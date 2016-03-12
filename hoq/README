@@ -2,7 +2,7 @@ The talk will discuss a golang program named "hoq".
 
 The "hoq" software is a vehicle for (hopefully) manifesting the abstract
 concepts of "Communicating Sequential Processes" by Tony Hoare
-(an intellectual godfather of golang) into concrete code.
+(a godfather of golang) into concrete code.
 
 The name "hoq" is a nod to a similiar program named "hoc",
 described in the well known book titled "The Unix Programming Environment"
