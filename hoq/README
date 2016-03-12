@@ -1,12 +1,15 @@
-The talk will discuss a golang program named "hoq".
+Our talk discusses a golang program named "hoq", which means 
+higher order query.
 
-The "hoq" software is a vehicle for (hopefully) manifesting the abstract
+The "hoq" program is a nascent vehicle for manifesting the abstract
 concepts of "Communicating Sequential Processes" by Tony Hoare
-(a godfather of golang) into concrete code.
+(a godfather of golang) into code.
 
-The name "hoq" is a nod to a similiar program named "hoc",
+The name "hoq" is a nod to a similiar program named "hoc", richly 
 described in the well known book titled "The Unix Programming Environment"
-by Rob Pike and Brian Kernighan.  The code of "hoq" diverges from "hoc",
-which is a traditional stack machine, because data is "flown" to the operands
-of "hoq" via channels instead of being pushed and popped to a traditional
-stack.  Experienced coders ought to be amused.
+by Rob Pike and Brian Kernighan.
+
+However, the code of "hoq" diverges from Pike's "hoc", which is a traditional 
+stack machine, by flowing data bottom up to the operands of the hoq "machine" 
+via channels instead of sequentially pushing and popping. The "hoq" model allows 
+easy concurrency of composed operands.
