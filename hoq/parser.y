@@ -377,7 +377,7 @@ PARSE_ERROR:
 
 func (l *yyLexState) mkerror(format string, args...interface{}) error {
 
-	return errors.New(fmt.Sprintf("%s, near line %d",
+	return errors.New(fmt.Sprintf("%s near line %d",
 		fmt.Sprintf(format, args...),
 		l.line_no,
 	))
