@@ -4,7 +4,9 @@ import (
 	"fmt"
 )
 
-func (a *ast) to_string() string {
+//  dump a node in the abstract syntax tree
+
+func (a *ast) String() string {
 
 	switch a.yy_tok {
 	case COMMAND:
@@ -22,38 +24,37 @@ func (a *ast) to_string() string {
 	return fmt.Sprintf("UNKNOWN_TOKEN(%d)", a.yy_tok)
 }
 
-func (a *ast) String() string {
+//  recursivly print indented nodes of the abstract syntax tree
 
-	return a.to_string()
-
-}
-
-func (a *ast) walk_print(indent int, is_first_sibling bool) {
+func (a *ast) print_tree(indent int, is_first_sibling bool) {
 
 	if a == nil {
 		return
 	}
-	if indent == 0 {
-		fmt.Println("")
-	} else {
-		for i := 0;  i < indent;  i++ {
-			fmt.Print("  ")
-		}
+
+	//  indent
+	for i := 0;  i < indent;  i++ {
+		fmt.Print("  ")
 	}
-	fmt.Println(a.to_string())
 
-	//  print kids
-	a.left.walk_print(indent + 1, true)
-	a.right.walk_print(indent + 1, true)
+	//  print the node
 
-	//  print siblings
+	fmt.Println(a.String())
+
+	//  recusively print the kids
+
+	a.left.print_tree(indent + 1, true)
+	a.right.print_tree(indent + 1, true)
+
+	//  print siblings if we are
+
 	if is_first_sibling {
 		for as := a.next;  as != nil;  as = as.next {
-			as.walk_print(indent, false)
+			as.print_tree(indent, false)
 		}
 	}
 }
 
 func (a *ast) print() {
-	a.walk_print(0, true)
+	a.print_tree(0, true)
 }
