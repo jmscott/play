@@ -64,7 +64,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:96
+//line parser.y:99
 var keyword = map[string]int{
 	"command": COMMAND,
 	"path":    PATH,
@@ -814,14 +814,17 @@ yydefault:
 		//line parser.y:56
 		{
 			s := yyDollar[1].ast
+
+			//  linearly find the last statement
+
 			for ; s.next != nil; s = s.next {
-			} //  find last stmt
+			}
 
 			s.next = yyDollar[2].ast
 		}
 	case 3:
 		yyDollar = yyS[yypt-8 : yypt+1]
-		//line parser.y:68
+		//line parser.y:71
 		{
 			l := yylex.(*yyLexState)
 
@@ -840,7 +843,7 @@ yydefault:
 		}
 	case 4:
 		yyDollar = yyS[yypt-5 : yypt+1]
-		//line parser.y:86
+		//line parser.y:89
 		{
 			yyVAL.ast = &ast{
 				yy_tok: CALL,

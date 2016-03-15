@@ -55,7 +55,10 @@ statement_list:
 	  statement_list statement
 	  {
 	  	s := $1
-		for ;  s.next != nil;  s = s.next {}	//  find last stmt
+
+		//  linearly find the last statement
+
+		for ;  s.next != nil;  s = s.next {}
 
 		s.next = $2
 	  }
