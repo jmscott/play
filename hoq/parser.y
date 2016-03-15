@@ -66,6 +66,21 @@ func init() {
 
 %%
 
+statement_list:
+	  statement
+	  {
+	  	yylex.(*yyLexState).ast_head = $1
+	  }
+	|
+	  statement_list statement
+	  {
+	  	s := $1
+		for ;  s.next != nil;  s = s.next {}	//  find last stmt
+
+		s.next = $2
+	  }
+	;
+
 statement:
 	  COMMAND  NAME  '{'  
 	  	PATH  '='  STRING  ';'
@@ -87,22 +102,6 @@ statement:
 		}
 	  }
 	;
-
-statement_list:
-	  statement
-	  {
-	  	yylex.(*yyLexState).ast_root = $1
-	  }
-	|
-	  statement_list statement
-	  {
-fmt.Println("WTF: in statement_list")
-	  	s := $1
-		for ;  s.next != nil;  s = s.next {}	//  find last stmt
-
-		s.next = $2
-	  }
-	;
 %%
 
 var keyword = map[string]int{
@@ -117,11 +116,21 @@ type yyLexState struct {
 	//  line number in source stream
 	line_no				uint64	   //  lexical line number
 
+	//  at end of stream
 	eof				bool       //  seen eof in token stream
+
+	//  lookahead on character
 	peek				rune       //  lookahead in lexer
+
+	//  error during parsing
 	err				error
 
-	ast_root			*ast
+	//  first statement in parse tree
+	ast_head			*ast
+	
+	//  track declared commands
+
+	commands			map[string]*command
 }
 
 func (l *yyLexState) pushback(c rune) {
@@ -410,8 +419,8 @@ func parse(in io.RuneReader) (
 	if err != nil {
 		return
 	}
-	if l.ast_root == nil {
-		panic("null ast_root")
+	if l.ast_head == nil {
+		panic("null ast_head")
 	}
-	return l.ast_root, err
+	return l.ast_head, err
 }

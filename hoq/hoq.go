@@ -24,11 +24,17 @@ func main() {
 	if argc > 2 {
 		die("wrong number of command line arguments")
 	}
+
+	//  parse the standard input into abstract syntax tree
+
 	ast, err := parse(bufio.NewReader(os.Stdin))
 	if err != nil {
 		die("parser: %s", err)
 		os.Exit(1)
 	}
+
+	//  dump the abstract syntax tree
+
 	if argc == 2 {
 		if os.Args[1] != "ast" {
 			die("unknown action: %s", os.Args[1])

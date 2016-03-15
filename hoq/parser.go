@@ -79,7 +79,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:106
+//line parser.y:105
 var keyword = map[string]int{
 	"command": COMMAND,
 	"path":    PATH,
@@ -92,11 +92,21 @@ type yyLexState struct {
 	//  line number in source stream
 	line_no uint64 //  lexical line number
 
-	eof  bool //  seen eof in token stream
-	peek rune //  lookahead in lexer
-	err  error
+	//  at end of stream
+	eof bool //  seen eof in token stream
 
-	ast_root *ast
+	//  lookahead on character
+	peek rune //  lookahead in lexer
+
+	//  error during parsing
+	err error
+
+	//  first statement in parse tree
+	ast_head *ast
+
+	//  track declared commands
+
+	commands map[string]*command
 }
 
 func (l *yyLexState) pushback(c rune) {
@@ -385,10 +395,10 @@ func parse(in io.RuneReader) (
 	if err != nil {
 		return
 	}
-	if l.ast_root == nil {
-		panic("null ast_root")
+	if l.ast_head == nil {
+		panic("null ast_head")
 	}
-	return l.ast_root, err
+	return l.ast_head, err
 }
 
 //line yacctab:1
@@ -404,35 +414,39 @@ const yyPrivate = 57344
 var yyTokenNames []string
 var yyStates []string
 
-const yyLast = 9
+const yyLast = 11
 
 var yyAct = [...]int{
 
-	9, 8, 6, 4, 7, 3, 5, 2, 1,
+	11, 10, 8, 6, 9, 5, 7, 3, 2, 1,
+	4,
 }
 var yyPact = [...]int{
 
-	2, -1000, -2, -9, 0, -11, -4, -13, -15, -1000,
+	2, 2, -1000, -2, -1000, -9, 0, -11, -4, -13,
+	-15, -1000,
 }
 var yyPgo = [...]int{
 
-	0, 8, 8,
+	0, 8, 9,
 }
 var yyR1 = [...]int{
 
-	0, 1, 2, 2,
+	0, 2, 2, 1,
 }
 var yyR2 = [...]int{
 
-	0, 8, 1, 2,
+	0, 1, 2, 8,
 }
 var yyChk = [...]int{
 
-	-1000, -1, 5, 7, 12, 6, 13, 8, 14, 15,
+	-1000, -2, -1, 5, -1, 7, 12, 6, 13, 8,
+	14, 15,
 }
 var yyDef = [...]int{
 
-	0, -2, 0, 0, 0, 0, 0, 0, 0, 1,
+	0, -2, 1, 0, 2, 0, 0, 0, 0, 0,
+	0, 3,
 }
 var yyTok1 = [...]int{
 
@@ -796,8 +810,24 @@ yydefault:
 	switch yynt {
 
 	case 1:
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:71
+		{
+			yylex.(*yyLexState).ast_head = yyDollar[1].ast
+		}
+	case 2:
+		yyDollar = yyS[yypt-2 : yypt+1]
+		//line parser.y:76
+		{
+			s := yyDollar[1].ast
+			for ; s.next != nil; s = s.next {
+			} //  find last stmt
+
+			s.next = yyDollar[2].ast
+		}
+	case 3:
 		yyDollar = yyS[yypt-8 : yypt+1]
-		//line parser.y:73
+		//line parser.y:88
 		{
 			l := yylex.(*yyLexState)
 
@@ -813,23 +843,6 @@ yydefault:
 					path: yyDollar[6].string,
 				},
 			}
-		}
-	case 2:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:93
-		{
-			yylex.(*yyLexState).ast_root = yyDollar[1].ast
-		}
-	case 3:
-		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:98
-		{
-			fmt.Println("WTF: in statement_list")
-			s := yyDollar[1].ast
-			for ; s.next != nil; s = s.next {
-			} //  find last stmt
-
-			s.next = yyDollar[2].ast
 		}
 	}
 	goto yystack /* stack new state and value */
