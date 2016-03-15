@@ -13,13 +13,7 @@ import (
 	"unicode"
 )
 
-func init() {
-	if yyToknames[3] != "__MIN_YYTOK" {
-		panic("yyToknames[3] != __MIN_YYTOK: yacc may have changed")
-	}
-}
-
-//line parser.y:25
+//line parser.y:19
 type yySymType struct {
 	yys int
 	//  string value
@@ -35,12 +29,13 @@ type yySymType struct {
 const __MIN_YYTOK = 57346
 const COMMAND = 57347
 const COMMAND_REF = 57348
-const PATH = 57349
-const NAME = 57350
-const STRING = 57351
-const PARSE_ERROR = 57352
-const EQ = 57353
-const NEQ = 57354
+const CALL = 57349
+const PATH = 57350
+const NAME = 57351
+const STRING = 57352
+const PARSE_ERROR = 57353
+const EQ = 57354
+const NEQ = 57355
 
 var yyToknames = [...]string{
 	"$end",
@@ -49,6 +44,7 @@ var yyToknames = [...]string{
 	"__MIN_YYTOK",
 	"COMMAND",
 	"COMMAND_REF",
+	"CALL",
 	"PATH",
 	"NAME",
 	"STRING",
@@ -59,6 +55,8 @@ var yyToknames = [...]string{
 	"'='",
 	"';'",
 	"'}'",
+	"'('",
+	"')'",
 }
 var yyStatenames = [...]string{}
 
@@ -66,10 +64,11 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:89
+//line parser.y:96
 var keyword = map[string]int{
 	"command": COMMAND,
 	"path":    PATH,
+	"call":    CALL,
 }
 
 type yyLexState struct {
@@ -260,9 +259,9 @@ func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 	return NAME, nil
 }
 
-/*
- *  Very simple utf8 string scanning and character escaping.
- */
+//  simple utf8 string scanning and with trivial character escaping.
+//  this string scan is not compatible with the golang string
+
 func (l *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
 	var c rune
 	s := ""
@@ -293,6 +292,8 @@ func (l *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
 	}
 	return true, nil
 }
+
+//  Lex() called by automatically generated yacc go code
 
 func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 
@@ -378,25 +379,19 @@ func (l *yyLexState) Error(msg string) {
 	}
 }
 
-//  entry in to yacc generated parser.
+//  enter the yacc dragon
 
 func parse() (ast *ast, err error) {
+
 	l := &yyLexState{
 		line_no:  1,
 		in:       bufio.NewReader(os.Stdin),
-		eof:      false,
-		err:      nil,
 		commands: make(map[string]*command),
 	}
+
 	yyParse(l)
-	err = l.err
-	if err != nil {
-		return
-	}
-	if l.ast_head == nil {
-		panic("null ast_head")
-	}
-	return l.ast_head, err
+
+	return l.ast_head, l.err
 }
 
 //line yacctab:1
@@ -406,45 +401,45 @@ var yyExca = [...]int{
 	-2, 0,
 }
 
-const yyNprod = 4
+const yyNprod = 5
 const yyPrivate = 57344
 
 var yyTokenNames []string
 var yyStates []string
 
-const yyLast = 11
+const yyLast = 17
 
 var yyAct = [...]int{
 
-	11, 10, 8, 6, 9, 5, 7, 3, 2, 1,
-	4,
+	11, 9, 16, 15, 13, 12, 8, 14, 6, 10,
+	3, 1, 4, 7, 2, 0, 5,
 }
 var yyPact = [...]int{
 
-	2, 2, -1000, -3, -1000, -10, -1, -12, -5, -14,
-	-16, -1000,
+	5, 5, -1000, -1, 7, -1000, -8, -17, 1, -19,
+	-10, -12, -3, -1000, -13, -15, -1000,
 }
 var yyPgo = [...]int{
 
-	0, 8, 9,
+	0, 14, 11,
 }
 var yyR1 = [...]int{
 
-	0, 2, 2, 1,
+	0, 2, 2, 1, 1,
 }
 var yyR2 = [...]int{
 
-	0, 1, 2, 8,
+	0, 1, 2, 8, 5,
 }
 var yyChk = [...]int{
 
-	-1000, -2, -1, 5, -1, 8, 13, 7, 14, 9,
-	15, 16,
+	-1000, -2, -1, 5, 7, -1, 9, 6, 14, 18,
+	8, 19, 15, 16, 10, 16, 17,
 }
 var yyDef = [...]int{
 
-	0, -2, 1, 0, 2, 0, 0, 0, 0, 0,
-	0, 3,
+	0, -2, 1, 0, 0, 2, 0, 0, 0, 0,
+	0, 0, 0, 4, 0, 0, 3,
 }
 var yyTok1 = [...]int{
 
@@ -452,20 +447,20 @@ var yyTok1 = [...]int{
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 15,
-	3, 14, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+	18, 19, 3, 3, 3, 3, 3, 3, 3, 3,
+	3, 3, 3, 3, 3, 3, 3, 3, 3, 16,
+	3, 15, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 13, 3, 16,
+	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+	3, 3, 3, 14, 3, 17,
 }
 var yyTok2 = [...]int{
 
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-	12,
+	12, 13,
 }
 var yyTok3 = [...]int{
 	0,
@@ -810,13 +805,13 @@ yydefault:
 
 	case 1:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:55
+		//line parser.y:51
 		{
 			yylex.(*yyLexState).ast_head = yyDollar[1].ast
 		}
 	case 2:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:60
+		//line parser.y:56
 		{
 			s := yyDollar[1].ast
 			for ; s.next != nil; s = s.next {
@@ -826,7 +821,7 @@ yydefault:
 		}
 	case 3:
 		yyDollar = yyS[yypt-8 : yypt+1]
-		//line parser.y:72
+		//line parser.y:68
 		{
 			l := yylex.(*yyLexState)
 
@@ -840,6 +835,18 @@ yydefault:
 				command: &command{
 					name: yyDollar[2].string,
 					path: yyDollar[6].string,
+				},
+			}
+		}
+	case 4:
+		yyDollar = yyS[yypt-5 : yypt+1]
+		//line parser.y:86
+		{
+			yyVAL.ast = &ast{
+				yy_tok: CALL,
+				left: &ast{
+					yy_tok:  COMMAND_REF,
+					command: yyDollar[2].command,
 				},
 			}
 		}
