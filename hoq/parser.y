@@ -14,12 +14,6 @@ import (
 	"unicode"
 )
 
-func init() {
-	if yyToknames[3] != "__MIN_YYTOK" {
-		panic("yyToknames[3] != __MIN_YYTOK: yacc may have changed")
-	}
-}
-
 %}
 
 %union {
@@ -37,6 +31,7 @@ func init() {
 %token	__MIN_YYTOK
 
 %token	COMMAND  COMMAND_REF
+%token	CALL
 %token	PATH
 %token	NAME
 %token	STRING
@@ -47,6 +42,7 @@ func init() {
 %type	<string>	STRING
 %type	<string>	NAME
 %type	<ast>		statement  statement_list
+%type	<command>	COMMAND_REF
 
 %%
 
@@ -85,12 +81,24 @@ statement:
 					},
 		}
 	  }
+	|
+	  CALL  COMMAND_REF  '('  ')'  ';'
+	  {
+	  	$$ = &ast{
+			yy_tok:		CALL,
+			left:		&ast {
+						yy_tok:		COMMAND_REF,
+						command:	$2,
+					},
+		}
+	  }
 	;
 %%
 
 var keyword = map[string]int{
 	"command":		COMMAND,
 	"path":			PATH,
+	"call":			CALL,
 }
 
 type yyLexState struct {
@@ -281,9 +289,9 @@ func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 	return NAME, nil
 }
 
-/*
- *  Very simple utf8 string scanning and character escaping.
- */
+//  simple utf8 string scanning and with trivial character escaping.
+//  this string scan is not compatible with the golang string
+
 func (l *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
 	var c rune
 	s := ""
@@ -314,6 +322,8 @@ func (l *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
 	}
 	return true, nil
 }
+
+//  Lex() called by automatically generated yacc go code
 
 func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 
@@ -399,23 +409,17 @@ func (l *yyLexState) Error(msg string) {
 	}
 }
 
-//  entry in to yacc generated parser.
+//  enter the yacc dragon
 
-func parse() (ast *ast,err error) {
+func parse() (ast *ast, err error) {
+
 	l := &yyLexState {
 		line_no:	1,
 		in:		bufio.NewReader(os.Stdin),
-		eof:		false,
-		err:		nil,
 		commands:	make(map[string]*command),
 	}
+
 	yyParse(l)
-	err = l.err
-	if err != nil {
-		return
-	}
-	if l.ast_head == nil {
-		panic("null ast_head")
-	}
-	return l.ast_head, err
+
+	return l.ast_head, l.err
 }
