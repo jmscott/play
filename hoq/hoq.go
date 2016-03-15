@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"syscall"
@@ -25,9 +24,9 @@ func main() {
 		die("wrong number of command line arguments")
 	}
 
-	//  parse the standard input into abstract syntax tree
+	//  parse the standard input into an abstract syntax tree
 
-	ast, err := parse(bufio.NewReader(os.Stdin))
+	ast, err := parse()
 	if err != nil {
 		die("parser: %s", err)
 		os.Exit(1)

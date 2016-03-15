@@ -5,11 +5,12 @@ import __yyfmt__ "fmt"
 
 //line parser.y:6
 import (
+	"bufio"
 	"errors"
-	"io"
-	"unicode"
-
 	"fmt"
+	"io"
+	"os"
+	"unicode"
 )
 
 func init() {
@@ -18,7 +19,7 @@ func init() {
 	}
 }
 
-//line parser.y:24
+//line parser.y:25
 type yySymType struct {
 	yys int
 	//  string value
@@ -33,12 +34,13 @@ type yySymType struct {
 
 const __MIN_YYTOK = 57346
 const COMMAND = 57347
-const PATH = 57348
-const NAME = 57349
-const STRING = 57350
-const PARSE_ERROR = 57351
-const EQ = 57352
-const NEQ = 57353
+const COMMAND_REF = 57348
+const PATH = 57349
+const NAME = 57350
+const STRING = 57351
+const PARSE_ERROR = 57352
+const EQ = 57353
+const NEQ = 57354
 
 var yyToknames = [...]string{
 	"$end",
@@ -46,6 +48,7 @@ var yyToknames = [...]string{
 	"$unk",
 	"__MIN_YYTOK",
 	"COMMAND",
+	"COMMAND_REF",
 	"PATH",
 	"NAME",
 	"STRING",
@@ -63,7 +66,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:88
+//line parser.y:89
 var keyword = map[string]int{
 	"command": COMMAND,
 	"path":    PATH,
@@ -242,8 +245,15 @@ func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 		l.pushback(c) /* first character after word */
 	}
 
-	if keyword[w] > 0 { /* got a keyword */
-		return keyword[w], nil /* return yacc generated token */
+	//  keyword?
+	if keyword[w] > 0 {
+		return keyword[w], nil
+	}
+
+	//  command reference?
+	if l.commands[w] != nil {
+		yylval.command = l.commands[w]
+		return COMMAND_REF, nil
 	}
 
 	yylval.string = w
@@ -251,17 +261,21 @@ func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 }
 
 /*
- *  Very simple utf8 string scanning, with no proper escapes for characters.
+ *  Very simple utf8 string scanning and character escaping.
  */
 func (l *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
 	var c rune
 	s := ""
 
 	for c, eof, err = l.get(); !eof && err == nil; c, eof, err = l.get() {
+
+		//  double quotes always clsoe the string
 		if c == '"' {
 			yylval.string = s
 			return false, nil
 		}
+
+		//  no new-line, carriage return, tab or slosh in string
 		switch c {
 		case '\n':
 			return false, l.mkerror("new line in string")
@@ -364,15 +378,15 @@ func (l *yyLexState) Error(msg string) {
 	}
 }
 
-func parse(in io.RuneReader) (
-	ast *ast,
-	err error,
-) {
+//  entry in to yacc generated parser.
+
+func parse() (ast *ast, err error) {
 	l := &yyLexState{
-		line_no: 1,
-		in:      in,
-		eof:     false,
-		err:     nil,
+		line_no:  1,
+		in:       bufio.NewReader(os.Stdin),
+		eof:      false,
+		err:      nil,
+		commands: make(map[string]*command),
 	}
 	yyParse(l)
 	err = l.err
@@ -407,8 +421,8 @@ var yyAct = [...]int{
 }
 var yyPact = [...]int{
 
-	2, 2, -1000, -2, -1000, -9, 0, -11, -4, -13,
-	-15, -1000,
+	2, 2, -1000, -3, -1000, -10, -1, -12, -5, -14,
+	-16, -1000,
 }
 var yyPgo = [...]int{
 
@@ -424,8 +438,8 @@ var yyR2 = [...]int{
 }
 var yyChk = [...]int{
 
-	-1000, -2, -1, 5, -1, 7, 12, 6, 13, 8,
-	14, 15,
+	-1000, -2, -1, 5, -1, 8, 13, 7, 14, 9,
+	15, 16,
 }
 var yyDef = [...]int{
 
@@ -439,18 +453,19 @@ var yyTok1 = [...]int{
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 14,
-	3, 13, 3, 3, 3, 3, 3, 3, 3, 3,
+	3, 3, 3, 3, 3, 3, 3, 3, 3, 15,
+	3, 14, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 12, 3, 15,
+	3, 3, 3, 13, 3, 16,
 }
 var yyTok2 = [...]int{
 
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+	12,
 }
 var yyTok3 = [...]int{
 	0,
@@ -795,13 +810,13 @@ yydefault:
 
 	case 1:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:54
+		//line parser.y:55
 		{
 			yylex.(*yyLexState).ast_head = yyDollar[1].ast
 		}
 	case 2:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:59
+		//line parser.y:60
 		{
 			s := yyDollar[1].ast
 			for ; s.next != nil; s = s.next {
@@ -811,7 +826,7 @@ yydefault:
 		}
 	case 3:
 		yyDollar = yyS[yypt-8 : yypt+1]
-		//line parser.y:71
+		//line parser.y:72
 		{
 			l := yylex.(*yyLexState)
 

@@ -6,11 +6,12 @@
 package main
 
 import (
+	"bufio"
 	"errors"
-	"io"
-	"unicode"
-
 	"fmt"
+	"io"
+	"os"
+	"unicode"
 )
 
 func init() {
@@ -35,7 +36,7 @@ func init() {
 //  lowest numbered yytoken.  must be first in list.
 %token	__MIN_YYTOK
 
-%token	COMMAND
+%token	COMMAND  COMMAND_REF
 %token	PATH
 %token	NAME
 %token	STRING
@@ -265,8 +266,15 @@ func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 		l.pushback(c)		/* first character after word */
 	}
 
-	if keyword[w] > 0 {		/* got a keyword */
-		return keyword[w], nil	/* return yacc generated token */
+	//  keyword?
+	if keyword[w] > 0 {
+		return keyword[w], nil
+	}
+
+	//  command reference?
+	if l.commands[w] != nil {
+		yylval.command = l.commands[w]
+		return COMMAND_REF, nil
 	}
 
 	yylval.string = w
@@ -274,17 +282,21 @@ func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 }
 
 /*
- *  Very simple utf8 string scanning, with no proper escapes for characters.
+ *  Very simple utf8 string scanning and character escaping.
  */
 func (l *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
 	var c rune
 	s := ""
 
 	for c, eof, err = l.get();  !eof && err == nil;  c, eof, err = l.get(){
+
+		//  double quotes always clsoe the string
 		if c == '"' {
 			yylval.string = s
 			return false, nil
 		}
+
+		//  no new-line, carriage return, tab or slosh in string
 		switch c {
 		case '\n':
 			return false, l.mkerror("new line in string")
@@ -387,15 +399,15 @@ func (l *yyLexState) Error(msg string) {
 	}
 }
 
-func parse(in io.RuneReader) (
-				ast *ast,
-				err error,
-) {
+//  entry in to yacc generated parser.
+
+func parse() (ast *ast,err error) {
 	l := &yyLexState {
 		line_no:	1,
-		in:		in,
+		in:		bufio.NewReader(os.Stdin),
 		eof:		false,
 		err:		nil,
+		commands:	make(map[string]*command),
 	}
 	yyParse(l)
 	err = l.err
