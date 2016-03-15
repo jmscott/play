@@ -13,28 +13,6 @@ import (
 	"fmt"
 )
 
-type command struct {
-	name	string
-	path	string
-}
-
-//  abstract syntax tree that represents the parsed program
-
-type ast struct {
-
-	yy_tok	int		//  lexical token defined by yacc
-
-	string
-	*command
-
-	//  children
-	left	*ast
-	right	*ast
-
-	//  siblings
-	next	*ast
-}
-
 func init() {
 	if yyToknames[3] != "__MIN_YYTOK" {
 		panic("yyToknames[3] != __MIN_YYTOK: yacc may have changed")
@@ -44,8 +22,13 @@ func init() {
 %}
 
 %union {
+	//  string value
 	string
+
+	//  unix command execed by hoq
 	command		*command
+
+	//  abstract syntax tree
 	ast		*ast
 }
 

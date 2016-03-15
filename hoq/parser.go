@@ -12,39 +12,23 @@ import (
 	"fmt"
 )
 
-type command struct {
-	name string
-	path string
-}
-
-//  abstract syntax tree that represents the parsed program
-
-type ast struct {
-	yy_tok int //  lexical token defined by yacc
-
-	string
-	*command
-
-	//  children
-	left  *ast
-	right *ast
-
-	//  siblings
-	next *ast
-}
-
 func init() {
 	if yyToknames[3] != "__MIN_YYTOK" {
 		panic("yyToknames[3] != __MIN_YYTOK: yacc may have changed")
 	}
 }
 
-//line parser.y:46
+//line parser.y:24
 type yySymType struct {
 	yys int
+	//  string value
 	string
+
+	//  unix command execed by hoq
 	command *command
-	ast     *ast
+
+	//  abstract syntax tree
+	ast *ast
 }
 
 const __MIN_YYTOK = 57346
@@ -79,7 +63,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:105
+//line parser.y:88
 var keyword = map[string]int{
 	"command": COMMAND,
 	"path":    PATH,
@@ -811,13 +795,13 @@ yydefault:
 
 	case 1:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:71
+		//line parser.y:54
 		{
 			yylex.(*yyLexState).ast_head = yyDollar[1].ast
 		}
 	case 2:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:76
+		//line parser.y:59
 		{
 			s := yyDollar[1].ast
 			for ; s.next != nil; s = s.next {
@@ -827,7 +811,7 @@ yydefault:
 		}
 	case 3:
 		yyDollar = yyS[yypt-8 : yypt+1]
-		//line parser.y:88
+		//line parser.y:71
 		{
 			l := yylex.(*yyLexState)
 

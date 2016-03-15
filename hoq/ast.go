@@ -4,6 +4,29 @@ import (
 	"fmt"
 )
 
+//  abstract syntax tree that represents the parsed program.
+//  all possible node values must be explicitly defined since go has no union
+//  types.
+
+type ast struct {
+
+	//  lexical token automatically defined by yacc
+	yy_tok	int
+
+	//  a string value associated with the node
+	string
+
+	//  a unix command declaration
+	*command
+
+	//  child nodes
+	left	*ast
+	right	*ast
+
+	//  siblings
+	next	*ast
+}
+
 //  dump a node in the abstract syntax tree
 
 func (a *ast) String() string {
