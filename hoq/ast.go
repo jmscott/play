@@ -13,8 +13,8 @@ type ast struct {
 	//  lexical token automatically defined by yacc
 	yy_tok	int
 
-	//  a string value associated with the node
 	string
+	uint64
 
 	//  a unix command declaration
 	*command
@@ -33,11 +33,14 @@ func (a *ast) String() string {
 
 	switch a.yy_tok {
 	case COMMAND:
-		return fmt.Sprintf("COMMAND(%s)", a.command.name)
+		return fmt.Sprintf("COMMAND{%s, %s}",
+				a.command.name, a.command.path)
+	case CALL:
+		return fmt.Sprintf("CALL.%s", a.command.name)
 	case STRING:
-		return fmt.Sprintf("STRING(\"%s\")", a.string)
-	case NAME:
-		return fmt.Sprintf("NAME(\"%s\")", a.string)
+		return fmt.Sprintf("STRING=\"%s\"", a.string)
+	case DOLLAR:
+		return fmt.Sprintf("$%d", a.uint64)
 	}
 
 	offset := a.yy_tok - __MIN_YYTOK + 3
@@ -55,7 +58,8 @@ func (a *ast) print_tree(indent int, is_first_sibling bool) {
 		return
 	}
 
-	//  indent
+	//  indent, two space for each level
+
 	for i := 0;  i < indent;  i++ {
 		fmt.Print("  ")
 	}

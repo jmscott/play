@@ -1,5 +1,5 @@
 GO=/usr/local/go/bin/go
-GOSRC=hoq.go parser.go ast.go command.go
+GOSRC=hoq.go parser.go ast.go command.go logic.go machine.go
 
 export GOPATH := /usr/local/go/bin
 

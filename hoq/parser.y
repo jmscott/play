@@ -11,14 +11,15 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"unicode"
 )
 
 %}
 
 %union {
-	//  string value
 	string
+	uint64
 
 	//  unix command execed by hoq
 	command		*command
@@ -31,18 +32,29 @@ import (
 %token	__MIN_YYTOK
 
 %token	COMMAND  COMMAND_REF
-%token	CALL
 %token	PATH
+%token	CALL  WHEN
 %token	NAME
 %token	STRING
 %token	PARSE_ERROR
 %token	EQ
 %token	NEQ
+%token	RE_MATCH  RE_NMATCH
+%token	DOLLAR  UINT64
+%token	AND  OR  NOT
+%token	ARGV  ARGV0
 
 %type	<string>	STRING
 %type	<string>	NAME
 %type	<ast>		statement  statement_list
+%type	<ast>		qualification  compare  boolean
+%type	<ast>		string_exp  string_list
 %type	<command>	COMMAND_REF
+%type	<ast>		DOLLAR
+%type	<ast>		AND  OR
+%type	<ast>		RE_MATCH  RE_NMATCH
+%type	<uint64>	UINT64
+%type	<ast>		argv
 
 %%
 
@@ -64,6 +76,144 @@ statement_list:
 	  }
 	;
 
+string_exp:
+	  '$'  UINT64
+	  {
+	  	$$ = &ast{
+			yy_tok:	DOLLAR,
+			uint64: $2,
+		}
+	  }
+	|
+	  STRING
+	  {
+	  	$$ = &ast{
+			yy_tok:	STRING,
+			string: $1,
+		}
+	  }
+	;
+
+string_list:
+	  string_exp
+	|
+	  string_list  ','  string_exp
+	  {
+	  	s := $1
+
+		//  linearly find the last statement
+
+		for ;  s.next != nil;  s = s.next {}
+
+		s.next = $3
+	  }
+	;
+
+argv:
+	  /* empty */
+	  {
+	  	$$ = &ast{
+			yy_tok:	ARGV0,
+		}
+	  }
+	|
+	  string_list
+	  {
+	  	$$ = &ast{
+			yy_tok:	ARGV,
+			left:	$1,
+		}
+	  }
+	;
+	
+compare:
+	  string_exp  EQ  string_exp
+	  {
+	  	$$ = &ast{
+			yy_tok: EQ,
+			left: $1,
+			right: $3,
+		}
+	  }
+	|
+	  string_exp  NEQ  string_exp
+	  {
+	  	$$ = &ast{
+			yy_tok: NEQ,
+			left: $1,
+			right: $3,
+		}
+	  }
+	|
+	  string_exp  RE_MATCH  string_exp
+	  {
+	  	$$ = &ast{
+			yy_tok: RE_MATCH,
+			left: $1,
+			right: $3,
+		}
+	  }
+	|
+	  string_exp  RE_NMATCH  string_exp
+	  {
+	  	$$ = &ast{
+			yy_tok: RE_NMATCH,
+			left: $1,
+			right: $3,
+		}
+	  }
+	;
+
+boolean:
+	  compare
+	|
+	  boolean  OR  boolean
+	  {
+	  	$$ = &ast{
+			yy_tok: OR,
+			left: $1,
+			right: $3,
+		}
+	  }
+	|
+	  boolean  AND  boolean
+	  {
+	  	$$ = &ast{
+			yy_tok: AND,
+			left: $1,
+			right: $3,
+		}
+	  }
+	|
+	  NOT  boolean
+	  {
+	  	$$ = &ast{
+			yy_tok:	NOT,
+			left: $2,
+		}
+	  }
+	|
+	  '('  boolean  ')'
+	  {
+	  	$$ = $2
+	  }
+	;
+
+qualification:
+	  /*  empty  */
+	  {
+	  	$$ = nil
+	  }
+	|
+	  WHEN   boolean
+	  {
+	  	$$ = &ast{
+			yy_tok:	WHEN,
+			right:	$2,
+		}
+	  }
+	;
+	
 statement:
 	  COMMAND  NAME  '{'  
 	  	PATH  '='  STRING  ';'
@@ -76,23 +226,23 @@ statement:
 			return 0
 		}
 
+		l.commands[$2] = &command{
+					name: $2,
+					path: $6,
+				}
 		$$ = &ast{
 			yy_tok:		COMMAND,
-			command:	&command {
-						name:	$2,
-						path:	$6,	
-					},
+			command:	l.commands[$2],
 		}
 	  }
 	|
-	  CALL  COMMAND_REF  '('  ')'  ';'
+	  CALL  COMMAND_REF  '('  argv  ')'  qualification  ';'
 	  {
 	  	$$ = &ast{
 			yy_tok:		CALL,
-			left:		&ast {
-						yy_tok:		COMMAND_REF,
-						command:	$2,
-					},
+			command:	$2,
+			left:		$4,
+			right:		$6,
 		}
 	  }
 	;
@@ -102,6 +252,10 @@ var keyword = map[string]int{
 	"command":		COMMAND,
 	"path":			PATH,
 	"call":			CALL,
+	"when":			WHEN,
+	"or":			OR,
+	"and":			AND,
+	"not":			NOT,
 }
 
 type yyLexState struct {
@@ -242,6 +396,37 @@ func skip_space(l *yyLexState) (c rune, eof bool, err error) {
 	return 0, eof, err
 }
 
+func (l *yyLexState) scan_uint64(yylval *yySymType, c rune) (err error) {
+	var eof bool
+
+	ui64 := string(c)
+	count := 1
+
+	/*
+	 *  Scan a string of unicode numbers/digits and let Scanf parse the
+	 *  actual digit string.
+	 */
+	for c, eof, err = l.get();  !eof && err == nil;  c, eof, err = l.get() {
+		count++
+		if count > 20 {
+			return l.mkerror("uint64 > 20 digits")
+		}
+		if c > 127 || !unicode.IsNumber(c) {
+			break
+		}
+		ui64 += string(c)
+	}
+	if err != nil {
+		return
+	}
+	if !eof {
+		l.pushback(c)		//  first character after ui64
+	}
+
+	yylval.uint64, err = strconv.ParseUint(ui64, 10, 64)
+	return
+}
+
 /*
  *  Words are a leading ascii or '_' followed by 0 or more ascii letters, digits
  *  and '_' characters.  The word is mapped onto either a keyword or
@@ -348,9 +533,9 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 	if (c > 127) {
 		goto PARSE_ERROR
 	}
-	/*
-	 *  switch(c) statement?
-	 */
+
+	//  scan a word
+
 	if (unicode.IsLetter(c)) || c == '_' {
 		tok, err = l.scan_word(yylval, c)
 		if err != nil {
@@ -358,6 +543,19 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 		}
 		return tok
 	}
+
+	//  scan an unsigned int 64
+
+	if unicode.IsNumber(c) {
+		err = l.scan_uint64(yylval, c)
+		if err != nil {
+			goto PARSE_ERROR
+		}
+		return UINT64
+	}
+
+	//  scan a string
+
 	if c == '"' {
 		lno := l.line_no	// reset line number on error
 
@@ -372,6 +570,9 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 		}
 		return STRING
 	}
+
+	//  peek ahead for ==
+
 	if c == '=' {
 		tok, err = lookahead(l, '=', EQ, int('='))
 		if err != nil {
@@ -379,13 +580,33 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 		}
 		return tok
 	}
+
+	//  peak ahead for not equals (!=) or not matches regular expression
+
 	if c == '!' {
 		tok, err = lookahead(l, '=', NEQ, int('!'))
 		if err != nil {
 			goto PARSE_ERROR
 		}
+		if tok == NEQ {
+			return NEQ
+		}
+		tok, err = lookahead(l, '~', RE_NMATCH, int('!'))
+		if err != nil {
+			goto PARSE_ERROR
+		}
 		return tok
 	}
+
+	//  peak ahead for regular expression match
+	if c == '~' {
+		tok, err = lookahead(l, '~', RE_MATCH, int('~'))
+		if err != nil {
+			goto PARSE_ERROR
+		}
+		return tok
+	}
+
 	return int(c)
 PARSE_ERROR:
 	l.err = err

@@ -10,14 +10,15 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"unicode"
 )
 
-//line parser.y:19
+//line parser.y:20
 type yySymType struct {
 	yys int
-	//  string value
 	string
+	uint64
 
 	//  unix command execed by hoq
 	command *command
@@ -29,13 +30,23 @@ type yySymType struct {
 const __MIN_YYTOK = 57346
 const COMMAND = 57347
 const COMMAND_REF = 57348
-const CALL = 57349
-const PATH = 57350
-const NAME = 57351
-const STRING = 57352
-const PARSE_ERROR = 57353
-const EQ = 57354
-const NEQ = 57355
+const PATH = 57349
+const CALL = 57350
+const WHEN = 57351
+const NAME = 57352
+const STRING = 57353
+const PARSE_ERROR = 57354
+const EQ = 57355
+const NEQ = 57356
+const RE_MATCH = 57357
+const RE_NMATCH = 57358
+const DOLLAR = 57359
+const UINT64 = 57360
+const AND = 57361
+const OR = 57362
+const NOT = 57363
+const ARGV = 57364
+const ARGV0 = 57365
 
 var yyToknames = [...]string{
 	"$end",
@@ -44,19 +55,31 @@ var yyToknames = [...]string{
 	"__MIN_YYTOK",
 	"COMMAND",
 	"COMMAND_REF",
-	"CALL",
 	"PATH",
+	"CALL",
+	"WHEN",
 	"NAME",
 	"STRING",
 	"PARSE_ERROR",
 	"EQ",
 	"NEQ",
+	"RE_MATCH",
+	"RE_NMATCH",
+	"DOLLAR",
+	"UINT64",
+	"AND",
+	"OR",
+	"NOT",
+	"ARGV",
+	"ARGV0",
+	"'$'",
+	"','",
+	"'('",
+	"')'",
 	"'{'",
 	"'='",
 	"';'",
 	"'}'",
-	"'('",
-	"')'",
 }
 var yyStatenames = [...]string{}
 
@@ -64,11 +87,15 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:99
+//line parser.y:249
 var keyword = map[string]int{
 	"command": COMMAND,
 	"path":    PATH,
 	"call":    CALL,
+	"when":    WHEN,
+	"or":      OR,
+	"and":     AND,
+	"not":     NOT,
 }
 
 type yyLexState struct {
@@ -209,6 +236,37 @@ func skip_space(l *yyLexState) (c rune, eof bool, err error) {
 	return 0, eof, err
 }
 
+func (l *yyLexState) scan_uint64(yylval *yySymType, c rune) (err error) {
+	var eof bool
+
+	ui64 := string(c)
+	count := 1
+
+	/*
+	 *  Scan a string of unicode numbers/digits and let Scanf parse the
+	 *  actual digit string.
+	 */
+	for c, eof, err = l.get(); !eof && err == nil; c, eof, err = l.get() {
+		count++
+		if count > 20 {
+			return l.mkerror("uint64 > 20 digits")
+		}
+		if c > 127 || !unicode.IsNumber(c) {
+			break
+		}
+		ui64 += string(c)
+	}
+	if err != nil {
+		return
+	}
+	if !eof {
+		l.pushback(c) //  first character after ui64
+	}
+
+	yylval.uint64, err = strconv.ParseUint(ui64, 10, 64)
+	return
+}
+
 /*
  *  Words are a leading ascii or '_' followed by 0 or more ascii letters, digits
  *  and '_' characters.  The word is mapped onto either a keyword or
@@ -315,9 +373,9 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 	if c > 127 {
 		goto PARSE_ERROR
 	}
-	/*
-	 *  switch(c) statement?
-	 */
+
+	//  scan a word
+
 	if (unicode.IsLetter(c)) || c == '_' {
 		tok, err = l.scan_word(yylval, c)
 		if err != nil {
@@ -325,6 +383,19 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 		}
 		return tok
 	}
+
+	//  scan an unsigned int 64
+
+	if unicode.IsNumber(c) {
+		err = l.scan_uint64(yylval, c)
+		if err != nil {
+			goto PARSE_ERROR
+		}
+		return UINT64
+	}
+
+	//  scan a string
+
 	if c == '"' {
 		lno := l.line_no // reset line number on error
 
@@ -339,6 +410,9 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 		}
 		return STRING
 	}
+
+	//  peek ahead for ==
+
 	if c == '=' {
 		tok, err = lookahead(l, '=', EQ, int('='))
 		if err != nil {
@@ -346,13 +420,33 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 		}
 		return tok
 	}
+
+	//  peak ahead for not equals (!=) or not matches regular expression
+
 	if c == '!' {
 		tok, err = lookahead(l, '=', NEQ, int('!'))
 		if err != nil {
 			goto PARSE_ERROR
 		}
+		if tok == NEQ {
+			return NEQ
+		}
+		tok, err = lookahead(l, '~', RE_NMATCH, int('!'))
+		if err != nil {
+			goto PARSE_ERROR
+		}
 		return tok
 	}
+
+	//  peak ahead for regular expression match
+	if c == '~' {
+		tok, err = lookahead(l, '~', RE_MATCH, int('~'))
+		if err != nil {
+			goto PARSE_ERROR
+		}
+		return tok
+	}
+
 	return int(c)
 PARSE_ERROR:
 	l.err = err
@@ -401,66 +495,83 @@ var yyExca = [...]int{
 	-2, 0,
 }
 
-const yyNprod = 5
+const yyNprod = 22
 const yyPrivate = 57344
 
 var yyTokenNames []string
 var yyStates []string
 
-const yyLast = 17
+const yyLast = 50
 
 var yyAct = [...]int{
 
-	11, 9, 16, 15, 13, 12, 8, 14, 6, 10,
-	3, 1, 4, 7, 2, 0, 5,
+	30, 26, 31, 25, 24, 33, 32, 15, 16, 8,
+	13, 17, 15, 42, 9, 18, 19, 28, 20, 23,
+	14, 6, 29, 33, 32, 14, 36, 37, 38, 39,
+	34, 35, 22, 3, 40, 41, 4, 43, 44, 45,
+	46, 10, 7, 2, 11, 5, 12, 27, 21, 1,
 }
 var yyPact = [...]int{
 
-	5, 5, -1000, -1, 7, -1000, -8, -17, 1, -19,
-	-10, -12, -3, -1000, -13, -15, -1000,
+	28, 28, -1000, 11, 36, -1000, -19, -12, 34, 1,
+	-21, -16, -10, -1000, -2, -1000, 7, 23, 1, -1000,
+	-26, -27, -4, -1000, -29, -1000, 4, -1000, -4, -4,
+	13, -1000, -4, -4, 4, -14, 1, 1, 1, 1,
+	4, 4, -1000, -1000, -1000, -1000, -1000,
 }
 var yyPgo = [...]int{
 
-	0, 14, 11,
+	0, 43, 49, 48, 47, 1, 0, 46, 44,
 }
 var yyR1 = [...]int{
 
-	0, 2, 2, 1, 1,
+	0, 2, 2, 6, 6, 7, 7, 8, 8, 4,
+	4, 4, 4, 5, 5, 5, 5, 5, 3, 3,
+	1, 1,
 }
 var yyR2 = [...]int{
 
-	0, 1, 2, 8, 5,
+	0, 1, 2, 2, 1, 1, 3, 0, 1, 3,
+	3, 3, 3, 1, 3, 3, 2, 3, 0, 2,
+	8, 7,
 }
 var yyChk = [...]int{
 
-	-1000, -2, -1, 5, 7, -1, 9, 6, 14, 18,
-	8, 19, 15, 16, 10, 16, 17,
+	-1000, -2, -1, 5, 8, -1, 10, 6, 28, 26,
+	7, -8, -7, -6, 24, 11, 29, 27, 25, 18,
+	11, -3, 9, -6, 30, 30, -5, -4, 21, 26,
+	-6, 31, 20, 19, -5, -5, 13, 14, 15, 16,
+	-5, -5, 27, -6, -6, -6, -6,
 }
 var yyDef = [...]int{
 
-	0, -2, 1, 0, 0, 2, 0, 0, 0, 0,
-	0, 0, 0, 4, 0, 0, 3,
+	0, -2, 1, 0, 0, 2, 0, 0, 0, 7,
+	0, 0, 8, 5, 0, 4, 0, 18, 0, 3,
+	0, 0, 0, 6, 0, 21, 19, 13, 0, 0,
+	0, 20, 0, 0, 16, 0, 0, 0, 0, 0,
+	14, 15, 17, 9, 10, 11, 12,
 }
 var yyTok1 = [...]int{
 
 	1, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	18, 19, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 16,
-	3, 15, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+	3, 3, 3, 3, 3, 3, 24, 3, 3, 3,
+	26, 27, 3, 3, 25, 3, 3, 3, 3, 3,
+	3, 3, 3, 3, 3, 3, 3, 3, 3, 30,
+	3, 29, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 14, 3, 17,
+	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+	3, 3, 3, 28, 3, 31,
 }
 var yyTok2 = [...]int{
 
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-	12, 13,
+	12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+	22, 23,
 }
 var yyTok3 = [...]int{
 	0,
@@ -805,13 +916,13 @@ yydefault:
 
 	case 1:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:51
+		//line parser.y:63
 		{
 			yylex.(*yyLexState).ast_head = yyDollar[1].ast
 		}
 	case 2:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:56
+		//line parser.y:68
 		{
 			s := yyDollar[1].ast
 
@@ -823,8 +934,146 @@ yydefault:
 			s.next = yyDollar[2].ast
 		}
 	case 3:
+		yyDollar = yyS[yypt-2 : yypt+1]
+		//line parser.y:81
+		{
+			yyVAL.ast = &ast{
+				yy_tok: DOLLAR,
+				uint64: yyDollar[2].uint64,
+			}
+		}
+	case 4:
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:89
+		{
+			yyVAL.ast = &ast{
+				yy_tok: STRING,
+				string: yyDollar[1].string,
+			}
+		}
+	case 6:
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line parser.y:101
+		{
+			s := yyDollar[1].ast
+
+			//  linearly find the last statement
+
+			for ; s.next != nil; s = s.next {
+			}
+
+			s.next = yyDollar[3].ast
+		}
+	case 7:
+		yyDollar = yyS[yypt-0 : yypt+1]
+		//line parser.y:114
+		{
+			yyVAL.ast = &ast{
+				yy_tok: ARGV0,
+			}
+		}
+	case 8:
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:121
+		{
+			yyVAL.ast = &ast{
+				yy_tok: ARGV,
+				left:   yyDollar[1].ast,
+			}
+		}
+	case 9:
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line parser.y:131
+		{
+			yyVAL.ast = &ast{
+				yy_tok: EQ,
+				left:   yyDollar[1].ast,
+				right:  yyDollar[3].ast,
+			}
+		}
+	case 10:
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line parser.y:140
+		{
+			yyVAL.ast = &ast{
+				yy_tok: NEQ,
+				left:   yyDollar[1].ast,
+				right:  yyDollar[3].ast,
+			}
+		}
+	case 11:
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line parser.y:149
+		{
+			yyVAL.ast = &ast{
+				yy_tok: RE_MATCH,
+				left:   yyDollar[1].ast,
+				right:  yyDollar[3].ast,
+			}
+		}
+	case 12:
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line parser.y:158
+		{
+			yyVAL.ast = &ast{
+				yy_tok: RE_NMATCH,
+				left:   yyDollar[1].ast,
+				right:  yyDollar[3].ast,
+			}
+		}
+	case 14:
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line parser.y:171
+		{
+			yyVAL.ast = &ast{
+				yy_tok: OR,
+				left:   yyDollar[1].ast,
+				right:  yyDollar[3].ast,
+			}
+		}
+	case 15:
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line parser.y:180
+		{
+			yyVAL.ast = &ast{
+				yy_tok: AND,
+				left:   yyDollar[1].ast,
+				right:  yyDollar[3].ast,
+			}
+		}
+	case 16:
+		yyDollar = yyS[yypt-2 : yypt+1]
+		//line parser.y:189
+		{
+			yyVAL.ast = &ast{
+				yy_tok: NOT,
+				left:   yyDollar[2].ast,
+			}
+		}
+	case 17:
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line parser.y:197
+		{
+			yyVAL.ast = yyDollar[2].ast
+		}
+	case 18:
+		yyDollar = yyS[yypt-0 : yypt+1]
+		//line parser.y:204
+		{
+			yyVAL.ast = nil
+		}
+	case 19:
+		yyDollar = yyS[yypt-2 : yypt+1]
+		//line parser.y:209
+		{
+			yyVAL.ast = &ast{
+				yy_tok: WHEN,
+				right:  yyDollar[2].ast,
+			}
+		}
+	case 20:
 		yyDollar = yyS[yypt-8 : yypt+1]
-		//line parser.y:71
+		//line parser.y:221
 		{
 			l := yylex.(*yyLexState)
 
@@ -833,24 +1082,24 @@ yydefault:
 				return 0
 			}
 
+			l.commands[yyDollar[2].string] = &command{
+				name: yyDollar[2].string,
+				path: yyDollar[6].string,
+			}
 			yyVAL.ast = &ast{
-				yy_tok: COMMAND,
-				command: &command{
-					name: yyDollar[2].string,
-					path: yyDollar[6].string,
-				},
+				yy_tok:  COMMAND,
+				command: l.commands[yyDollar[2].string],
 			}
 		}
-	case 4:
-		yyDollar = yyS[yypt-5 : yypt+1]
-		//line parser.y:89
+	case 21:
+		yyDollar = yyS[yypt-7 : yypt+1]
+		//line parser.y:240
 		{
 			yyVAL.ast = &ast{
-				yy_tok: CALL,
-				left: &ast{
-					yy_tok:  COMMAND_REF,
-					command: yyDollar[2].command,
-				},
+				yy_tok:  CALL,
+				command: yyDollar[2].command,
+				left:    yyDollar[4].ast,
+				right:   yyDollar[6].ast,
 			}
 		}
 	}
