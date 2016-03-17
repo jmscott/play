@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 	"unicode"
 )
@@ -31,7 +30,7 @@ import (
 //  lowest numbered yytoken.  must be first in list.
 %token	__MIN_YYTOK
 
-%token	COMMAND  COMMAND_REF
+%token	COMMAND  XCOMMAND  EXIT_STATUS
 %token	PATH
 %token	CALL  WHEN
 %token	NAME
@@ -49,7 +48,7 @@ import (
 %type	<ast>		statement  statement_list
 %type	<ast>		qualification  compare  boolean
 %type	<ast>		string_exp  string_list
-%type	<command>	COMMAND_REF
+%type	<command>	XCOMMAND
 %type	<ast>		DOLLAR
 %type	<ast>		AND  OR
 %type	<ast>		RE_MATCH  RE_NMATCH
@@ -236,7 +235,7 @@ statement:
 		}
 	  }
 	|
-	  CALL  COMMAND_REF  '('  argv  ')'  qualification  ';'
+	  CALL  XCOMMAND  '('  argv  ')'  qualification  ';'
 	  {
 	  	$$ = &ast{
 			yy_tok:		CALL,
@@ -249,13 +248,14 @@ statement:
 %%
 
 var keyword = map[string]int{
-	"command":		COMMAND,
-	"path":			PATH,
-	"call":			CALL,
-	"when":			WHEN,
-	"or":			OR,
 	"and":			AND,
+	"call":			CALL,
+	"command":		COMMAND,
+	"exit_status":		EXIT_STATUS,
 	"not":			NOT,
+	"or":			OR,
+	"path":			PATH,
+	"when":			WHEN,
 }
 
 type yyLexState struct {
@@ -428,10 +428,12 @@ func (l *yyLexState) scan_uint64(yylval *yySymType, c rune) (err error) {
 }
 
 /*
- *  Words are a leading ascii or '_' followed by 0 or more ascii letters, digits
- *  and '_' characters.  The word is mapped onto either a keyword or
- *  the NAME token.  When the word is a NAME, then the 'string' field points
- *  the the actual name.
+ *  scan a word from source file.
+ *
+ *  words have a leading ascii or '_' followed by 0 or more ascii letters,
+ *  digits and '_' characters.  the word is mapped onto either a keyword, a
+ *  command or the NAME token.  when the word is a NAME, then the 'string'
+ *  field points the the actual name of the word.
  */
 func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 	var eof bool
@@ -439,9 +441,8 @@ func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 	w := string(c)
 	count := 1
 
-	/*
-	 *  Scan a string of ascii letters, numbers/digits and '_' character.
-	 */
+	//  Scan a string of ascii letters, numbers/digits and '_' character.
+
 	for c, eof, err = l.get();  !eof && err == nil;  c, eof, err = l.get() {
 		if c > 127 ||
 		   (c != '_' &&
@@ -458,27 +459,32 @@ func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 	if err != nil {
 		return 0, err
 	}
+
+	//  pushback the first character after the end of the word
+
 	if !eof {
-		l.pushback(c)		/* first character after word */
+		l.pushback(c)
 	}
 
-	//  keyword?
+	//  language keyword?
+
 	if keyword[w] > 0 {
 		return keyword[w], nil
 	}
 
-	//  command reference?
+	//  an executed command reference?
+
 	if l.commands[w] != nil {
 		yylval.command = l.commands[w]
-		return COMMAND_REF, nil
+		return XCOMMAND, nil
 	}
 
 	yylval.string = w
 	return NAME, nil
 }
 
-//  simple utf8 string scanning and with trivial character escaping.
-//  this string scan is not compatible with the golang string
+//  simple utf8 string scanning with trivial character escaping.
+//  this string scan is not compatible with the golang string.
 
 func (l *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
 	var c rune
@@ -493,6 +499,7 @@ func (l *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
 		}
 
 		//  no new-line, carriage return, tab or slosh in string
+
 		switch c {
 		case '\n':
 			return false, l.mkerror("new line in string")
@@ -635,11 +642,11 @@ func (l *yyLexState) Error(msg string) {
 
 //  enter the yacc dragon
 
-func parse() (ast *ast, err error) {
+func parse(in io.Reader) (ast *ast, err error) {
 
 	l := &yyLexState {
 		line_no:	1,
-		in:		bufio.NewReader(os.Stdin),
+		in:		bufio.NewReader(in),
 		commands:	make(map[string]*command),
 	}
 

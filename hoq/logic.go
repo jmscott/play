@@ -1,12 +1,13 @@
 package main
 
-//  A rummy records for temporal + tri-state logic: true, false, null, waiting
+//  A rummy describes temporal + tri-state logic: true, false, null, waiting
+//	
 //  There are known knowns, there are known unknowns ...
 
 type rummy uint8
 
 const (
-	//  end of stream
+	//  channel closed
 	rum_NIL = rummy(0)
 
 	//  will eventually resolve to true, false or null
@@ -23,8 +24,12 @@ const (
 )
 
 //  state tables for logical and/or
+
 var and = [137]rummy{}
 var or = [137]rummy{}
+
+//  build the state tables for temporal logical AND and OR used by opcodes
+//  in method flow.bool2().
 
 func init() {
 
@@ -35,8 +40,8 @@ func init() {
 	const lf = rummy(rum_FALSE << 4)
 	const lt = rummy(rum_TRUE << 4)
 
-	//  SQL logical 'and' semantics for discovered values,
-	//  applied sequentially
+	//  SQL logical AND semantics with null,
+	//  applied in precedence listed below
 	//
 	//  false and *	=>	false
 	//  * and false	=>	false
@@ -100,8 +105,8 @@ func init() {
 	and[ln|rum_WAIT] = rum_WAIT
 	and[lw|rum_WAIT] = rum_WAIT
 
-	//  SQL logical 'or' semantics for discovered values,
-	//  applied sequentially
+	//  SQL logical OR semantics with null,
+	//  applied in precedence listed below.
 	//
 	//  true or *	=>	true
 	//  * or true	=>	true
@@ -167,7 +172,8 @@ func init() {
 
 func (rum rummy) String() string {
 
-	//  describe rummy states
+	//  english description of rummy states
+
 	var rum2string = [16]string{
 		"NIL",
 		"WAIT",
@@ -181,6 +187,9 @@ func (rum rummy) String() string {
 	if rum < 16 {
 		return rum2string[rum]
 	}
+
+	//  two rummy values packed into 8 bits
+
 	return rum2string[rum>>4] + "|" + rum2string[rum&0x0F]
 }
 

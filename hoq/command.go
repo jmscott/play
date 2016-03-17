@@ -11,6 +11,7 @@ type command struct {
 	name		string
 	path		string
 	full_path	string
+	depend_ref_count uint8
 }
 
 func (cmd *command) call(argv[] string) uint8 {

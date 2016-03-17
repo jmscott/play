@@ -50,9 +50,9 @@ func (a *ast) String() string {
 	return fmt.Sprintf("UNKNOWN_TOKEN(%d)", a.yy_tok)
 }
 
-//  recursivly print indented nodes of the abstract syntax tree
+//  recursivly dump indented nodes of the abstract syntax tree
 
-func (a *ast) print_tree(indent int, is_first_sibling bool) {
+func (a *ast) dump_tree(indent int, is_first_sibling bool) {
 
 	if a == nil {
 		return
@@ -70,18 +70,18 @@ func (a *ast) print_tree(indent int, is_first_sibling bool) {
 
 	//  recusively print the kids
 
-	a.left.print_tree(indent + 1, true)
-	a.right.print_tree(indent + 1, true)
+	a.left.dump_tree(indent + 1, true)
+	a.right.dump_tree(indent + 1, true)
 
-	//  print siblings if we are
+	//  dump siblings if we are
 
 	if is_first_sibling {
 		for as := a.next;  as != nil;  as = as.next {
-			as.print_tree(indent, false)
+			as.dump_tree(indent, false)
 		}
 	}
 }
 
-func (a *ast) print() {
-	a.print_tree(0, true)
+func (a *ast) dump() {
+	a.dump_tree(0, true)
 }

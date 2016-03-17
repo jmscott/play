@@ -9,12 +9,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 	"unicode"
 )
 
-//line parser.y:20
+//line parser.y:19
 type yySymType struct {
 	yys int
 	string
@@ -29,24 +28,25 @@ type yySymType struct {
 
 const __MIN_YYTOK = 57346
 const COMMAND = 57347
-const COMMAND_REF = 57348
-const PATH = 57349
-const CALL = 57350
-const WHEN = 57351
-const NAME = 57352
-const STRING = 57353
-const PARSE_ERROR = 57354
-const EQ = 57355
-const NEQ = 57356
-const RE_MATCH = 57357
-const RE_NMATCH = 57358
-const DOLLAR = 57359
-const UINT64 = 57360
-const AND = 57361
-const OR = 57362
-const NOT = 57363
-const ARGV = 57364
-const ARGV0 = 57365
+const XCOMMAND = 57348
+const EXIT_STATUS = 57349
+const PATH = 57350
+const CALL = 57351
+const WHEN = 57352
+const NAME = 57353
+const STRING = 57354
+const PARSE_ERROR = 57355
+const EQ = 57356
+const NEQ = 57357
+const RE_MATCH = 57358
+const RE_NMATCH = 57359
+const DOLLAR = 57360
+const UINT64 = 57361
+const AND = 57362
+const OR = 57363
+const NOT = 57364
+const ARGV = 57365
+const ARGV0 = 57366
 
 var yyToknames = [...]string{
 	"$end",
@@ -54,7 +54,8 @@ var yyToknames = [...]string{
 	"$unk",
 	"__MIN_YYTOK",
 	"COMMAND",
-	"COMMAND_REF",
+	"XCOMMAND",
+	"EXIT_STATUS",
 	"PATH",
 	"CALL",
 	"WHEN",
@@ -87,15 +88,16 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:249
+//line parser.y:248
 var keyword = map[string]int{
-	"command": COMMAND,
-	"path":    PATH,
-	"call":    CALL,
-	"when":    WHEN,
-	"or":      OR,
-	"and":     AND,
-	"not":     NOT,
+	"and":         AND,
+	"call":        CALL,
+	"command":     COMMAND,
+	"exit_status": EXIT_STATUS,
+	"not":         NOT,
+	"or":          OR,
+	"path":        PATH,
+	"when":        WHEN,
 }
 
 type yyLexState struct {
@@ -268,10 +270,12 @@ func (l *yyLexState) scan_uint64(yylval *yySymType, c rune) (err error) {
 }
 
 /*
- *  Words are a leading ascii or '_' followed by 0 or more ascii letters, digits
- *  and '_' characters.  The word is mapped onto either a keyword or
- *  the NAME token.  When the word is a NAME, then the 'string' field points
- *  the the actual name.
+ *  scan a word from source file.
+ *
+ *  words have a leading ascii or '_' followed by 0 or more ascii letters,
+ *  digits and '_' characters.  the word is mapped onto either a keyword, a
+ *  command or the NAME token.  when the word is a NAME, then the 'string'
+ *  field points the the actual name of the word.
  */
 func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 	var eof bool
@@ -279,9 +283,8 @@ func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 	w := string(c)
 	count := 1
 
-	/*
-	 *  Scan a string of ascii letters, numbers/digits and '_' character.
-	 */
+	//  Scan a string of ascii letters, numbers/digits and '_' character.
+
 	for c, eof, err = l.get(); !eof && err == nil; c, eof, err = l.get() {
 		if c > 127 ||
 			(c != '_' &&
@@ -298,27 +301,32 @@ func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 	if err != nil {
 		return 0, err
 	}
+
+	//  pushback the first character after the end of the word
+
 	if !eof {
-		l.pushback(c) /* first character after word */
+		l.pushback(c)
 	}
 
-	//  keyword?
+	//  language keyword?
+
 	if keyword[w] > 0 {
 		return keyword[w], nil
 	}
 
-	//  command reference?
+	//  an executed command reference?
+
 	if l.commands[w] != nil {
 		yylval.command = l.commands[w]
-		return COMMAND_REF, nil
+		return XCOMMAND, nil
 	}
 
 	yylval.string = w
 	return NAME, nil
 }
 
-//  simple utf8 string scanning and with trivial character escaping.
-//  this string scan is not compatible with the golang string
+//  simple utf8 string scanning with trivial character escaping.
+//  this string scan is not compatible with the golang string.
 
 func (l *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
 	var c rune
@@ -333,6 +341,7 @@ func (l *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
 		}
 
 		//  no new-line, carriage return, tab or slosh in string
+
 		switch c {
 		case '\n':
 			return false, l.mkerror("new line in string")
@@ -475,11 +484,11 @@ func (l *yyLexState) Error(msg string) {
 
 //  enter the yacc dragon
 
-func parse() (ast *ast, err error) {
+func parse(in io.Reader) (ast *ast, err error) {
 
 	l := &yyLexState{
 		line_no:  1,
-		in:       bufio.NewReader(os.Stdin),
+		in:       bufio.NewReader(in),
 		commands: make(map[string]*command),
 	}
 
@@ -508,20 +517,20 @@ var yyAct = [...]int{
 	30, 26, 31, 25, 24, 33, 32, 15, 16, 8,
 	13, 17, 15, 42, 9, 18, 19, 28, 20, 23,
 	14, 6, 29, 33, 32, 14, 36, 37, 38, 39,
-	34, 35, 22, 3, 40, 41, 4, 43, 44, 45,
-	46, 10, 7, 2, 11, 5, 12, 27, 21, 1,
+	34, 35, 22, 10, 40, 41, 7, 43, 44, 45,
+	46, 3, 2, 11, 5, 4, 12, 27, 21, 1,
 }
 var yyPact = [...]int{
 
-	28, 28, -1000, 11, 36, -1000, -19, -12, 34, 1,
-	-21, -16, -10, -1000, -2, -1000, 7, 23, 1, -1000,
-	-26, -27, -4, -1000, -29, -1000, 4, -1000, -4, -4,
-	13, -1000, -4, -4, 4, -14, 1, 1, 1, 1,
-	4, 4, -1000, -1000, -1000, -1000, -1000,
+	36, 36, -1000, 10, 30, -1000, -20, -13, 25, 0,
+	-22, -17, -11, -1000, -3, -1000, 6, 22, 0, -1000,
+	-27, -28, -5, -1000, -30, -1000, 3, -1000, -5, -5,
+	12, -1000, -5, -5, 3, -15, 0, 0, 0, 0,
+	3, 3, -1000, -1000, -1000, -1000, -1000,
 }
 var yyPgo = [...]int{
 
-	0, 43, 49, 48, 47, 1, 0, 46, 44,
+	0, 42, 49, 48, 47, 1, 0, 46, 43,
 }
 var yyR1 = [...]int{
 
@@ -537,11 +546,11 @@ var yyR2 = [...]int{
 }
 var yyChk = [...]int{
 
-	-1000, -2, -1, 5, 8, -1, 10, 6, 28, 26,
-	7, -8, -7, -6, 24, 11, 29, 27, 25, 18,
-	11, -3, 9, -6, 30, 30, -5, -4, 21, 26,
-	-6, 31, 20, 19, -5, -5, 13, 14, 15, 16,
-	-5, -5, 27, -6, -6, -6, -6,
+	-1000, -2, -1, 5, 9, -1, 11, 6, 29, 27,
+	8, -8, -7, -6, 25, 12, 30, 28, 26, 19,
+	12, -3, 10, -6, 31, 31, -5, -4, 22, 27,
+	-6, 32, 21, 20, -5, -5, 14, 15, 16, 17,
+	-5, -5, 28, -6, -6, -6, -6,
 }
 var yyDef = [...]int{
 
@@ -556,22 +565,22 @@ var yyTok1 = [...]int{
 	1, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 24, 3, 3, 3,
-	26, 27, 3, 3, 25, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 30,
-	3, 29, 3, 3, 3, 3, 3, 3, 3, 3,
+	3, 3, 3, 3, 3, 3, 25, 3, 3, 3,
+	27, 28, 3, 3, 26, 3, 3, 3, 3, 3,
+	3, 3, 3, 3, 3, 3, 3, 3, 3, 31,
+	3, 30, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 28, 3, 31,
+	3, 3, 3, 29, 3, 32,
 }
 var yyTok2 = [...]int{
 
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
 	12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
-	22, 23,
+	22, 23, 24,
 }
 var yyTok3 = [...]int{
 	0,
@@ -916,13 +925,13 @@ yydefault:
 
 	case 1:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:63
+		//line parser.y:62
 		{
 			yylex.(*yyLexState).ast_head = yyDollar[1].ast
 		}
 	case 2:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:68
+		//line parser.y:67
 		{
 			s := yyDollar[1].ast
 
@@ -935,7 +944,7 @@ yydefault:
 		}
 	case 3:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:81
+		//line parser.y:80
 		{
 			yyVAL.ast = &ast{
 				yy_tok: DOLLAR,
@@ -944,7 +953,7 @@ yydefault:
 		}
 	case 4:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:89
+		//line parser.y:88
 		{
 			yyVAL.ast = &ast{
 				yy_tok: STRING,
@@ -953,7 +962,7 @@ yydefault:
 		}
 	case 6:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:101
+		//line parser.y:100
 		{
 			s := yyDollar[1].ast
 
@@ -966,7 +975,7 @@ yydefault:
 		}
 	case 7:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:114
+		//line parser.y:113
 		{
 			yyVAL.ast = &ast{
 				yy_tok: ARGV0,
@@ -974,7 +983,7 @@ yydefault:
 		}
 	case 8:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:121
+		//line parser.y:120
 		{
 			yyVAL.ast = &ast{
 				yy_tok: ARGV,
@@ -983,7 +992,7 @@ yydefault:
 		}
 	case 9:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:131
+		//line parser.y:130
 		{
 			yyVAL.ast = &ast{
 				yy_tok: EQ,
@@ -993,7 +1002,7 @@ yydefault:
 		}
 	case 10:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:140
+		//line parser.y:139
 		{
 			yyVAL.ast = &ast{
 				yy_tok: NEQ,
@@ -1003,7 +1012,7 @@ yydefault:
 		}
 	case 11:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:149
+		//line parser.y:148
 		{
 			yyVAL.ast = &ast{
 				yy_tok: RE_MATCH,
@@ -1013,7 +1022,7 @@ yydefault:
 		}
 	case 12:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:158
+		//line parser.y:157
 		{
 			yyVAL.ast = &ast{
 				yy_tok: RE_NMATCH,
@@ -1023,7 +1032,7 @@ yydefault:
 		}
 	case 14:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:171
+		//line parser.y:170
 		{
 			yyVAL.ast = &ast{
 				yy_tok: OR,
@@ -1033,7 +1042,7 @@ yydefault:
 		}
 	case 15:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:180
+		//line parser.y:179
 		{
 			yyVAL.ast = &ast{
 				yy_tok: AND,
@@ -1043,7 +1052,7 @@ yydefault:
 		}
 	case 16:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:189
+		//line parser.y:188
 		{
 			yyVAL.ast = &ast{
 				yy_tok: NOT,
@@ -1052,19 +1061,19 @@ yydefault:
 		}
 	case 17:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:197
+		//line parser.y:196
 		{
 			yyVAL.ast = yyDollar[2].ast
 		}
 	case 18:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:204
+		//line parser.y:203
 		{
 			yyVAL.ast = nil
 		}
 	case 19:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:209
+		//line parser.y:208
 		{
 			yyVAL.ast = &ast{
 				yy_tok: WHEN,
@@ -1073,7 +1082,7 @@ yydefault:
 		}
 	case 20:
 		yyDollar = yyS[yypt-8 : yypt+1]
-		//line parser.y:221
+		//line parser.y:220
 		{
 			l := yylex.(*yyLexState)
 
@@ -1093,7 +1102,7 @@ yydefault:
 		}
 	case 21:
 		yyDollar = yyS[yypt-7 : yypt+1]
-		//line parser.y:240
+		//line parser.y:239
 		{
 			yyVAL.ast = &ast{
 				yy_tok:  CALL,
