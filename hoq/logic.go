@@ -23,7 +23,7 @@ const (
 	rum_TRUE = rummy(0x8)
 )
 
-//  state tables for logical and/or
+//  state tables for logical and/or with SQL semantics
 
 var and = [137]rummy{}
 var or = [137]rummy{}
