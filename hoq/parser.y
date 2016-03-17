@@ -428,10 +428,10 @@ func (l *yyLexState) scan_uint64(yylval *yySymType, c rune) (err error) {
 }
 
 /*
- *  scan a word from source file.
+ *  scan a word from the input stream.
  *
  *  words have a leading ascii or '_' followed by 0 or more ascii letters,
- *  digits and '_' characters.  the word is mapped onto either a keyword, a
+ *  digits or '_' characters.  the word is mapped onto either a keyword, a
  *  command or the NAME token.  when the word is a NAME, then the 'string'
  *  field points the the actual name of the word.
  */
