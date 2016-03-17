@@ -456,11 +456,9 @@ func (flo *flow) call(
 			//  when is true and argv exists, so fire command
 
 			case when.bool:
-				//  synchronous call to command{} process
-				//  always returns partially built xdr value
-
+				//xv = cmd.call(argv.argv)
 				exv.called = true
-				//xv = cmd.call(argv.argv, osx_q)
+				//  what about signals?
 			}
 
 			//  the flow never resolves until all call()s
