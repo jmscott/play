@@ -14,7 +14,7 @@ type ast struct {
 	yy_tok	int
 
 	string
-	uint64
+	uint8
 
 	//  a unix command declaration
 	*command
@@ -40,7 +40,7 @@ func (a *ast) String() string {
 	case STRING:
 		return fmt.Sprintf("STRING=\"%s\"", a.string)
 	case DOLLAR:
-		return fmt.Sprintf("$%d", a.uint64)
+		return fmt.Sprintf("$%d", a.uint8)
 	}
 
 	offset := a.yy_tok - __MIN_YYTOK + 3

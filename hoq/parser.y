@@ -18,7 +18,7 @@ import (
 
 %union {
 	string
-	uint64
+	uint8
 
 	//  unix command execed by hoq
 	command		*command
@@ -39,21 +39,25 @@ import (
 %token	EQ
 %token	NEQ
 %token	RE_MATCH  RE_NMATCH
-%token	DOLLAR  UINT64
+%token	DOLLAR  UINT8
 %token	AND  OR  NOT
-%token	ARGV  ARGV0
+%token	ARGV  ARGV0  ARGV1
 
 %type	<string>	STRING
 %type	<string>	NAME
 %type	<ast>		statement  statement_list
-%type	<ast>		qualification  compare  boolean
-%type	<ast>		string_exp  string_list
+%type	<ast>		qualification  boolean
+%type	<ast>		expression  expression_list
 %type	<command>	XCOMMAND
 %type	<ast>		DOLLAR
 %type	<ast>		AND  OR
 %type	<ast>		RE_MATCH  RE_NMATCH
-%type	<uint64>	UINT64
+%type	<uint8>	UINT8
 %type	<ast>		argv
+
+%left AND  OR
+%left EQ  NEQ  RE_MATCH  RE_NMATCH
+%right NOT
 
 %%
 
@@ -75,12 +79,12 @@ statement_list:
 	  }
 	;
 
-string_exp:
-	  '$'  UINT64
+expression:
+	  '$'  UINT8
 	  {
 	  	$$ = &ast{
 			yy_tok:	DOLLAR,
-			uint64: $2,
+			uint8: $2,
 		}
 	  }
 	|
@@ -91,20 +95,33 @@ string_exp:
 			string: $1,
 		}
 	  }
+	|
+	  UINT8
+	  {
+	  	$$ = &ast{
+			yy_tok:	UINT8,
+			uint8: $1,
+		}
+	  }
+	|
+	  '('  boolean  ')'
+	  {
+	  	$$ = $2
+	  }
 	;
 
-string_list:
-	  string_exp
+expression_list:
+	  expression
 	|
-	  string_list  ','  string_exp
+	  expression_list  ','  expression
 	  {
-	  	s := $1
+	  	e := $1
 
-		//  linearly find the last statement
+		//  linearly find the last expression in the list
 
-		for ;  s.next != nil;  s = s.next {}
+		for ;  e.next != nil;  e = e.next {}
 
-		s.next = $3
+		e.next = $3
 	  }
 	;
 
@@ -116,17 +133,22 @@ argv:
 		}
 	  }
 	|
-	  string_list
+	  expression_list
 	  {
+
+		yy_tok := ARGV
+		if $1.next == nil {
+			yy_tok = ARGV1
+		}
 	  	$$ = &ast{
-			yy_tok:	ARGV,
+			yy_tok:	yy_tok,
 			left:	$1,
 		}
 	  }
 	;
 	
-compare:
-	  string_exp  EQ  string_exp
+boolean:
+	  expression  EQ  expression
 	  {
 	  	$$ = &ast{
 			yy_tok: EQ,
@@ -135,7 +157,7 @@ compare:
 		}
 	  }
 	|
-	  string_exp  NEQ  string_exp
+	  expression  NEQ  expression
 	  {
 	  	$$ = &ast{
 			yy_tok: NEQ,
@@ -144,7 +166,7 @@ compare:
 		}
 	  }
 	|
-	  string_exp  RE_MATCH  string_exp
+	  expression  RE_MATCH  expression
 	  {
 	  	$$ = &ast{
 			yy_tok: RE_MATCH,
@@ -153,7 +175,7 @@ compare:
 		}
 	  }
 	|
-	  string_exp  RE_NMATCH  string_exp
+	  expression  RE_NMATCH  expression
 	  {
 	  	$$ = &ast{
 			yy_tok: RE_NMATCH,
@@ -161,10 +183,6 @@ compare:
 			right: $3,
 		}
 	  }
-	;
-
-boolean:
-	  compare
 	|
 	  boolean  OR  boolean
 	  {
@@ -263,7 +281,7 @@ type yyLexState struct {
 	in				io.RuneReader	//  config source stream
 
 	//  line number in source stream
-	line_no				uint64	   //  lexical line number
+	line_no				uint8	   //  lexical line number
 
 	//  at end of stream
 	eof				bool       //  seen eof in token stream
@@ -396,10 +414,10 @@ func skip_space(l *yyLexState) (c rune, eof bool, err error) {
 	return 0, eof, err
 }
 
-func (l *yyLexState) scan_uint64(yylval *yySymType, c rune) (err error) {
+func (l *yyLexState) scan_uint8(yylval *yySymType, c rune) (err error) {
 	var eof bool
 
-	ui64 := string(c)
+	ui8 := string(c)
 	count := 1
 
 	/*
@@ -409,21 +427,30 @@ func (l *yyLexState) scan_uint64(yylval *yySymType, c rune) (err error) {
 	for c, eof, err = l.get();  !eof && err == nil;  c, eof, err = l.get() {
 		count++
 		if count > 20 {
-			return l.mkerror("uint64 > 20 digits")
+			return l.mkerror("uint8 > 20 digits")
 		}
 		if c > 127 || !unicode.IsNumber(c) {
 			break
 		}
-		ui64 += string(c)
+		ui8 += string(c)
 	}
 	if err != nil {
 		return
 	}
 	if !eof {
-		l.pushback(c)		//  first character after ui64
+		l.pushback(c)		//  first character after ui8
 	}
 
-	yylval.uint64, err = strconv.ParseUint(ui64, 10, 64)
+	var ui64 uint64
+	ui64, err = strconv.ParseUint(ui8, 10, 8)
+
+	if err == nil {
+		if ui64 > 255 {
+			err = errors.New(fmt.Sprintf("uint8 > 255: %d", ui64))
+		} else {
+			yylval.uint8 = uint8(ui64)
+		}
+	}
 	return
 }
 
@@ -554,11 +581,11 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 	//  scan an unsigned int 64
 
 	if unicode.IsNumber(c) {
-		err = l.scan_uint64(yylval, c)
+		err = l.scan_uint8(yylval, c)
 		if err != nil {
 			goto PARSE_ERROR
 		}
-		return UINT64
+		return UINT8
 	}
 
 	//  scan a string
