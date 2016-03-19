@@ -27,7 +27,7 @@ func main() {
 
 	switch len(os.Args) {
 	case 2:
-		source_path = os.Args[0]
+		source_path = os.Args[1]
 	case 3:
 		if os.Args[1] == "--dump" {
 			dump = true
