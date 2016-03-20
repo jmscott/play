@@ -46,8 +46,9 @@ func main() {
 
 	in, err := os.Open(source_path)
 	if err != nil {
-		die("open failed: %s: %s", source_path, err)
+		die("%s", err)
 	}
+	defer in.Close()
 
 	//  parse the standard input into an abstract syntax tree
 
