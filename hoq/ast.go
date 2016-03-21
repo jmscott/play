@@ -85,3 +85,41 @@ func (a *ast) dump_tree(indent int, is_first_sibling bool) {
 func (a *ast) dump() {
 	a.dump_tree(0, true)
 }
+
+//  rewrite argument vector with no arguments into node ARGV0.
+
+func (a *ast) rewrite_ARGV0() {
+
+	if a == nil {
+		return
+	}
+	if a.yy_tok == CALL && a.left == nil {
+		a.left = &ast{
+			yy_tok:	ARGV0,
+		}
+	}
+	a.left.rewrite_ARGV0()
+	a.right.rewrite_ARGV0()
+	a.next.rewrite_ARGV0()
+}
+
+//  rewrite argument vector with single argument into node ARGV1.
+
+func (a *ast) rewrite_ARGV1() {
+
+	if a == nil {
+		return
+	}
+	if a.yy_tok == ARGV && a.left != nil && a.left.next == nil {
+		a.yy_tok = ARGV1
+	}
+	a.left.rewrite_ARGV1()
+	a.right.rewrite_ARGV1()
+	a.next.rewrite_ARGV1()
+}
+
+func (root *ast) rewrite() {
+	
+	root.rewrite_ARGV0()
+	root.rewrite_ARGV1()
+}
