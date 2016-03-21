@@ -58,9 +58,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	ast.rewrite()
+
 	if dump {
 		ast.dump()
 		os.Exit(0)
 	}
+
 	os.Exit(0)
 }

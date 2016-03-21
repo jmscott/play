@@ -39,6 +39,8 @@ func (a *ast) String() string {
 		return fmt.Sprintf("CALL.%s", a.command.name)
 	case STRING:
 		return fmt.Sprintf("STRING=\"%s\"", a.string)
+	case UINT8:
+		return fmt.Sprintf("UINT8=%d", a.uint8)
 	case DOLLAR:
 		return fmt.Sprintf("$%d", a.uint8)
 	}
@@ -118,8 +120,59 @@ func (a *ast) rewrite_ARGV1() {
 	a.next.rewrite_ARGV1()
 }
 
+//  since unix commands require strings, we transform the argument nodes
+//  that are uint8 into strings:
+//
+//	CALL func(123) to CALL func(to_string_uint8(123))
+
+func (a *ast) rewrite_CALL_UINT8() {
+
+	if a == nil {
+		return
+	}
+
+	if a.yy_tok == CALL {
+		
+		//  walk through argv of call, looking for scalar uint8
+		//  or call.exit_status nodes.
+
+		argv := a.left
+		prev := (*ast)(nil)
+
+		for arg := argv.left;  arg != nil;  arg = arg.next {
+
+			if arg.yy_tok != UINT8 && arg.yy_tok != EXIT_STATUS {
+				prev = arg
+				continue
+			}
+			if arg.left != nil {
+				panic("expected scalar expression in argv")
+			}
+			uv := arg
+			arg = &ast{
+				yy_tok:	TO_STRING_UINT8,
+				left: uv,
+				next: uv.next,
+			}
+			uv.next = nil
+
+			//  point either head of argv or previous scala
+			//  to TO_STRING_UINT8 node
+
+			if argv.left == uv {
+				argv.left = arg
+			} else {
+				prev.next = arg
+			}
+			prev = arg
+		}
+	}
+	a.next.rewrite_CALL_UINT8()
+}
+
 func (root *ast) rewrite() {
 	
 	root.rewrite_ARGV0()
 	root.rewrite_ARGV1()
+	root.rewrite_CALL_UINT8()
 }

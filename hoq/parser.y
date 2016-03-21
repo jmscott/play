@@ -30,6 +30,7 @@ import (
 //  lowest numbered yytoken.  must be first in list.
 %token	__MIN_YYTOK
 
+//  need to lower case
 %token	COMMAND  XCOMMAND  EXIT_STATUS
 %token	PATH
 %token	CALL  WHEN
@@ -42,6 +43,7 @@ import (
 %token	DOLLAR  UINT8
 %token	AND  OR  NOT
 %token	ARGV  ARGV0  ARGV1
+%token	TO_STRING_UINT8
 
 %type	<string>	STRING
 %type	<string>	NAME
@@ -52,7 +54,7 @@ import (
 %type	<ast>		DOLLAR
 %type	<ast>		AND  OR
 %type	<ast>		RE_MATCH  RE_NMATCH
-%type	<uint8>	UINT8
+%type	<uint8>		UINT8
 %type	<ast>		argv
 
 %left AND  OR
@@ -128,20 +130,13 @@ expression_list:
 argv:
 	  /* empty */
 	  {
-	  	$$ = &ast{
-			yy_tok:	ARGV0,
-		}
+	  	$$ = nil
 	  }
 	|
 	  expression_list
 	  {
-
-		yy_tok := ARGV
-		if $1.next == nil {
-			yy_tok = ARGV1
-		}
 	  	$$ = &ast{
-			yy_tok:	yy_tok,
+			yy_tok:	ARGV,
 			left:	$1,
 		}
 	  }

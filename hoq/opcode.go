@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"sync"
 )
 
@@ -362,6 +363,7 @@ func (flo *flow) const_uint8(ui uint8) (out uint8_chan) {
 		defer close(out)
 
 		for flo = flo.get(); flo != nil; flo = flo.get() {
+
 			out <- &uint8_value{
 				uint8:  ui,
 				is_null: false,
@@ -393,7 +395,10 @@ func (flo *flow) to_string_uint8(in uint8_chan) (out string_chan) {
 				is_null: ui.is_null,
 			}
 			if ui.is_null == false {
-				sv.string = fmt.Sprintf("%d", ui.uint8)
+				sv.string = strconv.FormatUint(
+						uint64(ui.uint8),
+						10,
+					)
 			}
 			out <- sv
 		}
