@@ -55,7 +55,6 @@ func init() {
 %token	NOT
 %token	TRUE  FALSE
 
-
 %type	<string>	STRING
 %type	<string>	NAME
 %type	<ast>		statement  statement_list
@@ -278,6 +277,14 @@ statement:
 	|
 	  CALL  XCOMMAND  '('  argv  ')'  qualification  ';'
 	  {
+	  	l := yylex.(*yyLexState)
+		n := $2.name
+		if l.called[n] {
+			l.error("command '%s' called more than once", n)
+			return 0
+		}
+		l.called[n] = true
+
 	  	$$ = &ast{
 			yy_tok:		CALL,
 			command:	$2,
@@ -323,6 +330,10 @@ type yyLexState struct {
 	//  track declared commands
 
 	commands			map[string]*command
+
+	//  track called commands
+
+	called				map[string]bool
 }
 
 func (l *yyLexState) pushback(c rune) {
@@ -742,6 +753,7 @@ func parse(in io.Reader) (ast *ast, err error) {
 		line_no:	1,
 		in:		bufio.NewReader(in),
 		commands:	make(map[string]*command),
+		called:		make(map[string]bool),
 	}
 
 	yyParse(l)
