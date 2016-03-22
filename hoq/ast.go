@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"reflect"
 )
 
 //  abstract syntax tree that represents the parsed program.
@@ -13,8 +14,13 @@ type ast struct {
 	//  lexical token automatically defined by yacc
 	yy_tok	int
 
+	go_type	reflect.Kind
+
+	line_no	uint64
+
 	string
 	uint8
+	bool
 
 	//  a unix command declaration
 	*command
@@ -151,6 +157,7 @@ func (a *ast) rewrite_CALL_UINT8() {
 			uv := arg
 			arg = &ast{
 				yy_tok:	TO_STRING_UINT8,
+				go_type: reflect.String,
 				left: uv,
 				next: uv.next,
 			}

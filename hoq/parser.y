@@ -10,15 +10,23 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"reflect"
 	"strconv"
 	"unicode"
 )
+
+func init() {
+	if yyToknames[3] != "__MIN_YYTOK" {
+		panic("yyToknames[3] != __MIN_YYTOK: yacc may have changed")
+	}
+}
 
 %}
 
 %union {
 	string
 	uint8
+	token	int
 
 	//  unix command execed by hoq
 	command		*command
@@ -30,7 +38,8 @@ import (
 //  lowest numbered yytoken.  must be first in list.
 %token	__MIN_YYTOK
 
-//  need to lower case
+//  need to lower case so not declared globally
+
 %token	COMMAND  XCOMMAND  EXIT_STATUS
 %token	PATH
 %token	CALL  WHEN
@@ -39,27 +48,25 @@ import (
 %token	PARSE_ERROR
 %token	EQ
 %token	NEQ
-%token	RE_MATCH  RE_NMATCH
 %token	DOLLAR  UINT8
-%token	AND  OR  NOT
 %token	ARGV  ARGV0  ARGV1
 %token	TO_STRING_UINT8
+%token	TRUE  FALSE
 
 %type	<string>	STRING
 %type	<string>	NAME
 %type	<ast>		statement  statement_list
-%type	<ast>		qualification  boolean
-%type	<ast>		expression  expression_list
+%type	<ast>		qualification  bool_exp
+%type	<ast>		scalar  bool_scalar  call_arg_exp  call_arg_exp_list
 %type	<command>	XCOMMAND
 %type	<ast>		DOLLAR
-%type	<ast>		AND  OR
-%type	<ast>		RE_MATCH  RE_NMATCH
 %type	<uint8>		UINT8
 %type	<ast>		argv
+%type	<token>		order_op  regex_op
 
-%left AND  OR
-%left EQ  NEQ  RE_MATCH  RE_NMATCH
-%right NOT
+%left 	AND  OR
+%left	EQ  NEQ  RE_MATCH  RE_NMATCH
+%right	NOT
 
 %%
 
@@ -81,49 +88,104 @@ statement_list:
 	  }
 	;
 
-expression:
-	  '$'  UINT8
+order_op:
+	  EQ
 	  {
-	  	$$ = &ast{
-			yy_tok:	DOLLAR,
-			uint8: $2,
-		}
+	  	$$ = EQ
+	  }
+	|
+	  NEQ
+	  {
+	  	$$ = NEQ
+	  }
+	;
+
+regexp_op:
+	  RE_MATCH
+	  {
+	  	$$ = RE_MATCH
+	  }
+	|
+	  RE_NMATCH
+	  {
+	  	$$ = RE_NMATCH
+	  }
+	;
+
+exp:
+	  TRUE
+	  {
+	  	$$ = yylex.(*yyLexState).scalar_node(TRUE, reflect.Bool)
+		$$.bool = true
+	  }
+	|
+	  FALSE
+	  {
+	  	$$ = yylex.(*yyLexState).scalar_node(TRUE, reflect.Bool)
+		$$.bool = true
 	  }
 	|
 	  STRING
 	  {
-	  	$$ = &ast{
-			yy_tok:	STRING,
-			string: $1,
-		}
+	  	$$ = yylex.(*yyLexState).scalar_node(STRING, reflect.String)
+		$$.string = $1
 	  }
 	|
 	  UINT8
 	  {
-	  	$$ = &ast{
-			yy_tok:	UINT8,
-			uint8: $1,
+	  	$$ = yylex.(*yyLexState).scalar_node(UINT8, reflect.Uint8)
+		$$.uint8 = $1
+	  }
+	|
+	  '$'  UINT8
+	  {
+	  	$$ = yylex.(*yyLexState).scalar_node(DOLLAR, reflect.String)
+		$$.uint8 = $2
+	  }
+	|
+	  exp  order_op  exp
+	  {
+		$$ = yylex.(*yyLexState).bool_node($2, $1, $3)
+		if $$ == nil {
+			return 0
 		}
 	  }
 	|
-	  '('  boolean  ')'
+	  exp  regex_op  exp
 	  {
-	  	$$ = $2
+		l := yylex.(*yyLexState)
+		$$ = l.bool_node($2, $1, $3)
+
+		if $1.go_type != reflect.String {
+			l.error("regex operator requires string")
+			return 0
+		}
+	  }
+	|
+	  exp  logic_op  bool_exp
+	  {
+		$$ = yylex.(*yyLexState).bool_node(OR, $1, $3)
+	  }
+	|
+	  bool_exp  AND  bool_exp
+	  {
+		$$ = yylex.(*yyLexState).bool_node(AND, $1, $3)
 	  }
 	;
+	  
 
-expression_list:
-	  expression
+exp_list:
+	  exp
 	|
-	  expression_list  ','  expression
+	  exp_list  ','  exp
 	  {
-	  	e := $1
+	  	ae := $1
 
-		//  linearly find the last expression in the list
+		//  find the last expression in the list
 
-		for ;  e.next != nil;  e = e.next {}
+		for ;  ae.next != nil;  ae = ae.next {}
 
-		e.next = $3
+		ae.next = $3
 	  }
 	;
 
@@ -133,7 +195,7 @@ argv:
 	  	$$ = nil
 	  }
 	|
-	  expression_list
+	  exp_list
 	  {
 	  	$$ = &ast{
 			yy_tok:	ARGV,
@@ -142,70 +204,53 @@ argv:
 	  }
 	;
 	
-boolean:
-	  expression  EQ  expression
+bool_exp:
+	  bool_scalar
+	|
+	  bool_exp  order_op  bool_exp
 	  {
-	  	$$ = &ast{
-			yy_tok: EQ,
-			left: $1,
-			right: $3,
+		$$ = yylex.(*yyLexState).bool_node($2, $1, $3)
+		if $$ == nil {
+			return 0
 		}
 	  }
 	|
-	  expression  NEQ  expression
+	  scalar  RE_MATCH  scalar
 	  {
-	  	$$ = &ast{
-			yy_tok: NEQ,
-			left: $1,
-			right: $3,
+		l := yylex.(*yyLexState)
+		$$ = l.bool_node(RE_MATCH, $1, $3)
+		if $1.go_type != reflect.String {
+			l.error("operator ~~ only matches strings")
+			return 0
 		}
 	  }
 	|
-	  expression  RE_MATCH  expression
+	  scalar  RE_NMATCH  scalar
 	  {
-	  	$$ = &ast{
-			yy_tok: RE_MATCH,
-			left: $1,
-			right: $3,
+		l := yylex.(*yyLexState)
+		$$ = l.bool_node(RE_NMATCH, $1, $3)
+		if $1.go_type != reflect.String {
+			l.error("operator !~ only matches strings")
+			return 0
 		}
 	  }
 	|
-	  expression  RE_NMATCH  expression
+	  bool_exp  OR  bool_exp
 	  {
-	  	$$ = &ast{
-			yy_tok: RE_NMATCH,
-			left: $1,
-			right: $3,
-		}
+		$$ = yylex.(*yyLexState).bool_node(OR, $1, $3)
 	  }
 	|
-	  boolean  OR  boolean
+	  bool_exp  AND  bool_exp
 	  {
-	  	$$ = &ast{
-			yy_tok: OR,
-			left: $1,
-			right: $3,
-		}
+		$$ = yylex.(*yyLexState).bool_node(AND, $1, $3)
 	  }
 	|
-	  boolean  AND  boolean
+	  NOT  bool_exp
 	  {
-	  	$$ = &ast{
-			yy_tok: AND,
-			left: $1,
-			right: $3,
-		}
+		$$ = yylex.(*yyLexState).bool_node(NOT, $2, nil)
 	  }
 	|
-	  NOT  boolean
-	  {
-	  	$$ = &ast{
-			yy_tok:	NOT,
-			left: $2,
-		}
-	  }
-	|
-	  '('  boolean  ')'
+	  '('  bool_exp  ')'
 	  {
 	  	$$ = $2
 	  }
@@ -217,12 +262,9 @@ qualification:
 	  	$$ = nil
 	  }
 	|
-	  WHEN   boolean
+	  WHEN   bool_exp
 	  {
-	  	$$ = &ast{
-			yy_tok:	WHEN,
-			right:	$2,
-		}
+	  	$$ = yylex.(*yyLexState).bool_node(WHEN, $2, nil)
 	  }
 	;
 	
@@ -265,9 +307,11 @@ var keyword = map[string]int{
 	"call":			CALL,
 	"command":		COMMAND,
 	"exit_status":		EXIT_STATUS,
+	"false":		FALSE,
 	"not":			NOT,
 	"or":			OR,
 	"path":			PATH,
+	"true":			TRUE,
 	"when":			WHEN,
 }
 
@@ -276,7 +320,7 @@ type yyLexState struct {
 	in				io.RuneReader	//  config source stream
 
 	//  line number in source stream
-	line_no				uint8	   //  lexical line number
+	line_no				uint64	   //  lexical line number
 
 	//  at end of stream
 	eof				bool       //  seen eof in token stream
@@ -305,6 +349,47 @@ func (l *yyLexState) pushback(c rune) {
 		l.line_no--
 	}
 }
+
+func (l *yyLexState) node(
+		yy_tok int,
+		go_type reflect.Kind,
+		left, right, next *ast,
+) (*ast) {
+	
+	return &ast{
+		yy_tok:	yy_tok,
+		go_type: go_type,
+		left: left,
+		right: right,
+		next: next,
+		line_no: l.line_no,
+	}
+}
+
+func (l *yyLexState) op_name(yy_tok int) {
+	switch yy_tok {
+		
+	}
+}
+
+func (l *yyLexState) bool_node(yy_tok int, left, right *ast) (*ast) {
+
+	if left != nil && right != nil && left.go_type != right.go_type {
+		l.error("operator %s: type mismatch: %s != %s",
+				yyToknames[yy_tok - __MIN_YYTOK + 3],
+				left.go_type,
+				right.go_type,
+		)
+		return nil
+	}
+	return l.node(yy_tok, reflect.Bool, left, right, nil)
+}
+
+func (l *yyLexState) scalar_node(yy_tok int, go_type reflect.Kind) (*ast) {
+
+	return l.node(yy_tok, go_type, nil, nil, nil)
+}
+	
 
 /*
  *  Read next UTF8 rune.
@@ -637,6 +722,7 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 	}
 
 	return int(c)
+
 PARSE_ERROR:
 	l.err = err
 	return PARSE_ERROR
