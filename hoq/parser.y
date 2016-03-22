@@ -16,6 +16,12 @@ import (
 )
 
 func init() {
+
+	//  sanity test:
+	//
+	//  token __MIN_YYTOK is starting index into yacc generated token name
+	//  table
+
 	if yyToknames[3] != "__MIN_YYTOK" {
 		panic("yyToknames[3] != __MIN_YYTOK: yacc may have changed")
 	}
@@ -682,7 +688,7 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 		return STRING
 	}
 
-	//  peek ahead for ==
+	//  peek ahead for '==' or '-'
 
 	if c == '=' {
 		tok, err = lookahead(l, '=', EQ, int('='))
@@ -692,7 +698,8 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 		return tok
 	}
 
-	//  peak ahead for not equals (!=) or not matches regular expression
+	//  peak ahead for not equals, '!=' or not matches regular expression,
+	//  '!~'
 
 	if c == '!' {
 		tok, err = lookahead(l, '=', NEQ, int('!'))
@@ -709,7 +716,8 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 		return tok
 	}
 
-	//  peak ahead for regular expression match
+	//  peak ahead for regular expression match '~~';  otherwise '~'
+
 	if c == '~' {
 		tok, err = lookahead(l, '~', RE_MATCH, int('~'))
 		if err != nil {
