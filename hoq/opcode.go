@@ -42,15 +42,6 @@ type uint8_value struct {
 }
 type uint8_chan chan *uint8_value
 
-type exit_value struct {
-	uint8
-	is_null bool
-	called bool
-
-	*flow
-}
-type exit_value_chan chan *exit_value
-
 type argv_value struct {
 	argv    []string
 	is_null bool
@@ -653,9 +644,9 @@ func (flo *flow) call(
 	in_argv argv_chan,
 	in_when bool_chan,
 
-) (out exit_value_chan) {
+) (out uint8_chan) {
 
-	out = make(exit_value_chan)
+	out = make(uint8_chan)
 
 	go func() {
 		defer close(out)
@@ -670,7 +661,7 @@ func (flo *flow) call(
 				return
 			}
 
-			exv := &exit_value{
+			uv := &uint8_value{
 				flow: flo,
 			}
 
@@ -680,17 +671,60 @@ func (flo *flow) call(
 			//  the "when" qualification is null
 
 			case argv.is_null || when.is_null:
-				exv.is_null = true
+				uv.is_null = true
 
 			//  when is true and argv exists, so fire the
 			//  associated command
 
 			case when.bool:
-				exv.uint8 = cmd.call(argv.argv)
-				exv.called = true
+				uv.uint8 = cmd.call(argv.argv)
 			}
 
-			out <- exv
+			out <- uv
+		}
+	}()
+	return out
+}
+
+//  broadcast a uint8 to many uint8 listeners
+//
+//  Note:
+//	would be nice to randomize writes to the output channels
+
+func (flo *flow) fanout_uint8(
+	in uint8_chan,
+	count uint8,
+) (out []uint8_chan) {
+
+	out = make([]uint8_chan, count)
+	for i := uint8(0); i < count; i++ {
+		out[i] = make(uint8_chan)
+	}
+
+	put := func(uv *uint8_value, uc uint8_chan) {
+
+		uc <- uv
+	}
+
+	go func() {
+
+		defer func() {
+			for _, a := range out {
+				close(a)
+			}
+		}()
+
+		for flo = flo.get(); flo != nil; flo = flo.get() {
+
+			uv := <-in
+			if uv == nil {
+				return
+			}
+
+			//  broadcast to channels in slice
+			for _, uc := range out {
+				go put(uv, uc)
+			}
 		}
 	}()
 	return out
