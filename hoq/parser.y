@@ -56,15 +56,15 @@ func init() {
 %type	<string>	STRING
 %type	<string>	NAME
 %type	<ast>		statement  statement_list
-%type	<ast>		qualification  bool_exp
-%type	<ast>		scalar  bool_scalar  call_arg_exp  call_arg_exp_list
+%type	<ast>		qualification 
+%type	<ast>		exp  exp_list
 %type	<command>	XCOMMAND
 %type	<ast>		DOLLAR
 %type	<uint8>		UINT8
 %type	<ast>		argv
-%type	<token>		order_op  regex_op
+%type	<token>		logic_op order_op  regexp_op
 
-%left 	AND  OR
+%left	AND  OR
 %left	EQ  NEQ  RE_MATCH  RE_NMATCH
 %right	NOT
 
@@ -112,6 +112,17 @@ regexp_op:
 	  }
 	;
 
+logic_op:
+	  AND
+	  {
+	  	$$ = AND
+	  }
+	|
+	  OR
+	  {
+	  	$$ = OR
+	  }
+	;
 exp:
 	  TRUE
 	  {
@@ -151,7 +162,7 @@ exp:
 		}
 	  }
 	|
-	  exp  regex_op  exp
+	  exp  regexp_op  exp
 	  {
 		l := yylex.(*yyLexState)
 		$$ = l.bool_node($2, $1, $3)
@@ -162,14 +173,20 @@ exp:
 		}
 	  }
 	|
-	  exp  logic_op  bool_exp
+	  exp  logic_op  exp
 	  {
 		$$ = yylex.(*yyLexState).bool_node(OR, $1, $3)
 	  }
 	|
-	  bool_exp  AND  bool_exp
+	  NOT  exp
 	  {
-		$$ = yylex.(*yyLexState).bool_node(AND, $1, $3)
+
+	  	$$ = yylex.(*yyLexState).bool_node(NOT, $2, nil) 
+	  }
+	|
+	  '('  exp  ')'
+	  {
+	  	$$ = $2
 	  }
 	;
 	  
@@ -204,65 +221,13 @@ argv:
 	  }
 	;
 	
-bool_exp:
-	  bool_scalar
-	|
-	  bool_exp  order_op  bool_exp
-	  {
-		$$ = yylex.(*yyLexState).bool_node($2, $1, $3)
-		if $$ == nil {
-			return 0
-		}
-	  }
-	|
-	  scalar  RE_MATCH  scalar
-	  {
-		l := yylex.(*yyLexState)
-		$$ = l.bool_node(RE_MATCH, $1, $3)
-		if $1.go_type != reflect.String {
-			l.error("operator ~~ only matches strings")
-			return 0
-		}
-	  }
-	|
-	  scalar  RE_NMATCH  scalar
-	  {
-		l := yylex.(*yyLexState)
-		$$ = l.bool_node(RE_NMATCH, $1, $3)
-		if $1.go_type != reflect.String {
-			l.error("operator !~ only matches strings")
-			return 0
-		}
-	  }
-	|
-	  bool_exp  OR  bool_exp
-	  {
-		$$ = yylex.(*yyLexState).bool_node(OR, $1, $3)
-	  }
-	|
-	  bool_exp  AND  bool_exp
-	  {
-		$$ = yylex.(*yyLexState).bool_node(AND, $1, $3)
-	  }
-	|
-	  NOT  bool_exp
-	  {
-		$$ = yylex.(*yyLexState).bool_node(NOT, $2, nil)
-	  }
-	|
-	  '('  bool_exp  ')'
-	  {
-	  	$$ = $2
-	  }
-	;
-
 qualification:
 	  /*  empty  */
 	  {
 	  	$$ = nil
 	  }
 	|
-	  WHEN   bool_exp
+	  WHEN   exp
 	  {
 	  	$$ = yylex.(*yyLexState).bool_node(WHEN, $2, nil)
 	  }

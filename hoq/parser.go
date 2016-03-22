@@ -9,15 +9,23 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"reflect"
 	"strconv"
 	"unicode"
 )
 
-//line parser.y:19
+func init() {
+	if yyToknames[3] != "__MIN_YYTOK" {
+		panic("yyToknames[3] != __MIN_YYTOK: yacc may have changed")
+	}
+}
+
+//line parser.y:26
 type yySymType struct {
 	yys int
 	string
 	uint8
+	token int
 
 	//  unix command execed by hoq
 	command *command
@@ -38,17 +46,19 @@ const STRING = 57354
 const PARSE_ERROR = 57355
 const EQ = 57356
 const NEQ = 57357
-const RE_MATCH = 57358
-const RE_NMATCH = 57359
-const DOLLAR = 57360
-const UINT8 = 57361
-const AND = 57362
-const OR = 57363
-const NOT = 57364
-const ARGV = 57365
-const ARGV0 = 57366
-const ARGV1 = 57367
-const TO_STRING_UINT8 = 57368
+const DOLLAR = 57358
+const UINT8 = 57359
+const ARGV = 57360
+const ARGV0 = 57361
+const ARGV1 = 57362
+const TO_STRING_UINT8 = 57363
+const TRUE = 57364
+const FALSE = 57365
+const AND = 57366
+const OR = 57367
+const RE_MATCH = 57368
+const RE_NMATCH = 57369
+const NOT = 57370
 
 var yyToknames = [...]string{
 	"$end",
@@ -66,17 +76,19 @@ var yyToknames = [...]string{
 	"PARSE_ERROR",
 	"EQ",
 	"NEQ",
-	"RE_MATCH",
-	"RE_NMATCH",
 	"DOLLAR",
 	"UINT8",
-	"AND",
-	"OR",
-	"NOT",
 	"ARGV",
 	"ARGV0",
 	"ARGV1",
 	"TO_STRING_UINT8",
+	"TRUE",
+	"FALSE",
+	"AND",
+	"OR",
+	"RE_MATCH",
+	"RE_NMATCH",
+	"NOT",
 	"'$'",
 	"'('",
 	"')'",
@@ -92,15 +104,17 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:261
+//line parser.y:268
 var keyword = map[string]int{
 	"and":         AND,
 	"call":        CALL,
 	"command":     COMMAND,
 	"exit_status": EXIT_STATUS,
+	"false":       FALSE,
 	"not":         NOT,
 	"or":          OR,
 	"path":        PATH,
+	"true":        TRUE,
 	"when":        WHEN,
 }
 
@@ -109,7 +123,7 @@ type yyLexState struct {
 	in io.RuneReader //  config source stream
 
 	//  line number in source stream
-	line_no uint8 //  lexical line number
+	line_no uint64 //  lexical line number
 
 	//  at end of stream
 	eof bool //  seen eof in token stream
@@ -137,6 +151,46 @@ func (l *yyLexState) pushback(c rune) {
 	if c == '\n' {
 		l.line_no--
 	}
+}
+
+func (l *yyLexState) node(
+	yy_tok int,
+	go_type reflect.Kind,
+	left, right, next *ast,
+) *ast {
+
+	return &ast{
+		yy_tok:  yy_tok,
+		go_type: go_type,
+		left:    left,
+		right:   right,
+		next:    next,
+		line_no: l.line_no,
+	}
+}
+
+func (l *yyLexState) op_name(yy_tok int) {
+	switch yy_tok {
+
+	}
+}
+
+func (l *yyLexState) bool_node(yy_tok int, left, right *ast) *ast {
+
+	if left != nil && right != nil && left.go_type != right.go_type {
+		l.error("operator %s: type mismatch: %s != %s",
+			yyToknames[yy_tok-__MIN_YYTOK+3],
+			left.go_type,
+			right.go_type,
+		)
+		return nil
+	}
+	return l.node(yy_tok, reflect.Bool, left, right, nil)
+}
+
+func (l *yyLexState) scalar_node(yy_tok int, go_type reflect.Kind) *ast {
+
+	return l.node(yy_tok, go_type, nil, nil, nil)
 }
 
 /*
@@ -470,6 +524,7 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 	}
 
 	return int(c)
+
 PARSE_ERROR:
 	l.err = err
 	return PARSE_ERROR
@@ -515,15 +570,9 @@ var yyExca = [...]int{
 	-1, 1,
 	1, -1,
 	-2, 0,
-	-1, 48,
-	20, 18,
-	21, 18,
-	29, 18,
-	33, 18,
-	-2, 6,
 }
 
-const yyNprod = 23
+const yyNprod = 27
 const yyPrivate = 57344
 
 var yyTokenNames []string
@@ -533,74 +582,74 @@ const yyLast = 56
 
 var yyAct = [...]int{
 
-	23, 49, 40, 39, 15, 18, 32, 31, 8, 15,
-	13, 16, 20, 22, 24, 48, 16, 19, 9, 14,
-	25, 29, 32, 31, 14, 17, 32, 31, 21, 26,
-	6, 30, 28, 10, 44, 45, 46, 47, 37, 38,
-	3, 11, 41, 7, 4, 42, 43, 33, 34, 35,
-	36, 2, 12, 5, 27, 1,
+	13, 27, 28, 47, 45, 44, 21, 8, 23, 22,
+	9, 31, 32, 29, 30, 33, 36, 6, 43, 38,
+	34, 35, 10, 7, 39, 40, 41, 42, 3, 2,
+	16, 5, 4, 25, 24, 17, 26, 11, 12, 46,
+	14, 15, 27, 28, 37, 1, 19, 18, 20, 0,
+	0, 0, 31, 32, 29, 30,
 }
 var yyPact = [...]int{
 
-	35, 35, -1000, 19, 37, -1000, -23, -10, 25, -3,
-	-27, -12, -18, -1000, 9, -1000, -1000, -8, 17, 22,
-	-3, -1000, 2, 33, -8, -8, -30, -31, -8, -1000,
-	-1000, -8, -8, -3, -3, -3, -3, -1000, -14, -33,
-	-1000, 6, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -1000,
+	23, 23, -1000, 6, 17, -1000, -26, -20, 14, 18,
+	-28, -22, -24, 28, -1000, -1000, -1000, -1000, -2, 18,
+	18, 4, 9, 18, 18, 18, 18, -1000, -1000, -1000,
+	-1000, -1000, -1000, -1000, -1000, -13, -30, -31, 18, 28,
+	28, 28, 28, -1000, -33, -1000, 28, -1000,
 }
 var yyPgo = [...]int{
 
-	0, 51, 55, 54, 13, 0, 52, 41,
+	0, 29, 45, 44, 0, 38, 37, 36, 34, 33,
 }
 var yyR1 = [...]int{
 
-	0, 2, 2, 5, 5, 5, 5, 6, 6, 7,
-	7, 4, 4, 4, 4, 4, 4, 4, 4, 3,
-	3, 1, 1,
+	0, 2, 2, 8, 8, 9, 9, 7, 7, 4,
+	4, 4, 4, 4, 4, 4, 4, 4, 4, 5,
+	5, 6, 6, 3, 3, 1, 1,
 }
 var yyR2 = [...]int{
 
-	0, 1, 2, 2, 1, 1, 3, 1, 3, 0,
-	1, 3, 3, 3, 3, 3, 3, 2, 3, 0,
-	2, 8, 7,
+	0, 1, 2, 1, 1, 1, 1, 1, 1, 1,
+	1, 1, 1, 2, 3, 3, 3, 2, 3, 1,
+	3, 0, 1, 0, 2, 8, 7,
 }
 var yyChk = [...]int{
 
-	-1000, -2, -1, 5, 9, -1, 11, 6, 31, 28,
-	8, -7, -6, -5, 27, 12, 19, 28, 32, 29,
-	30, 19, -4, -5, 22, 28, 12, -3, 10, -5,
-	29, 21, 20, 14, 15, 16, 17, -4, -4, 33,
-	33, -4, -4, -4, -5, -5, -5, -5, 29, 34,
+	-1000, -2, -1, 5, 9, -1, 11, 6, 33, 30,
+	8, -6, -5, -4, 22, 23, 12, 17, 29, 28,
+	30, 34, 31, 32, -8, -9, -7, 14, 15, 26,
+	27, 24, 25, 17, -4, -4, 12, -3, 10, -4,
+	-4, -4, -4, 31, 35, 35, -4, 36,
 }
 var yyDef = [...]int{
 
-	0, -2, 1, 0, 0, 2, 0, 0, 0, 9,
-	0, 0, 10, 7, 0, 4, 5, 0, 0, 19,
-	0, 3, 0, 0, 0, 0, 0, 0, 0, 8,
-	6, 0, 0, 0, 0, 0, 0, 17, 0, 0,
-	22, 20, 15, 16, 11, 12, 13, 14, -2, 21,
+	0, -2, 1, 0, 0, 2, 0, 0, 0, 21,
+	0, 0, 22, 19, 9, 10, 11, 12, 0, 0,
+	0, 0, 23, 0, 0, 0, 0, 3, 4, 5,
+	6, 7, 8, 13, 17, 0, 0, 0, 0, 20,
+	14, 15, 16, 18, 0, 26, 24, 25,
 }
 var yyTok1 = [...]int{
 
 	1, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 27, 3, 3, 3,
-	28, 29, 3, 3, 30, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 33,
-	3, 32, 3, 3, 3, 3, 3, 3, 3, 3,
+	3, 3, 3, 3, 3, 3, 29, 3, 3, 3,
+	30, 31, 3, 3, 32, 3, 3, 3, 3, 3,
+	3, 3, 3, 3, 3, 3, 3, 3, 3, 35,
+	3, 34, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 31, 3, 34,
+	3, 3, 3, 33, 3, 36,
 }
 var yyTok2 = [...]int{
 
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
 	12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
-	22, 23, 24, 25, 26,
+	22, 23, 24, 25, 26, 27, 28,
 }
 var yyTok3 = [...]int{
 	0,
@@ -945,13 +994,13 @@ yydefault:
 
 	case 1:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:68
+		//line parser.y:75
 		{
 			yylex.(*yyLexState).ast_head = yyDollar[1].ast
 		}
 	case 2:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:73
+		//line parser.y:80
 		{
 			s := yyDollar[1].ast
 
@@ -963,159 +1012,159 @@ yydefault:
 			s.next = yyDollar[2].ast
 		}
 	case 3:
-		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:86
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:93
 		{
-			yyVAL.ast = &ast{
-				yy_tok: DOLLAR,
-				uint8:  yyDollar[2].uint8,
-			}
+			yyVAL.token = EQ
 		}
 	case 4:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:94
+		//line parser.y:98
 		{
-			yyVAL.ast = &ast{
-				yy_tok: STRING,
-				string: yyDollar[1].string,
-			}
+			yyVAL.token = NEQ
 		}
 	case 5:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:102
+		//line parser.y:105
 		{
-			yyVAL.ast = &ast{
-				yy_tok: UINT8,
-				uint8:  yyDollar[1].uint8,
-			}
+			yyVAL.token = RE_MATCH
 		}
 	case 6:
-		yyDollar = yyS[yypt-3 : yypt+1]
+		yyDollar = yyS[yypt-1 : yypt+1]
 		//line parser.y:110
 		{
-			yyVAL.ast = yyDollar[2].ast
+			yyVAL.token = RE_NMATCH
+		}
+	case 7:
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:117
+		{
+			yyVAL.token = AND
 		}
 	case 8:
-		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:119
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:122
 		{
-			e := yyDollar[1].ast
-
-			//  linearly find the last expression in the list
-
-			for ; e.next != nil; e = e.next {
-			}
-
-			e.next = yyDollar[3].ast
+			yyVAL.token = OR
 		}
 	case 9:
-		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:132
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:128
 		{
-			yyVAL.ast = nil
+			yyVAL.ast = yylex.(*yyLexState).scalar_node(TRUE, reflect.Bool)
+			yyVAL.ast.bool = true
 		}
 	case 10:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:137
+		//line parser.y:134
+		{
+			yyVAL.ast = yylex.(*yyLexState).scalar_node(TRUE, reflect.Bool)
+			yyVAL.ast.bool = true
+		}
+	case 11:
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:140
+		{
+			yyVAL.ast = yylex.(*yyLexState).scalar_node(STRING, reflect.String)
+			yyVAL.ast.string = yyDollar[1].string
+		}
+	case 12:
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:146
+		{
+			yyVAL.ast = yylex.(*yyLexState).scalar_node(UINT8, reflect.Uint8)
+			yyVAL.ast.uint8 = yyDollar[1].uint8
+		}
+	case 13:
+		yyDollar = yyS[yypt-2 : yypt+1]
+		//line parser.y:152
+		{
+			yyVAL.ast = yylex.(*yyLexState).scalar_node(DOLLAR, reflect.String)
+			yyVAL.ast.uint8 = yyDollar[2].uint8
+		}
+	case 14:
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line parser.y:158
+		{
+			yyVAL.ast = yylex.(*yyLexState).bool_node(yyDollar[2].token, yyDollar[1].ast, yyDollar[3].ast)
+			if yyVAL.ast == nil {
+				return 0
+			}
+		}
+	case 15:
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line parser.y:166
+		{
+			l := yylex.(*yyLexState)
+			yyVAL.ast = l.bool_node(yyDollar[2].token, yyDollar[1].ast, yyDollar[3].ast)
+
+			if yyDollar[1].ast.go_type != reflect.String {
+				l.error("regex operator requires string")
+				return 0
+			}
+		}
+	case 16:
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line parser.y:177
+		{
+			yyVAL.ast = yylex.(*yyLexState).bool_node(OR, yyDollar[1].ast, yyDollar[3].ast)
+		}
+	case 17:
+		yyDollar = yyS[yypt-2 : yypt+1]
+		//line parser.y:182
+		{
+
+			yyVAL.ast = yylex.(*yyLexState).bool_node(NOT, yyDollar[2].ast, nil)
+		}
+	case 18:
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line parser.y:188
+		{
+			yyVAL.ast = yyDollar[2].ast
+		}
+	case 20:
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line parser.y:198
+		{
+			ae := yyDollar[1].ast
+
+			//  find the last expression in the list
+
+			for ; ae.next != nil; ae = ae.next {
+			}
+
+			ae.next = yyDollar[3].ast
+		}
+	case 21:
+		yyDollar = yyS[yypt-0 : yypt+1]
+		//line parser.y:211
+		{
+			yyVAL.ast = nil
+		}
+	case 22:
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:216
 		{
 			yyVAL.ast = &ast{
 				yy_tok: ARGV,
 				left:   yyDollar[1].ast,
 			}
 		}
-	case 11:
-		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:147
-		{
-			yyVAL.ast = &ast{
-				yy_tok: EQ,
-				left:   yyDollar[1].ast,
-				right:  yyDollar[3].ast,
-			}
-		}
-	case 12:
-		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:156
-		{
-			yyVAL.ast = &ast{
-				yy_tok: NEQ,
-				left:   yyDollar[1].ast,
-				right:  yyDollar[3].ast,
-			}
-		}
-	case 13:
-		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:165
-		{
-			yyVAL.ast = &ast{
-				yy_tok: RE_MATCH,
-				left:   yyDollar[1].ast,
-				right:  yyDollar[3].ast,
-			}
-		}
-	case 14:
-		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:174
-		{
-			yyVAL.ast = &ast{
-				yy_tok: RE_NMATCH,
-				left:   yyDollar[1].ast,
-				right:  yyDollar[3].ast,
-			}
-		}
-	case 15:
-		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:183
-		{
-			yyVAL.ast = &ast{
-				yy_tok: OR,
-				left:   yyDollar[1].ast,
-				right:  yyDollar[3].ast,
-			}
-		}
-	case 16:
-		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:192
-		{
-			yyVAL.ast = &ast{
-				yy_tok: AND,
-				left:   yyDollar[1].ast,
-				right:  yyDollar[3].ast,
-			}
-		}
-	case 17:
-		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:201
-		{
-			yyVAL.ast = &ast{
-				yy_tok: NOT,
-				left:   yyDollar[2].ast,
-			}
-		}
-	case 18:
-		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:209
-		{
-			yyVAL.ast = yyDollar[2].ast
-		}
-	case 19:
+	case 23:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:216
+		//line parser.y:226
 		{
 			yyVAL.ast = nil
 		}
-	case 20:
+	case 24:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:221
+		//line parser.y:231
 		{
-			yyVAL.ast = &ast{
-				yy_tok: WHEN,
-				right:  yyDollar[2].ast,
-			}
+			yyVAL.ast = yylex.(*yyLexState).bool_node(WHEN, yyDollar[2].ast, nil)
 		}
-	case 21:
+	case 25:
 		yyDollar = yyS[yypt-8 : yypt+1]
-		//line parser.y:233
+		//line parser.y:240
 		{
 			l := yylex.(*yyLexState)
 
@@ -1133,9 +1182,9 @@ yydefault:
 				command: l.commands[yyDollar[2].string],
 			}
 		}
-	case 22:
+	case 26:
 		yyDollar = yyS[yypt-7 : yypt+1]
-		//line parser.y:252
+		//line parser.y:259
 		{
 			yyVAL.ast = &ast{
 				yy_tok:  CALL,
