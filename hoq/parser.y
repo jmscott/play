@@ -51,7 +51,10 @@ func init() {
 %token	DOLLAR  UINT8
 %token	ARGV  ARGV0  ARGV1
 %token	TO_STRING_UINT8
+%token	EQ  NEQ  RE_MATCH  RE_NMATCH
+%token	NOT
 %token	TRUE  FALSE
+
 
 %type	<string>	STRING
 %type	<string>	NAME
@@ -62,7 +65,6 @@ func init() {
 %type	<ast>		DOLLAR
 %type	<uint8>		UINT8
 %type	<ast>		argv
-%type	<token>		logic_op order_op  regexp_op
 
 %left	AND  OR
 %left	EQ  NEQ  RE_MATCH  RE_NMATCH
@@ -88,41 +90,6 @@ statement_list:
 	  }
 	;
 
-order_op:
-	  EQ
-	  {
-	  	$$ = EQ
-	  }
-	|
-	  NEQ
-	  {
-	  	$$ = NEQ
-	  }
-	;
-
-regexp_op:
-	  RE_MATCH
-	  {
-	  	$$ = RE_MATCH
-	  }
-	|
-	  RE_NMATCH
-	  {
-	  	$$ = RE_NMATCH
-	  }
-	;
-
-logic_op:
-	  AND
-	  {
-	  	$$ = AND
-	  }
-	|
-	  OR
-	  {
-	  	$$ = OR
-	  }
-	;
 exp:
 	  TRUE
 	  {
@@ -132,7 +99,7 @@ exp:
 	|
 	  FALSE
 	  {
-	  	$$ = yylex.(*yyLexState).scalar_node(TRUE, reflect.Bool)
+	  	$$ = yylex.(*yyLexState).scalar_node(FALSE, reflect.Bool)
 		$$.bool = true
 	  }
 	|
@@ -154,18 +121,10 @@ exp:
 		$$.uint8 = $2
 	  }
 	|
-	  exp  order_op  exp
-	  {
-		$$ = yylex.(*yyLexState).bool_node($2, $1, $3)
-		if $$ == nil {
-			return 0
-		}
-	  }
-	|
-	  exp  regexp_op  exp
+	  exp  RE_MATCH  exp
 	  {
 		l := yylex.(*yyLexState)
-		$$ = l.bool_node($2, $1, $3)
+		$$ = l.bool_node(RE_MATCH, $1, $3)
 
 		if $1.go_type != reflect.String {
 			l.error("regex operator requires string")
@@ -173,9 +132,35 @@ exp:
 		}
 	  }
 	|
-	  exp  logic_op  exp
+	  exp  RE_NMATCH  exp
+	  {
+		l := yylex.(*yyLexState)
+		$$ = l.bool_node(RE_MATCH, $1, $3)
+
+		if $1.go_type != reflect.String {
+			l.error("regex operator requires string")
+			return 0
+		}
+	  }
+	|
+	  exp  AND  exp
+	  {
+		$$ = yylex.(*yyLexState).bool_node(AND, $1, $3)
+	  }
+	|
+	  exp  OR  exp
 	  {
 		$$ = yylex.(*yyLexState).bool_node(OR, $1, $3)
+	  }
+	|
+	  exp  EQ  exp
+	  {
+		$$ = yylex.(*yyLexState).bool_node(EQ, $1, $3)
+	  }
+	|
+	  exp  NEQ  exp
+	  {
+		$$ = yylex.(*yyLexState).bool_node(NEQ, $1, $3)
 	  }
 	|
 	  NOT  exp
