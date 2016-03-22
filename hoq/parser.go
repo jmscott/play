@@ -104,7 +104,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:253
+//line parser.y:289
 var keyword = map[string]int{
 	"and":         AND,
 	"call":        CALL,
@@ -1051,65 +1051,101 @@ yydefault:
 		//line parser.y:125
 		{
 			l := yylex.(*yyLexState)
+
 			yyVAL.ast = l.bool_node(RE_MATCH, yyDollar[1].ast, yyDollar[3].ast)
+			if yyVAL.ast == nil {
+				return 0
+			}
 
 			if yyDollar[1].ast.go_type != reflect.String {
-				l.error("regex operator requires string")
+				l.error("~~ operator requires string operands")
 				return 0
 			}
 		}
 	case 9:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:136
+		//line parser.y:140
 		{
 			l := yylex.(*yyLexState)
 			yyVAL.ast = l.bool_node(RE_MATCH, yyDollar[1].ast, yyDollar[3].ast)
 
+			if yyVAL.ast == nil {
+				return 0
+			}
+
 			if yyDollar[1].ast.go_type != reflect.String {
-				l.error("regex operator requires string")
+				l.error("!~ operator requires string operands")
 				return 0
 			}
 		}
 	case 10:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:147
+		//line parser.y:155
 		{
+			l := yylex.(*yyLexState)
 			yyVAL.ast = yylex.(*yyLexState).bool_node(AND, yyDollar[1].ast, yyDollar[3].ast)
+			if yyVAL.ast == nil {
+				return 0
+			}
+
+			if yyDollar[1].ast.go_type != reflect.Bool {
+				l.error("logical and requires boolean operands")
+				return 0
+			}
 		}
 	case 11:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:152
+		//line parser.y:169
 		{
+			l := yylex.(*yyLexState)
 			yyVAL.ast = yylex.(*yyLexState).bool_node(OR, yyDollar[1].ast, yyDollar[3].ast)
+			if yyVAL.ast == nil {
+				return 0
+			}
+
+			if yyDollar[1].ast.go_type != reflect.Bool {
+				l.error("logical or requires boolean operands")
+				return 0
+			}
 		}
 	case 12:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:157
+		//line parser.y:183
 		{
 			yyVAL.ast = yylex.(*yyLexState).bool_node(EQ, yyDollar[1].ast, yyDollar[3].ast)
+			if yyVAL.ast == nil {
+				return 0
+			}
 		}
 	case 13:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:162
+		//line parser.y:191
 		{
 			yyVAL.ast = yylex.(*yyLexState).bool_node(NEQ, yyDollar[1].ast, yyDollar[3].ast)
+			if yyVAL.ast == nil {
+				return 0
+			}
 		}
 	case 14:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:167
+		//line parser.y:199
 		{
-
+			l := yylex.(*yyLexState)
+			if yyDollar[2].ast.go_type != reflect.Bool {
+				l.error("logical not requires boolean operand")
+				return 0
+			}
 			yyVAL.ast = yylex.(*yyLexState).bool_node(NOT, yyDollar[2].ast, nil)
 		}
 	case 15:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:173
+		//line parser.y:209
 		{
 			yyVAL.ast = yyDollar[2].ast
 		}
 	case 17:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:183
+		//line parser.y:219
 		{
 			ae := yyDollar[1].ast
 
@@ -1122,13 +1158,13 @@ yydefault:
 		}
 	case 18:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:196
+		//line parser.y:232
 		{
 			yyVAL.ast = nil
 		}
 	case 19:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:201
+		//line parser.y:237
 		{
 			yyVAL.ast = &ast{
 				yy_tok: ARGV,
@@ -1137,19 +1173,19 @@ yydefault:
 		}
 	case 20:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:211
+		//line parser.y:247
 		{
 			yyVAL.ast = nil
 		}
 	case 21:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:216
+		//line parser.y:252
 		{
 			yyVAL.ast = yylex.(*yyLexState).bool_node(WHEN, yyDollar[2].ast, nil)
 		}
 	case 22:
 		yyDollar = yyS[yypt-8 : yypt+1]
-		//line parser.y:225
+		//line parser.y:261
 		{
 			l := yylex.(*yyLexState)
 
@@ -1169,7 +1205,7 @@ yydefault:
 		}
 	case 23:
 		yyDollar = yyS[yypt-7 : yypt+1]
-		//line parser.y:244
+		//line parser.y:280
 		{
 			yyVAL.ast = &ast{
 				yy_tok:  CALL,

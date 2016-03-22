@@ -124,10 +124,14 @@ exp:
 	  exp  RE_MATCH  exp
 	  {
 		l := yylex.(*yyLexState)
+
 		$$ = l.bool_node(RE_MATCH, $1, $3)
+		if $$ == nil {
+			return 0
+		}
 
 		if $1.go_type != reflect.String {
-			l.error("regex operator requires string")
+			l.error("~~ operator requires string operands")
 			return 0
 		}
 	  }
@@ -137,35 +141,67 @@ exp:
 		l := yylex.(*yyLexState)
 		$$ = l.bool_node(RE_MATCH, $1, $3)
 
+		if $$ == nil {
+			return 0
+		}
+
 		if $1.go_type != reflect.String {
-			l.error("regex operator requires string")
+			l.error("!~ operator requires string operands")
 			return 0
 		}
 	  }
 	|
 	  exp  AND  exp
 	  {
+	  	l := yylex.(*yyLexState)
 		$$ = yylex.(*yyLexState).bool_node(AND, $1, $3)
+		if $$ == nil {
+			return 0
+		}
+
+		if $1.go_type != reflect.Bool {
+			l.error("logical and requires boolean operands")
+			return 0
+		}
 	  }
 	|
 	  exp  OR  exp
 	  {
+	  	l := yylex.(*yyLexState)
 		$$ = yylex.(*yyLexState).bool_node(OR, $1, $3)
+		if $$ == nil {
+			return 0
+		}
+
+		if $1.go_type != reflect.Bool {
+			l.error("logical or requires boolean operands")
+			return 0
+		}
 	  }
 	|
 	  exp  EQ  exp
 	  {
 		$$ = yylex.(*yyLexState).bool_node(EQ, $1, $3)
+		if $$ == nil {
+			return 0
+		}
 	  }
 	|
 	  exp  NEQ  exp
 	  {
 		$$ = yylex.(*yyLexState).bool_node(NEQ, $1, $3)
+		if $$ == nil {
+			return 0
+		}
 	  }
 	|
 	  NOT  exp
 	  {
-
+	  	l := yylex.(*yyLexState)
+		if $2.go_type != reflect.Bool {
+			l.error("logical not requires boolean operand")
+			return 0
+		}
 	  	$$ = yylex.(*yyLexState).bool_node(NOT, $2, nil) 
 	  }
 	|
