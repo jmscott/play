@@ -15,12 +15,18 @@ import (
 )
 
 func init() {
+
+	//  sanity test:
+	//
+	//  token __MIN_YYTOK is starting index into yacc generated token name
+	//  table
+
 	if yyToknames[3] != "__MIN_YYTOK" {
 		panic("yyToknames[3] != __MIN_YYTOK: yacc may have changed")
 	}
 }
 
-//line parser.y:26
+//line parser.y:32
 type yySymType struct {
 	yys int
 	string
@@ -104,7 +110,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:296
+//line parser.y:302
 var keyword = map[string]int{
 	"and":         AND,
 	"call":        CALL,
@@ -491,7 +497,7 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 		return STRING
 	}
 
-	//  peek ahead for ==
+	//  peek ahead for '==' or '-'
 
 	if c == '=' {
 		tok, err = lookahead(l, '=', EQ, int('='))
@@ -501,7 +507,8 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 		return tok
 	}
 
-	//  peak ahead for not equals (!=) or not matches regular expression
+	//  peak ahead for not equals, '!=' or not matches regular expression,
+	//  '!~'
 
 	if c == '!' {
 		tok, err = lookahead(l, '=', NEQ, int('!'))
@@ -518,7 +525,8 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 		return tok
 	}
 
-	//  peak ahead for regular expression match
+	//  peak ahead for regular expression match '~~';  otherwise '~'
+
 	if c == '~' {
 		tok, err = lookahead(l, '~', RE_MATCH, int('~'))
 		if err != nil {
@@ -999,13 +1007,13 @@ yydefault:
 
 	case 1:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:76
+		//line parser.y:82
 		{
 			yylex.(*yyLexState).ast_head = yyDollar[1].ast
 		}
 	case 2:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:81
+		//line parser.y:87
 		{
 			s := yyDollar[1].ast
 
@@ -1018,42 +1026,42 @@ yydefault:
 		}
 	case 3:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:94
+		//line parser.y:100
 		{
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(TRUE, reflect.Bool)
 			yyVAL.ast.bool = true
 		}
 	case 4:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:100
+		//line parser.y:106
 		{
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(FALSE, reflect.Bool)
 			yyVAL.ast.bool = true
 		}
 	case 5:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:106
+		//line parser.y:112
 		{
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(STRING, reflect.String)
 			yyVAL.ast.string = yyDollar[1].string
 		}
 	case 6:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:112
+		//line parser.y:118
 		{
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(UINT8, reflect.Uint8)
 			yyVAL.ast.uint8 = yyDollar[1].uint8
 		}
 	case 7:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:118
+		//line parser.y:124
 		{
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(DOLLAR, reflect.String)
 			yyVAL.ast.uint8 = yyDollar[2].uint8
 		}
 	case 8:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:124
+		//line parser.y:130
 		{
 			l := yylex.(*yyLexState)
 
@@ -1069,7 +1077,7 @@ yydefault:
 		}
 	case 9:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:139
+		//line parser.y:145
 		{
 			l := yylex.(*yyLexState)
 			yyVAL.ast = l.bool_node(RE_MATCH, yyDollar[1].ast, yyDollar[3].ast)
@@ -1085,7 +1093,7 @@ yydefault:
 		}
 	case 10:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:154
+		//line parser.y:160
 		{
 			l := yylex.(*yyLexState)
 			yyVAL.ast = yylex.(*yyLexState).bool_node(AND, yyDollar[1].ast, yyDollar[3].ast)
@@ -1100,7 +1108,7 @@ yydefault:
 		}
 	case 11:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:168
+		//line parser.y:174
 		{
 			l := yylex.(*yyLexState)
 			yyVAL.ast = yylex.(*yyLexState).bool_node(OR, yyDollar[1].ast, yyDollar[3].ast)
@@ -1115,7 +1123,7 @@ yydefault:
 		}
 	case 12:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:182
+		//line parser.y:188
 		{
 			yyVAL.ast = yylex.(*yyLexState).bool_node(EQ, yyDollar[1].ast, yyDollar[3].ast)
 			if yyVAL.ast == nil {
@@ -1124,7 +1132,7 @@ yydefault:
 		}
 	case 13:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:190
+		//line parser.y:196
 		{
 			yyVAL.ast = yylex.(*yyLexState).bool_node(NEQ, yyDollar[1].ast, yyDollar[3].ast)
 			if yyVAL.ast == nil {
@@ -1133,7 +1141,7 @@ yydefault:
 		}
 	case 14:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:198
+		//line parser.y:204
 		{
 			l := yylex.(*yyLexState)
 			if yyDollar[2].ast.go_type != reflect.Bool {
@@ -1144,13 +1152,13 @@ yydefault:
 		}
 	case 15:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:208
+		//line parser.y:214
 		{
 			yyVAL.ast = yyDollar[2].ast
 		}
 	case 17:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:218
+		//line parser.y:224
 		{
 			ae := yyDollar[1].ast
 
@@ -1163,13 +1171,13 @@ yydefault:
 		}
 	case 18:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:231
+		//line parser.y:237
 		{
 			yyVAL.ast = nil
 		}
 	case 19:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:236
+		//line parser.y:242
 		{
 			yyVAL.ast = &ast{
 				yy_tok: ARGV,
@@ -1178,19 +1186,19 @@ yydefault:
 		}
 	case 20:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:246
+		//line parser.y:252
 		{
 			yyVAL.ast = nil
 		}
 	case 21:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:251
+		//line parser.y:257
 		{
 			yyVAL.ast = yylex.(*yyLexState).bool_node(WHEN, yyDollar[2].ast, nil)
 		}
 	case 22:
 		yyDollar = yyS[yypt-8 : yypt+1]
-		//line parser.y:260
+		//line parser.y:266
 		{
 			l := yylex.(*yyLexState)
 
@@ -1210,7 +1218,7 @@ yydefault:
 		}
 	case 23:
 		yyDollar = yyS[yypt-7 : yypt+1]
-		//line parser.y:279
+		//line parser.y:285
 		{
 			l := yylex.(*yyLexState)
 			n := yyDollar[2].command.name
