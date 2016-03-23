@@ -52,7 +52,7 @@ func main() {
 
 	//  parse the standard input into an abstract syntax tree
 
-	ast, err := parse(in)
+	ast, depend_order, err := parse(in)
 	if err != nil {
 		die("parser: %s", err)
 		os.Exit(1)
@@ -62,6 +62,11 @@ func main() {
 
 	if dump {
 		ast.dump()
+
+		fmt.Printf("\nDepend Order of %d Calls:\n", len(depend_order))
+		for i, n := range depend_order {
+			fmt.Printf("	#%d: %s\n", i, n)
+		}
 		os.Exit(0)
 	}
 

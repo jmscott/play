@@ -49,6 +49,8 @@ func (a *ast) String() string {
 		return fmt.Sprintf("UINT8=%d", a.uint8)
 	case DOLLAR:
 		return fmt.Sprintf("$%d", a.uint8)
+	case EXIT_STATUS:
+		return fmt.Sprintf("%s.exit_status", a.command.name)
 	}
 
 	offset := a.yy_tok - __MIN_YYTOK + 3
@@ -177,8 +179,54 @@ func (a *ast) rewrite_CALL_UINT8() {
 	a.next.rewrite_CALL_UINT8()
 }
 
+//  Change generic binary operator nodes to type specific version
+
+func (a *ast) rewrite_binop() {
+
+	if a == nil {
+		return
+	}
+
+	switch a.yy_tok {
+
+	case EQ:
+		switch a.left.go_type {
+		case reflect.Bool:
+			a.yy_tok = EQ_BOOL
+
+		case reflect.String:
+			a.yy_tok = EQ_STRING
+
+		case reflect.Uint8:
+			a.yy_tok = EQ_UINT8
+
+		default:
+			panic("EQ: impossible go_type")
+		}
+	case NEQ:
+		switch a.left.go_type {
+
+		case reflect.Bool:
+			a.yy_tok = NEQ_BOOL
+
+		case reflect.String:
+			a.yy_tok = NEQ_STRING
+
+		case reflect.Uint8:
+			a.yy_tok = NEQ_UINT8
+
+		default:
+			panic("NEQ: impossible go_type")
+		}
+	}
+	a.left.rewrite_binop()
+	a.right.rewrite_binop()
+	a.next.rewrite_binop()
+}
+
 func (root *ast) rewrite() {
 	
+	root.rewrite_binop()
 	root.rewrite_ARGV0()
 	root.rewrite_ARGV1()
 	root.rewrite_CALL_UINT8()

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"sync"
 )
@@ -204,7 +205,7 @@ func (flo *flow) string_rel(
 
 			bv := &bool_value{
 				flow:	flo,
-				is_null:	left.is_null && right.is_null,
+				is_null:	left.is_null || right.is_null,
 			}
 
 			//  invoke the string operator on non-null values
@@ -270,7 +271,7 @@ func (flo *flow) uint8_rel2(
 
 			bv := &bool_value{
 				flow:	flo,
-				is_null:	left.is_null && right.is_null,
+				is_null:	left.is_null || right.is_null,
 			}
 
 			//  invoke the uint8 binary operator on non-null values
@@ -287,9 +288,9 @@ func (flo *flow) uint8_rel2(
 
 //  implement either logical AND or OR, depending upon the state table
 
-func (flo *flow) bool2(
-	op [137]rummy,
+func (flo *flow) bool_rel2(
 	in_left, in_right bool_chan,
+	op [137]rummy,
 ) (out bool_chan) {
 
 	out = make(bool_chan)
@@ -335,7 +336,6 @@ func (flo *flow) const_string(s string) (out string_chan) {
 		for flo = flo.get(); flo != nil; flo = flo.get() {
 			out <- &string_value{
 				string:  s,
-				is_null: false,
 				flow:    flo,
 			}
 		}
@@ -357,7 +357,27 @@ func (flo *flow) const_uint8(ui uint8) (out uint8_chan) {
 
 			out <- &uint8_value{
 				uint8:  ui,
-				is_null: false,
+				flow:    flo,
+			}
+		}
+	}()
+
+	return out
+}
+
+//  send a bool constant
+
+func (flo *flow) const_bool(b bool) (out bool_chan) {
+
+	out = make(bool_chan)
+
+	go func() {
+		defer close(out)
+
+		for flo = flo.get(); flo != nil; flo = flo.get() {
+
+			out <- &bool_value{
+				bool:  b,
 				flow:    flo,
 			}
 		}
@@ -678,12 +698,45 @@ func (flo *flow) call(
 
 			case when.bool:
 				uv.uint8 = cmd.call(argv.argv)
+
+			//  when clause is false
+
+			default:
+				uv.is_null = true
 			}
 
 			out <- uv
 		}
 	}()
 	return out
+}
+
+func re_match(sample, re string) bool {
+
+	matched, err := regexp.MatchString(re, sample)
+	if err != nil {
+		panic(err)
+	}
+	return matched
+}
+
+func re_nmatch(sample, re string) bool {
+
+	matched, err := regexp.MatchString(re, sample)
+	if err != nil {
+		panic(err)
+	}
+	return matched
+}
+
+func string_eq(s1, s2 string) bool {
+
+	return s1 == s2
+}
+
+func string_neq(s1, s2 string) bool {
+
+	return s1 == s2
 }
 
 //  broadcast a uint8 to many uint8 listeners

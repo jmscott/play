@@ -52,12 +52,12 @@ func init() {
 %token	NAME
 %token	STRING
 %token	PARSE_ERROR
-%token	EQ
-%token	NEQ
+%token	EQ  EQ_UINT8  EQ_STRING  EQ_BOOL
+%token	NEQ  NEQ_UINT8  NEQ_STRING  NEQ_BOOL
 %token	DOLLAR  UINT8
 %token	ARGV  ARGV0  ARGV1
 %token	TO_STRING_UINT8
-%token	EQ  NEQ  RE_MATCH  RE_NMATCH
+%token	RE_MATCH  RE_NMATCH
 %token	NOT
 %token	TRUE  FALSE
 
@@ -124,6 +124,37 @@ exp:
 	  {
 	  	$$ = yylex.(*yyLexState).scalar_node(DOLLAR, reflect.String)
 		$$.uint8 = $2
+	  }
+	|
+	  XCOMMAND  '.'  EXIT_STATUS
+	  {
+		l := yylex.(*yyLexState)
+		cmd := $1
+
+		if cmd == l.call {
+			l.error("command cannot call itself: %s", cmd.name)
+			return 0
+		}
+
+		if l.called[cmd.name] == false {
+			l.error("command '%s' referenced before call", cmd.name)
+			return 0
+		}
+		if cmd.depend_ref_count == 255 {
+			l.error("%s: too many dependencies: > 255", cmd.name)
+			return 0
+		}
+		cmd.depend_ref_count++
+
+		//  record for detection of cycles in the invocation graph
+
+		l.depends = append(
+				l.depends,
+				fmt.Sprintf("%s %s", l.call.name, $1.name),
+			)
+
+	  	$$ = yylex.(*yyLexState).scalar_node(EXIT_STATUS, reflect.Uint8)
+		$$.command = cmd
 	  }
 	|
 	  exp  RE_MATCH  exp
@@ -281,7 +312,13 @@ statement:
 		}
 	  }
 	|
-	  CALL  XCOMMAND  '('  argv  ')'  qualification  ';'
+	  CALL  XCOMMAND
+	  {
+		//  dependency graph needs command being called
+
+	  	yylex.(*yyLexState).call = $2
+	  }
+	  '('  argv  ')'  qualification  ';'
 	  {
 	  	l := yylex.(*yyLexState)
 		n := $2.name
@@ -294,8 +331,8 @@ statement:
 	  	$$ = &ast{
 			yy_tok:		CALL,
 			command:	$2,
-			left:		$4,
-			right:		$6,
+			left:		$5,
+			right:		$7,
 		}
 	  }
 	;
@@ -340,6 +377,13 @@ type yyLexState struct {
 	//  track called commands
 
 	called				map[string]bool
+
+	//  track depends list used by tsort to build DAG of
+	//  call relationships.
+
+	depends []string
+
+	call	*command
 }
 
 func (l *yyLexState) pushback(c rune) {
@@ -755,7 +799,7 @@ func (l *yyLexState) Error(msg string) {
 
 //  enter the yacc dragon
 
-func parse(in io.Reader) (ast *ast, err error) {
+func parse(in io.Reader) (ast *ast, depend_order []string, err error) {
 
 	l := &yyLexState {
 		line_no:	1,
@@ -766,5 +810,5 @@ func parse(in io.Reader) (ast *ast, err error) {
 
 	yyParse(l)
 
-	return l.ast_head, l.err
+	return l.ast_head, tsort(l.depends), l.err
 }

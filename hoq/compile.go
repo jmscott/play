@@ -5,7 +5,7 @@ type compile struct {
 	*flow
 }
 
-func (cmpl *compile) compile() fdr_chan {
+func (cmpl *compile) compile() bool_chan {
 
 	type call_output struct {
 
@@ -17,6 +17,8 @@ func (cmpl *compile) compile() fdr_chan {
 
 		next_chan int
 	}
+
+	flo := cmpl.flow
 
 	//  map command output onto list of fanout channels
 
@@ -52,8 +54,7 @@ func (cmpl *compile) compile() fdr_chan {
 		case ARGV1:
 			a2a[a] = flo.argv1(a2s[a.left])
 		case ARGV:
-			//  argv() needs a string_chan slice
-			in := make([]string_chan, a.uint64)
+			in := make([]string_chan, a.uint8)
 
 			//  first arg node already compiled
 			aa := a.left
@@ -71,19 +72,15 @@ func (cmpl *compile) compile() fdr_chan {
 
 		//  call an os executable
 		case CALL:
-			cmd := a.call.command
-			a2x[a] = flo.call(
-				cmd,
-				cmpl.os_exec_chan,
-				a2a[a.left],
-				a2b[a.right],
-			)
+			cmd := a.command
+			a2u[a] = flo.call(cmd, a2a[a.left], a2b[a.right])
 
-			//  broadcast to all dependent calls
+			//  broadcast exit_status to all dependent calls
+
 			command2uint8[cmd.name] =
 				&call_output{
-					out_chans: flo.fanout_xdr(
-						a2x[a],
+					out_chans: flo.fanout_uint8(
+						a2u[a],
 						cmd.depend_ref_count+1,
 					),
 					next_chan: 1,
@@ -99,33 +96,55 @@ func (cmpl *compile) compile() fdr_chan {
 			a2b[a] = a2b[a.left]
 			cc = 0
 		case EXIT_STATUS:
+			//  CALL must occur before exit_status reference
+
 			cx := command2uint8[a.command.name]
 
-			//  Note: zap this test and add a sanity test at the
-			//	  end of the compile that verifys that
-			//	  cx.next_chan == len(cx.out_chans)
+			//  cheap sanity test
 
 			if cx == nil {
 				panic("missing command -> uint8 map for " +
 						a.command.name)
 			}
-			a2u[a] = flo.project_uint8(cx.out_chans[cx.next_chan])
+			a2u[a] = cx.out_chans[cx.next_chan]
 			cx.next_chan++
 
-		case EQ_UINT64:
-			a2b[a] = flo.eq_uint64(a.uint64, a2u[a.left])
-		case NEQ_UINT64:
-			a2b[a] = flo.neq_uint64(a.uint64, a2u[a.left])
+		case EQ_UINT8:
+			a2b[a] = flo.uint8_rel2(
+					a2u[a.left],
+					a2u[a.right],
+					uint8_eq,
+				)
+		case NEQ_UINT8:
+			a2b[a] = flo.uint8_rel2(
+					a2u[a.left],
+					a2u[a.right],
+					uint8_neq,
+				)
 		case EQ_STRING:
-			a2b[a] = flo.eq_string(a.string, a2s[a.left])
+			a2b[a] = flo.string_rel2(
+					a2s[a.left],
+					a2s[a.right],
+					string_eq,
+				)
 		case NEQ_STRING:
-			a2b[a] = flo.neq_string(a.string, a2s[a.left])
-		case EQ_BOOL:
-			a2b[a] = flo.eq_bool(a.bool, a2b[a.left])
+			a2b[a] = flo.string_rel2(
+					a2s[a.left],
+					a2s[a.right],
+					string_neq,
+				)
 		case OR:
-			a2b[a] = flo.bool2(or, a2b[a.left], a2b[a.right])
+			a2b[a] = flo.bool_rel2(
+					a2b[a.left],
+					a2b[a.right],
+					or,
+				)
 		case AND:
-			a2b[a] = flo.bool2(and, a2b[a.left], a2b[a.right])
+			a2b[a] = flo.bool_rel2(
+					a2b[a.left],
+					a2b[a.right],
+					and,
+				)
 		default:
 			panic(Sprintf("impossible yy_tok in ast: %d", a.yy_tok))
 		}
@@ -182,38 +201,5 @@ func (cmpl *compile) compile() fdr_chan {
 	}
 	flo.confluent_count += i
 
-	//  Wait for all qdr to flow in before reducing the whole set
-	//  into a single fdr record
-
-	i = 0
-	qdr_out := make([]qdr_chan, len(query2qdr))
-	for n, qq := range query2qdr {
-
-		//  cheap sanity test that all output channels have consumers
-		if qq.next_chan != len(qq.out_chans) {
-			panic(Sprintf(
-				"%s: expected %d consumed chans, got %d",
-				n,
-				len(qq.out_chans),
-				qq.next_chan,
-			))
-		}
-
-		//  wait for the qdr log entry to be written.
-		//
-		//  Note:
-		//	why make log_qdr_error() wait on log_qdr()?
-
-		qdr_out[i] = flo.log_qdr_error(
-			cmpl.info_log_chan,
-			flo.log_qdr(
-				cmpl.qdr_log_chan,
-				qq.out_chans[0],
-			))
-		i++
-	}
-	flo.confluent_count += i
-
-	flo.confluent_count += 2
 	return flo.log_fdr(cmpl.fdr_log_chan, flo.reduce(xdr_out, qdr_out))
 }
