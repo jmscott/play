@@ -158,7 +158,7 @@ func (flo *flow) wait_bool2(
 //  if either string value is null (in SQL sense) then the boolean answer is
 //  null.
 
-func (flo *flow) string_rel(
+func (flo *flow) string_rel2(
 	in_left, in_right string_chan,
 	rel func(left, right string) bool,
 ) (out bool_chan) {
@@ -226,7 +226,7 @@ func (flo *flow) string_rel(
 
 func (flo *flow) uint8_rel2(
 	in_left, in_right uint8_chan,
-	rel [256]bool,
+	rel [65536]bool,
 ) (out bool_chan) {
 
 	out = make(bool_chan)
