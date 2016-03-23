@@ -584,7 +584,7 @@ func (l *yyLexState) Error(msg string) {
 
 //  enter the yacc dragon
 
-func parse(in io.Reader) (ast *ast, depend_order []string, err error) {
+func parse(in io.Reader) (_ *ast, depend_order []string, err error) {
 
 	l := &yyLexState{
 		line_no:  1,
@@ -594,6 +594,25 @@ func parse(in io.Reader) (ast *ast, depend_order []string, err error) {
 	}
 
 	yyParse(l)
+
+	//  added unreferenced calls() to dependency list
+
+	var find_unreferenced_CALL func(a *ast)
+
+	find_unreferenced_CALL = func(a *ast) {
+
+		if a == nil {
+			return
+		}
+		if a.yy_tok == CALL && a.command.depend_ref_count == 0 {
+			n := a.command.name
+			l.depends = append(l.depends, fmt.Sprintf("%s %s", n, n))
+		}
+		find_unreferenced_CALL(a.left)
+		find_unreferenced_CALL(a.right)
+		find_unreferenced_CALL(a.next)
+	}
+	find_unreferenced_CALL(l.ast_head)
 
 	return l.ast_head, tsort(l.depends), l.err
 }
