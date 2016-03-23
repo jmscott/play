@@ -1,11 +1,10 @@
 package main
 
-type compile struct {
-	*ast
-	*flow
-}
+import (
+	"fmt"
+)
 
-func (cmpl *compile) compile() bool_chan {
+func (flo *flow) compile(ast_head *ast, depend_order [] string) {
 
 	type call_output struct {
 
@@ -18,7 +17,24 @@ func (cmpl *compile) compile() bool_chan {
 		next_chan int
 	}
 
-	flo := cmpl.flow
+	//  map the name of the CALL nodes to their abstract syntax tree node
+	//  later, we will compile the nodes in DAG order
+
+	call2ast := make(map[string]*ast)
+	var find_call func(*ast)
+	find_call = func(a *ast) {
+		
+		if a == nil {
+			return
+		}
+		if a.yy_tok == CALL {
+			call2ast[a.command.name] = a
+		}
+		find_call(a.left)
+		find_call(a.right)
+		find_call(a.next)
+	}
+	find_call(ast_head)
 
 	//  map command output onto list of fanout channels
 
@@ -32,7 +48,6 @@ func (cmpl *compile) compile() bool_chan {
 	a2a := make(map[*ast]argv_chan)
 
 	var compile func(a *ast)
-
 	compile = func(a *ast) {
 		if a == nil {
 			return
@@ -146,60 +161,15 @@ func (cmpl *compile) compile() bool_chan {
 					and,
 				)
 		default:
-			panic(Sprintf("impossible yy_tok in ast: %d", a.yy_tok))
+			panic(fmt.Sprintf(
+				"impossible yy_tok in ast: %d", a.yy_tok))
 		}
 		flo.confluent_count += cc
 	}
 
-	//  compile nodes from least dependent to most dependent order
-	for _, n := range par.depend_order {
+	//  compile CALL nodes from least dependent to most dependent order
 
-		//  skip tail dependency
-		if n == conf.tail.name {
-			continue
-		}
-
-		var root *ast
-		if root = par.call2ast[n]; root == nil {
-			root = par.query2ast[n]
-		}
-		if root == nil {
-			panic(Sprintf("map to abstract syntax tree: %s", n))
-		}
-		compile(root)
+	for _, n := range depend_order {
+		compile(call2ast[n])
 	}
-
-	//  Wait for all xdr to flow in before reducing the whole set
-	//  into a single fdr record
-
-	xdr_out := make([]xdr_chan, len(command2xdr))
-	i := 0
-	for n, cx := range command2xdr {
-
-		//  cheap sanity test that all output channels have consumers
-		if cx.next_chan != len(cx.out_chans) {
-			panic(Sprintf(
-				"%s: expected %d consumed chans, got %d",
-				n,
-				len(cx.out_chans),
-				cx.next_chan,
-			))
-		}
-
-		//  wait for the xdr log entry to be written.
-		//
-		//  Note:
-		//	why make log_xdr_error() wait on log_xdr()?
-
-		xdr_out[i] = flo.log_xdr_error(
-			cmpl.info_log_chan,
-			flo.log_xdr(
-				cmpl.xdr_log_chan,
-				cx.out_chans[0],
-			))
-		i++
-	}
-	flo.confluent_count += i
-
-	return flo.log_fdr(cmpl.fdr_log_chan, flo.reduce(xdr_out, qdr_out))
 }

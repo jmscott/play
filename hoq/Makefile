@@ -1,5 +1,5 @@
 GO=/usr/local/go/bin/go
-GOSRC=hoq.go tsort.go parser.go ast.go command.go logic.go opcode.go
+GOSRC=hoq.go compile.go tsort.go parser.go ast.go command.go logic.go opcode.go
 
 export GOPATH := /usr/local/go/bin
 
