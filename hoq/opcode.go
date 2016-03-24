@@ -806,3 +806,73 @@ func init() {
 		uint8_neq[i * 256 + i] = false
 	}
 }
+
+//  Reduce all the CALL statements into single uint8, which is the count
+//  of the programs that actuall fired
+
+func (flo *flow) fanin_uint8(inx []uint8_chan) (out uint8_chan) {
+
+	out = make(uint8_chan)
+
+	go func() {
+		defer close(out)
+
+		in_count := len(inx)
+
+		//  merge many uint8 channels onto a single uint8
+
+		uint8_merge := func() (merged uint8_chan) {
+
+			var wg sync.WaitGroup
+			merged = make(uint8_chan)
+
+			io := func(in uint8_chan) {
+				for uv := range in {
+					merged <- uv
+				}
+
+				//  decrement active go routine count
+
+				wg.Done()
+			}
+			wg.Add(len(inx))
+
+			//  start a worker for each input channel
+
+			for _, in := range inx {
+				go io(in)
+			}
+
+			//  Start a goroutine to wait for all merge workers
+			//  to exit, then close the merged channel.
+
+			go func() {
+				wg.Wait()
+				close(merged)
+			}()
+			return
+		}()
+		if len(inx) == 0 {
+			uint8_merge = nil
+		}
+
+		for flo = flo.get(); flo != nil; flo = flo.get() {
+
+			//  wait in_count uint8 to arrive
+
+			exec_count := uint8(0)
+			for i := 0; i < in_count; i++ {
+
+				uv := <- uint8_merge
+				if uv.is_null == false {
+					exec_count++
+				}
+			}
+			out <- &uint8_value{
+					uint8: exec_count,
+					flow: flo,
+				}
+		}
+	}()
+	return out
+}
