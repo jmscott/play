@@ -25,10 +25,10 @@ func tsort(pairs []string) (depend_order []string) {
 	if err != nil {
 		panic(err)
 	}
-	defer func () {
+	defer func() {
 		tmp.Close()
 		syscall.Unlink(tmp.Name())
-	}();
+	}()
 
 	out := bufio.NewWriter(tmp)
 
@@ -60,8 +60,8 @@ func tsort(pairs []string) (depend_order []string) {
 	argv[0] = tsort
 	argv[1] = tmp.Name()
 	gcmd := &exec.Cmd{
-			Path:	tsort,
-			Args:	argv[:],
+		Path: tsort,
+		Args: argv[:],
 	}
 
 	//  run gnu tsort command, check after ps is fetched, since any
@@ -93,7 +93,7 @@ func tsort(pairs []string) (depend_order []string) {
 
 	depend_order = make([]string, 0)
 	in := bufio.NewReader(strings.NewReader(string(output)))
-	for i := 0;;  i++ {
+	for i := 0; ; i++ {
 		var name string
 
 		name, err = in.ReadString(byte('\n'))
@@ -111,7 +111,7 @@ func tsort(pairs []string) (depend_order []string) {
 
 	//  reverse depend order so roots of the graph are first
 
-	for i, j := 0, len(depend_order) - 1;  i < j;  i, j = i + 1, j - 1 {
+	for i, j := 0, len(depend_order)-1; i < j; i, j = i+1, j-1 {
 		depend_order[i], depend_order[j] =
 			depend_order[j], depend_order[i]
 	}

@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-func (flo *flow) compile(ast_head *ast, depend_order [] string) {
+func (flo *flow) compile(ast_head *ast, depend_order []string) {
 
 	type call_output struct {
 
@@ -23,7 +23,7 @@ func (flo *flow) compile(ast_head *ast, depend_order [] string) {
 	call2ast := make(map[string]*ast)
 	var find_call func(*ast)
 	find_call = func(a *ast) {
-		
+
 		if a == nil {
 			return
 		}
@@ -127,51 +127,51 @@ func (flo *flow) compile(ast_head *ast, depend_order [] string) {
 
 			if cx == nil {
 				panic("missing command -> uint8 map for " +
-						a.command.name)
+					a.command.name)
 			}
 			a2u[a] = cx.out_chans[cx.next_chan]
 			cx.next_chan++
 
 		case EQ_UINT8:
 			a2b[a] = flo.uint8_rel2(
-					a2u[a.left],
-					a2u[a.right],
-					uint8_eq,
-				)
+				a2u[a.left],
+				a2u[a.right],
+				uint8_eq,
+			)
 		case NEQ_UINT8:
 			a2b[a] = flo.uint8_rel2(
-					a2u[a.left],
-					a2u[a.right],
-					uint8_neq,
-				)
+				a2u[a.left],
+				a2u[a.right],
+				uint8_neq,
+			)
 		case EQ_STRING:
 			a2b[a] = flo.string_rel2(
-					a2s[a.left],
-					a2s[a.right],
-					string_eq,
-				)
+				a2s[a.left],
+				a2s[a.right],
+				string_eq,
+			)
 		case NEQ_STRING:
 			a2b[a] = flo.string_rel2(
-					a2s[a.left],
-					a2s[a.right],
-					string_neq,
-				)
+				a2s[a.left],
+				a2s[a.right],
+				string_neq,
+			)
 		case OR:
 			a2b[a] = flo.bool_rel2(
-					a2b[a.left],
-					a2b[a.right],
-					or,
-				)
+				a2b[a.left],
+				a2b[a.right],
+				or,
+			)
 		case AND:
 			a2b[a] = flo.bool_rel2(
-					a2b[a.left],
-					a2b[a.right],
-					and,
-				)
+				a2b[a.left],
+				a2b[a.right],
+				and,
+			)
 		case TO_STRING_UINT8:
 			a2s[a] = flo.to_string_uint8(
-					a2u[a.left],
-				)
+				a2u[a.left],
+			)
 		default:
 			panic(fmt.Sprintf(
 				"impossible yy_tok in ast: %d", a.yy_tok))

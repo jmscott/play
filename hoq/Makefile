@@ -14,3 +14,5 @@ hoq: $(GOSRC)
 parser.go: parser.y
 	$(GO) tool yacc -o parser.go parser.y || (rm -f parser.go; exit 1)
 	$(GO) fmt parser.go
+fmt:
+	$(GO) fmt $(GOSRC)

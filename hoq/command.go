@@ -8,13 +8,13 @@ import (
 )
 
 type command struct {
-	name		string
-	path		string
-	full_path	string
+	name             string
+	path             string
+	full_path        string
 	depend_ref_count uint8
 }
 
-func (cmd *command) call(argv[] string) uint8 {
+func (cmd *command) call(argv []string) uint8 {
 
 	//  the first argument must be the command path
 
@@ -38,7 +38,7 @@ func (cmd *command) call(argv[] string) uint8 {
 
 	if err != nil {
 		if !strings.HasPrefix(err.Error(), "exit status") &&
-		   !strings.HasPrefix(err.Error(), "signal") {
+			!strings.HasPrefix(err.Error(), "signal") {
 			panic(err)
 		}
 		err = nil

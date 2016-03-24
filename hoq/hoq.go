@@ -79,56 +79,56 @@ func main() {
 	close(floA.resolved)
 
 	/*
-	in := bufio.NewReader(os.Stdin)
-	for {
-		line, err := in.ReadString('\n')
-		if err != nil {
-			if err == io.EOF {
+		in := bufio.NewReader(os.Stdin)
+		for {
+			line, err := in.ReadString('\n')
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				panic(err)
+			}
+			line = TrimRight(line, "\n")
+			floB = &flow{
+				line:     line,
+				fields:	  strings.Split(line, "\t"),
+				next:     make(chan flow_chan),
+				resolved: make(chan struct{}),
+			}
+
+			//  push flowA to flowB
+
+			for flowA.confluent_count > 0 {
+
+				reply := <-flowA.next
+				flowA.confluent_count--
+
+				reply <- flowB
+				flowB.confluent_count++
+			}
+
+			//  wait for flowB to finish
+			fv := <-fc
+			if fv == nil {
 				break
 			}
-			panic(err)
+			close(fv.resolved)
+
+			//  cheap sanity test
+
+			if fv.flow.seq != flowB.seq {
+				panic("fdr out of sync with flowB")
+			}
+
+			//  send stats to server goroutine
+
+			sam.ok_count = uint64(fv.fdr.ok_count)
+			sam.fault_count = uint64(fv.fdr.fault_count)
+			sam.wall_duration = fv.fdr.wall_duration
+			work.flow_sample_chan <- sam
+
+			flowA = flowB
 		}
-		line = TrimRight(line, "\n")
-		floB = &flow{
-			line:     line,
-			fields:	  strings.Split(line, "\t"),
-			next:     make(chan flow_chan),
-			resolved: make(chan struct{}),
-		}
-
-		//  push flowA to flowB
-
-		for flowA.confluent_count > 0 {
-
-			reply := <-flowA.next
-			flowA.confluent_count--
-
-			reply <- flowB
-			flowB.confluent_count++
-		}
-
-		//  wait for flowB to finish
-		fv := <-fc
-		if fv == nil {
-			break
-		}
-		close(fv.resolved)
-
-		//  cheap sanity test
-
-		if fv.flow.seq != flowB.seq {
-			panic("fdr out of sync with flowB")
-		}
-
-		//  send stats to server goroutine
-
-		sam.ok_count = uint64(fv.fdr.ok_count)
-		sam.fault_count = uint64(fv.fdr.fault_count)
-		sam.wall_duration = fv.fdr.wall_duration
-		work.flow_sample_chan <- sam
-
-		flowA = flowB
-	}
 	*/
 
 	os.Exit(0)

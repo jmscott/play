@@ -66,12 +66,12 @@ type flow struct {
 
 	//  the whole line of input with trailing new line removed
 
-	line	string
+	line string
 
 	//  tab separated fields split out from the line read from
 	//  standard input
 
-	fields	[]string
+	fields []string
 
 	//  count of go routines still flowing expressions
 	confluent_count int
@@ -181,7 +181,7 @@ func (flo *flow) string_rel2(
 
 				//  wait for left hand string to arrive
 
-				case lv := <- in_left:
+				case lv := <-in_left:
 					if lv == nil {
 						return
 					}
@@ -192,7 +192,7 @@ func (flo *flow) string_rel2(
 
 				//  wait for right hand string to arrive
 
-				case rv := <- in_right:
+				case rv := <-in_right:
 					if rv == nil {
 						return
 					}
@@ -204,14 +204,14 @@ func (flo *flow) string_rel2(
 			}
 
 			bv := &bool_value{
-				flow:	flo,
-				is_null:	left.is_null || right.is_null,
+				flow:    flo,
+				is_null: left.is_null || right.is_null,
 			}
 
 			//  invoke the string operator on non-null values
 
 			if bv.is_null == false {
-				bv.bool = rel(left.string, right.string) 
+				bv.bool = rel(left.string, right.string)
 			}
 			out <- bv
 		}
@@ -247,7 +247,7 @@ func (flo *flow) uint8_rel2(
 
 				//  wait for left hand value of operator
 
-				case lv := <- in_left:
+				case lv := <-in_left:
 					if lv == nil {
 						return
 					}
@@ -258,7 +258,7 @@ func (flo *flow) uint8_rel2(
 
 				//  wait for right hand value of operator
 
-				case rv := <- in_right:
+				case rv := <-in_right:
 					if rv == nil {
 						return
 					}
@@ -270,14 +270,14 @@ func (flo *flow) uint8_rel2(
 			}
 
 			bv := &bool_value{
-				flow:	flo,
-				is_null:	left.is_null || right.is_null,
+				flow:    flo,
+				is_null: left.is_null || right.is_null,
 			}
 
 			//  invoke the uint8 binary operator on non-null values
 
 			if bv.is_null == false {
-				bv.bool = rel[left.uint8 << 8 | right.uint8]
+				bv.bool = rel[left.uint8<<8|right.uint8]
 			}
 			out <- bv
 		}
@@ -335,8 +335,8 @@ func (flo *flow) const_string(s string) (out string_chan) {
 
 		for flo = flo.get(); flo != nil; flo = flo.get() {
 			out <- &string_value{
-				string:  s,
-				flow:    flo,
+				string: s,
+				flow:   flo,
 			}
 		}
 	}()
@@ -356,8 +356,8 @@ func (flo *flow) const_uint8(ui uint8) (out uint8_chan) {
 		for flo = flo.get(); flo != nil; flo = flo.get() {
 
 			out <- &uint8_value{
-				uint8:  ui,
-				flow:    flo,
+				uint8: ui,
+				flow:  flo,
 			}
 		}
 	}()
@@ -377,8 +377,8 @@ func (flo *flow) const_bool(b bool) (out bool_chan) {
 		for flo = flo.get(); flo != nil; flo = flo.get() {
 
 			out <- &bool_value{
-				bool:  b,
-				flow:    flo,
+				bool: b,
+				flow: flo,
 			}
 		}
 	}()
@@ -396,20 +396,20 @@ func (flo *flow) to_string_uint8(in uint8_chan) (out string_chan) {
 		defer close(out)
 
 		for flo = flo.get(); flo != nil; flo = flo.get() {
-			ui := <- in
+			ui := <-in
 			if ui == nil {
 				return
 			}
 
 			sv := &string_value{
-				flow:	flo,
+				flow:    flo,
 				is_null: ui.is_null,
 			}
 			if ui.is_null == false {
 				sv.string = strconv.FormatUint(
-						uint64(ui.uint8),
-						10,
-					)
+					uint64(ui.uint8),
+					10,
+				)
 			}
 			out <- sv
 		}
@@ -427,9 +427,9 @@ func (flo *flow) dollar(i int) (out string_chan) {
 		defer close(out)
 
 		for flo = flo.get(); flo != nil; flo = flo.get() {
-			
+
 			sv := &string_value{
-				flow:	flo,
+				flow: flo,
 			}
 			if i < len(flo.fields) {
 				sv.string = flo.fields[i]
@@ -453,10 +453,10 @@ func (flo *flow) dollar0(i int) (out string_chan) {
 		defer close(out)
 
 		for flo = flo.get(); flo != nil; flo = flo.get() {
-			
+
 			out <- &string_value{
-				flow:	flo,
-				string:	flo.line,
+				flow:   flo,
+				string: flo.line,
 			}
 		}
 	}()
@@ -617,7 +617,7 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 				//  Note: compile generates error for
 				//        arg_value{}
 
-				if a == (arg_value{}) {		// stream closed
+				if a == (arg_value{}) { // stream closed
 					return
 				}
 
@@ -783,8 +783,8 @@ func (flo *flow) fanout_uint8(
 	return out
 }
 
-var uint8_eq = [256*256]bool{}
-var uint8_neq = [256*256]bool{}
+var uint8_eq = [256 * 256]bool{}
+var uint8_neq = [256 * 256]bool{}
 
 //  build the state tables for temporal logical AND and OR used by opcodes
 //  in method flow.bool2().
@@ -793,17 +793,17 @@ func init() {
 
 	//  initialize "equals" uint16 table by setting diagonals true
 
-	for i := uint16(0);  i < 256;  i++ {
-		uint8_eq[i * 256 + i] = true
+	for i := uint16(0); i < 256; i++ {
+		uint8_eq[i*256+i] = true
 	}
 
 	//  initialze "not equals" uint16 table by setting all but diagonal true
 
-	for i := uint16(0);  i < 256;  i++ {
-		for j := uint16(0);  j < 256;  j++ {
-			uint8_neq[i << 8 | j] = true
+	for i := uint16(0); i < 256; i++ {
+		for j := uint16(0); j < 256; j++ {
+			uint8_neq[i<<8|j] = true
 		}
-		uint8_neq[i * 256 + i] = false
+		uint8_neq[i*256+i] = false
 	}
 }
 
@@ -863,15 +863,15 @@ func (flo *flow) fanin_uint8(inx []uint8_chan) (out uint8_chan) {
 			exec_count := uint8(0)
 			for i := 0; i < in_count; i++ {
 
-				uv := <- uint8_merge
+				uv := <-uint8_merge
 				if uv.is_null == false {
 					exec_count++
 				}
 			}
 			out <- &uint8_value{
-					uint8: exec_count,
-					flow: flo,
-				}
+				uint8: exec_count,
+				flow:  flo,
+			}
 		}
 	}()
 	return out

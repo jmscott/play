@@ -12,11 +12,11 @@ import (
 type ast struct {
 
 	//  lexical token automatically defined by yacc
-	yy_tok	int
+	yy_tok int
 
-	go_type	reflect.Kind
+	go_type reflect.Kind
 
-	line_no	uint64
+	line_no uint64
 
 	string
 	uint8
@@ -26,11 +26,11 @@ type ast struct {
 	*command
 
 	//  child nodes
-	left	*ast
-	right	*ast
+	left  *ast
+	right *ast
 
 	//  siblings
-	next	*ast
+	next *ast
 }
 
 //  dump a node in the abstract syntax tree
@@ -40,7 +40,7 @@ func (a *ast) String() string {
 	switch a.yy_tok {
 	case COMMAND:
 		return fmt.Sprintf("COMMAND{%s, %s}",
-				a.command.name, a.command.path)
+			a.command.name, a.command.path)
 	case CALL:
 		return fmt.Sprintf("CALL.%s", a.command.name)
 	case STRING:
@@ -56,7 +56,7 @@ func (a *ast) String() string {
 	}
 
 	offset := a.yy_tok - __MIN_YYTOK + 3
-	if (a.yy_tok > __MIN_YYTOK) {
+	if a.yy_tok > __MIN_YYTOK {
 		return yyToknames[offset]
 	}
 	return fmt.Sprintf("UNKNOWN_TOKEN(%d)", a.yy_tok)
@@ -72,7 +72,7 @@ func (a *ast) dump_tree(indent int, is_first_sibling bool) {
 
 	//  indent, two space for each level
 
-	for i := 0;  i < indent;  i++ {
+	for i := 0; i < indent; i++ {
 		fmt.Print("  ")
 	}
 
@@ -82,13 +82,13 @@ func (a *ast) dump_tree(indent int, is_first_sibling bool) {
 
 	//  recusively print the kids
 
-	a.left.dump_tree(indent + 1, true)
-	a.right.dump_tree(indent + 1, true)
+	a.left.dump_tree(indent+1, true)
+	a.right.dump_tree(indent+1, true)
 
 	//  dump siblings if we are
 
 	if is_first_sibling {
-		for as := a.next;  as != nil;  as = as.next {
+		for as := a.next; as != nil; as = as.next {
 			as.dump_tree(indent, false)
 		}
 	}
@@ -107,7 +107,7 @@ func (a *ast) rewrite_ARGV0() {
 	}
 	if a.yy_tok == CALL && a.left == nil {
 		a.left = &ast{
-			yy_tok:	ARGV0,
+			yy_tok: ARGV0,
 		}
 	}
 	a.left.rewrite_ARGV0()
@@ -143,14 +143,14 @@ func (a *ast) rewrite_CALL_UINT8() {
 	}
 
 	if a.yy_tok == CALL {
-		
+
 		//  walk through argv of call, looking for scalar uint8
 		//  or call.exit_status nodes.
 
 		argv := a.left
 		prev := (*ast)(nil)
 
-		for arg := argv.left;  arg != nil;  arg = arg.next {
+		for arg := argv.left; arg != nil; arg = arg.next {
 
 			if arg.yy_tok != UINT8 && arg.yy_tok != EXIT_STATUS {
 				prev = arg
@@ -161,10 +161,10 @@ func (a *ast) rewrite_CALL_UINT8() {
 			}
 			uv := arg
 			arg = &ast{
-				yy_tok:	TO_STRING_UINT8,
+				yy_tok:  TO_STRING_UINT8,
 				go_type: reflect.String,
-				left: uv,
-				next: uv.next,
+				left:    uv,
+				next:    uv.next,
 			}
 			uv.next = nil
 
@@ -228,7 +228,7 @@ func (a *ast) rewrite_binop() {
 }
 
 func (root *ast) optimize() {
-	
+
 	root.rewrite_binop()
 	root.rewrite_ARGV0()
 	root.rewrite_ARGV1()
