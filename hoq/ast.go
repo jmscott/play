@@ -49,6 +49,8 @@ func (a *ast) String() string {
 		return fmt.Sprintf("UINT8=%d", a.uint8)
 	case DOLLAR:
 		return fmt.Sprintf("$%d", a.uint8)
+	case ARGV:
+		return fmt.Sprintf("ARGV#%d", a.uint8)
 	case EXIT_STATUS:
 		return fmt.Sprintf("%s.exit_status", a.command.name)
 	}
@@ -122,6 +124,7 @@ func (a *ast) rewrite_ARGV1() {
 	}
 	if a.yy_tok == ARGV && a.left != nil && a.left.next == nil {
 		a.yy_tok = ARGV1
+		a.uint8 = 1
 	}
 	a.left.rewrite_ARGV1()
 	a.right.rewrite_ARGV1()
@@ -224,7 +227,7 @@ func (a *ast) rewrite_binop() {
 	a.next.rewrite_binop()
 }
 
-func (root *ast) rewrite() {
+func (root *ast) optimize() {
 	
 	root.rewrite_binop()
 	root.rewrite_ARGV0()
