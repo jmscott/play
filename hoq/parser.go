@@ -123,7 +123,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:339
+//line parser.y:354
 var keyword = map[string]int{
 	"and":         AND,
 	"call":        CALL,
@@ -1236,45 +1236,59 @@ yydefault:
 		yyDollar = yyS[yypt-3 : yypt+1]
 		//line parser.y:255
 		{
+			argc := uint16(0)
 			ae := yyDollar[1].ast
 
 			//  find the last expression in the list
 
 			for ; ae.next != nil; ae = ae.next {
-			}
 
+				if argc >= 255 {
+					yylex.(*yyLexState).error(
+						"too many expressions in list: > 255",
+					)
+					return 0
+				}
+				argc++
+			}
 			ae.next = yyDollar[3].ast
 		}
 	case 19:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:268
+		//line parser.y:277
 		{
 			yyVAL.ast = nil
 		}
 	case 20:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:273
+		//line parser.y:282
 		{
 			yyVAL.ast = &ast{
 				yy_tok: ARGV,
 				left:   yyDollar[1].ast,
 			}
+
+			//  count the arguments
+
+			for ae := yyDollar[1].ast; ae != nil; ae = ae.next {
+				yyVAL.ast.uint8++
+			}
 		}
 	case 21:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:283
+		//line parser.y:298
 		{
 			yyVAL.ast = nil
 		}
 	case 22:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:288
+		//line parser.y:303
 		{
 			yyVAL.ast = yylex.(*yyLexState).bool_node(WHEN, yyDollar[2].ast, nil)
 		}
 	case 23:
 		yyDollar = yyS[yypt-8 : yypt+1]
-		//line parser.y:297
+		//line parser.y:312
 		{
 			l := yylex.(*yyLexState)
 
@@ -1294,7 +1308,7 @@ yydefault:
 		}
 	case 24:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:316
+		//line parser.y:331
 		{
 			//  dependency graph needs command being called
 
@@ -1302,7 +1316,7 @@ yydefault:
 		}
 	case 25:
 		yyDollar = yyS[yypt-8 : yypt+1]
-		//line parser.y:322
+		//line parser.y:337
 		{
 			l := yylex.(*yyLexState)
 			n := yyDollar[2].command.name
