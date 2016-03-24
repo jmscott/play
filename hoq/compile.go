@@ -56,6 +56,8 @@ func (flo *flow) compile(ast_head *ast, depend_order [] string) {
 		//  track number of confluing go routines compiled by each node
 		cc := 1
 
+		//  compile kids first
+
 		compile(a.left)
 		compile(a.right)
 
@@ -96,6 +98,12 @@ func (flo *flow) compile(ast_head *ast, depend_order [] string) {
 				&call_output{
 					out_chans: flo.fanout_uint8(
 						a2u[a],
+
+						//  each exit_status in
+						//  qualification plus
+						//  the fanin channel that
+						//  terminates the flow
+
 						cmd.depend_ref_count+1,
 					),
 					next_chan: 1,
@@ -160,6 +168,10 @@ func (flo *flow) compile(ast_head *ast, depend_order [] string) {
 					a2b[a.right],
 					and,
 				)
+		case TO_STRING_UINT8:
+			a2s[a] = flo.to_string_uint8(
+					a2u[a.left],
+				)
 		default:
 			panic(fmt.Sprintf(
 				"impossible yy_tok in ast: %d", a.yy_tok))
@@ -172,4 +184,28 @@ func (flo *flow) compile(ast_head *ast, depend_order [] string) {
 	for _, n := range depend_order {
 		compile(call2ast[n])
 	}
+
+	uint8_out := make([]uint8_chan, len(command2uint8))
+	i := 0
+	for n, cx := range command2uint8 {
+
+		//  cheap sanity test that all output channels have consumers
+		if cx.next_chan != len(cx.out_chans) {
+			panic(fmt.Sprintf(
+				"%s: expected %d consumed chans, got %d",
+				n,
+				len(cx.out_chans),
+				cx.next_chan,
+			))
+		}
+
+		//  wait for the xdr log entry to be written.
+		//
+		//  Note:
+		//	why make log_xdr_error() wait on log_xdr()?
+
+		uint8_out[i] = cx.out_chans[0]
+		i++
+	}
+	flo.confluent_count += i
 }
