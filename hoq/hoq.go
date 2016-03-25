@@ -1,7 +1,9 @@
 package main
 
 import (
-	// "bufio"
+	"bufio"
+	"io"
+	"strings"
 	"fmt"
 	"os"
 	"syscall"
@@ -71,65 +73,51 @@ func main() {
 		os.Exit(0)
 	}
 
-	floA := &flow{
+	flowA := &flow{
 		next:     make(chan flow_chan),
 		resolved: make(chan struct{}),
 	}
-	floA.compile(ast, depend_order)
-	close(floA.resolved)
 
-	/*
-		in := bufio.NewReader(os.Stdin)
-		for {
-			line, err := in.ReadString('\n')
-			if err != nil {
-				if err == io.EOF {
-					break
-				}
-				panic(err)
-			}
-			line = TrimRight(line, "\n")
-			floB = &flow{
-				line:     line,
-				fields:	  strings.Split(line, "\t"),
-				next:     make(chan flow_chan),
-				resolved: make(chan struct{}),
-			}
+	uc := flowA.compile(ast, depend_order)
+	close(flowA.resolved)
 
-			//  push flowA to flowB
-
-			for flowA.confluent_count > 0 {
-
-				reply := <-flowA.next
-				flowA.confluent_count--
-
-				reply <- flowB
-				flowB.confluent_count++
-			}
-
-			//  wait for flowB to finish
-			fv := <-fc
-			if fv == nil {
+	in := bufio.NewReader(os.Stdin)
+	for {
+		line, err := in.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {	//  has flowB resolved?
 				break
 			}
-			close(fv.resolved)
-
-			//  cheap sanity test
-
-			if fv.flow.seq != flowB.seq {
-				panic("fdr out of sync with flowB")
-			}
-
-			//  send stats to server goroutine
-
-			sam.ok_count = uint64(fv.fdr.ok_count)
-			sam.fault_count = uint64(fv.fdr.fault_count)
-			sam.wall_duration = fv.fdr.wall_duration
-			work.flow_sample_chan <- sam
-
-			flowA = flowB
+			panic(err)
 		}
-	*/
+		line = strings.TrimRight(line, "\n")
+		flowB := &flow{
+			line:     line,
+			fields:	  strings.Split(line, "\t"),
+			next:     make(chan flow_chan),
+			resolved: make(chan struct{}),
+		}
+
+		//  push flowA to flowB
+
+fmt.Println("WTF: flowA.confluent_count:", flowA.confluent_count)
+		for flowA.confluent_count > 0 {
+
+			reply := <-flowA.next
+			flowA.confluent_count--
+
+			reply <- flowB
+			flowB.confluent_count++
+		}
+
+		//  wait for flowB to finish
+		uv := <-uc
+		if uv == nil {
+			break
+		}
+		close(flowB.resolved)
+		flowA = flowB
+	}
 
 	os.Exit(0)
 }

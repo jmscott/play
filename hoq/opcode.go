@@ -524,9 +524,9 @@ func (flo *flow) argv1(in string_chan) (out argv_chan) {
 	go func() {
 		defer close(out)
 
-		var argv [1]string
-
 		for flo = flo.get(); flo != nil; flo = flo.get() {
+
+			var argv [1]string
 
 			sv := <-in
 			if sv == nil {

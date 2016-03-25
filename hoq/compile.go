@@ -4,7 +4,10 @@ import (
 	"fmt"
 )
 
-func (flo *flow) compile(ast_head *ast, depend_order []string) {
+func (flo *flow) compile(
+	ast_head *ast,
+	depend_order []string,
+) (uint8_chan) {
 
 	type call_output struct {
 
@@ -17,8 +20,8 @@ func (flo *flow) compile(ast_head *ast, depend_order []string) {
 		next_chan int
 	}
 
-	//  map the name of the CALL nodes to their abstract syntax tree node
-	//  later, we will compile the nodes in DAG order
+	//  map the XCOMMAND name onto their CALL ast nodes
+	//  later, we compile the nodes in DAG order
 
 	call2ast := make(map[string]*ast)
 	var find_call func(*ast)
@@ -30,8 +33,6 @@ func (flo *flow) compile(ast_head *ast, depend_order []string) {
 		if a.yy_tok == CALL {
 			call2ast[a.command.name] = a
 		}
-		find_call(a.left)
-		find_call(a.right)
 		find_call(a.next)
 	}
 	find_call(ast_head)
@@ -101,7 +102,7 @@ func (flo *flow) compile(ast_head *ast, depend_order []string) {
 
 						//  each exit_status in
 						//  qualification plus
-						//  the fanin channel that
+						//  the fan-in channel that
 						//  terminates the flow
 
 						cmd.depend_ref_count+1,
@@ -119,8 +120,6 @@ func (flo *flow) compile(ast_head *ast, depend_order []string) {
 			a2b[a] = a2b[a.left]
 			cc = 0
 		case EXIT_STATUS:
-			//  CALL must occur before exit_status reference
-
 			cx := command2uint8[a.command.name]
 
 			//  cheap sanity test
@@ -131,6 +130,7 @@ func (flo *flow) compile(ast_head *ast, depend_order []string) {
 			}
 			a2u[a] = cx.out_chans[cx.next_chan]
 			cx.next_chan++
+			cc = 0
 
 		case EQ_UINT8:
 			a2b[a] = flo.uint8_rel2(
@@ -199,13 +199,13 @@ func (flo *flow) compile(ast_head *ast, depend_order []string) {
 			))
 		}
 
-		//  wait for the xdr log entry to be written.
-		//
-		//  Note:
-		//	why make log_xdr_error() wait on log_xdr()?
-
 		uint8_out[i] = cx.out_chans[0]
 		i++
 	}
-	flo.confluent_count += i
+
+	//  fanin counts in confluent_count
+
+	flo.confluent_count++
+
+	return flo.fanin_uint8(uint8_out)
 }
