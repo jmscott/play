@@ -159,8 +159,8 @@ func (flo *flow) wait_bool2(
 //  null.
 
 func (flo *flow) string_rel2(
-	in_left, in_right string_chan,
 	rel func(left, right string) bool,
+	in_left, in_right string_chan,
 ) (out bool_chan) {
 
 	out = make(bool_chan)
@@ -225,8 +225,8 @@ func (flo *flow) string_rel2(
 //  is null.
 
 func (flo *flow) uint8_rel2(
-	in_left, in_right uint8_chan,
 	rel [65536]bool,
+	in_left, in_right uint8_chan,
 ) (out bool_chan) {
 
 	out = make(bool_chan)
@@ -289,8 +289,8 @@ func (flo *flow) uint8_rel2(
 //  implement either logical AND or OR, depending upon the state table
 
 func (flo *flow) bool_rel2(
-	in_left, in_right bool_chan,
 	op [137]rummy,
+	in_left, in_right bool_chan,
 ) (out bool_chan) {
 
 	out = make(bool_chan)

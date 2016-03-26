@@ -65,7 +65,8 @@ func (flo *flow) compile(
 			return
 		}
 
-		//  track number of confluing go routines compiled by each node
+		//  track number of confluing go routines compiled for 
+		//  each node
 		cc := 1
 
 		//  compile kids first
@@ -149,39 +150,39 @@ func (flo *flow) compile(
 
 		case EQ_UINT8:
 			a2b[a] = flo.uint8_rel2(
+				uint8_eq,
 				a2u8[a.left],
 				a2u8[a.right],
-				uint8_eq,
 			)
 		case NEQ_UINT8:
 			a2b[a] = flo.uint8_rel2(
+				uint8_neq,
 				a2u8[a.left],
 				a2u8[a.right],
-				uint8_neq,
 			)
 		case EQ_STRING:
 			a2b[a] = flo.string_rel2(
+				string_eq,
 				a2s[a.left],
 				a2s[a.right],
-				string_eq,
 			)
 		case NEQ_STRING:
 			a2b[a] = flo.string_rel2(
+				string_neq,
 				a2s[a.left],
 				a2s[a.right],
-				string_neq,
 			)
 		case OR:
 			a2b[a] = flo.bool_rel2(
+				or,
 				a2b[a.left],
 				a2b[a.right],
-				or,
 			)
 		case AND:
 			a2b[a] = flo.bool_rel2(
+				and,
 				a2b[a.left],
 				a2b[a.right],
-				and,
 			)
 		case TO_STRING_UINT8:
 			a2s[a] = flo.to_string_uint8(
