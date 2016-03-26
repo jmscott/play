@@ -10,17 +10,22 @@ import (
 type command struct {
 	name             string
 	path             string
-	full_path        string
 	depend_ref_count uint8
 }
 
 func (cmd *command) exec(argv []string) uint8 {
 
+	xargv := make([]string, 1+len(argv))
+
+	//  the first argument must be the command path
+	xargv[0] = cmd.path
+	copy(xargv[1:], argv[:])
+
 	//  the first argument must be the command path
 
 	exec := &exec.Cmd{
-		Path: cmd.full_path,
-		Args: argv,
+		Path: cmd.path,
+		Args: xargv,
 	}
 
 	//  run the command
@@ -29,7 +34,7 @@ func (cmd *command) exec(argv []string) uint8 {
 
 	//  any output from the process is a panicy error
 
-	if output_256 != nil {
+	if output_256 != nil && len(output_256) > 0 {
 		stderr.Write(output_256)
 		panic(fmt.Sprintf("%s: unexpected output", cmd.name))
 	}
