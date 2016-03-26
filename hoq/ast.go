@@ -44,7 +44,7 @@ func (a *ast) String() string {
 	case EXEC:
 		return fmt.Sprintf("EXEC.%s", a.command.name)
 	case STRING:
-		return fmt.Sprintf("STRING=\"%s\"", a.string)
+		return fmt.Sprintf("\"%s\"", a.string)
 	case UINT8:
 		return fmt.Sprintf("UINT8=%d", a.uint8)
 	case DOLLAR:
