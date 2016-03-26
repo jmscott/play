@@ -726,7 +726,7 @@ func re_nmatch(sample, re string) bool {
 	if err != nil {
 		panic(err)
 	}
-	return matched
+	return !matched
 }
 
 func string_eq(s1, s2 string) bool {
