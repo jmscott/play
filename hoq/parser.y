@@ -177,7 +177,7 @@ exp:
 	  exp  RE_NMATCH  exp
 	  {
 		l := yylex.(*yyLexState)
-		$$ = l.bool_node(RE_MATCH, $1, $3)
+		$$ = l.bool_node(RE_NMATCH, $1, $3)
 
 		if $$ == nil {
 			return 0

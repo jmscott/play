@@ -1154,7 +1154,7 @@ yydefault:
 		//line parser.y:178
 		{
 			l := yylex.(*yyLexState)
-			yyVAL.ast = l.bool_node(RE_MATCH, yyDollar[1].ast, yyDollar[3].ast)
+			yyVAL.ast = l.bool_node(RE_NMATCH, yyDollar[1].ast, yyDollar[3].ast)
 
 			if yyVAL.ast == nil {
 				return 0
