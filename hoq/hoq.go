@@ -100,7 +100,6 @@ func main() {
 
 		//  push flowA to flowB
 
-fmt.Println("WTF: flowA.confluent_count:", flowA.confluent_count)
 		for flowA.confluent_count > 0 {
 
 			reply := <-flowA.next

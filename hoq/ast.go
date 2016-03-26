@@ -41,8 +41,8 @@ func (a *ast) String() string {
 	case COMMAND:
 		return fmt.Sprintf("COMMAND{%s, %s}",
 			a.command.name, a.command.path)
-	case CALL:
-		return fmt.Sprintf("CALL.%s", a.command.name)
+	case EXEC:
+		return fmt.Sprintf("EXEC.%s", a.command.name)
 	case STRING:
 		return fmt.Sprintf("STRING=\"%s\"", a.string)
 	case UINT8:
@@ -105,7 +105,7 @@ func (a *ast) rewrite_ARGV0() {
 	if a == nil {
 		return
 	}
-	if a.yy_tok == CALL && a.left == nil {
+	if a.yy_tok == EXEC && a.left == nil {
 		a.left = &ast{
 			yy_tok: ARGV0,
 		}
@@ -134,18 +134,18 @@ func (a *ast) rewrite_ARGV1() {
 //  since unix commands require strings, we transform the argument nodes
 //  that are uint8 into strings:
 //
-//	CALL func(123) to CALL func(to_string_uint8(123))
+//	EXEC func(123) to EXEC func(to_string_uint8(123))
 
-func (a *ast) rewrite_CALL_UINT8() {
+func (a *ast) rewrite_EXEC_ARGV_UINT8() {
 
 	if a == nil {
 		return
 	}
 
-	if a.yy_tok == CALL {
+	if a.yy_tok == EXEC {
 
-		//  walk through argv of call, looking for scalar uint8
-		//  or call.exit_status nodes.
+		//  walk through argv of exec, looking for scalar uint8
+		//  or exec.exit_status nodes.
 
 		argv := a.left
 		prev := (*ast)(nil)
@@ -179,7 +179,7 @@ func (a *ast) rewrite_CALL_UINT8() {
 			prev = arg
 		}
 	}
-	a.next.rewrite_CALL_UINT8()
+	a.next.rewrite_EXEC_ARGV_UINT8()
 }
 
 //  Change generic binary operator nodes to type specific version
@@ -227,10 +227,26 @@ func (a *ast) rewrite_binop() {
 	a.next.rewrite_binop()
 }
 
+//  change an empty qualification to always true
+
+func (a *ast) rewrite_EXEC_NO_QUAL() {
+
+	if a == nil {
+		return
+	}
+	if a.yy_tok == EXEC && a.right == nil {
+		a.right = &ast{
+			yy_tok:	TRUE,
+		}
+	}
+	a.next.rewrite_EXEC_NO_QUAL()
+}
+
 func (root *ast) optimize() {
 
 	root.rewrite_binop()
 	root.rewrite_ARGV0()
 	root.rewrite_ARGV1()
-	root.rewrite_CALL_UINT8()
+	root.rewrite_EXEC_ARGV_UINT8()
+	root.rewrite_EXEC_NO_QUAL()
 }

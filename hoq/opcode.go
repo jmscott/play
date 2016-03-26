@@ -659,7 +659,7 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 	return out
 }
 
-func (flo *flow) call(
+func (flo *flow) exec(
 	cmd *command,
 	in_argv argv_chan,
 	in_when bool_chan,
@@ -697,7 +697,7 @@ func (flo *flow) call(
 			//  associated command
 
 			case when.bool:
-				uv.uint8 = cmd.call(argv.argv)
+				uv.uint8 = cmd.exec(argv.argv)
 
 			//  when clause is false
 
@@ -812,12 +812,15 @@ func init() {
 
 func (flo *flow) fanin_uint8(inx []uint8_chan) (out uint8_chan) {
 
+	if len(inx) == 0 {
+		panic("no channels for input to fanin_uint8")
+	}
 	out = make(uint8_chan)
 
 	go func() {
 		defer close(out)
 
-		in_count := len(inx)
+		inx_count := len(inx)
 
 		//  merge many uint8 channels onto a single uint8
 
@@ -852,18 +855,17 @@ func (flo *flow) fanin_uint8(inx []uint8_chan) (out uint8_chan) {
 			}()
 			return
 		}()
-		if len(inx) == 0 {
-			uint8_merge = nil
-		}
 
 		for flo = flo.get(); flo != nil; flo = flo.get() {
 
-			//  wait in_count uint8 to arrive
+			//  wait for len(inx) uint8 to arrive
 
 			exec_count := uint8(0)
-			for i := 0; i < in_count; i++ {
-
+			for i := 0; i < inx_count; i++ {
 				uv := <-uint8_merge
+				if uv == nil {
+					return
+				}
 				if uv.is_null == false {
 					exec_count++
 				}

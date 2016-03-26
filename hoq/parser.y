@@ -48,7 +48,7 @@ func init() {
 
 %token	COMMAND  XCOMMAND  EXIT_STATUS
 %token	PATH
-%token	CALL  WHEN
+%token	EXEC  WHEN
 %token	NAME
 %token	STRING
 %token	PARSE_ERROR
@@ -131,13 +131,13 @@ exp:
 		l := yylex.(*yyLexState)
 		cmd := $1
 
-		if cmd == l.call {
-			l.error("command cannot call itself: %s", cmd.name)
+		if cmd == l.exec {
+			l.error("command cannot exec itself: %s", cmd.name)
 			return 0
 		}
 
-		if l.called[cmd.name] == false {
-			l.error("command '%s' referenced before call", cmd.name)
+		if l.execed[cmd.name] == false {
+			l.error("command '%s' referenced before exec", cmd.name)
 			return 0
 		}
 		if cmd.depend_ref_count == 255 {
@@ -150,7 +150,7 @@ exp:
 
 		l.depends = append(
 				l.depends,
-				fmt.Sprintf("%s %s", l.call.name, $1.name),
+				fmt.Sprintf("%s %s", l.exec.name, $1.name),
 			)
 
 	  	$$ = yylex.(*yyLexState).scalar_node(EXIT_STATUS, reflect.Uint8)
@@ -327,24 +327,24 @@ statement:
 		}
 	  }
 	|
-	  CALL  XCOMMAND
+	  EXEC  XCOMMAND
 	  {
-		//  dependency graph needs command being called
+		//  dependency graph needs command being executed
 
-	  	yylex.(*yyLexState).call = $2
+	  	yylex.(*yyLexState).exec = $2
 	  }
 	  '('  argv  ')'  qualification  ';'
 	  {
 	  	l := yylex.(*yyLexState)
 		n := $2.name
-		if l.called[n] {
-			l.error("command '%s' called more than once", n)
+		if l.execed[n] {
+			l.error("command '%s' execed more than once", n)
 			return 0
 		}
-		l.called[n] = true
+		l.execed[n] = true
 
 	  	$$ = &ast{
-			yy_tok:		CALL,
+			yy_tok:		EXEC,
 			command:	$2,
 			left:		$5,
 			right:		$7,
@@ -355,7 +355,7 @@ statement:
 
 var keyword = map[string]int{
 	"and":			AND,
-	"call":			CALL,
+	"exec":			EXEC,
 	"command":		COMMAND,
 	"exit_status":		EXIT_STATUS,
 	"false":		FALSE,
@@ -389,16 +389,16 @@ type yyLexState struct {
 
 	commands			map[string]*command
 
-	//  track called commands
+	//  track execed commands
 
-	called				map[string]bool
+	execed				map[string]bool
 
 	//  track depends list used by tsort to build DAG of
-	//  call relationships.
+	//  exec relationships.
 
 	depends []string
 
-	call	*command
+	exec	*command
 }
 
 func (l *yyLexState) pushback(c rune) {
@@ -820,29 +820,29 @@ func parse(in io.Reader) (_ *ast, depend_order []string, err error) {
 		line_no:	1,
 		in:		bufio.NewReader(in),
 		commands:	make(map[string]*command),
-		called:		make(map[string]bool),
+		execed:		make(map[string]bool),
 	}
 
 	yyParse(l)
 
-	//  added unreferenced calls() to dependency list
+	//  added unreferenced exec ... () to dependency list
 
-	var find_unreferenced_CALL func(a *ast)
+	var find_unreferenced_EXEC func(a *ast)
 
-	find_unreferenced_CALL = func(a *ast) {
+	find_unreferenced_EXEC = func(a *ast) {
 
 		if a == nil {
 			return
 		}
-		if a.yy_tok == CALL && a.command.depend_ref_count == 0 {
+		if a.yy_tok == EXEC && a.command.depend_ref_count == 0 {
 			n := a.command.name
 			l.depends = append(l.depends, fmt.Sprintf("%s %s", n,n))
 		}
-		find_unreferenced_CALL(a.left)
-		find_unreferenced_CALL(a.right)
-		find_unreferenced_CALL(a.next)
+		find_unreferenced_EXEC(a.left)
+		find_unreferenced_EXEC(a.right)
+		find_unreferenced_EXEC(a.next)
 	}
-	find_unreferenced_CALL(l.ast_head)
+	find_unreferenced_EXEC(l.ast_head)
 
 	return l.ast_head, tsort(l.depends), l.err
 }

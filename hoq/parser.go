@@ -45,7 +45,7 @@ const COMMAND = 57347
 const XCOMMAND = 57348
 const EXIT_STATUS = 57349
 const PATH = 57350
-const CALL = 57351
+const EXEC = 57351
 const WHEN = 57352
 const NAME = 57353
 const STRING = 57354
@@ -81,7 +81,7 @@ var yyToknames = [...]string{
 	"XCOMMAND",
 	"EXIT_STATUS",
 	"PATH",
-	"CALL",
+	"EXEC",
 	"WHEN",
 	"NAME",
 	"STRING",
@@ -126,7 +126,7 @@ const yyInitialStackSize = 16
 //line parser.y:354
 var keyword = map[string]int{
 	"and":         AND,
-	"call":        CALL,
+	"exec":        EXEC,
 	"command":     COMMAND,
 	"exit_status": EXIT_STATUS,
 	"false":       FALSE,
@@ -160,16 +160,16 @@ type yyLexState struct {
 
 	commands map[string]*command
 
-	//  track called commands
+	//  track execed commands
 
-	called map[string]bool
+	execed map[string]bool
 
 	//  track depends list used by tsort to build DAG of
-	//  call relationships.
+	//  exec relationships.
 
 	depends []string
 
-	call *command
+	exec *command
 }
 
 func (l *yyLexState) pushback(c rune) {
@@ -590,29 +590,29 @@ func parse(in io.Reader) (_ *ast, depend_order []string, err error) {
 		line_no:  1,
 		in:       bufio.NewReader(in),
 		commands: make(map[string]*command),
-		called:   make(map[string]bool),
+		execed:   make(map[string]bool),
 	}
 
 	yyParse(l)
 
-	//  added unreferenced calls() to dependency list
+	//  added unreferenced exec ... () to dependency list
 
-	var find_unreferenced_CALL func(a *ast)
+	var find_unreferenced_EXEC func(a *ast)
 
-	find_unreferenced_CALL = func(a *ast) {
+	find_unreferenced_EXEC = func(a *ast) {
 
 		if a == nil {
 			return
 		}
-		if a.yy_tok == CALL && a.command.depend_ref_count == 0 {
+		if a.yy_tok == EXEC && a.command.depend_ref_count == 0 {
 			n := a.command.name
 			l.depends = append(l.depends, fmt.Sprintf("%s %s", n, n))
 		}
-		find_unreferenced_CALL(a.left)
-		find_unreferenced_CALL(a.right)
-		find_unreferenced_CALL(a.next)
+		find_unreferenced_EXEC(a.left)
+		find_unreferenced_EXEC(a.right)
+		find_unreferenced_EXEC(a.next)
 	}
-	find_unreferenced_CALL(l.ast_head)
+	find_unreferenced_EXEC(l.ast_head)
 
 	return l.ast_head, tsort(l.depends), l.err
 }
@@ -1110,13 +1110,13 @@ yydefault:
 			l := yylex.(*yyLexState)
 			cmd := yyDollar[1].command
 
-			if cmd == l.call {
-				l.error("command cannot call itself: %s", cmd.name)
+			if cmd == l.exec {
+				l.error("command cannot exec itself: %s", cmd.name)
 				return 0
 			}
 
-			if l.called[cmd.name] == false {
-				l.error("command '%s' referenced before call", cmd.name)
+			if l.execed[cmd.name] == false {
+				l.error("command '%s' referenced before exec", cmd.name)
 				return 0
 			}
 			if cmd.depend_ref_count == 255 {
@@ -1129,7 +1129,7 @@ yydefault:
 
 			l.depends = append(
 				l.depends,
-				fmt.Sprintf("%s %s", l.call.name, yyDollar[1].command.name),
+				fmt.Sprintf("%s %s", l.exec.name, yyDollar[1].command.name),
 			)
 
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(EXIT_STATUS, reflect.Uint8)
@@ -1310,9 +1310,9 @@ yydefault:
 		yyDollar = yyS[yypt-2 : yypt+1]
 		//line parser.y:331
 		{
-			//  dependency graph needs command being called
+			//  dependency graph needs command being executed
 
-			yylex.(*yyLexState).call = yyDollar[2].command
+			yylex.(*yyLexState).exec = yyDollar[2].command
 		}
 	case 25:
 		yyDollar = yyS[yypt-8 : yypt+1]
@@ -1320,14 +1320,14 @@ yydefault:
 		{
 			l := yylex.(*yyLexState)
 			n := yyDollar[2].command.name
-			if l.called[n] {
-				l.error("command '%s' called more than once", n)
+			if l.execed[n] {
+				l.error("command '%s' execed more than once", n)
 				return 0
 			}
-			l.called[n] = true
+			l.execed[n] = true
 
 			yyVAL.ast = &ast{
-				yy_tok:  CALL,
+				yy_tok:  EXEC,
 				command: yyDollar[2].command,
 				left:    yyDollar[5].ast,
 				right:   yyDollar[7].ast,

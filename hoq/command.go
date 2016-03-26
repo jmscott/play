@@ -14,7 +14,7 @@ type command struct {
 	depend_ref_count uint8
 }
 
-func (cmd *command) call(argv []string) uint8 {
+func (cmd *command) exec(argv []string) uint8 {
 
 	//  the first argument must be the command path
 

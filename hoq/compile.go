@@ -20,7 +20,7 @@ func (flo *flow) compile(
 		next_chan int
 	}
 
-	//  map the XCOMMAND name onto their CALL ast nodes
+	//  map the XCOMMAND name onto their EXEC ast nodes
 	//  later, we compile the nodes in DAG order
 
 	call2ast := make(map[string]*ast)
@@ -30,7 +30,7 @@ func (flo *flow) compile(
 		if a == nil {
 			return
 		}
-		if a.yy_tok == CALL {
+		if a.yy_tok == EXEC {
 			call2ast[a.command.name] = a
 		}
 		find_call(a.next)
@@ -43,10 +43,21 @@ func (flo *flow) compile(
 
 	//  map abstract syntax tree nodes to compiled channels
 
+	// ast node to bool channel
+
 	a2b := make(map[*ast]bool_chan)
-	a2u := make(map[*ast]uint8_chan)
+
+	// ast node to uint8 channel
+
+	a2u8 := make(map[*ast]uint8_chan)
+
+	//  ast node to string channel
+
 	a2s := make(map[*ast]string_chan)
-	a2a := make(map[*ast]argv_chan)
+
+	//  ast node to argv channel
+
+	a2av := make(map[*ast]argv_chan)
 
 	var compile func(a *ast)
 	compile = func(a *ast) {
@@ -64,13 +75,13 @@ func (flo *flow) compile(
 
 		switch a.yy_tok {
 		case UINT8:
-			a2u[a] = flo.const_uint8(a.uint8)
+			a2u8[a] = flo.const_uint8(a.uint8)
 		case STRING:
 			a2s[a] = flo.const_string(a.string)
 		case ARGV0:
-			a2a[a] = flo.argv0()
+			a2av[a] = flo.argv0()
 		case ARGV1:
-			a2a[a] = flo.argv1(a2s[a.left])
+			a2av[a] = flo.argv1(a2s[a.left])
 		case ARGV:
 			in := make([]string_chan, a.uint8)
 
@@ -86,19 +97,20 @@ func (flo *flow) compile(
 				in[i] = a2s[aa]
 				i++
 			}
-			a2a[a] = flo.argv(in)
+			a2av[a] = flo.argv(in)
 
-		//  call an os executable
-		case CALL:
+		//  call an executable program in the file system
+
+		case EXEC:
 			cmd := a.command
-			a2u[a] = flo.call(cmd, a2a[a.left], a2b[a.right])
+			a2u8[a] = flo.exec(cmd, a2av[a.left], a2b[a.right])
 
-			//  broadcast exit_status to all dependent calls
+			//  broadcast exit_status to interested go routines
 
 			command2uint8[cmd.name] =
 				&call_output{
 					out_chans: flo.fanout_uint8(
-						a2u[a],
+						a2u8[a],
 
 						//  each exit_status in
 						//  qualification plus
@@ -107,6 +119,9 @@ func (flo *flow) compile(
 
 						cmd.depend_ref_count+1,
 					),
+
+					//  slot 0 is the fan-in channel
+
 					next_chan: 1,
 				}
 
@@ -128,20 +143,20 @@ func (flo *flow) compile(
 				panic("missing command -> uint8 map for " +
 					a.command.name)
 			}
-			a2u[a] = cx.out_chans[cx.next_chan]
+			a2u8[a] = cx.out_chans[cx.next_chan]
 			cx.next_chan++
 			cc = 0
 
 		case EQ_UINT8:
 			a2b[a] = flo.uint8_rel2(
-				a2u[a.left],
-				a2u[a.right],
+				a2u8[a.left],
+				a2u8[a.right],
 				uint8_eq,
 			)
 		case NEQ_UINT8:
 			a2b[a] = flo.uint8_rel2(
-				a2u[a.left],
-				a2u[a.right],
+				a2u8[a.left],
+				a2u8[a.right],
 				uint8_neq,
 			)
 		case EQ_STRING:
@@ -170,7 +185,7 @@ func (flo *flow) compile(
 			)
 		case TO_STRING_UINT8:
 			a2s[a] = flo.to_string_uint8(
-				a2u[a.left],
+				a2u8[a.left],
 			)
 		default:
 			panic(fmt.Sprintf(
@@ -179,7 +194,7 @@ func (flo *flow) compile(
 		flo.confluent_count += cc
 	}
 
-	//  compile CALL nodes from least dependent to most dependent order
+	//  compile EXEC nodes from least dependent to most dependent order
 
 	for _, n := range depend_order {
 		compile(call2ast[n])
