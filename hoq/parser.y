@@ -1,6 +1,8 @@
 /*
  *  Synopsis:
  *	Yacc grammar for 'hoq' language.
+ *  Note:
+ *	Refactor lexical code into lex.go
  */
 %{
 package main
@@ -54,7 +56,7 @@ func init() {
 %token	PARSE_ERROR
 %token	EQ  EQ_UINT8  EQ_STRING  EQ_BOOL
 %token	NEQ  NEQ_UINT8  NEQ_STRING  NEQ_BOOL
-%token	DOLLAR  UINT8
+%token	DOLLAR  DOLLAR0  UINT8
 %token	ARGV  ARGV0  ARGV1
 %token	TO_STRING_UINT8
 %token	RE_MATCH  RE_NMATCH
@@ -73,7 +75,7 @@ func init() {
 
 %left	AND  OR
 %left	EQ  NEQ  RE_MATCH  RE_NMATCH
-%right	NOT
+%right	NOT  '$'
 
 %%
 
@@ -428,12 +430,6 @@ func (l *yyLexState) node(
 	}
 }
 
-func (l *yyLexState) op_name(yy_tok int) {
-	switch yy_tok {
-		
-	}
-}
-
 func (l *yyLexState) bool_node(yy_tok int, left, right *ast) (*ast) {
 
 	if left != nil && right != nil && left.go_type != right.go_type {
@@ -688,6 +684,7 @@ func (l *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
 }
 
 //  Lex() called by automatically generated yacc go code
+//  Note: consider changing to big switch{} statement.
 
 func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 

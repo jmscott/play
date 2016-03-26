@@ -187,6 +187,10 @@ func (flo *flow) compile(
 			a2s[a] = flo.to_string_uint8(
 				a2u8[a.left],
 			)
+		case DOLLAR:
+			a2s[a] = flo.dollar(a.uint8 - 1)
+		case DOLLAR0:
+			a2s[a] = flo.dollar0()
 		default:
 			panic(fmt.Sprintf(
 				"impossible yy_tok in ast: %d", a.yy_tok))
@@ -205,6 +209,7 @@ func (flo *flow) compile(
 	for n, cx := range command2uint8 {
 
 		//  cheap sanity test that all output channels have consumers
+
 		if cx.next_chan != len(cx.out_chans) {
 			panic(fmt.Sprintf(
 				"%s: expected %d consumed chans, got %d",
@@ -218,7 +223,7 @@ func (flo *flow) compile(
 		i++
 	}
 
-	//  fanin counts in confluent_count
+	//  fanin counts as one confluent_count
 
 	flo.confluent_count++
 

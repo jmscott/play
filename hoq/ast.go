@@ -242,6 +242,19 @@ func (a *ast) rewrite_EXEC_NO_QUAL() {
 	a.next.rewrite_EXEC_NO_QUAL()
 }
 
+func (a *ast) rewrite_DOLLAR0() {
+	
+	if a == nil {
+		return
+	}
+	if a.yy_tok == DOLLAR && a.uint8 == 0 {
+		a.yy_tok = DOLLAR0
+	}
+	a.left.rewrite_DOLLAR0()
+	a.right.rewrite_DOLLAR0()
+	a.next.rewrite_DOLLAR0()
+}
+
 func (root *ast) optimize() {
 
 	root.rewrite_binop()
@@ -249,4 +262,5 @@ func (root *ast) optimize() {
 	root.rewrite_ARGV1()
 	root.rewrite_EXEC_ARGV_UINT8()
 	root.rewrite_EXEC_NO_QUAL()
+	root.rewrite_DOLLAR0()
 }

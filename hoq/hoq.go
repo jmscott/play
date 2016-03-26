@@ -93,7 +93,7 @@ func main() {
 		line = strings.TrimRight(line, "\n")
 		flowB := &flow{
 			line:     line,
-			fields:	  strings.Split(line, "\t"),
+			fields:	  strings.SplitN(line, "\t", 255),
 			next:     make(chan flow_chan),
 			resolved: make(chan struct{}),
 		}

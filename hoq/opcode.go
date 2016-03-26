@@ -419,7 +419,7 @@ func (flo *flow) to_string_uint8(in uint8_chan) (out string_chan) {
 
 //  send $I, the i'th tab separated field of the input line, upstream
 
-func (flo *flow) dollar(i int) (out string_chan) {
+func (flo *flow) dollar(i uint8) (out string_chan) {
 
 	out = make(string_chan)
 
@@ -431,7 +431,7 @@ func (flo *flow) dollar(i int) (out string_chan) {
 			sv := &string_value{
 				flow: flo,
 			}
-			if i < len(flo.fields) {
+			if int(i) < len(flo.fields) {
 				sv.string = flo.fields[i]
 			} else {
 				sv.is_null = true
@@ -445,7 +445,7 @@ func (flo *flow) dollar(i int) (out string_chan) {
 
 //  send the $0, the entire line, upstream
 
-func (flo *flow) dollar0(i int) (out string_chan) {
+func (flo *flow) dollar0() (out string_chan) {
 
 	out = make(string_chan)
 
