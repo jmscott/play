@@ -48,29 +48,27 @@ func init() {
 
 //  need to lower case so not declared globally
 
-%token	COMMAND  XCOMMAND  EXIT_STATUS
+%token	COMMAND  EXIT_STATUS
 %token	PATH
 %token	EXEC  WHEN
-%token	NAME
-%token	STRING
 %token	PARSE_ERROR
 %token	EQ  EQ_UINT8  EQ_STRING  EQ_BOOL
 %token	NEQ  NEQ_UINT8  NEQ_STRING  NEQ_BOOL
-%token	DOLLAR  DOLLAR0  UINT8
+%token	DOLLAR0
 %token	ARGV  ARGV0  ARGV1
 %token	TO_STRING_UINT8
 %token	RE_MATCH  RE_NMATCH
 %token	NOT
 %token	TRUE  FALSE
 
-%type	<string>	STRING
-%type	<string>	NAME
+%token	<string>	STRING  NAME
+%token	<command>	XCOMMAND
+%token	<uint8>		UINT8
+%token	<ast>		DOLLAR
+
 %type	<ast>		statement  statement_list
 %type	<ast>		qualification 
 %type	<ast>		exp  exp_list
-%type	<command>	XCOMMAND
-%type	<ast>		DOLLAR
-%type	<uint8>		UINT8
 %type	<ast>		argv
 
 %left	AND  OR
