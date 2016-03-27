@@ -11,15 +11,21 @@ type command struct {
 	name             string
 	path             string
 	depend_ref_count uint8
+
+	//  static command line arguments
+	argv []string
 }
 
 func (cmd *command) exec(argv []string) uint8 {
 
-	xargv := make([]string, 1+len(argv))
+	argc := len(cmd.argv)
+	xargv := make([]string, 1+argc+len(argv))
 
 	//  the first argument must be the command path
 	xargv[0] = cmd.path
-	copy(xargv[1:], argv[:])
+
+	copy(xargv[1:], cmd.argv[:])
+	copy(xargv[1+argc:], argv)
 
 	//  the first argument must be the command path
 

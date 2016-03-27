@@ -35,6 +35,7 @@ func init() {
 	string
 	uint8
 	token	int
+	sarray	[]string
 
 	//  unix command execed by hoq
 	command		*command
@@ -70,6 +71,7 @@ func init() {
 %type	<ast>		qualification 
 %type	<ast>		exp  exp_list
 %type	<ast>		argv
+%type	<sarray>	string_list  command_argv
 
 %left	AND  OR
 %left	EQ  NEQ  RE_MATCH  RE_NMATCH
@@ -272,6 +274,19 @@ exp_list:
 	  }
 	;
 
+string_list:
+	  STRING
+	  {
+	  	$$ = make([]string, 1)
+		($$)[0] = $1
+	  }
+	|
+	  string_list  ','  STRING
+	  {
+	  	$$ = append($1, $3)
+	  }
+	;
+
 argv:
 	  /* empty */
 	  {
@@ -304,22 +319,35 @@ qualification:
 	  	$$ = yylex.(*yyLexState).bool_node(WHEN, $2, nil)
 	  }
 	;
+
+command_argv:
+	  /* empty */
+	  {
+	  	$$ = nil
+	  }
+	|
+	  '('  string_list ')'
+	  {
+	  	$$ = $2
+	  }
+	;
 	
 statement:
-	  COMMAND  NAME  '{'  
+	  COMMAND  NAME  command_argv  '{'
 	  	PATH  '='  STRING  ';'
 	  '}'
 	  {
 		l := yylex.(*yyLexState)
 
-		if $6 == "" {
+		if $7 == "" {
 			l.error("command %s: path is zero length", $2)
 			return 0
 		}
 
 		l.commands[$2] = &command{
 					name: $2,
-					path: $6,
+					path: $7,
+					argv: $3,
 				}
 		$$ = &ast{
 			yy_tok:		COMMAND,
@@ -355,6 +383,7 @@ statement:
 
 var keyword = map[string]int{
 	"and":			AND,
+	"argv":			ARGV,
 	"exec":			EXEC,
 	"command":		COMMAND,
 	"exit_status":		EXIT_STATUS,

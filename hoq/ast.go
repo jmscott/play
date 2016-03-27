@@ -39,8 +39,19 @@ func (a *ast) String() string {
 
 	switch a.yy_tok {
 	case COMMAND:
-		return fmt.Sprintf("COMMAND{%s, %s}",
-			a.command.name, a.command.path)
+		cmd := a.command
+		var argv string
+
+		for i, s := range cmd.argv {
+			if i > 0 {
+				argv += ", "
+			}
+			argv += "\"" + s + "\""
+		}
+		if len(argv) > 0 {
+			argv = "(" + argv + ")"
+		}
+		return fmt.Sprintf("COMMAND.%s%s->%s", cmd.name, argv, cmd.path)
 	case EXEC:
 		return fmt.Sprintf("EXEC.%s", a.command.name)
 	case STRING:
