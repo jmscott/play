@@ -597,6 +597,9 @@ func (l *yyLexState) scan_uint8(yylval *yySymType, c rune) (err error) {
  *  digits or '_' characters.  the word is mapped onto either a keyword, a
  *  command or the NAME token.  when the word is a NAME, then the 'string'
  *  field points the the actual name of the word.
+ *
+ *  Note:
+ *	Why ascii only?  unicode ought to suffice.
  */
 func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 	var eof bool
@@ -655,7 +658,8 @@ func (l *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
 
 	for c, eof, err = l.get();  !eof && err == nil;  c, eof, err = l.get(){
 
-		//  double quotes always clsoe the string
+		//  double quotes always close the string
+
 		if c == '"' {
 			yylval.string = s
 			return false, nil
@@ -705,7 +709,7 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 		goto PARSE_ERROR
 	}
 
-	//  scan a word
+	//  scan a word.  a words starts with a letter
 
 	if (unicode.IsLetter(c)) || c == '_' {
 		tok, err = l.scan_word(yylval, c)
@@ -715,7 +719,7 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 		return tok
 	}
 
-	//  scan an unsigned int 64
+	//  scan  a decimal uint8
 
 	if unicode.IsNumber(c) {
 		err = l.scan_uint8(yylval, c)
