@@ -236,14 +236,14 @@ func (a *ast) rewrite_EXEC_NO_QUAL() {
 	}
 	if a.yy_tok == EXEC && a.right == nil {
 		a.right = &ast{
-			yy_tok:	TRUE,
+			yy_tok: TRUE,
 		}
 	}
 	a.next.rewrite_EXEC_NO_QUAL()
 }
 
 func (a *ast) rewrite_DOLLAR0() {
-	
+
 	if a == nil {
 		return
 	}

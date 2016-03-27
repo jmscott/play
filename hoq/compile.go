@@ -7,7 +7,7 @@ import (
 func (flo *flow) compile(
 	ast_head *ast,
 	depend_order []string,
-) (uint8_chan) {
+) uint8_chan {
 
 	type call_output struct {
 
@@ -65,7 +65,7 @@ func (flo *flow) compile(
 			return
 		}
 
-		//  track number of confluing go routines compiled for 
+		//  track number of confluing go routines compiled for
 		//  each node
 		cc := 1
 
@@ -194,16 +194,16 @@ func (flo *flow) compile(
 			a2s[a] = flo.dollar0()
 		case RE_MATCH:
 			a2b[a] = flo.string_rel2(
-					re_match,
-					a2s[a.left],
-					a2s[a.right],
-				)
+				re_match,
+				a2s[a.left],
+				a2s[a.right],
+			)
 		case RE_NMATCH:
 			a2b[a] = flo.string_rel2(
-					re_nmatch,
-					a2s[a.left],
-					a2s[a.right],
-				)
+				re_nmatch,
+				a2s[a.left],
+				a2s[a.right],
+			)
 		default:
 			panic(fmt.Sprintf(
 				"impossible yy_tok in ast: %d", a.yy_tok))

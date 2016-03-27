@@ -2,10 +2,10 @@ package main
 
 import (
 	"bufio"
-	"io"
-	"strings"
 	"fmt"
+	"io"
 	"os"
+	"strings"
 	"syscall"
 )
 
@@ -85,7 +85,7 @@ func main() {
 	for {
 		line, err := in.ReadString('\n')
 		if err != nil {
-			if err == io.EOF {	//  has flowB resolved?
+			if err == io.EOF { //  has flowB resolved?
 				break
 			}
 			panic(err)
@@ -93,7 +93,7 @@ func main() {
 		line = strings.TrimRight(line, "\n")
 		flowB := &flow{
 			line:     line,
-			fields:	  strings.SplitN(line, "\t", 255),
+			fields:   strings.SplitN(line, "\t", 255),
 			next:     make(chan flow_chan),
 			resolved: make(chan struct{}),
 		}
