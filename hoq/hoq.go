@@ -11,6 +11,7 @@ import (
 
 var (
 	stderr = os.NewFile(uintptr(syscall.Stderr), "/dev/stderr")
+	stdout = os.NewFile(uintptr(syscall.Stdout), "/dev/stdout")
 )
 
 func die(format string, args ...interface{}) {

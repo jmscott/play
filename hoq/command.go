@@ -8,56 +8,67 @@ import (
 )
 
 type command struct {
+
+	//  name in command{} declaration in hoq source code
 	name             string
+
+	//  full path to program in file system
+
 	path             string
+
+	//  count of dependencies on exit status in compiled hoq code
+
 	depend_ref_count uint8
 
-	//  static command line arguments
-	argv []string
+	//  initial static argument vector for command line
+
+	init_argv []string
 }
 
 func (cmd *command) exec(argv []string) uint8 {
 
-	argc := len(cmd.argv)
+	argc := len(cmd.init_argv)
 	xargv := make([]string, 1+argc+len(argv))
 
 	//  the first argument must be the command path
 	xargv[0] = cmd.path
 
-	copy(xargv[1:], cmd.argv[:])
+	copy(xargv[1:], cmd.init_argv[:])
 	copy(xargv[1+argc:], argv)
 
 	//  the first argument must be the command path
 
-	exec := &exec.Cmd{
+	ex := &exec.Cmd{
 		Path: cmd.path,
 		Args: xargv,
 	}
 
 	//  run the command
 
-	output, err := exec.CombinedOutput()
+	output, err := ex.Output()
 
-	//  need to segregate stout from stderr
+	if err != nil {
+
+		//  Ignore wierd err upon of non-zero exit.
+		//  Signaled process panics(), which is not clean
+
+		if !strings.HasPrefix(err.Error(), "exit status ") {
+			panic(err)
+		}
+		if ee, ok := err.(*exec.ExitError);  ok {
+			stderr.Write(ee.Stderr)
+		}
+		err = nil
+	}
 
 	if len(output) > 0 {
-		_, err = stderr.Write(output)
+		_, err = stdout.Write(output)
 		if err != nil {
 			panic(err)
 		}
 	}
 
-	//  Ignore wierd err upon of non-zero exit codes or signal
-
-	if err != nil {
-		if !strings.HasPrefix(err.Error(), "exit status") &&
-			!strings.HasPrefix(err.Error(), "signal") {
-			panic(err)
-		}
-		err = nil
-	}
-
-	ps := exec.ProcessState
+	ps := ex.ProcessState
 	if ps == nil {
 		panic(fmt.Sprintf("%s: exec.Cmd.ProcessState is nil", cmd.name))
 	}
