@@ -338,6 +338,8 @@ command_argv:
 	;
 	
 statement:
+	  //  the {} block ought to be optional.
+
 	  COMMAND  NAME  command_argv  '{'
 	  	PATH  '='  STRING  ';'
 	  '}'
