@@ -138,8 +138,9 @@ func (flo *flow) wait_bool2(
 		next = op[(lv.rummy()<<4)|rv.rummy()]
 	}
 
-	//  drain unread channel.  eventually the qualification tree
-	//  will terminate early on logical or.
+	//  drain unread channel.
+	//
+	//  someday the qualification tree will terminate early on logical or.
 
 	if lv == nil {
 		<-in_left
