@@ -1336,9 +1336,9 @@ yydefault:
 			}
 
 			l.commands[yyDollar[2].string] = &command{
-				name: yyDollar[2].string,
-				path: yyDollar[7].string,
-				argv: yyDollar[3].sarray,
+				name:      yyDollar[2].string,
+				path:      yyDollar[7].string,
+				init_argv: yyDollar[3].sarray,
 			}
 			yyVAL.ast = &ast{
 				yy_tok:  COMMAND,

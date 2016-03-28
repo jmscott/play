@@ -350,9 +350,9 @@ statement:
 		}
 
 		l.commands[$2] = &command{
-					name: $2,
-					path: $7,
-					argv: $3,
+					name:		$2,
+					path:		$7,
+					init_argv:	$3,
 				}
 		$$ = &ast{
 			yy_tok:		COMMAND,

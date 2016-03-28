@@ -42,7 +42,7 @@ func (a *ast) String() string {
 		cmd := a.command
 		var argv string
 
-		for i, s := range cmd.argv {
+		for i, s := range cmd.init_argv {
 			if i > 0 {
 				argv += ", "
 			}
