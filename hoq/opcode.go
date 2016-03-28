@@ -283,7 +283,8 @@ func (flo *flow) uint8_rel2(
 	return out
 }
 
-//  implement either logical AND or OR, depending upon the state table
+//  implement logical AND, logical OR, boolean comparison ==, !=.
+//  using state table.
 
 func (flo *flow) bool_rel2(
 	op [137]rummy,
@@ -301,8 +302,8 @@ func (flo *flow) bool_rel2(
 
 			var b, is_null bool
 
-			//  Note: op can go away
 			rum := flo.wait_bool2(op, in_left, in_right)
+
 			switch rum {
 			case rum_NIL:
 				return
