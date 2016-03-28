@@ -204,6 +204,10 @@ func (flo *flow) compile(
 				a2s[a.left],
 				a2s[a.right],
 			)
+		case TO_STRING_BOOL:
+			a2s[a] = flo.to_string_bool(
+				a2b[a.left],
+			)
 		default:
 			panic(fmt.Sprintf(
 				"impossible yy_tok in ast: %d", a.yy_tok))

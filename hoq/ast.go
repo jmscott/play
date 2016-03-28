@@ -163,26 +163,31 @@ func (a *ast) rewrite_EXEC_ARGV_UINT8() {
 
 		for arg := argv.left; arg != nil; arg = arg.next {
 
-			if arg.yy_tok != UINT8 && arg.yy_tok != EXIT_STATUS {
+			var a *ast 
+
+			a = arg
+			switch arg.go_type {
+			case reflect.String:
 				prev = arg
 				continue
+			case reflect.Uint8:
+				arg = &ast{
+					yy_tok:  TO_STRING_UINT8,
+					go_type: reflect.String,
+				}
+			case reflect.Bool:
+				arg = &ast{
+					yy_tok:  TO_STRING_BOOL,
+					go_type: reflect.String,
+				}
+			default:
+				panic("impossible ast.go_type")
 			}
-			if arg.left != nil {
-				panic("expected scalar expression in argv")
-			}
-			uv := arg
-			arg = &ast{
-				yy_tok:  TO_STRING_UINT8,
-				go_type: reflect.String,
-				left:    uv,
-				next:    uv.next,
-			}
-			uv.next = nil
+			arg.left = a
+			arg.next = a.next
+			a.next = nil
 
-			//  point either head of argv or previous scala
-			//  to TO_STRING_UINT8 node
-
-			if argv.left == uv {
+			if argv.left == a {
 				argv.left = arg
 			} else {
 				prev.next = arg

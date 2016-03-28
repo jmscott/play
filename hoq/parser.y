@@ -57,7 +57,7 @@ func init() {
 %token	NEQ  NEQ_UINT8  NEQ_STRING  NEQ_BOOL
 %token	DOLLAR0
 %token	ARGV  ARGV0  ARGV1
-%token	TO_STRING_UINT8
+%token	TO_STRING_UINT8  TO_STRING_BOOL
 %token	RE_MATCH  RE_NMATCH
 %token	NOT
 %token	TRUE  FALSE

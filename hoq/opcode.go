@@ -416,6 +416,37 @@ func (flo *flow) to_string_uint8(in uint8_chan) (out string_chan) {
 	}()
 	return out
 }
+//  convert an uint8 to a string
+
+func (flo *flow) to_string_bool(in bool_chan) (out string_chan) {
+
+	out = make(string_chan)
+
+	go func() {
+		defer close(out)
+
+		for flo = flo.get(); flo != nil; flo = flo.get() {
+			bv := <-in
+			if bv == nil {
+				return
+			}
+
+			sv := &string_value{
+				flow:    flo,
+				is_null: bv.is_null,
+			}
+			if bv.is_null == false {
+				if bv.bool {
+					sv.string = "true"
+				} else {
+					sv.string = "false"
+				}
+			}
+			out <- sv
+		}
+	}()
+	return out
+}
 
 //  send $I, the i'th tab separated field of the input line, upstream
 
