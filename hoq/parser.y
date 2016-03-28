@@ -326,6 +326,11 @@ command_argv:
 	  	$$ = nil
 	  }
 	|
+	  '('  ')'
+	  {
+	  	$$ = nil
+	  }
+	|
 	  '('  string_list ')'
 	  {
 	  	$$ = $2
