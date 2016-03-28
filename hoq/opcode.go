@@ -416,6 +416,7 @@ func (flo *flow) to_string_uint8(in uint8_chan) (out string_chan) {
 	}()
 	return out
 }
+
 //  convert an uint8 to a string
 
 func (flo *flow) to_string_bool(in bool_chan) (out string_chan) {

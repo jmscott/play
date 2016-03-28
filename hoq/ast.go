@@ -163,7 +163,7 @@ func (a *ast) rewrite_EXEC_ARGV_UINT8() {
 
 		for arg := argv.left; arg != nil; arg = arg.next {
 
-			var a *ast 
+			var a *ast
 
 			a = arg
 			switch arg.go_type {
