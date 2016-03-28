@@ -157,7 +157,7 @@ func (flo *flow) wait_bool2(
 //  null.
 
 func (flo *flow) string_rel2(
-	rel func(left, right string) bool,
+	rel2 func(left, right string) bool,
 	in_left, in_right string_chan,
 ) (out bool_chan) {
 
@@ -209,7 +209,7 @@ func (flo *flow) string_rel2(
 			//  invoke the string operator on non-null values
 
 			if bv.is_null == false {
-				bv.bool = rel(left.string, right.string)
+				bv.bool = rel2(left.string, right.string)
 			}
 			out <- bv
 		}
@@ -218,12 +218,10 @@ func (flo *flow) string_rel2(
 	return out
 }
 
-//  compare two unsigned 8 bit values and send boolean answer upstream.
-//  if either uint8 operand is null (in SQL sense) then the boolean answer
-//  is null.
+//  map a uint8Xuint8 relation onto a boolean fault, honoring SQL null sematics.
 
 func (flo *flow) uint8_rel2(
-	rel [65536]bool,
+	rel2 [65536]bool,
 	in_left, in_right uint8_chan,
 ) (out bool_chan) {
 
@@ -275,7 +273,8 @@ func (flo *flow) uint8_rel2(
 			//  invoke the uint8 binary operator on non-null values
 
 			if bv.is_null == false {
-				bv.bool = rel[left.uint8<<8|right.uint8]
+
+				bv.bool = rel2[left.uint8<<8|right.uint8]
 			}
 			out <- bv
 		}
@@ -817,24 +816,26 @@ func (flo *flow) fanout_uint8(
 var uint8_eq = [256 * 256]bool{}
 var uint8_neq = [256 * 256]bool{}
 
-//  build the state tables for temporal logical AND and OR used by opcodes
-//  in method flow.bool2().
+//  build the state tables for boolean '==' and '!-' with sql semantics for null
 
 func init() {
 
-	//  initialize "equals" uint16 table by setting diagonals true
-
-	for i := uint16(0); i < 256; i++ {
-		uint8_eq[i*256+i] = true
+	for i := uint16(0);  i < 8;  i++ {
+		uint8_eq[i * i] = true
 	}
 
-	//  initialze "not equals" uint16 table by setting all but diagonal true
+	//  initialize all entries of uint8 "!=" operator as true.
 
-	for i := uint16(0); i < 256; i++ {
-		for j := uint16(0); j < 256; j++ {
-			uint8_neq[i<<8|j] = true
-		}
-		uint8_neq[i*256+i] = false
+	for i := range uint8_neq {
+		uint8_neq[i] = true
+	}
+
+	//  initialize diagonal entries of uint8 "!=" operator as "false" into
+	//  answer bool[65536]
+
+	for i := uint16(1); i <= 127; i <<= 1 {
+
+		uint8_neq[i << 8|i] = false
 	}
 }
 

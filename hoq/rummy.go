@@ -27,6 +27,8 @@ const (
 
 var and = [137]rummy{}
 var or = [137]rummy{}
+var bool_eq = [137]rummy{}
+var bool_neq = [137]rummy{}
 
 //  build the state tables for temporal logical AND and OR used by opcodes
 //  in method flow.bool2().
@@ -168,6 +170,136 @@ func init() {
 	or[lt|rum_WAIT] = rum_TRUE
 	or[lf|rum_WAIT] = rum_WAIT
 	or[ln|rum_WAIT] = rum_WAIT
+
+	//  SQL equality semantics with null,
+	//  applied in precedence listed below.
+	//
+	//  null == *		=>	null
+	//  * == null		=>	null
+	//  true == true	=>	true
+	//  false == false	=>	true
+	//  * == *		=>	false
+
+	//  left value is false
+
+	bool_eq[lf|rum_WAIT] = rum_WAIT
+	bool_eq[lf|rum_NULL] = rum_NULL
+	bool_eq[lf|rum_FALSE] = rum_TRUE
+	bool_eq[lf|rum_TRUE] = rum_FALSE
+
+	//  right value is false
+
+	bool_eq[lw|rum_FALSE] = rum_WAIT
+	bool_eq[ln|rum_FALSE] = rum_NULL
+	bool_eq[lt|rum_FALSE] = rum_FALSE
+	bool_eq[lf|rum_FALSE] = rum_TRUE
+
+	//  left value is true
+
+	bool_eq[lt|rum_WAIT] = rum_WAIT
+	bool_eq[lt|rum_NULL] = rum_NULL
+	bool_eq[lt|rum_FALSE] = rum_FALSE
+	bool_eq[lt|rum_TRUE] = rum_TRUE
+
+	//  right value is true
+
+	bool_eq[lw|rum_TRUE] = rum_WAIT
+	bool_eq[ln|rum_TRUE] = rum_NULL
+	bool_eq[lt|rum_TRUE] = rum_TRUE
+	bool_eq[lf|rum_TRUE] = rum_FALSE
+
+	//  left value is null
+
+	bool_eq[ln|rum_NULL] = rum_NULL
+	bool_eq[ln|rum_TRUE] = rum_NULL
+	bool_eq[ln|rum_FALSE] = rum_NULL
+	bool_eq[ln|rum_WAIT] = rum_NULL
+
+	//  right value is null
+
+	bool_eq[lt|rum_NULL] = rum_NULL
+	bool_eq[lf|rum_NULL] = rum_NULL
+	bool_eq[ln|rum_NULL] = rum_NULL
+	bool_eq[lw|rum_NULL] = rum_NULL
+
+	//  left value is waiting
+
+	bool_eq[lw|rum_NULL] = rum_NULL
+	bool_eq[lw|rum_TRUE] = rum_WAIT
+	bool_eq[lw|rum_FALSE] = rum_WAIT
+	bool_eq[lw|rum_WAIT] = rum_WAIT
+
+	//  right value is waiting
+
+	bool_eq[lt|rum_WAIT] = rum_WAIT
+	bool_eq[lf|rum_WAIT] = rum_WAIT
+	bool_eq[ln|rum_WAIT] = rum_NULL
+	bool_eq[lw|rum_WAIT] = rum_WAIT
+
+	//  SQL inequality semantics with null,
+	//  applied in precedence listed below.
+	//
+	//  null != *		=>	null
+	//  * != null		=>	null
+	//  true != false	=>	true
+	//  false != true	=>	true
+	//  * != *		=>	false
+
+	//  left value is false
+
+	bool_neq[lf|rum_WAIT] = rum_WAIT
+	bool_neq[lf|rum_NULL] = rum_NULL
+	bool_neq[lf|rum_FALSE] = rum_FALSE
+	bool_neq[lf|rum_TRUE] = rum_TRUE
+
+	//  right value is false
+
+	bool_neq[lw|rum_FALSE] = rum_WAIT
+	bool_neq[ln|rum_FALSE] = rum_NULL
+	bool_neq[lt|rum_FALSE] = rum_TRUE
+	bool_neq[lf|rum_FALSE] = rum_FALSE
+
+	//  left value is true
+
+	bool_neq[lt|rum_WAIT] = rum_WAIT
+	bool_neq[lt|rum_NULL] = rum_NULL
+	bool_neq[lt|rum_FALSE] = rum_TRUE
+	bool_neq[lt|rum_TRUE] = rum_FALSE
+
+	//  right value is true
+
+	bool_neq[lw|rum_TRUE] = rum_WAIT
+	bool_neq[ln|rum_TRUE] = rum_NULL
+	bool_neq[lt|rum_TRUE] = rum_FALSE
+	bool_neq[lf|rum_TRUE] = rum_TRUE
+
+	//  left value is null
+
+	bool_neq[ln|rum_NULL] = rum_NULL
+	bool_neq[ln|rum_TRUE] = rum_NULL
+	bool_neq[ln|rum_FALSE] = rum_NULL
+	bool_neq[ln|rum_WAIT] = rum_NULL
+
+	//  right value is null
+
+	bool_neq[lt|rum_NULL] = rum_NULL
+	bool_neq[lf|rum_NULL] = rum_NULL
+	bool_neq[ln|rum_NULL] = rum_NULL
+	bool_neq[lw|rum_NULL] = rum_NULL
+
+	//  left value is waiting
+
+	bool_neq[lw|rum_NULL] = rum_NULL
+	bool_neq[lw|rum_TRUE] = rum_WAIT
+	bool_neq[lw|rum_FALSE] = rum_WAIT
+	bool_neq[lw|rum_WAIT] = rum_WAIT
+
+	//  right value is waiting
+
+	bool_neq[lt|rum_WAIT] = rum_WAIT
+	bool_neq[lf|rum_WAIT] = rum_WAIT
+	bool_neq[ln|rum_WAIT] = rum_NULL
+	bool_neq[lw|rum_WAIT] = rum_WAIT
 }
 
 func (rum rummy) String() string {

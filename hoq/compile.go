@@ -210,6 +210,18 @@ func (flo *flow) compile(
 			a2s[a] = flo.to_string_bool(
 				a2b[a.left],
 			)
+		case EQ_BOOL:
+			a2b[a] = flo.bool_rel2(
+				bool_eq,
+				a2b[a.left],
+				a2b[a.right],
+			)
+		case NEQ_BOOL:
+			a2b[a] = flo.bool_rel2(
+				bool_neq,
+				a2b[a.left],
+				a2b[a.right],
+			)
 		default:
 			panic(fmt.Sprintf(
 				"impossible yy_tok in ast: %d", a.yy_tok))

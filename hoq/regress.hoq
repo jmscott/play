@@ -1,0 +1,23 @@
+#  say hello
+
+command regress_echo2 {
+	path = "regress-echo2";
+}
+
+exec regress_echo2(
+	"true == true", true == true,
+
+	"true == false", true == false,
+
+	"false == true", false == true,
+
+	"false == false", false == false,
+
+	"true != true", true != true,
+
+	"true != false", true != false,
+
+	"false != true", false != true,
+
+	"false != false", false != false
+);

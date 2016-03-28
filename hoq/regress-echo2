@@ -1,0 +1,13 @@
+#!/bin/bash
+#
+#  Usage:
+#	echo2 arg1 arg2 [arg3 arg4 ...] 
+#
+
+PROG=$(basename $0)
+
+while [ "$1" ]; do
+	echo "$PROG: $1: $2"
+	shift
+	shift
+done
