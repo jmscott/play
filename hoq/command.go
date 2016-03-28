@@ -36,13 +36,15 @@ func (cmd *command) exec(argv []string) uint8 {
 
 	//  run the command
 
-	output_256, err := exec.CombinedOutput()
+	output, err := exec.CombinedOutput()
 
-	//  any output from the process is a panicy error
+	//  need to segregate stout from stderr
 
-	if output_256 != nil && len(output_256) > 0 {
-		stderr.Write(output_256)
-		panic(fmt.Sprintf("%s: unexpected output", cmd.name))
+	if len(output) > 0 {
+		_, err = stderr.Write(output)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	//  Ignore wierd err upon of non-zero exit codes or signal
