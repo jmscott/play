@@ -79,7 +79,7 @@ type flow struct {
 
 type flow_chan chan *flow
 
-//  wait for all go routines to resolve
+//  wait for all go routines to resolve, then request and return another flow
 
 func (flo *flow) get() *flow {
 
@@ -138,11 +138,8 @@ func (flo *flow) wait_bool2(
 		next = op[(lv.rummy()<<4)|rv.rummy()]
 	}
 
-	//  drain unread channel.
-	//
-	//  Note: reading in the background causes a mutiple read of
-	//        same left/right hand side.  Why?  Shouldn't the flow
-	//	  block on current sequence until all qualfications converge?
+	//  drain unread channel.  eventually the qualification tree
+	//  will terminate early on logical or.
 
 	if lv == nil {
 		<-in_left
@@ -220,7 +217,7 @@ func (flo *flow) string_rel2(
 	return out
 }
 
-//  compare two unsigned 8 bit values and send boolean answer upstream
+//  compare two unsigned 8 bit values and send boolean answer upstream.
 //  if either uint8 operand is null (in SQL sense) then the boolean answer
 //  is null.
 
