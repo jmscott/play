@@ -9,7 +9,7 @@ func (flo *flow) compile(
 	depend_order []string,
 ) uint8_chan {
 
-	type call_output struct {
+	type exec_output struct {
 
 		//  fanout channels listening for exit_status of a process
 
@@ -20,26 +20,28 @@ func (flo *flow) compile(
 		next_chan int
 	}
 
-	//  map the XCOMMAND name onto their EXEC ast nodes
-	//  later, we compile the nodes in DAG order
+	//  map the COMMAND name onto their EXEC ast nodes.
+	//
+	//  later, we compile the nodes in order of directed acyclic graph,
+	//  using tsort command
 
-	call2ast := make(map[string]*ast)
-	var find_call func(*ast)
-	find_call = func(a *ast) {
+	exec2ast := make(map[string]*ast)
+	var find_EXEC func(*ast)
+	find_EXEC = func(a *ast) {
 
 		if a == nil {
 			return
 		}
 		if a.yy_tok == EXEC {
-			call2ast[a.command.name] = a
+			exec2ast[a.command.name] = a
 		}
-		find_call(a.next)
+		find_EXEC(a.next)
 	}
-	find_call(ast_head)
+	find_EXEC(ast_head)
 
 	//  map command output onto list of fanout channels
 
-	command2uint8 := make(map[string]*call_output)
+	cmd2out := make(map[string]*exec_output)
 
 	//  map abstract syntax tree nodes to compiled channels
 
@@ -100,7 +102,7 @@ func (flo *flow) compile(
 			}
 			a2av[a] = flo.argv(in)
 
-		//  call an executable program in the file system
+		//  execute a program in the file system
 
 		case EXEC:
 			cmd := a.command
@@ -108,8 +110,8 @@ func (flo *flow) compile(
 
 			//  broadcast exit_status to interested go routines
 
-			command2uint8[cmd.name] =
-				&call_output{
+			cmd2out[cmd.name] =
+				&exec_output{
 					out_chans: flo.fanout_uint8(
 						a2u8[a],
 
@@ -136,7 +138,7 @@ func (flo *flow) compile(
 			a2b[a] = a2b[a.left]
 			cc = 0
 		case EXIT_STATUS:
-			cx := command2uint8[a.command.name]
+			cx := cmd2out[a.command.name]
 
 			//  cheap sanity test
 
@@ -218,21 +220,22 @@ func (flo *flow) compile(
 	//  compile EXEC nodes from least dependent to most dependent order
 
 	for _, n := range depend_order {
-		compile(call2ast[n])
+		compile(exec2ast[n])
 	}
 
-	uint8_out := make([]uint8_chan, len(command2uint8))
+	//  map output of each exec.exit_status onto a fanin channel.
+	//  out_chan[0] is reserved for the fanin channel
+
+	uint8_out := make([]uint8_chan, len(cmd2out))
 	i := 0
-	for n, cx := range command2uint8 {
+	for n, cx := range cmd2out {
 
 		//  cheap sanity test that all output channels have consumers
 
 		if cx.next_chan != len(cx.out_chans) {
 			panic(fmt.Sprintf(
 				"%s: expected %d consumed chans, got %d",
-				n,
-				len(cx.out_chans),
-				cx.next_chan,
+					n, len(cx.out_chans), cx.next_chan,
 			))
 		}
 
