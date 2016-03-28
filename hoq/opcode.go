@@ -140,7 +140,7 @@ func (flo *flow) wait_bool2(
 
 	//  drain unread channel.
 	//
-	//  someday the qualification tree will terminate early on logical or.
+	//  someday the qualification tree will be pruned.
 
 	if lv == nil {
 		<-in_left

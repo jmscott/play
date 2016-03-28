@@ -1,7 +1,17 @@
+#
+#  Synopsis:
+#	Simple makefile to build hoq
+#
 GO=/usr/local/go/bin/go
-GOSRC=hoq.go compile.go tsort.go parser.go ast.go command.go logic.go opcode.go
 
-export GOPATH := /usr/local/go/bin
+GOSRC=hoq.go 								\
+	ast.go								\
+	command.go							\
+	compile.go							\
+	opcode.go							\
+	parser.go							\
+	rummy.go							\
+	tsort.go
 
 all: hoq
 
