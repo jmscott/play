@@ -6,15 +6,19 @@ import (
 )
 
 //  abstract syntax tree that represents the parsed program.
-//  all possible node values must be explicitly defined since go has no union
-//  types.
+//
+//  unfortunatly since go has no union type all possible node values must be
+//  explicitly defined.
 
 type ast struct {
 
-	//  lexical token automatically defined by yacc
+	//  lexical token, automatically defined by yacc.  see parser.go
+
 	yy_tok int
 
 	go_type reflect.Kind
+
+	//  approximate line number in the source file
 
 	line_no uint64
 
@@ -22,14 +26,17 @@ type ast struct {
 	uint8
 	bool
 
-	//  a unix command declaration
+	//  a unix command{} declaration
+
 	*command
 
-	//  child nodes
+	//  child nodes.  shoulld be {left, right}_child
+
 	left  *ast
 	right *ast
 
-	//  siblings
+	//  ought to next_sibling
+
 	next *ast
 }
 
@@ -51,7 +58,12 @@ func (a *ast) String() string {
 		if len(argv) > 0 {
 			argv = "(" + argv + ")"
 		}
-		return fmt.Sprintf("COMMAND.%s%s->%s", cmd.name, argv, cmd.path)
+		return fmt.Sprintf("COMMAND.%s%s->%s->%s",
+					cmd.name,
+					argv,
+					cmd.path,
+					cmd.full_path,
+			)
 	case EXEC:
 		return fmt.Sprintf("EXEC.%s", a.command.name)
 	case STRING:
@@ -243,7 +255,7 @@ func (a *ast) rewrite_binop() {
 	a.next.rewrite_binop()
 }
 
-//  change an empty qualification to always true
+//  rewrite an empty qualification in an exec() statement to always send true.
 
 func (a *ast) rewrite_EXEC_NO_QUAL() {
 
@@ -271,6 +283,20 @@ func (a *ast) rewrite_DOLLAR0() {
 	a.next.rewrite_DOLLAR0()
 }
 
+//  expand the relative Path to the COMMAND into the full path to the
+//  executable file
+
+func (a *ast) lookup_command_PATH() {
+
+	if a == nil {
+		return
+	}
+	if a.yy_tok == COMMAND {
+		a.command.lookup_full_path()
+	}
+	a.next.lookup_command_PATH()
+}
+
 func (root *ast) optimize() {
 
 	root.rewrite_binop()
@@ -279,4 +305,5 @@ func (root *ast) optimize() {
 	root.rewrite_EXEC_ARGV_UINT8()
 	root.rewrite_EXEC_NO_QUAL()
 	root.rewrite_DOLLAR0()
+	root.lookup_command_PATH()
 }

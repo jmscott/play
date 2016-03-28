@@ -12,9 +12,13 @@ type command struct {
 	//  name in command{} declaration in hoq source code
 	name             string
 
-	//  full path to program in file system
+	//  path to program in file system, typicall relative
 
 	path             string
+
+	//  full path to program in $PATH list, resolved at runtime
+
+	full_path	string
 
 	//  count of dependencies on exit status in compiled hoq code
 
@@ -39,7 +43,7 @@ func (cmd *command) exec(argv []string) uint8 {
 	//  the first argument must be the command path
 
 	ex := &exec.Cmd{
-		Path: cmd.path,
+		Path: cmd.full_path,
 		Args: xargv,
 	}
 
@@ -75,8 +79,16 @@ func (cmd *command) exec(argv []string) uint8 {
 
 	wait := ps.Sys().(syscall.WaitStatus)
 	ws := uint16(wait)
-	if wait.Signaled() {
-		panic(fmt.Sprintf("%s: process signaled: #%d", uint8(ws)))
-	}
+
+	// caught signal above in wierd error status
 	return uint8(ws >> 8)
+}
+
+func (cmd *command) lookup_full_path() {
+
+	fp, err := exec.LookPath(cmd.path)
+	if err != nil {
+		panic(err)
+	}
+	cmd.full_path = fp
 }
