@@ -12,12 +12,7 @@ import (
 	"syscall"
 )
 
-//  topologically sort the dependency graph or panic.
-//
-//  Note:
-//	do we need the tsort()?  is simply requiring a call()/query()
-//	to be defined before a reference to it's value sufficent
-//	to insure no cycles?
+//  invoke program tsort on an array of label pairs.
 
 func tsort(pairs []string) (depend_order []string) {
 
@@ -32,10 +27,9 @@ func tsort(pairs []string) (depend_order []string) {
 
 	out := bufio.NewWriter(tmp)
 
-	/*
-	 *  Write the vertices of the dependency graph built by the attribute
-	 *  references in either the argv or the 'when' clause.
-	 */
+	//  Write the vertices of the dependency graph built by the attribute
+	//  references in either the argv or the 'when' clause.
+
 	for _, v := range pairs {
 		fmt.Fprintf(out, "%s\n", v)
 	}
