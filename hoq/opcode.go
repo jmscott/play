@@ -274,7 +274,8 @@ func (flo *flow) uint8_rel2(
 
 			if bv.is_null == false {
 
-				bv.bool = rel2[left.uint8<<8|right.uint8]
+				bv.bool = rel2[(uint16(left.uint8)<<8) |
+						uint16(right.uint8)]
 			}
 			out <- bv
 		}
@@ -820,8 +821,10 @@ var uint8_neq = [256 * 256]bool{}
 
 func init() {
 
-	for i := uint16(0);  i < 8;  i++ {
-		uint8_eq[i * i] = true
+	//  initialize diagonal of '==' operator to true.
+
+	for i := uint16(0);  i <= 255;  i++ {
+		uint8_eq[i << 8 | i] = true
 	}
 
 	//  initialize all entries of uint8 "!=" operator as true.
@@ -830,12 +833,10 @@ func init() {
 		uint8_neq[i] = true
 	}
 
-	//  initialize diagonal entries of uint8 "!=" operator as "false" into
-	//  answer bool[65536]
+	//  initialize diagonal of '!=' operator to false.
 
-	for i := uint16(1); i <= 127; i <<= 1 {
-
-		uint8_neq[i << 8|i] = false
+	for i := uint16(0);  i <= 255;  i++ {
+		uint8_neq[i << 8 | i] = false
 	}
 }
 
