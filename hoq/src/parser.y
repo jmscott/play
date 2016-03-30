@@ -860,7 +860,7 @@ func parse(in io.Reader) (_ *ast, depend_order []string, err error) {
 
 	yyParse(l)
 
-	//  added unreferenced exec ... () to dependency list
+	//  add unqualified exec ... () to dependency list
 
 	var find_unreferenced_EXEC func(a *ast)
 
