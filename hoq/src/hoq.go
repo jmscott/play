@@ -1,3 +1,5 @@
+//  main() for command line hoq interpreter
+
 package main
 
 import (
