@@ -1,3 +1,5 @@
+//  abstract syntax tree, the output of yacc in parser.y
+
 package main
 
 import (
