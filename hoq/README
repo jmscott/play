@@ -1,15 +1,5 @@
-Our talk discusses a golang program named "hoq", which means 
-higher order query.
+a toy interpreter in golang using the yacc tool in go core.  The interpreter is named hoq, which means Higher Order Query. The hoq query language allows triggering the firing  of unix processes by matching text patterns seen on an input stream, as well as qualifying on the process exit codes.
 
-The "hoq" program is a nascent vehicle for manifesting the abstract
-concepts of "Communicating Sequential Processes" by Tony Hoare
-(a godfather of golang) into code.
+The name hoq is a nod to a teaching interpreter named hoc (Higher Order Calculator), richly  described in the well known book titled "The Unix Programming Environment"  by Rob Pike and Brian Kernighan.
 
-The name "hoq" is a nod to a similiar program named "hoc", richly 
-described in the well known book titled "The Unix Programming Environment"
-by Rob Pike and Brian Kernighan.
-
-However, the code of "hoq" diverges from Pike's "hoc", which is a traditional 
-stack machine, by flowing data bottom up to the operands of the hoq "machine" 
-via channels instead of sequentially pushing and popping. The "hoq" model allows 
-easy concurrency of composed operands.
+However, the code of hoq diverges from Pike's hoc, which is a traditional  stack machine, by flowing data bottom up to the operands of the hoq "machine"  via channels instead of sequentially pushing and popping on a stack.  This model allows both  easy concurrency across cooperating processes and adding new operators to the language.
