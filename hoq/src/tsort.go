@@ -1,3 +1,6 @@
+//  topologically sort dependency pairs beteen processes in hoq qualifications
+//  use gnu 'tsort' program to sort.
+
 package main
 
 import (
