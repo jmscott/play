@@ -1,3 +1,5 @@
+//  execute commands in (unix) file system and wait for output and exit status
+
 package main
 
 import (
