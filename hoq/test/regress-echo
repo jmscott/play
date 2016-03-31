@@ -3,7 +3,7 @@
 #  Synopsis:
 #	Echo arguments two at a time
 #  Usage:
-#	regress-echo arg1 arg2 [arg3 arg4 ...] 
+#	regress-echo arg1 arg2 [arg3 arg4 [arg5 arg6] ...]
 #
 
 PROG=$(basename $0)
