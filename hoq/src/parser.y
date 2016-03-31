@@ -1,9 +1,5 @@
-/*
- *  Synopsis:
- *	Yacc grammar for 'hoq' language.
- *  Note:
- *	Refactor lexical code into lex.go
- */
+//  Yacc grammar for 'hoq' language.
+
 %{
 package main
 
