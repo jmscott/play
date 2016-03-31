@@ -12,6 +12,7 @@ import (
 type command struct {
 
 	//  name in command{} declaration in hoq source code
+
 	name             string
 
 	//  path to program in file system, typicall relative
@@ -31,7 +32,10 @@ type command struct {
 	init_argv []string
 }
 
-func (cmd *command) exec(argv []string) uint8 {
+//  exec() a unix command, wait for exit status and write output to
+//  standard  out and standard error.
+
+func (cmd *command) exec(argv []string) (exit_status uint8) {
 
 	argc := len(cmd.init_argv)
 	xargv := make([]string, 1+argc+len(argv))
@@ -67,12 +71,16 @@ func (cmd *command) exec(argv []string) uint8 {
 		err = nil
 	}
 
+	//  write standard output
+
 	if len(output) > 0 {
 		_, err = stdout.Write(output)
 		if err != nil {
 			panic(err)
 		}
 	}
+
+	//  assemble exit status of process
 
 	ps := ex.ProcessState
 	if ps == nil {
@@ -82,9 +90,13 @@ func (cmd *command) exec(argv []string) uint8 {
 	wait := ps.Sys().(syscall.WaitStatus)
 	ws := uint16(wait)
 
-	// caught signal above in wierd error status
+	// already caught signal above in wierd error status
+
 	return uint8(ws >> 8)
 }
+
+//  map a relative path of the executable file to the full path
+//  in $PATH variable
 
 func (cmd *command) lookup_full_path() {
 
