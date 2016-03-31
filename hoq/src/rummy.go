@@ -1,5 +1,4 @@
 //  A rummy describes temporal + tri-state logic: true, false, null, waiting
-//
 //  There are known knowns, there are known unknowns ...
 
 package main
