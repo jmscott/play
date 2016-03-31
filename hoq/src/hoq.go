@@ -113,8 +113,7 @@ func main() {
 		}
 
 		//  wait for flowB to finish
-		uv := <-uc
-		if uv == nil {
+		if <-uc == nil {
 			break
 		}
 		close(flowB.resolved)
