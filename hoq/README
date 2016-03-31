@@ -1,5 +1,15 @@
-a toy interpreter in golang using the yacc tool in go core.  The interpreter is named hoq, which means Higher Order Query. The hoq query language allows triggering the firing  of unix processes by matching text patterns seen on an input stream, as well as qualifying on the process exit codes.
+Here is toy interpreter in golang using the yacc tool in go core.
+The interpreter is named hoq, which means Higher Order Query.
+The hoq query language allows triggering the firing  of unix processes by
+matching text patterns seen on an input stream, as well as qualifying on the
+process exit codes.
 
-The name hoq is a nod to a teaching interpreter named hoc (Higher Order Calculator), richly  described in the well known book titled "The Unix Programming Environment"  by Rob Pike and Brian Kernighan.
+The name hoq is a nod to a teaching interpreter named hoc 
+(Higher Order Calculator), richly  described in the well known book titled
+"The Unix Programming Environment"  by Rob Pike and Brian Kernighan.
 
-However, the code of hoq diverges from Pike's hoc, which is a traditional  stack machine, by flowing data bottom up to the operands of the hoq "machine"  via channels instead of sequentially pushing and popping on a stack.  This model allows both  easy concurrency across cooperating processes and adding new operators to the language.
+However, the code of hoq diverges from Pike's hoc, which is a traditional
+stack machine, by flowing data bottom up to the operands of the hoq "machine"
+via channels instead of sequentially pushing and popping on a stack.
+This model allows both  easy concurrency across cooperating processes and
+adding new operators to the language.
