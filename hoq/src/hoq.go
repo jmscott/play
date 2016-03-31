@@ -124,14 +124,18 @@ func main() {
 		}
 
 		//  wait for flowB to finish
+
 		if <-uc == nil {
 			break
 		}
 
-		//  broadcast to all waiting nodes in flowb
+		//  broadcast to all waiting nodes in flowb by closing
+		//  the resolved channel, which all nodes listen on.
+
 		close(flowB.resolved)
 
-		//  flow b becomes new flowA
+		//  and so the wheel turns.
+
 		flowA = flowB
 	}
 
