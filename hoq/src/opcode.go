@@ -1,3 +1,4 @@
+//  welcome to the machine
 package main
 
 import (
