@@ -1,4 +1,4 @@
-Here is toy interpreter in golang using the yacc tool in go core.
+Here is a toy interpreter in golang using the yacc tool in go core.
 The interpreter is named hoq, which means Higher Order Query.
 The hoq query language allows triggering the firing  of unix processes by
 matching text patterns seen on an input stream, as well as qualifying on the
