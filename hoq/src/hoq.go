@@ -80,7 +80,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	//  set up first flow compile all ast nodes into a single flow graph.
+	//  set up first flow to compile all ast nodes into a single flow graph.
 	//  each flow terminates by sending a count of the fired unix processes.
 
 	flowA := &flow{
