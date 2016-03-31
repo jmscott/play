@@ -123,7 +123,7 @@ func main() {
 			flowB.confluent_count++
 		}
 
-		//  wait for flowB to finish
+		//  wait for flowB to finish, exiting on nil
 
 		if <-uc == nil {
 			break
