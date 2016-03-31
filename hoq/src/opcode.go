@@ -219,7 +219,8 @@ func (flo *flow) string_rel2(
 	return out
 }
 
-//  map a uint8Xuint8 relation onto a boolean fault, honoring SQL null sematics.
+//  map two uint8 channels (relation) onto a boolean output derived from
+//  a lookup table, honouring null SQL semantics
 
 func (flo *flow) uint8_rel2(
 	rel2 [65536]bool,
@@ -286,7 +287,7 @@ func (flo *flow) uint8_rel2(
 }
 
 //  implement logical AND, logical OR, boolean comparison ==, !=.
-//  using state table.
+//  using a lookup table.
 
 func (flo *flow) bool_rel2(
 	op [137]rummy,
@@ -324,7 +325,7 @@ func (flo *flow) bool_rel2(
 	return out
 }
 
-//  send a string constant
+//  send a string constant upstream
 
 func (flo *flow) const_string(s string) (out string_chan) {
 
@@ -344,7 +345,7 @@ func (flo *flow) const_string(s string) (out string_chan) {
 	return out
 }
 
-//  send a uint8 constant
+//  send a uint8 constant upstream
 
 func (flo *flow) const_uint8(ui uint8) (out uint8_chan) {
 
@@ -365,7 +366,7 @@ func (flo *flow) const_uint8(ui uint8) (out uint8_chan) {
 	return out
 }
 
-//  send a bool constant
+//  send a bool constant upstream
 
 func (flo *flow) const_bool(b bool) (out bool_chan) {
 
@@ -386,7 +387,7 @@ func (flo *flow) const_bool(b bool) (out bool_chan) {
 	return out
 }
 
-//  convert an uint8 to a string
+//  convert an uint8 to a string and send upstream
 
 func (flo *flow) to_string_uint8(in uint8_chan) (out string_chan) {
 
@@ -417,7 +418,7 @@ func (flo *flow) to_string_uint8(in uint8_chan) (out string_chan) {
 	return out
 }
 
-//  convert an uint8 to a string
+//  convert a bool to a string and send upstream
 
 func (flo *flow) to_string_bool(in bool_chan) (out string_chan) {
 
@@ -449,7 +450,7 @@ func (flo *flow) to_string_bool(in bool_chan) (out string_chan) {
 	return out
 }
 
-//  send $I, the i'th tab separated field of the input line, upstream
+//  send $I 'th field of standard input text upstream
 
 func (flo *flow) dollar(i uint8) (out string_chan) {
 
@@ -475,7 +476,7 @@ func (flo *flow) dollar(i uint8) (out string_chan) {
 	return out
 }
 
-//  send the $0, the entire line, upstream
+//  send the $0, the entire line, upstream as a string
 
 func (flo *flow) dollar0() (out string_chan) {
 
@@ -496,8 +497,8 @@ func (flo *flow) dollar0() (out string_chan) {
 	return out
 }
 
-//  a rule fires if and only if both the argv[] exist and
-//  the "when" clause is true.
+//  a rule fires if and only if both the argv[] exist (non null) and
+//  the "when" clause is boolean true.
 
 func (flo *flow) wait_fire(
 	in_argv argv_chan,
@@ -524,7 +525,8 @@ func (flo *flow) wait_fire(
 	return
 }
 
-//  empty non-null argv sends immediatly
+//  send a constant empty, non-null argv upstream
+//  used in an unqualified "when" clause.
 
 func (flo *flow) argv0() (out argv_chan) {
 
@@ -547,7 +549,8 @@ func (flo *flow) argv0() (out argv_chan) {
 	return out
 }
 
-//  optimized opcode for single string argument
+//  send a single string upstring as argv[1].  much quicker than fanin
+//  in argv(), below.
 
 func (flo *flow) argv1(in string_chan) (out argv_chan) {
 
@@ -691,6 +694,8 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 	return out
 }
 
+//  exec() a unix process if the "when" clause is boolean true.
+
 func (flo *flow) exec(
 	cmd *command,
 	in_argv argv_chan,
@@ -743,6 +748,8 @@ func (flo *flow) exec(
 	return out
 }
 
+// helper function to match a regular expression.  see compile.go/
+
 func re_match(sample, re string) bool {
 
 	matched, err := regexp.MatchString(re, sample)
@@ -751,6 +758,8 @@ func re_match(sample, re string) bool {
 	}
 	return matched
 }
+
+// helper function to negatively match a regular expression.  see compile.go.
 
 func re_nmatch(sample, re string) bool {
 
@@ -761,10 +770,15 @@ func re_nmatch(sample, re string) bool {
 	return !matched
 }
 
+// helper function to equality comparison on two strings.  see compile.go.
+
 func string_eq(s1, s2 string) bool {
 
 	return s1 == s2
 }
+
+// helper function to negative equality comparison on two strings.
+// see compile.go
 
 func string_neq(s1, s2 string) bool {
 
