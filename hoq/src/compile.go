@@ -1,3 +1,5 @@
+//  compile an ast into a flow graph of nodes
+
 package main
 
 import (
