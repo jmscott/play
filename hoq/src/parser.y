@@ -1,4 +1,7 @@
 //  Yacc grammar for 'hoq' language.
+//  Enter the dragon:
+//
+//	http://www.amazon.com/Compilers-Principles-Techniques-Tools-2nd/dp/0321486811
 
 %{
 package main
@@ -27,6 +30,8 @@ func init() {
 
 %}
 
+//  go values associated with seen patterns during parsing
+
 %union {
 	string
 	uint8
@@ -34,16 +39,19 @@ func init() {
 	sarray	[]string
 
 	//  unix command execed by hoq
+
 	command		*command
 
 	//  abstract syntax tree
+
 	ast		*ast
 }
 
 //  lowest numbered yytoken.  must be first in list.
 %token	__MIN_YYTOK
 
-//  need to lower case so not declared globally
+//  tokens are integers, returned by yyLex and stored in nodes of abstract
+//  syntax tree.
 
 %token	COMMAND  EXIT_STATUS
 %token	PATH
@@ -63,11 +71,15 @@ func init() {
 %token	<uint8>		UINT8
 %token	<ast>		DOLLAR
 
+//  complex patterns seen in input stream produced by yyLex.
+
 %type	<ast>		statement  statement_list
 %type	<ast>		qualification 
 %type	<ast>		exp  exp_list
 %type	<ast>		argv
 %type	<sarray>	string_list  command_argv
+
+//  precedence rules for reducing patterns in input stream
 
 %left	AND  OR
 %left	EQ  NEQ  RE_MATCH  RE_NMATCH
