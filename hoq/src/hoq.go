@@ -48,14 +48,14 @@ func main() {
 		die("wrong number of arguments: %d", len(os.Args))
 	}
 
-	//  open the source file
+	//  open the hoq source file
 
 	src, err := os.Open(source_path)
 	if err != nil {
 		die("%s", err)
 	}
 
-	//  parse the standard input into an abstract syntax tree
+	//  let YACC parse the standard input into an abstract syntax tree
 
 	ast, depend_order, err := parse(src)
 	if err != nil {
@@ -64,7 +64,11 @@ func main() {
 	}
 	src.Close()
 
+	//  rewrite nodes in the tree for type casts and trivial optimizations.
+
 	ast.rewrite()
+
+	//  are we just dumping the syntax tree for debugging?
 
 	if dump {
 		ast.dump()
@@ -76,13 +80,17 @@ func main() {
 		os.Exit(0)
 	}
 
+	//  set up first flow for comping ast nodes into a flow graph.
+	//  each flow terminat3s by sending a count of the fired unix processes.
+
 	flowA := &flow{
 		next:     make(chan flow_chan),
 		resolved: make(chan struct{}),
 	}
-
 	uc := flowA.compile(ast, depend_order)
 	close(flowA.resolved)
+
+	//  start pumping standard input to the flow graph of nodes
 
 	in := bufio.NewReader(os.Stdin)
 	for {
@@ -93,6 +101,9 @@ func main() {
 			}
 			panic(err)
 		}
+
+		//  trim and split the input line of text
+
 		line = strings.TrimRight(line, "\n")
 		flowB := &flow{
 			line:     line,
@@ -116,7 +127,11 @@ func main() {
 		if <-uc == nil {
 			break
 		}
+
+		//  broadcast to all waiting nodes in flowb
 		close(flowB.resolved)
+
+		//  flow b becomes new flowA
 		flowA = flowB
 	}
 
