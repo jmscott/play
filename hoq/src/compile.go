@@ -1,4 +1,4 @@
-//  compile an ast into a flow graph of nodes
+//  compile an abstract syntax tree into a flow graph of nodes
 
 package main
 
