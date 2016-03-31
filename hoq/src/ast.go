@@ -297,7 +297,7 @@ func (a *ast) lookup_command_PATH() {
 	a.next.lookup_command_PATH()
 }
 
-func (root *ast) optimize() {
+func (root *ast) rewrite() {
 
 	root.rewrite_binop()
 	root.rewrite_ARGV0()

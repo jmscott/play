@@ -62,7 +62,7 @@ func main() {
 	}
 	src.Close()
 
-	ast.optimize()
+	ast.rewrite()
 
 	if dump {
 		ast.dump()
