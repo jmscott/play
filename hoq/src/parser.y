@@ -868,10 +868,9 @@ func parse(in io.Reader) (_ *ast, depend_order []string, err error) {
 
 	yyParse(l)
 
-	//  add unqualified exec ... () to dependency list
+	//  add unqualified exec ... () statements to the dependency list.
 
 	var find_unreferenced_EXEC func(a *ast)
-
 	find_unreferenced_EXEC = func(a *ast) {
 
 		if a == nil {
