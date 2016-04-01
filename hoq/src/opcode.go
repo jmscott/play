@@ -747,44 +747,6 @@ func (flo *flow) exec(
 	}()
 	return out
 }
-
-// helper function to match a regular expression.  see compile.go/
-
-func re_match(sample, re string) bool {
-
-	matched, err := regexp.MatchString(re, sample)
-	if err != nil {
-		panic(err)
-	}
-	return matched
-}
-
-// helper function to negatively match a regular expression.  see compile.go.
-
-func re_nmatch(sample, re string) bool {
-
-	matched, err := regexp.MatchString(re, sample)
-	if err != nil {
-		panic(err)
-	}
-	return !matched
-}
-
-// helper function to equality comparison on two strings.  see compile.go.
-
-func string_eq(s1, s2 string) bool {
-
-	return s1 == s2
-}
-
-// helper function to negative equality comparison on two strings.
-// see compile.go
-
-func string_neq(s1, s2 string) bool {
-
-	return s1 == s2
-}
-
 //  broadcast a uint8 to many uint8 listeners
 //
 //  Note:
@@ -828,33 +790,6 @@ func (flo *flow) fanout_uint8(
 	}()
 	return out
 }
-
-var uint8_eq = [256 * 256]bool{}
-var uint8_neq = [256 * 256]bool{}
-
-//  build the state tables for boolean '==' and '!-' with sql semantics for null
-
-func init() {
-
-	//  initialize diagonal of '==' operator to true.
-
-	for i := uint16(0);  i <= 255;  i++ {
-		uint8_eq[i << 8 | i] = true
-	}
-
-	//  initialize all entries of uint8 "!=" operator as true.
-
-	for i := range uint8_neq {
-		uint8_neq[i] = true
-	}
-
-	//  initialize diagonal of '!=' operator to false.
-
-	for i := uint16(0);  i <= 255;  i++ {
-		uint8_neq[i << 8 | i] = false
-	}
-}
-
 //  Reduce all the CALL statements into single uint8, which is the count
 //  of the programs that actuall fired
 
@@ -926,3 +861,68 @@ func (flo *flow) fanin_uint8(inx []uint8_chan) (out uint8_chan) {
 	}()
 	return out
 }
+
+// helper function to match a regular expression.  see compile.go/
+
+func re_match(sample, re string) bool {
+
+	matched, err := regexp.MatchString(re, sample)
+	if err != nil {
+		panic(err)
+	}
+	return matched
+}
+
+// helper function to negatively match a regular expression.  see compile.go.
+
+func re_nmatch(sample, re string) bool {
+
+	matched, err := regexp.MatchString(re, sample)
+	if err != nil {
+		panic(err)
+	}
+	return !matched
+}
+
+// helper function to equality comparison on two strings.  see compile.go.
+
+func string_eq(s1, s2 string) bool {
+
+	return s1 == s2
+}
+
+// helper function to negative equality comparison on two strings.
+// see compile.go
+
+func string_neq(s1, s2 string) bool {
+
+	return s1 == s2
+}
+
+
+var uint8_eq = [256 * 256]bool{}
+var uint8_neq = [256 * 256]bool{}
+
+//  build the state tables for boolean '==' and '!-' with sql semantics for null
+
+func init() {
+
+	//  initialize diagonal of '==' operator to true.
+
+	for i := uint16(0);  i <= 255;  i++ {
+		uint8_eq[i << 8 | i] = true
+	}
+
+	//  initialize all entries of uint8 "!=" operator as true.
+
+	for i := range uint8_neq {
+		uint8_neq[i] = true
+	}
+
+	//  initialize diagonal of '!=' operator to false.
+
+	for i := uint16(0);  i <= 255;  i++ {
+		uint8_neq[i << 8 | i] = false
+	}
+}
+
