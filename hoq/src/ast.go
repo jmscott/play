@@ -60,12 +60,20 @@ func (a *ast) String() string {
 		if len(argv) > 0 {
 			argv = "(" + argv + ")"
 		}
+		if cmd.full_path == "" {
+			return fmt.Sprintf("COMMAND.%s%s->%s",
+						cmd.name,
+						argv,
+						cmd.path,
+				)
+			}
 		return fmt.Sprintf("COMMAND.%s%s->%s->%s",
 					cmd.name,
 					argv,
 					cmd.path,
 					cmd.full_path,
 			)
+
 	case EXEC:
 		return fmt.Sprintf("EXEC.%s", a.command.name)
 	case STRING:
@@ -299,7 +307,7 @@ func (a *ast) lookup_command_PATH() {
 	a.next.lookup_command_PATH()
 }
 
-func (root *ast) rewrite() {
+func (root *ast) rewrite(dumping bool) {
 
 	root.rewrite_binop()
 	root.rewrite_ARGV0()
@@ -307,5 +315,7 @@ func (root *ast) rewrite() {
 	root.rewrite_EXEC_ARGV_UINT8()
 	root.rewrite_EXEC_NO_QUAL()
 	root.rewrite_DOLLAR0()
-	root.lookup_command_PATH()
+	if !dumping {
+		root.lookup_command_PATH()
+	}
 }

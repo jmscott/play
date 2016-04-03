@@ -66,7 +66,7 @@ func main() {
 
 	//  rewrite nodes in the tree for type casts and trivial optimizations.
 
-	ast.rewrite()
+	ast.rewrite(dump)
 
 	//  are we just dumping the syntax tree for debugging?
 
