@@ -344,9 +344,11 @@ command_argv:
 	  	$$ = $2
 	  }
 	;
+
 	
 statement:
 	  //  the {} block ought to be optional.
+	  //  NAME ought to be a name_list!
 
 	  COMMAND  NAME  command_argv  '{'
 	  	PATH  '='  STRING  ';'
