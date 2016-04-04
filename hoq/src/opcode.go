@@ -13,8 +13,6 @@ import (
 type bool_value struct {
 	bool
 	is_null bool
-
-	*flow
 }
 type bool_chan chan *bool_value
 
@@ -203,7 +201,6 @@ func (flo *flow) string_rel2(
 			}
 
 			bv := &bool_value{
-				flow:    flo,
 				is_null: left.is_null || right.is_null,
 			}
 
@@ -268,7 +265,6 @@ func (flo *flow) uint8_rel2(
 			}
 
 			bv := &bool_value{
-				flow:    flo,
 				is_null: left.is_null || right.is_null,
 			}
 
@@ -318,7 +314,6 @@ func (flo *flow) bool_rel2(
 			out <- &bool_value{
 				bool:    b,
 				is_null: is_null,
-				flow:    flo,
 			}
 		}
 	}()
@@ -379,7 +374,6 @@ func (flo *flow) const_bool(b bool) (out bool_chan) {
 
 			out <- &bool_value{
 				bool: b,
-				flow: flo,
 			}
 		}
 	}()
