@@ -1180,13 +1180,13 @@ yydefault:
 		//line parser.y:201
 		{
 			l := yylex.(*yyLexState)
-			yyVAL.ast = yylex.(*yyLexState).bool_node(AND, yyDollar[1].ast, yyDollar[3].ast)
+			yyVAL.ast = l.bool_node(AND, yyDollar[1].ast, yyDollar[3].ast)
 			if yyVAL.ast == nil {
 				return 0
 			}
 
 			if yyDollar[1].ast.go_type != reflect.Bool {
-				l.error("logical and requires boolean operands")
+				l.error("logical 'and' requires boolean operands")
 				return 0
 			}
 		}
@@ -1195,13 +1195,13 @@ yydefault:
 		//line parser.y:215
 		{
 			l := yylex.(*yyLexState)
-			yyVAL.ast = yylex.(*yyLexState).bool_node(OR, yyDollar[1].ast, yyDollar[3].ast)
+			yyVAL.ast = l.bool_node(OR, yyDollar[1].ast, yyDollar[3].ast)
 			if yyVAL.ast == nil {
 				return 0
 			}
 
 			if yyDollar[1].ast.go_type != reflect.Bool {
-				l.error("logical or requires boolean operands")
+				l.error("logical 'or' requires boolean operands")
 				return 0
 			}
 		}
