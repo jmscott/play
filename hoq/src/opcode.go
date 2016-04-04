@@ -29,24 +29,18 @@ func (bv *bool_value) String() string {
 type string_value struct {
 	string
 	is_null bool
-
-	*flow
 }
 type string_chan chan *string_value
 
 type uint8_value struct {
 	uint8
 	is_null bool
-
-	*flow
 }
 type uint8_chan chan *uint8_value
 
 type argv_value struct {
 	argv    []string
 	is_null bool
-
-	*flow
 }
 type argv_chan chan *argv_value
 
@@ -332,7 +326,6 @@ func (flo *flow) const_string(s string) (out string_chan) {
 		for flo = flo.get(); flo != nil; flo = flo.get() {
 			out <- &string_value{
 				string: s,
-				flow:   flo,
 			}
 		}
 	}()
@@ -353,7 +346,6 @@ func (flo *flow) const_uint8(ui uint8) (out uint8_chan) {
 
 			out <- &uint8_value{
 				uint8: ui,
-				flow:  flo,
 			}
 		}
 	}()
@@ -397,7 +389,6 @@ func (flo *flow) to_string_uint8(in uint8_chan) (out string_chan) {
 			}
 
 			sv := &string_value{
-				flow:    flo,
 				is_null: ui.is_null,
 			}
 			if ui.is_null == false {
@@ -428,7 +419,6 @@ func (flo *flow) to_string_bool(in bool_chan) (out string_chan) {
 			}
 
 			sv := &string_value{
-				flow:    flo,
 				is_null: bv.is_null,
 			}
 			if bv.is_null == false {
@@ -455,9 +445,7 @@ func (flo *flow) dollar(i uint8) (out string_chan) {
 
 		for flo = flo.get(); flo != nil; flo = flo.get() {
 
-			sv := &string_value{
-				flow: flo,
-			}
+			sv := &string_value{}
 			if int(i) < len(flo.fields) {
 				sv.string = flo.fields[i]
 			} else {
@@ -482,7 +470,6 @@ func (flo *flow) dollar0() (out string_chan) {
 		for flo = flo.get(); flo != nil; flo = flo.get() {
 
 			out <- &string_value{
-				flow:   flo,
 				string: flo.line,
 			}
 		}
@@ -536,7 +523,6 @@ func (flo *flow) argv0() (out argv_chan) {
 			out <- &argv_value{
 				is_null: false,
 				argv:    argv[:],
-				flow:    flo,
 			}
 		}
 	}()
@@ -566,7 +552,6 @@ func (flo *flow) argv1(in string_chan) (out argv_chan) {
 			out <- &argv_value{
 				is_null: sv.is_null,
 				argv:    argv[:],
-				flow:    flo,
 			}
 		}
 	}()
@@ -680,7 +665,6 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 			out <- &argv_value{
 				argv:    av,
 				is_null: is_null,
-				flow:    flo,
 			}
 		}
 	}()
@@ -712,9 +696,7 @@ func (flo *flow) exec(
 				return
 			}
 
-			uv := &uint8_value{
-				flow: flo,
-			}
+			uv := &uint8_value{}
 
 			switch {
 
@@ -849,7 +831,6 @@ func (flo *flow) fanin_uint8(inx []uint8_chan) (out uint8_chan) {
 			}
 			out <- &uint8_value{
 				uint8: exec_count,
-				flow:  flo,
 			}
 		}
 	}()
