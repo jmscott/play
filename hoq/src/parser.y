@@ -200,13 +200,13 @@ exp:
 	  exp  AND  exp
 	  {
 	  	l := yylex.(*yyLexState)
-		$$ = yylex.(*yyLexState).bool_node(AND, $1, $3)
+		$$ = l.bool_node(AND, $1, $3)
 		if $$ == nil {
 			return 0
 		}
 
 		if $1.go_type != reflect.Bool {
-			l.error("logical and requires boolean operands")
+			l.error("logical 'and' requires boolean operands")
 			return 0
 		}
 	  }
@@ -214,13 +214,13 @@ exp:
 	  exp  OR  exp
 	  {
 	  	l := yylex.(*yyLexState)
-		$$ = yylex.(*yyLexState).bool_node(OR, $1, $3)
+		$$ = l.bool_node(OR, $1, $3)
 		if $$ == nil {
 			return 0
 		}
 
 		if $1.go_type != reflect.Bool {
-			l.error("logical or requires boolean operands")
+			l.error("logical 'or' requires boolean operands")
 			return 0
 		}
 	  }
