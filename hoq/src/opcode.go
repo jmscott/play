@@ -2,7 +2,6 @@
 package main
 
 import (
-	"fmt"
 	"regexp"
 	"strconv"
 	"sync"
@@ -23,7 +22,7 @@ func (bv *bool_value) String() string {
 	if bv.is_null {
 		return "<NULL>"
 	}
-	return fmt.Sprintf("%t", bv.bool)
+	return strconv.FormatBool(bv.bool)
 }
 
 type string_value struct {
@@ -109,22 +108,11 @@ func (flo *flow) wait_bool2(
 			if l == nil {
 				return rum_NIL
 			}
-
-			// cheap sanity test.  will go away soon
-
-			if lv != nil {
-				panic("left hand value out of sync")
-			}
 			lv = l
 
 		case r := <-in_right:
 			if r == nil {
 				return rum_NIL
-			}
-
-			// cheap sanity test.  will go away soon
-			if rv != nil {
-				panic("right hand value out of sync")
 			}
 			rv = r
 		}
@@ -176,9 +164,6 @@ func (flo *flow) string_rel2(
 					if lv == nil {
 						return
 					}
-					if left != nil {
-						panic("string2: left again")
-					}
 					left = lv
 
 				//  wait for right hand string to arrive
@@ -186,9 +171,6 @@ func (flo *flow) string_rel2(
 				case rv := <-in_right:
 					if rv == nil {
 						return
-					}
-					if right != nil {
-						panic("string2: right again")
 					}
 					right = rv
 				}
@@ -240,9 +222,6 @@ func (flo *flow) uint8_rel2(
 					if lv == nil {
 						return
 					}
-					if left != nil {
-						panic("uint8_rel: left again")
-					}
 					left = lv
 
 				//  wait for right hand value of operator
@@ -250,9 +229,6 @@ func (flo *flow) uint8_rel2(
 				case rv := <-in_right:
 					if rv == nil {
 						return
-					}
-					if right != nil {
-						panic("uint8_rel: right again")
 					}
 					right = rv
 				}
