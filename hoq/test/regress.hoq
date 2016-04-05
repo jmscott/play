@@ -1,4 +1,13 @@
-#  say hello
+#
+#  Synopsis:
+#	Trivial regression test
+#  Usage:
+#	echo | hoq regress.hoq | shasum
+#	cat regress.sha1
+#  Note:
+#	The script 'regress-echo' must be in $PATH;
+#	otherwise hoq will panic.
+#
 
 command regress_echo
 {
