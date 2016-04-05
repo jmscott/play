@@ -351,7 +351,7 @@ statement:
 	  //  NAME ought to be a name_list!
 
 	  COMMAND  NAME  command_argv  '{'
-	  	PATH  '='  STRING  ';'
+	  	PATH  ':'  STRING  ';'
 	  '}'
 	  {
 		l := yylex.(*yyLexState)
