@@ -1,4 +1,7 @@
-//  A rummy describes temporal + tri-state logic: true, false, null, waiting
+//  A rummy datatype describes temporal + tri-state logic:
+//
+//	true, false, sql null, waiting
+//
 //  There are known knowns, there are known unknowns ...
 
 package main
@@ -29,8 +32,8 @@ var or = [137]rummy{}
 var bool_eq = [137]rummy{}
 var bool_neq = [137]rummy{}
 
-//  build the state tables for temporal logical AND and OR used by opcodes
-//  in method flow.bool2().
+//  build the state tables for temporal logical AND, OR, ==, !=
+//  see flow.bool_rel2()
 
 func init() {
 
