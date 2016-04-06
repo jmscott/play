@@ -164,8 +164,8 @@ func (a *ast) rewrite_ARGV1() {
 	a.next.rewrite_ARGV1()
 }
 
-//  since unix commands require strings, we transform the argument nodes
-//  that are uint8 into strings:
+//  since unix commands require strings in argv[], we first transform the
+//  argument nodes to EXEC that are uint8 or bool into strings:
 //
 //	EXEC func(123) to EXEC func(to_string_uint8(123))
 
