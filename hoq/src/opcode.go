@@ -7,6 +7,32 @@ import (
 	"sync"
 )
 
+var uint8_eq = [256 * 256]bool{}
+var uint8_neq = [256 * 256]bool{}
+
+//  build the state tables for boolean '==' and '!-' with sql semantics for null
+
+func init() {
+
+	//  initialize diagonal of '==' operator to true.
+
+	for i := uint16(0);  i <= 255;  i++ {
+		uint8_eq[i << 8 | i] = true
+	}
+
+	//  initialize all entries of uint8 "!=" operator as true.
+
+	for i := range uint8_neq {
+		uint8_neq[i] = true
+	}
+
+	//  initialize diagonal of '!=' operator to false.
+
+	for i := uint16(0);  i <= 255;  i++ {
+		uint8_neq[i << 8 | i] = false
+	}
+}
+
 // bool_value is result of AND, OR and binary relational operations
 
 type bool_value struct {
@@ -70,66 +96,6 @@ type flow struct {
 }
 
 type flow_chan chan *flow
-
-//  wait for all go routines to resolve, then request and return another flow
-
-func (flo *flow) get() *flow {
-
-	<-flo.resolved
-
-	//  next active flow arrives on this channel
-
-	reply := make(flow_chan)
-
-	//  request another flow, sending reply channel to scheduler
-
-	flo.next <- reply
-
-	//  return next flow
-
-	return <-reply
-}
-
-//  wait for two boolean input channels to resolve to either true, false or null
-
-func (flo *flow) wait_bool2(
-	op [137]rummy,
-	in_left, in_right bool_chan,
-) (
-	next rummy,
-) {
-	var lv, rv *bool_value
-
-	next = rum_WAIT
-	for next == rum_WAIT {
-
-		select {
-		case l := <-in_left:
-			if l == nil {
-				return rum_NIL
-			}
-			lv = l
-
-		case r := <-in_right:
-			if r == nil {
-				return rum_NIL
-			}
-			rv = r
-		}
-		next = op[(lv.rummy()<<4)|rv.rummy()]
-	}
-
-	//  drain unread channel.
-	//
-	//  someday the qualification tree will be pruned.
-
-	if lv == nil {
-		<-in_left
-	} else if rv == nil {
-		<-in_right
-	}
-	return next
-}
 
 //  compare two strings read from left and right input channels
 //  and send boolean answer upstream.
@@ -850,30 +816,62 @@ func string_neq(s1, s2 string) bool {
 	return s1 == s2
 }
 
+//  wait for two boolean input channels to resolve to either true, false or null
 
-var uint8_eq = [256 * 256]bool{}
-var uint8_neq = [256 * 256]bool{}
+func (flo *flow) wait_bool2(
+	op [137]rummy,
+	in_left, in_right bool_chan,
+) (
+	next rummy,
+) {
+	var lv, rv *bool_value
 
-//  build the state tables for boolean '==' and '!-' with sql semantics for null
+	next = rum_WAIT
+	for next == rum_WAIT {
 
-func init() {
+		select {
+		case l := <-in_left:
+			if l == nil {
+				return rum_NIL
+			}
+			lv = l
 
-	//  initialize diagonal of '==' operator to true.
-
-	for i := uint16(0);  i <= 255;  i++ {
-		uint8_eq[i << 8 | i] = true
+		case r := <-in_right:
+			if r == nil {
+				return rum_NIL
+			}
+			rv = r
+		}
+		next = op[(lv.rummy()<<4)|rv.rummy()]
 	}
 
-	//  initialize all entries of uint8 "!=" operator as true.
+	//  drain unread channel.
+	//
+	//  someday the qualification tree will be pruned.
 
-	for i := range uint8_neq {
-		uint8_neq[i] = true
+	if lv == nil {
+		<-in_left
+	} else if rv == nil {
+		<-in_right
 	}
-
-	//  initialize diagonal of '!=' operator to false.
-
-	for i := uint16(0);  i <= 255;  i++ {
-		uint8_neq[i << 8 | i] = false
-	}
+	return next
 }
 
+//  wait for all go routines to resolve, then request and return another flow
+
+func (flo *flow) get() *flow {
+
+	<-flo.resolved
+
+	//  next active flow arrives on this channel
+
+	reply := make(flow_chan)
+
+	//  request another flow, sending reply channel to scheduler
+
+	flo.next <- reply
+
+	//  return next flow
+
+	return <-reply
+}
