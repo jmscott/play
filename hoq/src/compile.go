@@ -249,7 +249,7 @@ func (flo *flow) compile(
 		if cx.next_chan != len(cx.out_chans) {
 			panic(fmt.Sprintf(
 				"%s: expected %d consumed chans, got %d",
-					n, len(cx.out_chans), cx.next_chan,
+				n, len(cx.out_chans), cx.next_chan,
 			))
 		}
 

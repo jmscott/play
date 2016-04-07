@@ -13,15 +13,15 @@ type command struct {
 
 	//  name in command{} declaration in hoq source code
 
-	name             string
+	name string
 
 	//  path to program in file system, typicall relative
 
-	path             string
+	path string
 
 	//  full path to program in $PATH list, resolved at runtime
 
-	full_path	string
+	full_path string
 
 	//  count of dependencies on exit status in compiled hoq code
 
@@ -65,7 +65,7 @@ func (cmd *command) exec(argv []string) (exit_status uint8) {
 		if !strings.HasPrefix(err.Error(), "exit status ") {
 			panic(err)
 		}
-		if ee, ok := err.(*exec.ExitError);  ok {
+		if ee, ok := err.(*exec.ExitError); ok {
 			stderr.Write(ee.Stderr)
 		}
 		err = nil

@@ -62,17 +62,17 @@ func (a *ast) String() string {
 		}
 		if cmd.full_path == "" {
 			return fmt.Sprintf("COMMAND.%s%s->%s",
-						cmd.name,
-						argv,
-						cmd.path,
-				)
-			}
-		return fmt.Sprintf("COMMAND.%s%s->%s->%s",
-					cmd.name,
-					argv,
-					cmd.path,
-					cmd.full_path,
+				cmd.name,
+				argv,
+				cmd.path,
 			)
+		}
+		return fmt.Sprintf("COMMAND.%s%s->%s->%s",
+			cmd.name,
+			argv,
+			cmd.path,
+			cmd.full_path,
+		)
 
 	case EXEC:
 		return fmt.Sprintf("EXEC.%s", a.command.name)

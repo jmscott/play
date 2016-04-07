@@ -16,8 +16,8 @@ func init() {
 
 	//  initialize diagonal of '==' operator to true.
 
-	for i := uint16(0);  i <= 255;  i++ {
-		uint8_eq[i << 8 | i] = true
+	for i := uint16(0); i <= 255; i++ {
+		uint8_eq[i<<8|i] = true
 	}
 
 	//  initialize all entries of uint8 "!=" operator as true.
@@ -28,8 +28,8 @@ func init() {
 
 	//  initialize diagonal of '!=' operator to false.
 
-	for i := uint16(0);  i <= 255;  i++ {
-		uint8_neq[i << 8 | i] = false
+	for i := uint16(0); i <= 255; i++ {
+		uint8_neq[i<<8|i] = false
 	}
 }
 
@@ -208,8 +208,8 @@ func (flo *flow) uint8_rel2(
 
 			if bv.is_null == false {
 
-				bv.bool = rel2[(uint16(left.uint8)<<8) |
-						uint16(right.uint8)]
+				bv.bool = rel2[(uint16(left.uint8)<<8)|
+					uint16(right.uint8)]
 			}
 			out <- bv
 		}
@@ -665,6 +665,7 @@ func (flo *flow) exec(
 	}()
 	return out
 }
+
 //  broadcast a uint8 to many uint8 listeners
 //
 //  Note:
@@ -708,6 +709,7 @@ func (flo *flow) fanout_uint8(
 	}()
 	return out
 }
+
 //  Reduce all the CALL statements into single uint8, which is the count
 //  of the programs that actuall fired
 
