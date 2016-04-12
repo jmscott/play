@@ -157,6 +157,7 @@ exp:
 		cmd.depend_ref_count++
 
 		//  record for detection of cycles in the invocation graph
+		//  and compilation order
 
 		l.depends = append(
 				l.depends,
