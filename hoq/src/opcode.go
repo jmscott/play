@@ -681,10 +681,6 @@ func (flo *flow) fanout_uint8(
 		out[i] = make(uint8_chan)
 	}
 
-	put := func(uv *uint8_value, uc uint8_chan) {
-
-		uc <- uv
-	}
 
 	go func() {
 
@@ -694,6 +690,11 @@ func (flo *flow) fanout_uint8(
 			}
 		}()
 
+		put := func(uv *uint8_value, uc uint8_chan) {
+
+			uc <- uv
+		}
+
 		for flo = flo.get(); flo != nil; flo = flo.get() {
 
 			uv := <-in
@@ -702,6 +703,7 @@ func (flo *flow) fanout_uint8(
 			}
 
 			//  broadcast to channels in slice
+
 			for _, uc := range out {
 				go put(uv, uc)
 			}
