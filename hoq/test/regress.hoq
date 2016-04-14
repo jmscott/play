@@ -2,14 +2,24 @@
 #  Synopsis:
 #	Trivial regression test
 #  Usage:
-#	echo | hoq regress.hoq | shasum
+#	seq 1000 | hoq regress.hoq | sort | shasum
 #	cat regress.sha1
 #  Note:
 #	The script 'regress-echo' must be in $PATH;
 #	otherwise hoq will panic.
 #
 
-command regress_echo
+command echo_bool
+{
+	path = "regress-echo";
+}
+
+command echo_line
+{
+	path = "regress-echo";
+}
+
+command echo_dollar1
 {
 	path = "regress-echo";
 }
@@ -21,7 +31,7 @@ command xtrue
 
 exec xtrue();
 
-exec regress_echo(
+exec echo_bool(
 	"true == true", true == true,
 
 	"true == false", true == false,
@@ -61,3 +71,13 @@ exec regress_echo(
 	"xtrue == 255", xtrue.exit_status == 255,
 	"xtrue != 255", xtrue.exit_status != 255
 );
+
+exec echo_line("$0", $0)
+  when
+  	xtrue.exit_status == 0
+;
+
+exec echo_dollar1("$1", $1)
+  when
+  	xtrue.exit_status == 0
+;
