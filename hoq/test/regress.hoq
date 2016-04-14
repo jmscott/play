@@ -2,11 +2,9 @@
 #  Synopsis:
 #	Trivial regression test
 #  Usage:
-#	seq 1000 | hoq regress.hoq | sort | shasum
+#	PATH=.:$PATH
+#	seq 1000 | ../src/hoq regress.hoq | sort | shasum
 #	cat regress.sha1
-#  Note:
-#	The script 'regress-echo' must be in $PATH;
-#	otherwise hoq will panic.
 #
 
 command echo_bool
