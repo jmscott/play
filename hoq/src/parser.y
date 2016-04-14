@@ -870,6 +870,9 @@ func parse(in io.Reader) (_ *ast, depend_order []string, err error) {
 	}
 
 	yyParse(l)
+	if l.err != nil {
+		return nil, nil, l.err
+	}
 
 	//  add unqualified exec ... () statements to the dependency list.
 
@@ -889,5 +892,13 @@ func parse(in io.Reader) (_ *ast, depend_order []string, err error) {
 	}
 	find_unreferenced_EXEC(l.ast_head)
 
-	return l.ast_head, tsort(l.depends), l.err
+	depend_order = tsort(l.depends)
+	if depend_order == nil {
+		l.err = errors.New("exec invocation order has cycles")
+	}
+	for i, j := 0, len(depend_order)-1; i < j; i, j = i+1, j-1 {
+		depend_order[i], depend_order[j] =
+			depend_order[j], depend_order[i]
+	}
+	return l.ast_head, depend_order, l.err
 }
