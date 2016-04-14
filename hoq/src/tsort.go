@@ -52,7 +52,7 @@ func tsort(graph []string) (order []string) {
 	//	delete r1 from root set
 	//	add r1 to order list
 	//	increment count of visited nodes
-	//	visit targets of r1, say tN,
+	//	visit each target, say tN, of r1
 	//		decrement tN inbound node count
 	//		add tN to root set if inbound count <= 0
 	//  ordered if visited count == node count
