@@ -2,6 +2,7 @@
 #  Synopsis:
 #	Trivial regression test
 #  Usage:
+#	export LANG=C
 #	PATH=.:$PATH
 #	seq 1000 | ../src/hoq regress.hoq | sort | shasum
 #	cat regress.sha1
