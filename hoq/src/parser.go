@@ -130,7 +130,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:400
+//line parser.y:379
 var keyword = map[string]int{
 	"and":         AND,
 	"argv":        ARGV,
@@ -1078,53 +1078,46 @@ yydefault:
 		yyDollar = yyS[yypt-2 : yypt+1]
 		//line parser.y:97
 		{
-			s := yyDollar[1].ast
-
-			//  linearly find the last statement
-
-			for ; s.next != nil; s = s.next {
-			}
-
-			s.next = yyDollar[2].ast
+			yyDollar[1].ast.tail().next = yyDollar[2].ast
 		}
 	case 3:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:110
+		//line parser.y:104
 		{
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(TRUE, reflect.Bool)
 			yyVAL.ast.bool = true
 		}
 	case 4:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:116
+		//line parser.y:110
 		{
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(FALSE, reflect.Bool)
 			yyVAL.ast.bool = true
 		}
 	case 5:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:122
+		//line parser.y:116
 		{
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(STRING, reflect.String)
 			yyVAL.ast.string = yyDollar[1].string
 		}
 	case 6:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:128
+		//line parser.y:122
 		{
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(UINT8, reflect.Uint8)
 			yyVAL.ast.uint8 = yyDollar[1].uint8
 		}
 	case 7:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:134
+		//line parser.y:128
 		{
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(DOLLAR, reflect.String)
 			yyVAL.ast.uint8 = yyDollar[2].uint8
 		}
 	case 8:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:140
+		//line parser.y:134
 		{
 			l := yylex.(*yyLexState)
 			cmd := yyDollar[1].command
@@ -1157,7 +1150,7 @@ yydefault:
 		}
 	case 9:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:172
+		//line parser.y:166
 		{
 			l := yylex.(*yyLexState)
 
@@ -1173,7 +1166,7 @@ yydefault:
 		}
 	case 10:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:187
+		//line parser.y:181
 		{
 			l := yylex.(*yyLexState)
 			yyVAL.ast = l.bool_node(RE_NMATCH, yyDollar[1].ast, yyDollar[3].ast)
@@ -1189,7 +1182,7 @@ yydefault:
 		}
 	case 11:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:202
+		//line parser.y:196
 		{
 			l := yylex.(*yyLexState)
 			yyVAL.ast = l.bool_node(AND, yyDollar[1].ast, yyDollar[3].ast)
@@ -1204,7 +1197,7 @@ yydefault:
 		}
 	case 12:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:216
+		//line parser.y:210
 		{
 			l := yylex.(*yyLexState)
 			yyVAL.ast = l.bool_node(OR, yyDollar[1].ast, yyDollar[3].ast)
@@ -1219,7 +1212,7 @@ yydefault:
 		}
 	case 13:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:230
+		//line parser.y:224
 		{
 			yyVAL.ast = yylex.(*yyLexState).bool_node(EQ, yyDollar[1].ast, yyDollar[3].ast)
 			if yyVAL.ast == nil {
@@ -1228,7 +1221,7 @@ yydefault:
 		}
 	case 14:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:238
+		//line parser.y:232
 		{
 			yyVAL.ast = yylex.(*yyLexState).bool_node(NEQ, yyDollar[1].ast, yyDollar[3].ast)
 			if yyVAL.ast == nil {
@@ -1237,7 +1230,7 @@ yydefault:
 		}
 	case 15:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:246
+		//line parser.y:240
 		{
 			l := yylex.(*yyLexState)
 			if yyDollar[2].ast.go_type != reflect.Bool {
@@ -1248,53 +1241,38 @@ yydefault:
 		}
 	case 16:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:256
+		//line parser.y:250
 		{
 			yyVAL.ast = yyDollar[2].ast
 		}
 	case 18:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:266
+		//line parser.y:260
 		{
-			argc := uint16(0)
-			ae := yyDollar[1].ast
-
-			//  find the last expression in the list
-
-			for ; ae.next != nil; ae = ae.next {
-
-				if argc >= 255 {
-					yylex.(*yyLexState).error(
-						"too many expressions in list: > 255",
-					)
-					return 0
-				}
-				argc++
-			}
-			ae.next = yyDollar[3].ast
+			yyDollar[1].ast.tail().next = yyDollar[3].ast
 		}
 	case 19:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:288
+		//line parser.y:267
 		{
 			yyVAL.sarray = make([]string, 1)
 			(yyVAL.sarray)[0] = yyDollar[1].string
 		}
 	case 20:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:294
+		//line parser.y:273
 		{
 			yyVAL.sarray = append(yyDollar[1].sarray, yyDollar[3].string)
 		}
 	case 21:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:301
+		//line parser.y:280
 		{
 			yyVAL.ast = nil
 		}
 	case 22:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:306
+		//line parser.y:285
 		{
 			yyVAL.ast = &ast{
 				yy_tok: ARGV,
@@ -1309,37 +1287,37 @@ yydefault:
 		}
 	case 23:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:322
+		//line parser.y:301
 		{
 			yyVAL.ast = nil
 		}
 	case 24:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:327
+		//line parser.y:306
 		{
 			yyVAL.ast = yylex.(*yyLexState).bool_node(WHEN, yyDollar[2].ast, nil)
 		}
 	case 25:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:334
+		//line parser.y:313
 		{
 			yyVAL.sarray = nil
 		}
 	case 26:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:339
+		//line parser.y:318
 		{
 			yyVAL.sarray = nil
 		}
 	case 27:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:344
+		//line parser.y:323
 		{
 			yyVAL.sarray = yyDollar[2].sarray
 		}
 	case 28:
 		yyDollar = yyS[yypt-9 : yypt+1]
-		//line parser.y:357
+		//line parser.y:336
 		{
 			l := yylex.(*yyLexState)
 
@@ -1360,7 +1338,7 @@ yydefault:
 		}
 	case 29:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:377
+		//line parser.y:356
 		{
 			//  dependency graph needs command being executed
 
@@ -1368,7 +1346,7 @@ yydefault:
 		}
 	case 30:
 		yyDollar = yyS[yypt-8 : yypt+1]
-		//line parser.y:383
+		//line parser.y:362
 		{
 			l := yylex.(*yyLexState)
 			n := yyDollar[2].command.name

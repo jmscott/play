@@ -319,3 +319,13 @@ func (root *ast) rewrite(dumping bool) {
 		root.lookup_command_PATH()
 	}
 }
+
+func (a *ast) tail() *ast {
+
+	if a == nil {
+		return a
+	}
+	for ;  a.next != nil;  a = a.next {}
+
+	return a
+}

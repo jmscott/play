@@ -95,13 +95,7 @@ statement_list:
 	|
 	  statement_list statement
 	  {
-	  	s := $1
-
-		//  linearly find the last statement
-
-		for ;  s.next != nil;  s = s.next {}
-
-		s.next = $2
+		$1.tail().next = $2
 	  }
 	;
 
@@ -264,22 +258,7 @@ exp_list:
 	|
 	  exp_list  ','  exp
 	  {
-		argc := uint16(0)
-	  	ae := $1
-
-		//  find the last expression in the list
-
-		for ;  ae.next != nil;  ae = ae.next {
-
-			if argc >= 255 {
-				yylex.(*yyLexState).error(
-					"too many expressions in list: > 255",
-				)
-				return 0
-			}
-			argc++
-		}
-		ae.next = $3
+		$1.tail().next = $3
 	  }
 	;
 
