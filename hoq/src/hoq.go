@@ -80,6 +80,15 @@ func main() {
 		os.Exit(0)
 	}
 
+	//  no dependencies, so do nothing
+
+	if len(depend_order) == 0 {
+
+		//  Should we drain standard input before exiting?
+
+		os.Exit(0)
+	}
+
 	//  set up first flow to compile all ast nodes into a single flow graph.
 	//  each flow terminates by sending a count of the fired unix processes.
 
