@@ -64,7 +64,7 @@ func init() {
 %token	TO_STRING_UINT8  TO_STRING_BOOL
 %token	RE_MATCH  RE_NMATCH
 %token	NOT
-%token	TRUE  FALSE
+%token	TRUE  FALSE  EMPTY_STATEMENT
 
 %token	<string>	STRING  NAME
 %token	<command>	XCOMMAND
@@ -327,6 +327,15 @@ command_argv:
 
 	
 statement:
+	  /* empty */  ';'
+	  {
+	  	$$ =  yylex.(*yyLexState).node(
+				EMPTY_STATEMENT,
+				reflect.Invalid,
+				nil, nil, nil,
+			)
+	  }
+	|
 	  //  the {} block ought to be optional.
 	  //  NAME ought to be a name_list!
 
@@ -381,8 +390,8 @@ statement:
 var keyword = map[string]int{
 	"and":			AND,
 	"argv":			ARGV,
-	"exec":			EXEC,
 	"command":		COMMAND,
+	"exec":			EXEC,
 	"exit_status":		EXIT_STATUS,
 	"false":		FALSE,
 	"not":			NOT,
