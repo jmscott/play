@@ -681,7 +681,6 @@ func (flo *flow) fanout_uint8(
 		out[i] = make(uint8_chan)
 	}
 
-
 	go func() {
 
 		defer func() {
