@@ -1,14 +1,17 @@
 #!/bin/bash
 #
+#  Synopsis:
+#	Very trivial regression test
 #  Usage:
-#	(cd ../src && make clean hoq)
 #	./regress
 #
 set -x
 (cd ../src && make clean hoq) || exit
 
-export LANG=C
-PATH=.:../src/$PATH
+export LC_ALL=C
+unset LANG LANGUAGE
+
+PATH=.:../src:$PATH
 
 seq 1000 | hoq regress.hoq | sort | shasum
 cat regress.sha1
