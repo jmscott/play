@@ -604,6 +604,9 @@ func parse(in io.Reader) (_ *ast, depend_order []string, err error) {
 		return nil, nil, l.err
 	}
 
+	//  Note: all argv lengths must be <= 255 elements!
+	//  verify_argv_length()
+
 	//  add unqualified exec ... () statements to the dependency list.
 
 	var find_unreferenced_EXEC func(a *ast)
