@@ -264,6 +264,27 @@ func (flo *flow) rel2_bool(
 	return out
 }
 
+//  not (bool) opcode.  not null is null.
+
+func (flo *flow) not(in bool_chan) (out bool_chan) {
+	
+	out = make(bool_chan)
+
+	go func() {
+		defer close(out)
+
+		for flo = flo.get(); flo != nil; flo = flo.get() {
+			b := <- in
+			if b == nil {
+				return
+			}
+			b.bool = !b.bool
+			out <- b
+		}
+	}()
+	return out
+}
+
 //  send a string constant upstream
 
 func (flo *flow) const_string(s string) (out string_chan) {

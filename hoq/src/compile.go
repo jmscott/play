@@ -224,6 +224,8 @@ func (flo *flow) compile(
 				a2b[a.left],
 				a2b[a.right],
 			)
+		case NOT:
+			a2b[a] = flo.not(a2b[a.left])
 		default:
 			panic(fmt.Sprintf(
 				"impossible yy_tok in ast: %d", a.yy_tok))
