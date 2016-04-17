@@ -4,12 +4,28 @@
 #	Very trivial regression test
 #  Usage:
 #	./regress
+#  Note:
+#	Still not clear if LC_ALL overrides all other LC_* variables.
+#
+#	     http://unix.stackexchange.com/questions/87745/what-does-lc-all-c-do
+#
+#	Probably ought to explicity unset all LC_ variables with something like
+#
+#		unset $(locale | cut -d = -f1)
+#		LC_ALL=C
 #
 set -x
 (cd ../src && make clean hoq) || exit
 
+#  unset an locale environment variables
+
+unset $(locale | cut -d = -f1)
+
+#  reset to all LC vars to C.
+#
+#  Note: should the unset LC vars in previous staement be set to C? 
+
 export LC_ALL=C
-unset LANG LANGUAGE
 
 PATH=.:../src:$PATH
 
