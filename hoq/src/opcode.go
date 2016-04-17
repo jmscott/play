@@ -78,7 +78,7 @@ type flow struct {
 
 	next chan flow_chan
 
-	//  channel is closed when all call()s make no further progress
+	//  channel is closed when all qualifications are resolved.
 
 	resolved chan struct{}
 
@@ -92,13 +92,14 @@ type flow struct {
 	fields []string
 
 	//  count of go routines still flowing expressions
+
 	confluent_count int
 }
 
 type flow_chan chan *flow
 
-//  compare two strings read from left and right input channels
-//  and send boolean answer upstream.
+//  evalutate a boolean relation on two strings, reading strings from left and
+//  right input channels, then send boolean answer upstream.
 //
 //  if either string value is null (in SQL sense) then the boolean answer is
 //  null.
@@ -146,11 +147,15 @@ func (flo *flow) string_rel2(
 				is_null: left.is_null || right.is_null,
 			}
 
-			//  invoke the string operator on non-null values
+			//  evaluate the boolean relation on left and right
+			//  string values.
 
 			if bv.is_null == false {
 				bv.bool = rel2(left.string, right.string)
 			}
+
+			//  send answer upstream
+
 			out <- bv
 		}
 	}()
@@ -158,8 +163,11 @@ func (flo *flow) string_rel2(
 	return out
 }
 
-//  map two uint8 channels (relation) onto a boolean output derived from
-//  a lookup table, honouring null SQL semantics
+//  evalutate a boolean relation on two uint8, reading uint8's from left and
+//  right input channels, then send boolean answer upstream.
+//
+//  if either uint8 value is null (in SQL sense) then the boolean answer is
+//  null.
 
 func (flo *flow) uint8_rel2(
 	rel2 [65536]bool,
@@ -642,7 +650,7 @@ func (flo *flow) exec(
 
 			switch {
 
-			//  exit value is null when either argumenr vector or
+			//  exit value is null when either argument vector or
 			//  the "when" qualification is null
 
 			case argv.is_null || when.is_null:
