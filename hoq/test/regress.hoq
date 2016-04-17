@@ -30,6 +30,7 @@ exec xtrue()
 	)
 	and
 	not (
+		#  always false
 		true == false
 		and
 		true != true
