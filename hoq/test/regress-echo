@@ -1,14 +1,12 @@
 #!/bin/bash
 #
 #  Synopsis:
-#	Echo arguments two at a time
+#	Echo arguments two at a time, called by regress.hoq
 #  Usage:
 #	regress-echo arg1: arg2 [arg3: arg4 [arg5: arg6] ...]
 #
 
-PROG=$(basename $0)
-
-while [ "$1" ]; do
+while [ $# -gt 0 ]; do
 	echo "$1: $2"
 	shift
 	shift
