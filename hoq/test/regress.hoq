@@ -8,25 +8,13 @@
 #	cat regress.sha1
 #
 
-command echo_bool
-{
-	path = "regress-echo";
-}
+command echo_bool("regress-echo");
 
-command echo_line
-{
-	path = "regress-echo";
-}
+command echo_line("regress-echo");
 
-command echo_dollar1
-{
-	path = "regress-echo";
-}
+command echo_dollar1("regress-echo");
 
-command xtrue
-{
-	path = "true";
-}
+command xtrue("true");
 
 exec xtrue();
 

@@ -339,26 +339,13 @@ statement:
 	  //  the {} block ought to be optional.
 	  //  NAME ought to be a name_list!
 
-	  COMMAND  NAME  command_argv  '{'
-	  	PATH  '='  STRING  ';'
-	  '}'
+	  COMMAND  NAME  command_argv  ';'
 	  {
 		l := yylex.(*yyLexState)
 
-		if $7 == "" {
-			l.error("command %s: path is zero length", $2)
-			return 0
-		}
-
-		l.commands[$2] = &command{
-					name:		$2,
-					path:		$7,
-					init_argv:	$3,
-				}
-		$$ = &ast{
-			yy_tok:		COMMAND,
-			command:	l.commands[$2],
-		}
+		$$ = l.node(COMMAND, reflect.Invalid, nil, nil, nil)
+		$$.command = $$.command.newc($2, $3)
+		l.commands[$2] = $$.command
 	  }
 	|
 	  EXEC  XCOMMAND

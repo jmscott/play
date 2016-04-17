@@ -51,7 +51,7 @@ func (a *ast) String() string {
 		cmd := a.command
 		var argv string
 
-		for i, s := range cmd.init_argv {
+		for i, s := range cmd.argv {
 			if i > 0 {
 				argv += ", "
 			}
@@ -61,16 +61,14 @@ func (a *ast) String() string {
 			argv = "(" + argv + ")"
 		}
 		if cmd.full_path == "" {
-			return fmt.Sprintf("COMMAND.%s%s->%s",
+			return fmt.Sprintf("COMMAND.%s%s",
 				cmd.name,
 				argv,
-				cmd.path,
 			)
 		}
-		return fmt.Sprintf("COMMAND.%s%s->%s->%s",
+		return fmt.Sprintf("COMMAND.%s%s->%s",
 			cmd.name,
 			argv,
-			cmd.path,
 			cmd.full_path,
 		)
 

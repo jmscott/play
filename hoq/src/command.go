@@ -35,12 +35,12 @@ type command struct {
 func (cmd *command) exec(argv []string) (exit_status uint8) {
 
 	argc := len(cmd.argv)
-	xargv := make([]string, 1+argc+len(argv))
+	xargv := make([]string, argc+len(argv))
 
 	//  a copy of argv[] per exec()
 
-	copy(xargv[0:], cmd.argv[:])
-	copy(xargv[1+argc:], argv)
+	copy(xargv[:], cmd.argv[:])
+	copy(xargv[argc:], argv)
 
 	//  the first argument must be the command path
 
@@ -107,7 +107,7 @@ func (cmd *command) newc(name string, argv []string) (*command) {
 
 	var path string
 
-	if argv == nil {
+	if len(argv) == 0 {
 		path = name
 		argv = make([]string, 1)
 		argv[0] = path
