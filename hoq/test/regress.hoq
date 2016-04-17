@@ -16,7 +16,33 @@ command echo_dollar1("regress-echo");
 
 command xtrue("true");
 
-exec xtrue();
+exec xtrue()
+  when
+	# both are always true
+	(
+		true != false
+		or
+		true == true
+		or
+		false == false
+		or
+		false != true
+	)
+	and
+	not (
+		true == false
+		and
+		true != true
+		and
+		false != false
+		and
+		false == true
+	)
+	and
+	true
+	and
+	not false
+;
 
 exec echo_bool(
 	"true == true", true == true,
