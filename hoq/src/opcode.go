@@ -508,24 +508,22 @@ func (flo *flow) argv1(in string_chan) (out argv_chan) {
 	return out
 }
 
-//  concurrently read strings from multiple input channels to assemble
-//  argument vector of a call() statement.  a single null string renders
-//  the entire vector null.
+//  assemble argument vector by concurrently reading strings from multiple
+//  input channels.  a single null string element renders the entire vector
+//  null
 
 func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 
-	//  track a received string and position in argv[]
-	type arg_value struct {
-		*string_value
-		position uint8
-	}
-
 	out = make(argv_chan)
 
-	//  called func has arguments, so wait on multple string channels
-	//  before sending assembled argv[]
-
 	go func() {
+
+		//  track a received string and position in argv[]
+
+		type arg_value struct {
+			*string_value
+			position uint8
+		}
 
 		defer close(out)
 
