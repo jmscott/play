@@ -11,39 +11,35 @@ import (
 
 type command struct {
 
-	//  name in command{} declaration in hoq source code
+	//  name used by hoq qualifications
 
 	name string
-
-	//  path to program in file system, typicall relative
-
-	path string
 
 	//  full path to program in $PATH list, resolved at runtime
 
 	full_path string
 
 	//  count of dependencies on exit status in compiled hoq code
+	//  Note: is depend_ref_count really needed?
 
 	depend_ref_count uint8
 
-	//  initial static argument vector for command line
+	//  initial argument vector, before appending argv from exec()
 
-	init_argv []string
+	argv []string
 }
 
 //  exec() a unix command, wait for exit status and write output to
-//  standard  out and standard error.
+//  standard out and standard error.
 
 func (cmd *command) exec(argv []string) (exit_status uint8) {
 
-	argc := len(cmd.init_argv)
+	argc := len(cmd.argv)
 	xargv := make([]string, 1+argc+len(argv))
 
-	//  the first argument must be the command path
-	xargv[0] = cmd.path
+	//  a copy of argv[] per exec()
 
-	copy(xargv[1:], cmd.init_argv[:])
+	copy(xargv[0:], cmd.argv[:])
 	copy(xargv[1+argc:], argv)
 
 	//  the first argument must be the command path
@@ -100,9 +96,26 @@ func (cmd *command) exec(argv []string) (exit_status uint8) {
 
 func (cmd *command) lookup_full_path() {
 
-	fp, err := exec.LookPath(cmd.path)
+	fp, err := exec.LookPath(cmd.argv[0])
 	if err != nil {
 		panic(err)
 	}
 	cmd.full_path = fp
+}
+
+func (cmd *command) newc(name string, argv []string) (*command) {
+
+	var path string
+
+	if argv == nil {
+		path = name
+		argv = make([]string, 1)
+		argv[0] = path
+	} else {
+		path = argv[0]
+	}
+	return &command{
+			name:	name,
+			argv: argv,
+	}
 }
