@@ -850,6 +850,7 @@ func parse(in io.Reader) (_ *ast, depend_order []string, err error) {
 	}
 
 	//  Note: all argv lengths must be <= 255 elements!
+	//  verify_argv_length()
 
 	//  add unqualified exec ... () statements to the dependency list.
 
