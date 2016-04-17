@@ -29,5 +29,6 @@ export LC_ALL=C
 
 PATH=.:../src:$PATH
 
-seq 1000 | hoq regress.hoq | sort | shasum
+seq 1000 | perl -MList::Util=shuffle -e 'print shuffle(<STDIN>);' |
+	hoq regress.hoq | sort | shasum
 cat regress.sha1
