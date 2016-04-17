@@ -33,7 +33,7 @@ var bool_eq = [137]rummy{}
 var bool_neq = [137]rummy{}
 
 //  build the state tables for temporal logical AND, OR, ==, !=
-//  see flow.bool_rel2()
+//  see flow.rel2_bool()
 
 func init() {
 

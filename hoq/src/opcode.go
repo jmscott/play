@@ -104,7 +104,7 @@ type flow_chan chan *flow
 //  if either string value is null (in SQL sense) then the boolean answer is
 //  null.
 
-func (flo *flow) string_rel2(
+func (flo *flow) rel2_string(
 	rel2 func(left, right string) bool,
 	in_left, in_right string_chan,
 ) (out bool_chan) {
@@ -169,7 +169,7 @@ func (flo *flow) string_rel2(
 //  if either uint8 value is null (in SQL sense) then the boolean answer is
 //  null.
 
-func (flo *flow) uint8_rel2(
+func (flo *flow) rel2_uint8(
 	rel2 [65536]bool,
 	in_left, in_right uint8_chan,
 ) (out bool_chan) {
@@ -229,7 +229,7 @@ func (flo *flow) uint8_rel2(
 //  implement logical AND, logical OR, boolean comparison ==, !=.
 //  using a lookup table.
 
-func (flo *flow) bool_rel2(
+func (flo *flow) rel2_bool(
 	op [137]rummy,
 	in_left, in_right bool_chan,
 ) (out bool_chan) {

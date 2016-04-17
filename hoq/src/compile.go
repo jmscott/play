@@ -153,37 +153,37 @@ func (flo *flow) compile(
 			cc = 0
 
 		case EQ_UINT8:
-			a2b[a] = flo.uint8_rel2(
+			a2b[a] = flo.rel2_uint8(
 				uint8_eq,
 				a2u8[a.left],
 				a2u8[a.right],
 			)
 		case NEQ_UINT8:
-			a2b[a] = flo.uint8_rel2(
+			a2b[a] = flo.rel2_uint8(
 				uint8_neq,
 				a2u8[a.left],
 				a2u8[a.right],
 			)
 		case EQ_STRING:
-			a2b[a] = flo.string_rel2(
+			a2b[a] = flo.rel2_string(
 				string_eq,
 				a2s[a.left],
 				a2s[a.right],
 			)
 		case NEQ_STRING:
-			a2b[a] = flo.string_rel2(
+			a2b[a] = flo.rel2_string(
 				string_neq,
 				a2s[a.left],
 				a2s[a.right],
 			)
 		case OR:
-			a2b[a] = flo.bool_rel2(
+			a2b[a] = flo.rel2_bool(
 				or,
 				a2b[a.left],
 				a2b[a.right],
 			)
 		case AND:
-			a2b[a] = flo.bool_rel2(
+			a2b[a] = flo.rel2_bool(
 				and,
 				a2b[a.left],
 				a2b[a.right],
@@ -197,13 +197,13 @@ func (flo *flow) compile(
 		case DOLLAR0:
 			a2s[a] = flo.dollar0()
 		case RE_MATCH:
-			a2b[a] = flo.string_rel2(
+			a2b[a] = flo.rel2_string(
 				re_match,
 				a2s[a.left],
 				a2s[a.right],
 			)
 		case RE_NMATCH:
-			a2b[a] = flo.string_rel2(
+			a2b[a] = flo.rel2_string(
 				re_nmatch,
 				a2s[a.left],
 				a2s[a.right],
@@ -213,13 +213,13 @@ func (flo *flow) compile(
 				a2b[a.left],
 			)
 		case EQ_BOOL:
-			a2b[a] = flo.bool_rel2(
+			a2b[a] = flo.rel2_bool(
 				bool_eq,
 				a2b[a.left],
 				a2b[a.right],
 			)
 		case NEQ_BOOL:
-			a2b[a] = flo.bool_rel2(
+			a2b[a] = flo.rel2_bool(
 				bool_neq,
 				a2b[a.left],
 				a2b[a.right],
