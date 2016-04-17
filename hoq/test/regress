@@ -9,10 +9,8 @@
 #
 #	     http://unix.stackexchange.com/questions/87745/what-does-lc-all-c-do
 #
-#	Probably ought to explicity unset all LC_ variables with something like
-#
-#		unset $(locale | cut -d = -f1)
-#		LC_ALL=C
+#	The command shasum may not exist in some unix distros,  like 2.8.18
+#	redhat.
 #
 set -x
 (cd ../src && make clean hoq) || exit
