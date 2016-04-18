@@ -46,37 +46,38 @@ type yySymType struct {
 const __MIN_YYTOK = 57346
 const COMMAND = 57347
 const EXIT_STATUS = 57348
-const PATH = 57349
-const EXEC = 57350
-const WHEN = 57351
-const PARSE_ERROR = 57352
-const EQ = 57353
-const EQ_UINT8 = 57354
-const EQ_STRING = 57355
-const EQ_BOOL = 57356
-const NEQ = 57357
-const NEQ_UINT8 = 57358
-const NEQ_STRING = 57359
-const NEQ_BOOL = 57360
-const DOLLAR0 = 57361
-const ARGV = 57362
-const ARGV0 = 57363
-const ARGV1 = 57364
-const TO_STRING_UINT8 = 57365
-const TO_STRING_BOOL = 57366
-const RE_MATCH = 57367
-const RE_NMATCH = 57368
-const NOT = 57369
-const TRUE = 57370
-const FALSE = 57371
-const EMPTY_STATEMENT = 57372
-const STRING = 57373
-const NAME = 57374
-const XCOMMAND = 57375
-const UINT8 = 57376
-const DOLLAR = 57377
-const AND = 57378
-const OR = 57379
+const PREDICATE = 57349
+const PATH = 57350
+const EXEC = 57351
+const WHEN = 57352
+const PARSE_ERROR = 57353
+const EQ = 57354
+const EQ_UINT8 = 57355
+const EQ_STRING = 57356
+const EQ_BOOL = 57357
+const NEQ = 57358
+const NEQ_UINT8 = 57359
+const NEQ_STRING = 57360
+const NEQ_BOOL = 57361
+const DOLLAR0 = 57362
+const ARGV = 57363
+const ARGV0 = 57364
+const ARGV1 = 57365
+const TO_STRING_UINT8 = 57366
+const TO_STRING_BOOL = 57367
+const RE_MATCH = 57368
+const RE_NMATCH = 57369
+const NOT = 57370
+const TRUE = 57371
+const FALSE = 57372
+const EMPTY_STATEMENT = 57373
+const STRING = 57374
+const NAME = 57375
+const XCOMMAND = 57376
+const UINT8 = 57377
+const DOLLAR = 57378
+const AND = 57379
+const OR = 57380
 
 var yyToknames = [...]string{
 	"$end",
@@ -85,6 +86,7 @@ var yyToknames = [...]string{
 	"__MIN_YYTOK",
 	"COMMAND",
 	"EXIT_STATUS",
+	"PREDICATE",
 	"PATH",
 	"EXEC",
 	"WHEN",
@@ -117,11 +119,11 @@ var yyToknames = [...]string{
 	"AND",
 	"OR",
 	"'$'",
+	"';'",
 	"'.'",
 	"'('",
 	"')'",
 	"','",
-	"';'",
 }
 var yyStatenames = [...]string{}
 
@@ -129,7 +131,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:375
+//line parser.y:376
 var keyword = map[string]int{
 	"and":         AND,
 	"argv":        ARGV,
@@ -640,7 +642,7 @@ func parse(in io.Reader) (_ *ast, depend_order []string, err error) {
 var yyExca = [...]int{
 	-1, 1,
 	1, -1,
-	-2, 0,
+	-2, 28,
 }
 
 const yyNprod = 32
@@ -649,31 +651,30 @@ const yyPrivate = 57344
 var yyTokenNames []string
 var yyStates []string
 
-const yyLast = 73
+const yyLast = 67
 
 var yyAct = [...]int{
 
-	21, 28, 22, 23, 54, 24, 4, 27, 25, 5,
-	18, 17, 26, 12, 29, 32, 15, 37, 31, 16,
-	10, 38, 40, 39, 8, 7, 13, 30, 44, 41,
+	21, 28, 22, 23, 32, 24, 31, 27, 25, 18,
+	17, 15, 26, 16, 11, 29, 40, 37, 9, 39,
+	6, 38, 13, 8, 7, 30, 44, 52, 12, 41,
 	42, 33, 34, 45, 46, 47, 48, 49, 50, 51,
-	52, 11, 35, 36, 3, 55, 37, 53, 37, 2,
-	38, 6, 38, 9, 14, 19, 20, 43, 1, 0,
-	33, 34, 33, 34, 0, 0, 0, 0, 0, 0,
-	0, 35, 36,
+	37, 10, 35, 36, 38, 54, 37, 3, 53, 14,
+	38, 4, 19, 20, 33, 34, 2, 43, 5, 1,
+	33, 34, 0, 0, 0, 35, 36,
 }
 var yyPact = [...]int{
 
-	1, 1, -1000, -1000, -7, -9, -1000, -20, -1000, -30,
-	-15, -21, -1000, -1000, -31, -1000, -26, -4, -1000, -23,
-	-27, 35, -1000, -1000, -1000, -1000, -11, -17, -26, -26,
-	-1000, 19, -26, -26, -26, -26, -26, -26, -26, -1000,
-	34, -1000, 6, -39, -26, 35, -1000, -1000, 37, 37,
-	-1000, -1000, -1000, -1000, -1000, 35,
+	42, 42, -20, -9, -11, -22, -1000, -28, -1000, -1000,
+	-1000, -21, -29, -1000, -34, -1000, -27, -7, -1000, -37,
+	-40, 28, -1000, -1000, -1000, -1000, -16, -25, -27, -27,
+	-1000, 16, -27, -27, -27, -27, -27, -27, -27, -1000,
+	21, -1000, 5, -1000, -27, 28, -1000, -1000, 34, 34,
+	-1000, -1000, -1000, -1000, 28,
 }
 var yyPgo = [...]int{
 
-	0, 49, 58, 57, 0, 56, 55, 54, 53, 41,
+	0, 56, 59, 57, 0, 53, 52, 49, 41, 28,
 }
 var yyR1 = [...]int{
 
@@ -684,44 +685,44 @@ var yyR1 = [...]int{
 }
 var yyR2 = [...]int{
 
-	0, 1, 2, 1, 1, 1, 1, 2, 3, 3,
+	0, 2, 3, 1, 1, 1, 1, 2, 3, 3,
 	3, 3, 3, 3, 3, 2, 3, 1, 3, 1,
-	3, 0, 1, 0, 2, 0, 2, 3, 1, 4,
-	0, 8,
+	3, 0, 1, 0, 2, 0, 2, 3, 0, 3,
+	0, 7,
 }
 var yyChk = [...]int{
 
-	-1000, -2, -1, 43, 5, 8, -1, 32, 33, -8,
-	40, -9, 43, 41, -7, 31, 40, 42, 41, -6,
-	-5, -4, 28, 29, 31, 34, 38, 33, 27, 40,
-	31, 41, 42, 25, 26, 36, 37, 11, 15, 34,
-	39, -4, -4, -3, 9, -4, -4, -4, -4, -4,
-	-4, -4, 6, 41, 43, -4,
+	-1000, -2, -1, 5, 9, -1, 40, 33, 34, 40,
+	-8, 42, -9, 43, -7, 32, 42, 44, 43, -6,
+	-5, -4, 29, 30, 32, 35, 39, 34, 28, 42,
+	32, 43, 44, 26, 27, 37, 38, 12, 16, 35,
+	41, -4, -4, -3, 10, -4, -4, -4, -4, -4,
+	-4, -4, 6, 43, -4,
 }
 var yyDef = [...]int{
 
-	0, -2, 1, 28, 0, 0, 2, 25, 30, 0,
-	0, 0, 29, 26, 0, 19, 21, 0, 27, 0,
+	28, -2, 0, 0, 0, 0, 1, 25, 30, 2,
+	29, 0, 0, 26, 0, 19, 21, 0, 27, 0,
 	22, 17, 3, 4, 5, 6, 0, 0, 0, 0,
 	20, 23, 0, 0, 0, 0, 0, 0, 0, 7,
-	0, 15, 0, 0, 0, 18, 9, 10, 11, 12,
-	13, 14, 8, 16, 31, 24,
+	0, 15, 0, 31, 0, 18, 9, 10, 11, 12,
+	13, 14, 8, 16, 24,
 }
 var yyTok1 = [...]int{
 
 	1, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 38, 3, 3, 3,
-	40, 41, 3, 3, 42, 3, 39, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 43,
+	3, 3, 3, 3, 3, 3, 39, 3, 3, 3,
+	42, 43, 3, 3, 44, 3, 41, 3, 3, 3,
+	3, 3, 3, 3, 3, 3, 3, 3, 3, 40,
 }
 var yyTok2 = [...]int{
 
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
 	12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
 	22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-	32, 33, 34, 35, 36, 37,
+	32, 33, 34, 35, 36, 37, 38,
 }
 var yyTok3 = [...]int{
 	0,
@@ -1065,55 +1066,55 @@ yydefault:
 	switch yynt {
 
 	case 1:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:92
+		yyDollar = yyS[yypt-2 : yypt+1]
+		//line parser.y:93
 		{
 			yylex.(*yyLexState).ast_head = yyDollar[1].ast
 		}
 	case 2:
-		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:97
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line parser.y:98
 		{
 			yyDollar[1].ast.tail().next = yyDollar[2].ast
 		}
 	case 3:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:104
+		//line parser.y:105
 		{
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(TRUE, reflect.Bool)
 			yyVAL.ast.bool = true
 		}
 	case 4:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:110
+		//line parser.y:111
 		{
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(FALSE, reflect.Bool)
 			yyVAL.ast.bool = true
 		}
 	case 5:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:116
+		//line parser.y:117
 		{
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(STRING, reflect.String)
 			yyVAL.ast.string = yyDollar[1].string
 		}
 	case 6:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:122
+		//line parser.y:123
 		{
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(UINT8, reflect.Uint8)
 			yyVAL.ast.uint8 = yyDollar[1].uint8
 		}
 	case 7:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:128
+		//line parser.y:129
 		{
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(DOLLAR, reflect.String)
 			yyVAL.ast.uint8 = yyDollar[2].uint8
 		}
 	case 8:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:134
+		//line parser.y:135
 		{
 			l := yylex.(*yyLexState)
 			cmd := yyDollar[1].command
@@ -1146,7 +1147,7 @@ yydefault:
 		}
 	case 9:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:166
+		//line parser.y:167
 		{
 			l := yylex.(*yyLexState)
 
@@ -1162,7 +1163,7 @@ yydefault:
 		}
 	case 10:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:181
+		//line parser.y:182
 		{
 			l := yylex.(*yyLexState)
 			yyVAL.ast = l.bool_node(RE_NMATCH, yyDollar[1].ast, yyDollar[3].ast)
@@ -1178,7 +1179,7 @@ yydefault:
 		}
 	case 11:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:196
+		//line parser.y:197
 		{
 			l := yylex.(*yyLexState)
 			yyVAL.ast = l.bool_node(AND, yyDollar[1].ast, yyDollar[3].ast)
@@ -1193,7 +1194,7 @@ yydefault:
 		}
 	case 12:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:210
+		//line parser.y:211
 		{
 			l := yylex.(*yyLexState)
 			yyVAL.ast = l.bool_node(OR, yyDollar[1].ast, yyDollar[3].ast)
@@ -1208,7 +1209,7 @@ yydefault:
 		}
 	case 13:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:224
+		//line parser.y:225
 		{
 			yyVAL.ast = yylex.(*yyLexState).bool_node(EQ, yyDollar[1].ast, yyDollar[3].ast)
 			if yyVAL.ast == nil {
@@ -1217,7 +1218,7 @@ yydefault:
 		}
 	case 14:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:232
+		//line parser.y:233
 		{
 			yyVAL.ast = yylex.(*yyLexState).bool_node(NEQ, yyDollar[1].ast, yyDollar[3].ast)
 			if yyVAL.ast == nil {
@@ -1226,7 +1227,7 @@ yydefault:
 		}
 	case 15:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:240
+		//line parser.y:241
 		{
 			l := yylex.(*yyLexState)
 			if yyDollar[2].ast.go_type != reflect.Bool {
@@ -1237,38 +1238,38 @@ yydefault:
 		}
 	case 16:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:250
+		//line parser.y:251
 		{
 			yyVAL.ast = yyDollar[2].ast
 		}
 	case 18:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:260
+		//line parser.y:261
 		{
 			yyDollar[1].ast.tail().next = yyDollar[3].ast
 		}
 	case 19:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:267
+		//line parser.y:268
 		{
 			yyVAL.sarray = make([]string, 1)
 			(yyVAL.sarray)[0] = yyDollar[1].string
 		}
 	case 20:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:273
+		//line parser.y:274
 		{
 			yyVAL.sarray = append(yyDollar[1].sarray, yyDollar[3].string)
 		}
 	case 21:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:280
+		//line parser.y:281
 		{
 			yyVAL.ast = nil
 		}
 	case 22:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:285
+		//line parser.y:286
 		{
 			yyVAL.ast = &ast{
 				yy_tok: ARGV,
@@ -1283,37 +1284,37 @@ yydefault:
 		}
 	case 23:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:301
+		//line parser.y:302
 		{
 			yyVAL.ast = nil
 		}
 	case 24:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:306
+		//line parser.y:307
 		{
 			yyVAL.ast = yylex.(*yyLexState).bool_node(WHEN, yyDollar[2].ast, nil)
 		}
 	case 25:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:313
+		//line parser.y:314
 		{
 			yyVAL.sarray = nil
 		}
 	case 26:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:318
+		//line parser.y:319
 		{
 			yyVAL.sarray = nil
 		}
 	case 27:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:323
+		//line parser.y:324
 		{
 			yyVAL.sarray = yyDollar[2].sarray
 		}
 	case 28:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:331
+		yyDollar = yyS[yypt-0 : yypt+1]
+		//line parser.y:332
 		{
 			yyVAL.ast = yylex.(*yyLexState).node(
 				EMPTY_STATEMENT,
@@ -1322,8 +1323,8 @@ yydefault:
 			)
 		}
 	case 29:
-		yyDollar = yyS[yypt-4 : yypt+1]
-		//line parser.y:343
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line parser.y:344
 		{
 			l := yylex.(*yyLexState)
 
@@ -1333,15 +1334,15 @@ yydefault:
 		}
 	case 30:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:352
+		//line parser.y:353
 		{
 			//  dependency graph needs command being executed
 
 			yylex.(*yyLexState).exec = yyDollar[2].command
 		}
 	case 31:
-		yyDollar = yyS[yypt-8 : yypt+1]
-		//line parser.y:358
+		yyDollar = yyS[yypt-7 : yypt+1]
+		//line parser.y:359
 		{
 			l := yylex.(*yyLexState)
 			n := yyDollar[2].command.name
