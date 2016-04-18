@@ -13,6 +13,7 @@
 #	redhat.
 #
 set -x
+rm -f regress.out
 (cd ../src && make clean hoq) || exit
 
 #  unset an locale environment variables
@@ -28,5 +29,5 @@ export LC_ALL=C
 PATH=.:../src:$PATH
 
 seq 1000 | perl -MList::Util=shuffle -e 'print shuffle(<STDIN>);' |
-	hoq regress.hoq | sort | shasum
+	hoq regress.hoq | sort | tee regress.out | shasum
 cat regress.sha1
