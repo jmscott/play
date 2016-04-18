@@ -337,9 +337,6 @@ statement:
 			)
 	  }
 	|
-	  //  the {} block ought to be optional.
-	  //  NAME ought to be a name_list!
-
 	  COMMAND  NAME  command_argv
 	  {
 		l := yylex.(*yyLexState)
