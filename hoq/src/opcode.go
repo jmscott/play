@@ -738,8 +738,8 @@ func (flo *flow) fanout_uint8(
 	return out
 }
 
-//  Reduce all the CALL statements into single uint8, which is the count
-//  of the programs that actuall fired
+//  Reduce all the exec statements into single uint8, which is the count
+//  of the programs that actually fired.
 
 func (flo *flow) fanin_uint8(inx []uint8_chan) (out uint8_chan) {
 
