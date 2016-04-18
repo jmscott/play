@@ -103,7 +103,7 @@ func (cmd *command) lookup_full_path() {
 	cmd.full_path = fp
 }
 
-func (cmd *command) newc(name string, argv []string) (*command) {
+func (cmd *command) newc(name string, argv []string) *command {
 
 	var path string
 
@@ -115,7 +115,7 @@ func (cmd *command) newc(name string, argv []string) (*command) {
 		path = argv[0]
 	}
 	return &command{
-			name:	name,
-			argv: argv,
+		name: name,
+		argv: argv,
 	}
 }

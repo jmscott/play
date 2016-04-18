@@ -267,14 +267,14 @@ func (flo *flow) rel2_bool(
 //  not (bool) opcode.  not null is null.
 
 func (flo *flow) not(in bool_chan) (out bool_chan) {
-	
+
 	out = make(bool_chan)
 
 	go func() {
 		defer close(out)
 
 		for flo = flo.get(); flo != nil; flo = flo.get() {
-			b := <- in
+			b := <-in
 			if b == nil {
 				return
 			}

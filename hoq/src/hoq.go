@@ -74,7 +74,7 @@ func main() {
 		ast.dump()
 
 		fmt.Printf("\nDependency Order of %d Terms:\n",
-						len(depend_order),
+			len(depend_order),
 		)
 		for i, n := range depend_order {
 			fmt.Printf("	#%d: %s\n", i, n)
