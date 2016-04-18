@@ -131,7 +131,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:376
+//line parser.y:373
 var keyword = map[string]int{
 	"and":         AND,
 	"argv":        ARGV,
@@ -1324,7 +1324,7 @@ yydefault:
 		}
 	case 29:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:344
+		//line parser.y:341
 		{
 			l := yylex.(*yyLexState)
 
@@ -1334,7 +1334,7 @@ yydefault:
 		}
 	case 30:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:353
+		//line parser.y:350
 		{
 			//  dependency graph needs command being executed
 
@@ -1342,7 +1342,7 @@ yydefault:
 		}
 	case 31:
 		yyDollar = yyS[yypt-7 : yypt+1]
-		//line parser.y:359
+		//line parser.y:356
 		{
 			l := yylex.(*yyLexState)
 			n := yyDollar[2].command.name
