@@ -54,6 +54,7 @@ func init() {
 //  syntax tree.
 
 %token	COMMAND  EXIT_STATUS
+%token	PREDICATE
 %token	PATH
 %token	EXEC  WHEN
 %token	PARSE_ERROR
@@ -88,12 +89,12 @@ func init() {
 %%
 
 statement_list:
-	  statement
+	  statement  ';'
 	  {
 	  	yylex.(*yyLexState).ast_head = $1
 	  }
 	|
-	  statement_list statement
+	  statement_list statement  ';'
 	  {
 		$1.tail().next = $2
 	  }
@@ -327,7 +328,7 @@ command_argv:
 
 	
 statement:
-	  /* empty */  ';'
+	  /* empty */
 	  {
 	  	$$ =  yylex.(*yyLexState).node(
 				EMPTY_STATEMENT,
@@ -339,7 +340,7 @@ statement:
 	  //  the {} block ought to be optional.
 	  //  NAME ought to be a name_list!
 
-	  COMMAND  NAME  command_argv  ';'
+	  COMMAND  NAME  command_argv
 	  {
 		l := yylex.(*yyLexState)
 
@@ -354,7 +355,7 @@ statement:
 
 	  	yylex.(*yyLexState).exec = $2
 	  }
-	  '('  argv  ')'  qualification  ';'
+	  '('  argv  ')'  qualification
 	  {
 	  	l := yylex.(*yyLexState)
 		n := $2.name
