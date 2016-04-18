@@ -843,7 +843,7 @@ func string_eq(s1, s2 string) bool {
 
 func string_neq(s1, s2 string) bool {
 
-	return s1 == s2
+	return s1 != s2
 }
 
 //  wait for two boolean input channels to resolve to either true, false or null
