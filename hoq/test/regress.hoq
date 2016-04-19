@@ -16,6 +16,7 @@ command echo_dollar1("regress-echo");
 
 command echo_10("regress-echo", "echo 10");
 command echo_100("regress-echo", "echo 100");
+command echo_line_exit("regress-echo", "echo line exit status");
 
 command xtrue("true");
 
@@ -125,3 +126,5 @@ exec echo_100($1)
   when
   	$1 == "100"
 ;
+
+exec echo_line_exit(echo_line.exit_status, "echo line: $1", $1);
