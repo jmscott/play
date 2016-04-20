@@ -42,6 +42,10 @@ func init() {
 
 	command		*command
 
+	//  unix command execed by hoq
+
+	predicate	*predicate
+
 	//  abstract syntax tree
 
 	ast		*ast
@@ -54,8 +58,7 @@ func init() {
 //  syntax tree.
 
 %token	COMMAND  EXIT_STATUS
-%token	PREDICATE
-%token	PATH
+%token	PREDICATE  IS
 %token	EXEC  WHEN
 %token	PARSE_ERROR
 %token	EQ  EQ_UINT8  EQ_STRING  EQ_BOOL
@@ -69,6 +72,7 @@ func init() {
 
 %token	<string>	STRING  NAME
 %token	<command>	XCOMMAND
+%token	<predicate>	XPREDICATE
 %token	<uint8>		UINT8
 %token	<ast>		DOLLAR
 
@@ -91,15 +95,21 @@ func init() {
 statement_list:
 	  statement  ';'
 	  {
-	  	yylex.(*yyLexState).ast_head = $1
+		l := yylex.(*yyLexState)
+	  	l.ast_head = $1
+		l.exec = nil
+		l.pred = nil
 	  }
 	|
 	  statement_list statement  ';'
 	  {
 		$1.tail().next = $2
+
+		l := yylex.(*yyLexState)
+		l.exec = nil
+		l.pred = nil
 	  }
 	;
-
 exp:
 	  TRUE
 	  {
@@ -131,6 +141,18 @@ exp:
 		$$.uint8 = $2
 	  }
 	|
+	  XPREDICATE
+	  {
+		l := yylex.(*yyLexState)
+		pred := $1
+	  	$$ = l.scalar_node(XPREDICATE, reflect.Bool)
+		$$.predicate = pred
+
+		if l.add_depend(pred.name) == false {
+			return 0
+		}
+	  }
+	|
 	  XCOMMAND  '.'  EXIT_STATUS
 	  {
 		l := yylex.(*yyLexState)
@@ -149,15 +171,7 @@ exp:
 			l.error("%s: too many dependencies: > 255", cmd.name)
 			return 0
 		}
-		cmd.depend_ref_count++
-
-		//  record for detection of cycles in the invocation graph
-		//  and compilation order
-
-		l.depends = append(
-				l.depends,
-				fmt.Sprintf("%s %s", l.exec.name, $1.name),
-			)
+		l.add_depend($1.name)
 
 	  	$$ = yylex.(*yyLexState).scalar_node(EXIT_STATUS, reflect.Uint8)
 		$$.command = cmd
@@ -342,8 +356,8 @@ statement:
 		l := yylex.(*yyLexState)
 
 		$$ = l.node(COMMAND, reflect.Invalid, nil, nil, nil)
-		$$.command = $$.command.newc($2, $3)
-		l.commands[$2] = $$.command
+		$$.command = $$.command.new_command($2, $3)
+		l.command[$2] = $$.command
 	  }
 	|
 	  EXEC  XCOMMAND
@@ -362,28 +376,44 @@ statement:
 		}
 		l.execed[n] = true
 
-	  	$$ = &ast{
-			yy_tok:		EXEC,
-			command:	$2,
-			left:		$5,
-			right:		$7,
-		}
+	  	$$ = l.node(EXEC, reflect.Invalid, $5, $7, nil)
+		$$.command = $2
+	  }
+	|
+	  PREDICATE  NAME
+	  {
+		//  dependency graph needs command being executed
+
+	  	yylex.(*yyLexState).pred = &predicate{name:$2}
+
+	  } IS  exp {
+
+	  	l := yylex.(*yyLexState)
+		p := l.pred
+		l.predicate[$2] = p
+		$$ = l.node(PREDICATE, reflect.Invalid, $5, nil, nil)
+		$$.predicate = p
 	  }
 	;
 %%
 
 var keyword = map[string]int{
 	"and":			AND,
-	"argv":			ARGV,
 	"command":		COMMAND,
 	"exec":			EXEC,
 	"exit_status":		EXIT_STATUS,
 	"false":		FALSE,
+	"is":			IS,
 	"not":			NOT,
 	"or":			OR,
-	"path":			PATH,
+	"predicate":		PREDICATE,
 	"true":			TRUE,
 	"when":			WHEN,
+}
+
+type predicate struct {
+	name         string
+	depend_ref_count uint8
 }
 
 type yyLexState struct {
@@ -407,18 +437,28 @@ type yyLexState struct {
 	
 	//  track declared commands
 
-	commands			map[string]*command
+	command			map[string]*command
 
 	//  track execed commands
 
 	execed				map[string]bool
 
-	//  track depends list used by tsort to build DAG of
-	//  exec relationships.
+	//  track predicates
+
+	predicate			map[string]*predicate
+
+	//  track dependencies between {exec, predicate} and references to
+	//  other {exec, predicate} in their clauses.
 
 	depends []string
 
+	//  exec statement being parsed
+
 	exec	*command
+
+	//  predicate statement being parsed
+
+	pred	*predicate
 }
 
 func (l *yyLexState) pushback(c rune) {
@@ -447,6 +487,8 @@ func (l *yyLexState) node(
 		line_no: l.line_no,
 	}
 }
+
+// Note: rename bool_node to bool2_node
 
 func (l *yyLexState) bool_node(yy_tok int, left, right *ast) (*ast) {
 
@@ -660,9 +702,16 @@ func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 
 	//  an executed command reference?
 
-	if l.commands[w] != nil {
-		yylval.command = l.commands[w]
+	if l.command[w] != nil {
+		yylval.command = l.command[w]
 		return XCOMMAND, nil
+	}
+
+	//  a predicate reference?
+
+	if l.predicate[w] != nil {
+		yylval.predicate = l.predicate[w]
+		return XPREDICATE, nil
 	}
 
 	yylval.string = w
@@ -811,6 +860,48 @@ PARSE_ERROR:
 	return PARSE_ERROR
 }
 
+func (l *yyLexState) add_depend(object string) bool {
+
+	var subject string
+
+	switch {
+	case l.exec != nil:
+		subject = l.exec.name
+	case l.pred != nil:
+		subject = l.pred.name
+	default:
+		panic("impossible: no subject for object: " + object)
+	}
+
+
+	//  increase reference count of either command or predicate
+
+	switch {
+	case l.command[object] != nil:
+		cmd := l.command[object]
+		if cmd.depend_ref_count == 255 {
+			l.error("command %s: references >= 256", cmd.name)
+			return false
+		}
+		cmd.depend_ref_count++
+	case l.predicate[object] != nil:
+		pred := l.predicate[object]
+		if pred.depend_ref_count == 255 {
+			l.error("predicate %s: references >= 256", pred.name)
+			return false
+		}
+		pred.depend_ref_count++
+	default:
+		panic("impossible: can not find type of object: " + object)
+	}
+
+	//  add to dependency graph
+
+	l.depends = append(l.depends, fmt.Sprintf("%s %s", subject, object))
+
+	return true
+}
+
 func (l *yyLexState) mkerror(format string, args...interface{}) error {
 
 	return errors.New(fmt.Sprintf("%s near line %d",
@@ -838,7 +929,8 @@ func parse(in io.Reader) (_ *ast, depend_order []string, err error) {
 	l := &yyLexState {
 		line_no:	1,
 		in:		bufio.NewReader(in),
-		commands:	make(map[string]*command),
+		command:	make(map[string]*command),
+		predicate:	make(map[string]*predicate),
 		execed:		make(map[string]bool),
 	}
 
@@ -847,30 +939,38 @@ func parse(in io.Reader) (_ *ast, depend_order []string, err error) {
 		return nil, nil, l.err
 	}
 
+	if len(l.execed) == 0 && len(l.predicate) == 0 {
+		return nil, nil, errors.New("no exec or predicate statement")
+	}
+
 	//  Note: all argv lengths must be <= 255 elements!
 	//  verify_argv_length()
 
 	//  add unqualified exec ... () statements to the dependency list.
 
-	var find_unreferenced_EXEC func(a *ast)
-	find_unreferenced_EXEC = func(a *ast) {
+	var find_unreferenced_EXEC_PRED func(a *ast)
+	find_unreferenced_EXEC_PRED = func(a *ast) {
 
 		if a == nil {
 			return
 		}
-		if a.yy_tok == EXEC && a.command.depend_ref_count == 0 {
+		switch {
+		case a.yy_tok == EXEC && a.command.depend_ref_count == 0:
 			n := a.command.name
 			l.depends = append(l.depends, fmt.Sprintf("%s %s", n,n))
+		case a.yy_tok == PREDICATE && a.predicate.depend_ref_count == 0:
+			n := a.predicate.name
+			l.depends = append(l.depends, fmt.Sprintf("%s %s", n,n))
 		}
-		find_unreferenced_EXEC(a.left)
-		find_unreferenced_EXEC(a.right)
-		find_unreferenced_EXEC(a.next)
+		find_unreferenced_EXEC_PRED(a.left)
+		find_unreferenced_EXEC_PRED(a.right)
+		find_unreferenced_EXEC_PRED(a.next)
 	}
-	find_unreferenced_EXEC(l.ast_head)
+	find_unreferenced_EXEC_PRED(l.ast_head)
 
 	depend_order = tsort(l.depends)
 	if depend_order == nil {
-		l.err = errors.New("exec invocation order has cycles")
+		l.err = errors.New("statement invocation order has cycles")
 	}
 	for i, j := 0, len(depend_order)-1; i < j; i, j = i+1, j-1 {
 		depend_order[i], depend_order[j] =

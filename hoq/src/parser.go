@@ -38,6 +38,10 @@ type yySymType struct {
 
 	command *command
 
+	//  unix command execed by hoq
+
+	predicate *predicate
+
 	//  abstract syntax tree
 
 	ast *ast
@@ -47,7 +51,7 @@ const __MIN_YYTOK = 57346
 const COMMAND = 57347
 const EXIT_STATUS = 57348
 const PREDICATE = 57349
-const PATH = 57350
+const IS = 57350
 const EXEC = 57351
 const WHEN = 57352
 const PARSE_ERROR = 57353
@@ -74,10 +78,11 @@ const EMPTY_STATEMENT = 57373
 const STRING = 57374
 const NAME = 57375
 const XCOMMAND = 57376
-const UINT8 = 57377
-const DOLLAR = 57378
-const AND = 57379
-const OR = 57380
+const XPREDICATE = 57377
+const UINT8 = 57378
+const DOLLAR = 57379
+const AND = 57380
+const OR = 57381
 
 var yyToknames = [...]string{
 	"$end",
@@ -87,7 +92,7 @@ var yyToknames = [...]string{
 	"COMMAND",
 	"EXIT_STATUS",
 	"PREDICATE",
-	"PATH",
+	"IS",
 	"EXEC",
 	"WHEN",
 	"PARSE_ERROR",
@@ -114,6 +119,7 @@ var yyToknames = [...]string{
 	"STRING",
 	"NAME",
 	"XCOMMAND",
+	"XPREDICATE",
 	"UINT8",
 	"DOLLAR",
 	"AND",
@@ -131,19 +137,24 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:373
+//line parser.y:398
 var keyword = map[string]int{
 	"and":         AND,
-	"argv":        ARGV,
 	"command":     COMMAND,
 	"exec":        EXEC,
 	"exit_status": EXIT_STATUS,
 	"false":       FALSE,
+	"is":          IS,
 	"not":         NOT,
 	"or":          OR,
-	"path":        PATH,
+	"predicate":   PREDICATE,
 	"true":        TRUE,
 	"when":        WHEN,
+}
+
+type predicate struct {
+	name             string
+	depend_ref_count uint8
 }
 
 type yyLexState struct {
@@ -167,18 +178,28 @@ type yyLexState struct {
 
 	//  track declared commands
 
-	commands map[string]*command
+	command map[string]*command
 
 	//  track execed commands
 
 	execed map[string]bool
 
-	//  track depends list used by tsort to build DAG of
-	//  exec relationships.
+	//  track predicates
+
+	predicate map[string]*predicate
+
+	//  track dependencies between {exec, predicate} and references to
+	//  other {exec, predicate} in their clauses.
 
 	depends []string
 
+	//  exec statement being parsed
+
 	exec *command
+
+	//  predicate statement being parsed
+
+	pred *predicate
 }
 
 func (l *yyLexState) pushback(c rune) {
@@ -207,6 +228,8 @@ func (l *yyLexState) node(
 		line_no: l.line_no,
 	}
 }
+
+// Note: rename bool_node to bool2_node
 
 func (l *yyLexState) bool_node(yy_tok int, left, right *ast) *ast {
 
@@ -419,9 +442,16 @@ func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 
 	//  an executed command reference?
 
-	if l.commands[w] != nil {
-		yylval.command = l.commands[w]
+	if l.command[w] != nil {
+		yylval.command = l.command[w]
 		return XCOMMAND, nil
+	}
+
+	//  a predicate reference?
+
+	if l.predicate[w] != nil {
+		yylval.predicate = l.predicate[w]
+		return XPREDICATE, nil
 	}
 
 	yylval.string = w
@@ -570,6 +600,47 @@ PARSE_ERROR:
 	return PARSE_ERROR
 }
 
+func (l *yyLexState) add_depend(object string) bool {
+
+	var subject string
+
+	switch {
+	case l.exec != nil:
+		subject = l.exec.name
+	case l.pred != nil:
+		subject = l.pred.name
+	default:
+		panic("impossible: no subject for object: " + object)
+	}
+
+	//  increase reference count of either command or predicate
+
+	switch {
+	case l.command[object] != nil:
+		cmd := l.command[object]
+		if cmd.depend_ref_count == 255 {
+			l.error("command %s: references >= 256", cmd.name)
+			return false
+		}
+		cmd.depend_ref_count++
+	case l.predicate[object] != nil:
+		pred := l.predicate[object]
+		if pred.depend_ref_count == 255 {
+			l.error("predicate %s: references >= 256", pred.name)
+			return false
+		}
+		pred.depend_ref_count++
+	default:
+		panic("impossible: can not find type of object: " + object)
+	}
+
+	//  add to dependency graph
+
+	l.depends = append(l.depends, fmt.Sprintf("%s %s", subject, object))
+
+	return true
+}
+
 func (l *yyLexState) mkerror(format string, args ...interface{}) error {
 
 	return errors.New(fmt.Sprintf("%s near line %d",
@@ -595,10 +666,11 @@ func (l *yyLexState) Error(msg string) {
 func parse(in io.Reader) (_ *ast, depend_order []string, err error) {
 
 	l := &yyLexState{
-		line_no:  1,
-		in:       bufio.NewReader(in),
-		commands: make(map[string]*command),
-		execed:   make(map[string]bool),
+		line_no:   1,
+		in:        bufio.NewReader(in),
+		command:   make(map[string]*command),
+		predicate: make(map[string]*predicate),
+		execed:    make(map[string]bool),
 	}
 
 	yyParse(l)
@@ -606,30 +678,38 @@ func parse(in io.Reader) (_ *ast, depend_order []string, err error) {
 		return nil, nil, l.err
 	}
 
+	if len(l.execed) == 0 && len(l.predicate) == 0 {
+		return nil, nil, errors.New("no exec or predicate statement")
+	}
+
 	//  Note: all argv lengths must be <= 255 elements!
 	//  verify_argv_length()
 
 	//  add unqualified exec ... () statements to the dependency list.
 
-	var find_unreferenced_EXEC func(a *ast)
-	find_unreferenced_EXEC = func(a *ast) {
+	var find_unreferenced_EXEC_PRED func(a *ast)
+	find_unreferenced_EXEC_PRED = func(a *ast) {
 
 		if a == nil {
 			return
 		}
-		if a.yy_tok == EXEC && a.command.depend_ref_count == 0 {
+		switch {
+		case a.yy_tok == EXEC && a.command.depend_ref_count == 0:
 			n := a.command.name
 			l.depends = append(l.depends, fmt.Sprintf("%s %s", n, n))
+		case a.yy_tok == PREDICATE && a.predicate.depend_ref_count == 0:
+			n := a.predicate.name
+			l.depends = append(l.depends, fmt.Sprintf("%s %s", n, n))
 		}
-		find_unreferenced_EXEC(a.left)
-		find_unreferenced_EXEC(a.right)
-		find_unreferenced_EXEC(a.next)
+		find_unreferenced_EXEC_PRED(a.left)
+		find_unreferenced_EXEC_PRED(a.right)
+		find_unreferenced_EXEC_PRED(a.next)
 	}
-	find_unreferenced_EXEC(l.ast_head)
+	find_unreferenced_EXEC_PRED(l.ast_head)
 
 	depend_order = tsort(l.depends)
 	if depend_order == nil {
-		l.err = errors.New("exec invocation order has cycles")
+		l.err = errors.New("statement invocation order has cycles")
 	}
 	for i, j := 0, len(depend_order)-1; i < j; i, j = i+1, j-1 {
 		depend_order[i], depend_order[j] =
@@ -642,87 +722,92 @@ func parse(in io.Reader) (_ *ast, depend_order []string, err error) {
 var yyExca = [...]int{
 	-1, 1,
 	1, -1,
-	-2, 28,
+	-2, 29,
 }
 
-const yyNprod = 32
+const yyNprod = 35
 const yyPrivate = 57344
 
 var yyTokenNames []string
 var yyStates []string
 
-const yyLast = 67
+const yyLast = 74
 
 var yyAct = [...]int{
 
-	21, 28, 22, 23, 32, 24, 31, 27, 25, 18,
-	17, 15, 26, 16, 11, 29, 40, 37, 9, 39,
-	6, 38, 13, 8, 7, 30, 44, 52, 12, 41,
-	42, 33, 34, 45, 46, 47, 48, 49, 50, 51,
-	37, 10, 35, 36, 38, 54, 37, 3, 53, 14,
-	38, 4, 19, 20, 33, 34, 2, 43, 5, 1,
-	33, 34, 0, 0, 0, 35, 36,
+	25, 33, 26, 27, 38, 28, 18, 32, 31, 29,
+	22, 21, 37, 30, 19, 13, 34, 46, 16, 11,
+	7, 35, 43, 45, 9, 10, 44, 8, 36, 3,
+	50, 5, 58, 4, 47, 48, 39, 40, 20, 51,
+	52, 53, 54, 55, 56, 57, 43, 15, 41, 42,
+	44, 60, 43, 2, 59, 6, 44, 14, 12, 17,
+	39, 40, 23, 24, 49, 1, 39, 40, 0, 0,
+	0, 0, 41, 42,
 }
 var yyPact = [...]int{
 
-	42, 42, -20, -9, -11, -22, -1000, -28, -1000, -1000,
-	-1000, -21, -29, -1000, -34, -1000, -27, -7, -1000, -37,
-	-40, 28, -1000, -1000, -1000, -1000, -16, -25, -27, -27,
-	-1000, 16, -27, -27, -27, -27, -27, -27, -27, -1000,
-	21, -1000, 5, -1000, -27, 28, -1000, -1000, 34, 34,
-	-1000, -1000, -1000, -1000, 28,
+	24, 24, -21, -6, -10, -8, -22, -1000, -28, -1000,
+	-1000, -1000, -1000, -26, -29, 30, -1000, -34, -1000, -27,
+	-27, -4, -1000, -32, -41, 34, -1000, -1000, -1000, -1000,
+	-13, -1000, -25, -27, -27, 34, -1000, 20, -27, -27,
+	-27, -27, -27, -27, -27, -1000, 26, -1000, 10, -1000,
+	-27, 34, -1000, -1000, 40, 40, -1000, -1000, -1000, -1000,
+	34,
 }
 var yyPgo = [...]int{
 
-	0, 56, 59, 57, 0, 53, 52, 49, 41, 28,
+	0, 53, 65, 64, 0, 63, 62, 59, 58, 57,
+	47,
 }
 var yyR1 = [...]int{
 
 	0, 2, 2, 4, 4, 4, 4, 4, 4, 4,
-	4, 4, 4, 4, 4, 4, 4, 5, 5, 7,
-	7, 6, 6, 3, 3, 8, 8, 8, 1, 1,
-	9, 1,
+	4, 4, 4, 4, 4, 4, 4, 4, 5, 5,
+	7, 7, 6, 6, 3, 3, 8, 8, 8, 1,
+	1, 9, 1, 10, 1,
 }
 var yyR2 = [...]int{
 
-	0, 2, 3, 1, 1, 1, 1, 2, 3, 3,
-	3, 3, 3, 3, 3, 2, 3, 1, 3, 1,
-	3, 0, 1, 0, 2, 0, 2, 3, 0, 3,
-	0, 7,
+	0, 2, 3, 1, 1, 1, 1, 2, 1, 3,
+	3, 3, 3, 3, 3, 3, 2, 3, 1, 3,
+	1, 3, 0, 1, 0, 2, 0, 2, 3, 0,
+	3, 0, 7, 0, 5,
 }
 var yyChk = [...]int{
 
-	-1000, -2, -1, 5, 9, -1, 40, 33, 34, 40,
-	-8, 42, -9, 43, -7, 32, 42, 44, 43, -6,
-	-5, -4, 29, 30, 32, 35, 39, 34, 28, 42,
-	32, 43, 44, 26, 27, 37, 38, 12, 16, 35,
-	41, -4, -4, -3, 10, -4, -4, -4, -4, -4,
-	-4, -4, 6, 43, -4,
+	-1000, -2, -1, 5, 9, 7, -1, 41, 33, 34,
+	33, 41, -8, 43, -9, -10, 44, -7, 32, 43,
+	8, 45, 44, -6, -5, -4, 29, 30, 32, 36,
+	40, 35, 34, 28, 43, -4, 32, 44, 45, 26,
+	27, 38, 39, 12, 16, 36, 42, -4, -4, -3,
+	10, -4, -4, -4, -4, -4, -4, -4, 6, 44,
+	-4,
 }
 var yyDef = [...]int{
 
-	28, -2, 0, 0, 0, 0, 1, 25, 30, 2,
-	29, 0, 0, 26, 0, 19, 21, 0, 27, 0,
-	22, 17, 3, 4, 5, 6, 0, 0, 0, 0,
-	20, 23, 0, 0, 0, 0, 0, 0, 0, 7,
-	0, 15, 0, 31, 0, 18, 9, 10, 11, 12,
-	13, 14, 8, 16, 24,
+	29, -2, 0, 0, 0, 0, 0, 1, 26, 31,
+	33, 2, 30, 0, 0, 0, 27, 0, 20, 22,
+	0, 0, 28, 0, 23, 18, 3, 4, 5, 6,
+	0, 8, 0, 0, 0, 34, 21, 24, 0, 0,
+	0, 0, 0, 0, 0, 7, 0, 16, 0, 32,
+	0, 19, 10, 11, 12, 13, 14, 15, 9, 17,
+	25,
 }
 var yyTok1 = [...]int{
 
 	1, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 39, 3, 3, 3,
-	42, 43, 3, 3, 44, 3, 41, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 40,
+	3, 3, 3, 3, 3, 3, 40, 3, 3, 3,
+	43, 44, 3, 3, 45, 3, 42, 3, 3, 3,
+	3, 3, 3, 3, 3, 3, 3, 3, 3, 41,
 }
 var yyTok2 = [...]int{
 
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
 	12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
 	22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-	32, 33, 34, 35, 36, 37, 38,
+	32, 33, 34, 35, 36, 37, 38, 39,
 }
 var yyTok3 = [...]int{
 	0,
@@ -1067,54 +1152,74 @@ yydefault:
 
 	case 1:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:93
+		//line parser.y:97
 		{
-			yylex.(*yyLexState).ast_head = yyDollar[1].ast
+			l := yylex.(*yyLexState)
+			l.ast_head = yyDollar[1].ast
+			l.exec = nil
+			l.pred = nil
 		}
 	case 2:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:98
+		//line parser.y:105
 		{
 			yyDollar[1].ast.tail().next = yyDollar[2].ast
+
+			l := yylex.(*yyLexState)
+			l.exec = nil
+			l.pred = nil
 		}
 	case 3:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:105
+		//line parser.y:115
 		{
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(TRUE, reflect.Bool)
 			yyVAL.ast.bool = true
 		}
 	case 4:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:111
+		//line parser.y:121
 		{
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(FALSE, reflect.Bool)
 			yyVAL.ast.bool = true
 		}
 	case 5:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:117
+		//line parser.y:127
 		{
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(STRING, reflect.String)
 			yyVAL.ast.string = yyDollar[1].string
 		}
 	case 6:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:123
+		//line parser.y:133
 		{
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(UINT8, reflect.Uint8)
 			yyVAL.ast.uint8 = yyDollar[1].uint8
 		}
 	case 7:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:129
+		//line parser.y:139
 		{
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(DOLLAR, reflect.String)
 			yyVAL.ast.uint8 = yyDollar[2].uint8
 		}
 	case 8:
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line parser.y:145
+		{
+			l := yylex.(*yyLexState)
+			pred := yyDollar[1].predicate
+			yyVAL.ast = l.scalar_node(XPREDICATE, reflect.Bool)
+			yyVAL.ast.predicate = pred
+
+			if l.add_depend(pred.name) == false {
+				return 0
+			}
+		}
+	case 9:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:135
+		//line parser.y:157
 		{
 			l := yylex.(*yyLexState)
 			cmd := yyDollar[1].command
@@ -1132,22 +1237,14 @@ yydefault:
 				l.error("%s: too many dependencies: > 255", cmd.name)
 				return 0
 			}
-			cmd.depend_ref_count++
-
-			//  record for detection of cycles in the invocation graph
-			//  and compilation order
-
-			l.depends = append(
-				l.depends,
-				fmt.Sprintf("%s %s", l.exec.name, yyDollar[1].command.name),
-			)
+			l.add_depend(yyDollar[1].command.name)
 
 			yyVAL.ast = yylex.(*yyLexState).scalar_node(EXIT_STATUS, reflect.Uint8)
 			yyVAL.ast.command = cmd
 		}
-	case 9:
+	case 10:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:167
+		//line parser.y:181
 		{
 			l := yylex.(*yyLexState)
 
@@ -1161,9 +1258,9 @@ yydefault:
 				return 0
 			}
 		}
-	case 10:
+	case 11:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:182
+		//line parser.y:196
 		{
 			l := yylex.(*yyLexState)
 			yyVAL.ast = l.bool_node(RE_NMATCH, yyDollar[1].ast, yyDollar[3].ast)
@@ -1177,9 +1274,9 @@ yydefault:
 				return 0
 			}
 		}
-	case 11:
+	case 12:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:197
+		//line parser.y:211
 		{
 			l := yylex.(*yyLexState)
 			yyVAL.ast = l.bool_node(AND, yyDollar[1].ast, yyDollar[3].ast)
@@ -1192,9 +1289,9 @@ yydefault:
 				return 0
 			}
 		}
-	case 12:
+	case 13:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:211
+		//line parser.y:225
 		{
 			l := yylex.(*yyLexState)
 			yyVAL.ast = l.bool_node(OR, yyDollar[1].ast, yyDollar[3].ast)
@@ -1207,27 +1304,27 @@ yydefault:
 				return 0
 			}
 		}
-	case 13:
+	case 14:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:225
+		//line parser.y:239
 		{
 			yyVAL.ast = yylex.(*yyLexState).bool_node(EQ, yyDollar[1].ast, yyDollar[3].ast)
 			if yyVAL.ast == nil {
 				return 0
 			}
 		}
-	case 14:
+	case 15:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:233
+		//line parser.y:247
 		{
 			yyVAL.ast = yylex.(*yyLexState).bool_node(NEQ, yyDollar[1].ast, yyDollar[3].ast)
 			if yyVAL.ast == nil {
 				return 0
 			}
 		}
-	case 15:
+	case 16:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:241
+		//line parser.y:255
 		{
 			l := yylex.(*yyLexState)
 			if yyDollar[2].ast.go_type != reflect.Bool {
@@ -1236,40 +1333,40 @@ yydefault:
 			}
 			yyVAL.ast = yylex.(*yyLexState).bool_node(NOT, yyDollar[2].ast, nil)
 		}
-	case 16:
+	case 17:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:251
+		//line parser.y:265
 		{
 			yyVAL.ast = yyDollar[2].ast
 		}
-	case 18:
+	case 19:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:261
+		//line parser.y:275
 		{
 			yyDollar[1].ast.tail().next = yyDollar[3].ast
 		}
-	case 19:
+	case 20:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:268
+		//line parser.y:282
 		{
 			yyVAL.sarray = make([]string, 1)
 			(yyVAL.sarray)[0] = yyDollar[1].string
 		}
-	case 20:
+	case 21:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:274
+		//line parser.y:288
 		{
 			yyVAL.sarray = append(yyDollar[1].sarray, yyDollar[3].string)
 		}
-	case 21:
+	case 22:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:281
+		//line parser.y:295
 		{
 			yyVAL.ast = nil
 		}
-	case 22:
+	case 23:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line parser.y:286
+		//line parser.y:300
 		{
 			yyVAL.ast = &ast{
 				yy_tok: ARGV,
@@ -1282,39 +1379,39 @@ yydefault:
 				yyVAL.ast.uint8++
 			}
 		}
-	case 23:
+	case 24:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:302
+		//line parser.y:316
 		{
 			yyVAL.ast = nil
 		}
-	case 24:
+	case 25:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:307
+		//line parser.y:321
 		{
 			yyVAL.ast = yylex.(*yyLexState).bool_node(WHEN, yyDollar[2].ast, nil)
 		}
-	case 25:
-		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:314
-		{
-			yyVAL.sarray = nil
-		}
 	case 26:
-		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:319
+		yyDollar = yyS[yypt-0 : yypt+1]
+		//line parser.y:328
 		{
 			yyVAL.sarray = nil
 		}
 	case 27:
+		yyDollar = yyS[yypt-2 : yypt+1]
+		//line parser.y:333
+		{
+			yyVAL.sarray = nil
+		}
+	case 28:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:324
+		//line parser.y:338
 		{
 			yyVAL.sarray = yyDollar[2].sarray
 		}
-	case 28:
+	case 29:
 		yyDollar = yyS[yypt-0 : yypt+1]
-		//line parser.y:332
+		//line parser.y:346
 		{
 			yyVAL.ast = yylex.(*yyLexState).node(
 				EMPTY_STATEMENT,
@@ -1322,27 +1419,27 @@ yydefault:
 				nil, nil, nil,
 			)
 		}
-	case 29:
+	case 30:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line parser.y:341
+		//line parser.y:355
 		{
 			l := yylex.(*yyLexState)
 
 			yyVAL.ast = l.node(COMMAND, reflect.Invalid, nil, nil, nil)
-			yyVAL.ast.command = yyVAL.ast.command.newc(yyDollar[2].string, yyDollar[3].sarray)
-			l.commands[yyDollar[2].string] = yyVAL.ast.command
+			yyVAL.ast.command = yyVAL.ast.command.new_command(yyDollar[2].string, yyDollar[3].sarray)
+			l.command[yyDollar[2].string] = yyVAL.ast.command
 		}
-	case 30:
+	case 31:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line parser.y:350
+		//line parser.y:364
 		{
 			//  dependency graph needs command being executed
 
 			yylex.(*yyLexState).exec = yyDollar[2].command
 		}
-	case 31:
+	case 32:
 		yyDollar = yyS[yypt-7 : yypt+1]
-		//line parser.y:356
+		//line parser.y:370
 		{
 			l := yylex.(*yyLexState)
 			n := yyDollar[2].command.name
@@ -1352,12 +1449,28 @@ yydefault:
 			}
 			l.execed[n] = true
 
-			yyVAL.ast = &ast{
-				yy_tok:  EXEC,
-				command: yyDollar[2].command,
-				left:    yyDollar[5].ast,
-				right:   yyDollar[7].ast,
-			}
+			yyVAL.ast = l.node(EXEC, reflect.Invalid, yyDollar[5].ast, yyDollar[7].ast, nil)
+			yyVAL.ast.command = yyDollar[2].command
+		}
+	case 33:
+		yyDollar = yyS[yypt-2 : yypt+1]
+		//line parser.y:384
+		{
+			//  dependency graph needs command being executed
+
+			yylex.(*yyLexState).pred = &predicate{name: yyDollar[2].string}
+
+		}
+	case 34:
+		yyDollar = yyS[yypt-5 : yypt+1]
+		//line parser.y:389
+		{
+
+			l := yylex.(*yyLexState)
+			p := l.pred
+			l.predicate[yyDollar[2].string] = p
+			yyVAL.ast = l.node(PREDICATE, reflect.Invalid, yyDollar[5].ast, nil, nil)
+			yyVAL.ast.predicate = p
 		}
 	}
 	goto yystack /* stack new state and value */

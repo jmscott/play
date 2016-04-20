@@ -738,13 +738,13 @@ func (flo *flow) fanout_uint8(
 	return out
 }
 
-//  Reduce all the exec statements into single uint8, which is the count
-//  of the programs that actually fired.
+//  Reduce a stream of uint8 to single uint8 which is a count of non-null
+//  values.
 
-func (flo *flow) fanin_uint8(inx []uint8_chan) (out uint8_chan) {
+func (flo *flow) reduce_uint8(inx []uint8_chan) (out uint8_chan) {
 
-	if len(inx) == 0 {
-		panic("no channels for input to fanin_uint8")
+	if len(inx) > 255 {
+		panic("too many uint8 input channels: > 255")
 	}
 	out = make(uint8_chan)
 
@@ -791,20 +791,185 @@ func (flo *flow) fanin_uint8(inx []uint8_chan) (out uint8_chan) {
 
 			//  wait for len(inx) uint8 to arrive
 
-			exec_count := uint8(0)
+			u8_count := uint8(0)
 			for i := 0; i < inx_count; i++ {
 				uv := <-uint8_merge
 				if uv == nil {
 					return
 				}
 				if uv.is_null == false {
-					exec_count++
+					u8_count++
 				}
 			}
 			out <- &uint8_value{
-				uint8: exec_count,
+				uint8: u8_count,
 			}
 		}
+	}()
+	return out
+}
+//  broadcast a uint8 to many uint8 listeners
+//
+//  Note:
+//	would be nice to randomize writes to the output channels
+
+func (flo *flow) fanout_bool(
+	in bool_chan,
+	count uint8,
+) (out []bool_chan) {
+
+	out = make([]bool_chan, count)
+	for i := uint8(0); i < count; i++ {
+		out[i] = make(bool_chan)
+	}
+
+	go func() {
+
+		defer func() {
+			for _, a := range out {
+				close(a)
+			}
+		}()
+
+		put := func(bv *bool_value, bc bool_chan) {
+
+			bc <- bv
+		}
+
+		for flo = flo.get(); flo != nil; flo = flo.get() {
+
+			bv := <-in
+			if bv == nil {
+				return
+			}
+
+			//  broadcast to channels in slice
+
+			for _, bc := range out {
+				go put(bv, bc)
+			}
+		}
+	}()
+	return out
+}
+
+//  Reduce a stream of bools to single uint8 which is a count of non-null
+//  values.
+
+func (flo *flow) reduce_bool(inx []bool_chan) (out uint8_chan) {
+
+	if len(inx) > 255 {
+		panic("too many bool input channels: > 255")
+	}
+	out = make(uint8_chan)
+
+	go func() {
+		defer close(out)
+
+		inx_count := len(inx)
+
+		//  merge many bool channels onto a single uint8
+
+		bool_merge := func() (merged bool_chan) {
+
+			var wg sync.WaitGroup
+			merged = make(bool_chan)
+
+			io := func(in bool_chan) {
+				for bv := range in {
+					merged <- bv
+				}
+
+				//  decrement active go routine count
+
+				wg.Done()
+			}
+			wg.Add(len(inx))
+
+			//  start a worker for each input channel
+
+			for _, in := range inx {
+				go io(in)
+			}
+
+			//  Start a goroutine to wait for all merge workers
+			//  to exit, then close the merged channel.
+
+			go func() {
+				wg.Wait()
+				close(merged)
+			}()
+			return
+		}()
+
+		for flo = flo.get(); flo != nil; flo = flo.get() {
+
+			//  wait for len(inx) uint8 to arrive
+
+			bool_count := uint8(0)
+			for i := 0; i < inx_count; i++ {
+				bv := <-bool_merge
+				if bv == nil {
+					return
+				}
+				if bv.is_null == false {
+					bool_count++
+				}
+			}
+			out <- &uint8_value{
+				uint8: bool_count,
+			}
+		}
+	}()
+	return out
+}
+
+func (flo *flow) reduce(in_exec, in_predicate uint8_chan) (uint8_chan) {
+
+	out := make(uint8_chan)
+
+	go func() {
+		defer close(out)
+
+		for flo = flo.get(); flo != nil; flo = flo.get() {
+			inx := in_exec
+			inp := in_predicate
+
+			total := uint16(0)
+
+			//  wait for both exec and predicates to exit
+
+			for inx != nil || inp != nil {
+
+				select {
+
+				//  merged exec count
+
+				case uv := <- inx:
+					if uv == nil {
+						return
+					}
+					total += uint16(uv.uint8)
+					inx = nil
+
+				//  merged predicate count
+
+				case uv := <- inp:
+					if uv == nil {
+						return
+					}
+					total += uint16(uv.uint8)
+					inp = nil
+				}
+			}
+			if total > 255 {
+				panic("exec + predicate count > 255")
+			}
+			out <- &uint8_value{
+					uint8: uint8(total),
+			}
+		}
+
 	}()
 	return out
 }

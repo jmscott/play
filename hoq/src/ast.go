@@ -32,6 +32,10 @@ type ast struct {
 
 	*command
 
+	//  a predicate declaration
+
+	*predicate
+
 	//  child nodes.  shoulld be {left, right}_child
 
 	left  *ast
@@ -47,6 +51,8 @@ type ast struct {
 func (a *ast) String() string {
 
 	switch a.yy_tok {
+	case PREDICATE:
+		return "PREDICATE." + a.predicate.name
 	case COMMAND:
 		cmd := a.command
 		var argv string
@@ -77,7 +83,7 @@ func (a *ast) String() string {
 	case STRING:
 		return fmt.Sprintf("\"%s\"", a.string)
 	case UINT8:
-		return fmt.Sprintf("UINT8=%d", a.uint8)
+		return fmt.Sprintf("UINT8:%d", a.uint8)
 	case DOLLAR:
 		return fmt.Sprintf("$%d", a.uint8)
 	case ARGV:

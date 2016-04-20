@@ -22,10 +22,7 @@ func (flo *flow) compile(
 		next_chan int
 	}
 
-	//  map the COMMAND name onto their EXEC ast nodes.
-	//
-	//  later, we compile the nodes in order of directed acyclic graph,
-	//  using tsort command
+	//  map the command name to EXEC ast node
 
 	exec2ast := make(map[string]*ast)
 	var find_EXEC func(*ast)
@@ -44,6 +41,37 @@ func (flo *flow) compile(
 	//  map command output onto list of fanout channels
 
 	cmd2out := make(map[string]*exec_output)
+
+	type predicate_output struct {
+
+		//  fanout channels listening for exit_status of a process
+
+		out_chans []bool_chan
+
+		//  next free channel
+
+		next_chan int
+	}
+
+	//  map the predicate name to PREDICATE ast node
+
+	pred2ast := make(map[string]*ast)
+	var find_PREDICATE func(*ast)
+	find_PREDICATE = func(a *ast) {
+
+		if a == nil {
+			return
+		}
+		if a.yy_tok == PREDICATE {
+			pred2ast[a.predicate.name] = a
+		}
+		find_PREDICATE(a.next)
+	}
+	find_PREDICATE(ast_head)
+
+	//  map command output onto list of fanout channels
+
+	pred2out := make(map[string]*predicate_output)
 
 	//  map abstract syntax tree nodes to compiled channels
 
@@ -132,6 +160,31 @@ func (flo *flow) compile(
 
 			//  for the extra fanout_uint8()
 			cc++
+
+		//  execute a program in the file system
+
+		case PREDICATE:
+			pred := a.predicate
+
+			//  broadcast boolean qualification to interested
+			//  go routines
+
+			pred2out[pred.name] = &predicate_output{
+					out_chans: flo.fanout_bool(
+						a2b[a.left],
+
+						//  each bool in
+						//  qualification plus
+						//  the fan-in channel that
+						//  terminates the flow
+
+						pred.depend_ref_count+1,
+					),
+
+					//  slot 0 is the fan-in channel
+
+					next_chan: 1,
+				}
 		case TRUE:
 			a2b[a] = flo.const_bool(true)
 		case FALSE:
@@ -140,16 +193,14 @@ func (flo *flow) compile(
 			a2b[a] = a2b[a.left]
 			cc = 0
 		case EXIT_STATUS:
-			cx := cmd2out[a.command.name]
-
-			//  cheap sanity test
-
-			if cx == nil {
-				panic("missing command -> uint8 map for " +
-					a.command.name)
-			}
-			a2u8[a] = cx.out_chans[cx.next_chan]
-			cx.next_chan++
+			co := cmd2out[a.command.name]
+			a2u8[a] = co.out_chans[co.next_chan]
+			co.next_chan++
+			cc = 0
+		case XPREDICATE:
+			po := pred2out[a.predicate.name]
+			a2b[a] = po.out_chans[po.next_chan]
+			po.next_chan++
 			cc = 0
 
 		case EQ_UINT8:
@@ -228,40 +279,76 @@ func (flo *flow) compile(
 			a2b[a] = flo.not(a2b[a.left])
 		default:
 			panic(fmt.Sprintf(
-				"impossible yy_tok in ast: %d", a.yy_tok))
+				"impossible yy_tok in ast: %d, near line %d",
+					a.yy_tok,
+					a.line_no,
+					))
 		}
 		flo.confluent_count += cc
 	}
 
-	//  compile EXEC nodes from least dependent to most dependent order
+	//  compile EXEC/PREDICATe nodes from least dependent to most
+	//  dependent order
 
 	for _, n := range depend_order {
-		compile(exec2ast[n])
+		switch {
+		case exec2ast[n] != nil:
+			compile(exec2ast[n])
+		case pred2ast[n] != nil:
+			compile(pred2ast[n])
+		default:
+			panic("unknown type in depend order: " + n)
+		}
 	}
 
-	//  map output of each exec.exit_status onto a fanin channel.
-	//  out_chan[0] is reserved for the fanin channel
+	//  map uint8 output of each exec.exit_status onto a fanin channel.
+	//  uint8_chan[0] is reserved for the fanin channel
 
 	uint8_out := make([]uint8_chan, len(cmd2out))
 	i := 0
-	for n, cx := range cmd2out {
+	for n, ox := range cmd2out {
 
 		//  cheap sanity test that all output channels have consumers
 
-		if cx.next_chan != len(cx.out_chans) {
+		if ox.next_chan != len(ox.out_chans) {
 			panic(fmt.Sprintf(
-				"%s: expected %d consumed chans, got %d",
-				n, len(cx.out_chans), cx.next_chan,
+				"exec: %s: expected %d consumed chans, got %d",
+				n, len(ox.out_chans), ox.next_chan,
 			))
 		}
 
-		uint8_out[i] = cx.out_chans[0]
+		uint8_out[i] = ox.out_chans[0]
 		i++
 	}
+	flo.confluent_count++
 
-	//  fanin counts as one confluent_count
+	//  map bool output of each predicate onto a fanin channel.
+	//  bool_chan[0] is reserved for the fanin channel
+
+	bool_out := make([]bool_chan, len(pred2out))
+	i = 0
+	for n, op := range pred2out {
+
+		//  cheap sanity test that all output channels have consumers
+
+		if op.next_chan != len(op.out_chans) {
+			panic(fmt.Sprintf(
+				"pred %s: expected %d consumed chans, got %d",
+				n, len(op.out_chans), op.next_chan,
+			))
+		}
+
+		bool_out[i] = op.out_chans[0]
+		i++
+	}
+	flo.confluent_count++
+
+	//  reduce() counts as one a conflowing go routine
 
 	flo.confluent_count++
 
-	return flo.fanin_uint8(uint8_out)
+	return flo.reduce(
+			flo.reduce_uint8(uint8_out),
+			flo.reduce_bool(bool_out),
+	)
 }

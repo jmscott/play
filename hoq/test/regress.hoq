@@ -49,6 +49,51 @@ exec xtrue()
 	not false
 ;
 
+predicate true_bool
+ is
+ 	(
+		true != false
+		or
+		true == true
+		or
+		false == false
+		or
+		false != true
+	)
+	and
+	not (
+		#  always false
+		true == false
+		and
+		true != true
+		and
+		false != false
+		and
+		false == true
+	)
+	and
+	true
+	and
+	not false
+	and
+	xtrue.exit_status == 0
+;
+
+predicate true_re
+  is
+  	$1 ~~ "^[0-9][0-9]*$"
+	and
+  	$0 ~~ "^[0-9][0-9]*$"
+	and
+	not (
+		$1 !~ "^[0-9][0-9]*$"
+		and
+		$0 !~ "^[0-9][0-9]*$"
+	)
+	and
+	true_bool
+;
+
 exec echo_bool(
 	"true == true", true == true,
 
@@ -120,6 +165,8 @@ exec echo_10($1)
 		and
 		$1 != "100"
 	) == false
+	and
+	true_bool
 ;
 
 exec echo_100($1)
