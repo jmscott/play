@@ -12,6 +12,7 @@
 #	The command shasum may not exist in some unix distros,  like 2.8.18
 #	redhat.
 #
+SEQ_LIMIT=1000
 set -x
 rm -f regress.out
 (cd ../src && make clean hoq) || exit
@@ -28,6 +29,6 @@ export LC_ALL=C
 
 PATH=.:../src:$PATH
 
-seq 1000 | perl -MList::Util=shuffle -e 'print shuffle(<STDIN>);' |
+seq $SEQ_LIMIT | perl -MList::Util=shuffle -e 'print shuffle(<STDIN>);' |
 	hoq regress.hoq | sort | tee regress.out | shasum
 cat regress.sha1
