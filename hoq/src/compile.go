@@ -170,21 +170,21 @@ func (flo *flow) compile(
 			//  go routines
 
 			pred2out[pred.name] = &predicate_output{
-					out_chans: flo.fanout_bool(
-						a2b[a.left],
+				out_chans: flo.fanout_bool(
+					a2b[a.left],
 
-						//  each bool in
-						//  qualification plus
-						//  the fan-in channel that
-						//  terminates the flow
+					//  each bool in
+					//  qualification plus
+					//  the fan-in channel that
+					//  terminates the flow
 
-						pred.depend_ref_count+1,
-					),
+					pred.depend_ref_count+1,
+				),
 
-					//  slot 0 is the fan-in channel
+				//  slot 0 is the fan-in channel
 
-					next_chan: 1,
-				}
+				next_chan: 1,
+			}
 		case TRUE:
 			a2b[a] = flo.const_bool(true)
 		case FALSE:
@@ -280,9 +280,9 @@ func (flo *flow) compile(
 		default:
 			panic(fmt.Sprintf(
 				"impossible yy_tok in ast: %d, near line %d",
-					a.yy_tok,
-					a.line_no,
-					))
+				a.yy_tok,
+				a.line_no,
+			))
 		}
 		flo.confluent_count += cc
 	}
@@ -348,7 +348,7 @@ func (flo *flow) compile(
 	flo.confluent_count++
 
 	return flo.reduce(
-			flo.reduce_uint8(uint8_out),
-			flo.reduce_bool(bool_out),
+		flo.reduce_uint8(uint8_out),
+		flo.reduce_bool(bool_out),
 	)
 }

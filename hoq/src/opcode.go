@@ -808,6 +808,7 @@ func (flo *flow) reduce_uint8(inx []uint8_chan) (out uint8_chan) {
 	}()
 	return out
 }
+
 //  broadcast a uint8 to many uint8 listeners
 //
 //  Note:
@@ -924,7 +925,7 @@ func (flo *flow) reduce_bool(inx []bool_chan) (out uint8_chan) {
 	return out
 }
 
-func (flo *flow) reduce(in_exec, in_predicate uint8_chan) (uint8_chan) {
+func (flo *flow) reduce(in_exec, in_predicate uint8_chan) uint8_chan {
 
 	out := make(uint8_chan)
 
@@ -945,7 +946,7 @@ func (flo *flow) reduce(in_exec, in_predicate uint8_chan) (uint8_chan) {
 
 				//  merged exec count
 
-				case uv := <- inx:
+				case uv := <-inx:
 					if uv == nil {
 						return
 					}
@@ -954,7 +955,7 @@ func (flo *flow) reduce(in_exec, in_predicate uint8_chan) (uint8_chan) {
 
 				//  merged predicate count
 
-				case uv := <- inp:
+				case uv := <-inp:
 					if uv == nil {
 						return
 					}
@@ -966,7 +967,7 @@ func (flo *flow) reduce(in_exec, in_predicate uint8_chan) (uint8_chan) {
 				panic("exec + predicate count > 255")
 			}
 			out <- &uint8_value{
-					uint8: uint8(total),
+				uint8: uint8(total),
 			}
 		}
 
