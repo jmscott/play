@@ -582,15 +582,8 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 		}
 		return tok
 	}
-
-	//  peak ahead for regular expression match '~~';  otherwise '~'
-
 	if c == '~' {
-		tok, err = lookahead(l, '~', RE_MATCH, int('~'))
-		if err != nil {
-			goto PARSE_ERROR
-		}
-		return tok
+		return RE_MATCH
 	}
 
 	return int(c)
@@ -1254,7 +1247,7 @@ yydefault:
 			}
 
 			if yyDollar[1].ast.go_type != reflect.String {
-				l.error("~~ operator requires string operands")
+				l.error("~ operator requires string operands")
 				return 0
 			}
 		}
