@@ -596,11 +596,7 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 			for ac < argc {
 
 				a := <-merge
-
-				//  Note: compile generates error for
-				//        arg_value{}
-
-				if a == (arg_value{}) { // stream closed
+				if a == (arg_value{}) {      // stream closed
 					return
 				}
 
@@ -612,18 +608,6 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 
 				if a.is_null {
 					is_null = true
-				}
-
-				//  cheap sanity test tp insure we don't
-				//  see the same argument twice
-				//
-				//  Note:
-				//	technically this implies an empty
-				//	string is not allowed which is probably
-				//	unreasonable
-
-				if av[pos] != "" {
-					panic("argv[] element not \"\"")
 				}
 				av[pos] = sv.string
 				ac++

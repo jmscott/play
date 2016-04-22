@@ -278,11 +278,7 @@ func (flo *flow) compile(
 		case NOT:
 			a2b[a] = flo.not(a2b[a.left])
 		default:
-			panic(fmt.Sprintf(
-				"impossible yy_tok in ast: %d, near line %d",
-				a.yy_tok,
-				a.line_no,
-			))
+			panic(fmt.Sprintf("uncompilable yy_tok: %d", a.yy_tok))
 		}
 		flo.confluent_count += cc
 	}
@@ -297,7 +293,7 @@ func (flo *flow) compile(
 		case pred2ast[n] != nil:
 			compile(pred2ast[n])
 		default:
-			panic("unknown type in depend order: " + n)
+			panic("unknown subject in depend order: " + n)
 		}
 	}
 
@@ -306,15 +302,12 @@ func (flo *flow) compile(
 
 	uint8_out := make([]uint8_chan, len(cmd2out))
 	i := 0
-	for n, ox := range cmd2out {
+	for _, ox := range cmd2out {
 
 		//  cheap sanity test that all output channels have consumers
 
 		if ox.next_chan != len(ox.out_chans) {
-			panic(fmt.Sprintf(
-				"exec: %s: expected %d consumed chans, got %d",
-				n, len(ox.out_chans), ox.next_chan,
-			))
+			panic("unconsumed exec output channels")
 		}
 
 		uint8_out[i] = ox.out_chans[0]
@@ -327,15 +320,12 @@ func (flo *flow) compile(
 
 	bool_out := make([]bool_chan, len(pred2out))
 	i = 0
-	for n, op := range pred2out {
+	for _, op := range pred2out {
 
 		//  cheap sanity test that all output channels have consumers
 
 		if op.next_chan != len(op.out_chans) {
-			panic(fmt.Sprintf(
-				"pred %s: expected %d consumed chans, got %d",
-				n, len(op.out_chans), op.next_chan,
-			))
+			panic("unconsumed predicate output channels")
 		}
 
 		bool_out[i] = op.out_chans[0]
@@ -343,7 +333,7 @@ func (flo *flow) compile(
 	}
 	flo.confluent_count++
 
-	//  reduce() counts as one a conflowing go routine
+	//  reduce() counts as one conflowing go routine
 
 	flo.confluent_count++
 
