@@ -6,6 +6,11 @@
 //  the graph is a list of edges.  each edge is a pair of nodes separated by a
 //  space character.
 //
+//	graph := []string{
+//		"a b",
+//		"c d",
+//	}
+//
 //  eventually need to return a cycle, to aid debuging.
 
 package main
