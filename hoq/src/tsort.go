@@ -1,5 +1,5 @@
-//  toplogically sort a directed graph using the kahn algorithm.
-//  return the order or nil.
+//toplogically sort a directed graph using the kahn algorithm.
+//return the order or nil.  least dependent nodes occur before more dependent.
 //
 //	https://en.wikipedia.org/wiki/Topological_sorting#Kahn.27s_algorithm
 //
@@ -19,7 +19,7 @@ func tsort(graph []string) (order []string) {
 	inbound := make(map[string]uint64)
 	root := make(map[string]bool)
 
-	//  build the node{}, edge{}, and inbound{} maps of graph
+	//  derive the node{}, edge{} and inbound{} sets of graph
 
 	for _, e := range graph {
 
@@ -36,7 +36,7 @@ func tsort(graph []string) (order []string) {
 		}
 	}
 
-	//  build the root{} map
+	//  derive the root{} set
 
 	for n := range node {
 		if inbound[n] == 0 {
@@ -81,5 +81,8 @@ func tsort(graph []string) (order []string) {
 	if visited == len(node) {
 		return order
 	}
+
+	//  Note: need to return an example cycle!
+
 	return nil
 }
