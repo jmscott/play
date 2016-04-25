@@ -596,7 +596,7 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 			for ac < argc {
 
 				a := <-merge
-				if a == (arg_value{}) {      // stream closed
+				if a == (arg_value{}) { // stream closed
 					return
 				}
 
