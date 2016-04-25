@@ -76,7 +76,7 @@ predicate true_bool
 	and
 	not false
 	and
-	xtrue.exit_status == 0
+	xtrue$exit_status == 0
 ;
 
 predicate true_re
@@ -120,14 +120,14 @@ exec echo_bool(
 	"0 == 255", 0 == 255,
 	"0 != 255", 0 != 255,
 
-	"xtrue.exit_status == 255", xtrue.exit_status == 255,
-	"xtrue.exit_status != 255", xtrue.exit_status != 255,
+	"xtrue$exit_status == 255", xtrue$exit_status == 255,
+	"xtrue$exit_status != 255", xtrue$exit_status != 255,
 
-	"xtrue.exit_status == 0", xtrue.exit_status == 0,
-	"xtrue.exit_status != 0", xtrue.exit_status != 0,
+	"xtrue$exit_status == 0", xtrue$exit_status == 0,
+	"xtrue$exit_status != 0", xtrue$exit_status != 0,
 
-	"xtrue.exit_status == 1", xtrue.exit_status == 1,
-	"xtrue.exit_status != 1", xtrue.exit_status != 1,
+	"xtrue$exit_status == 1", xtrue$exit_status == 1,
+	"xtrue$exit_status != 1", xtrue$exit_status != 1,
 
 	"a == a", "a" == "a",
 	"a != a", "a" != "a",
@@ -150,12 +150,12 @@ exec echo_bool(
 
 exec echo_line("$0", $0)
   when
-  	xtrue.exit_status == 0
+  	xtrue$exit_status == 0
 ;
 
 exec echo_dollar1("$1", $1)
   when
-  	xtrue.exit_status == 0
+  	xtrue$exit_status == 0
 ;
 
 exec echo_10($1)
@@ -174,4 +174,4 @@ exec echo_100($1)
   	$1 == "100"
 ;
 
-exec echo_line_exit(echo_line.exit_status, "echo line: $1", $1);
+exec echo_line_exit(echo_line$exit_status, "echo line: $1", $1);

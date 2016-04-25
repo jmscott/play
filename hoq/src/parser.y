@@ -153,7 +153,7 @@ exp:
 		}
 	  }
 	|
-	  XCOMMAND  '.'  EXIT_STATUS
+	  XCOMMAND  '$'  EXIT_STATUS
 	  {
 		l := yylex.(*yyLexState)
 		cmd := $1
