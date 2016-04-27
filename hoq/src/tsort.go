@@ -65,6 +65,8 @@ func tsort(graph []string) (order []string) {
 	for len(root) > 0 {
 		var r1 string
 
+		//  select a single element from root set
+
 		for r1 = range root {
 			break
 		}
