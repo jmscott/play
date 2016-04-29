@@ -673,6 +673,9 @@ func parse(in io.Reader) (_ *ast, depend_order []string, err error) {
 	if len(l.execed) == 0 && len(l.predicate) == 0 {
 		return nil, nil, errors.New("no exec or predicate statement")
 	}
+	if len(l.execed)+len(l.predicate) > 255 {
+		return nil, nil, errors.New("exec + predicate count > 255")
+	}
 
 	//  Note: all argv lengths must be <= 255 elements!
 	//  verify_argv_length()

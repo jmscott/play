@@ -947,9 +947,6 @@ func (flo *flow) reduce(in_exec, in_predicate uint8_chan) uint8_chan {
 					inp = nil
 				}
 			}
-			if total > 255 {
-				panic("exec + predicate count > 255")
-			}
 			out <- &uint8_value{
 				uint8: uint8(total),
 			}
