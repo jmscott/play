@@ -2,7 +2,7 @@ Here is a toy interpreter in golang built using the yacc tool in go core.
 The interpreter is named hoq, which means Higher Order Query.
 The hoq query language allows triggering the firing  of unix processes by
 matching text patterns seen on an input stream, as well as qualifying on the
-process exit codes.
+process exit codes.  You may think of hoq as a mashup of awk and make.
 
 The name hoq is a nod to a teaching interpreter named hoc 
 (Higher Order Calculator), richly  described in the well known book titled
