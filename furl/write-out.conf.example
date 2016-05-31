@@ -1,0 +1,16 @@
+\n
+Begin Write Output:\n
+\n
+            Time Total: %{time_total} sec\n
+      Time Name Lookup: %{time_namelookup} sec\n
+          Time Connect: %{time_connect} sec\n
+       Time PreTansfer: %{time_pretransfer} sec\n
+         Time Redirect: %{time_redirect} sec\n
+   Time Start Transfer: %{time_starttransfer} sec\n
+         Size Download: %{size_download} bytes\n
+           Size Header: %{size_header} bytes\n
+          Size Request: %{size_request} bytes\n
+Average Download Speed: %{speed_download} bytes/sec\n
+\n
+End Write Output:\n
+\n

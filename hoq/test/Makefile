@@ -1,2 +1,2 @@
 all:
-	./regress
+	./regress 10000

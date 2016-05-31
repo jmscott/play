@@ -39,12 +39,10 @@ type bool_value struct {
 	bool
 	is_null bool
 }
-type bool_chan chan *bool_value
+type bool_chan chan bool_value
 
-func (bv *bool_value) String() string {
-	if bv == nil {
-		return "NIL"
-	}
+func (bv bool_value) String() string {
+
 	if bv.is_null {
 		return "<NULL>"
 	}
@@ -143,7 +141,7 @@ func (flo *flow) rel2_string(
 				}
 			}
 
-			bv := &bool_value{
+			bv := bool_value{
 				is_null: left.is_null || right.is_null,
 			}
 
@@ -208,7 +206,7 @@ func (flo *flow) rel2_uint8(
 				}
 			}
 
-			bv := &bool_value{
+			bv := bool_value{
 				is_null: left.is_null || right.is_null,
 			}
 
@@ -255,7 +253,7 @@ func (flo *flow) rel2_bool(
 			case rum_TRUE:
 				b = true
 			}
-			out <- &bool_value{
+			out <- bool_value{
 				bool:    b,
 				is_null: is_null,
 			}
@@ -274,12 +272,12 @@ func (flo *flow) not(in bool_chan) (out bool_chan) {
 		defer close(out)
 
 		for flo = flo.get(); flo != nil; flo = flo.get() {
-			b := <-in
-			if b == nil {
+			bv, ok := <-in
+			if !ok {
 				return
 			}
-			b.bool = !b.bool
-			out <- b
+			bv.bool = !bv.bool
+			out <- bv
 		}
 	}()
 	return out
@@ -335,7 +333,7 @@ func (flo *flow) const_bool(b bool) (out bool_chan) {
 
 		for flo = flo.get(); flo != nil; flo = flo.get() {
 
-			out <- &bool_value{
+			out <- bool_value{
 				bool: b,
 			}
 		}
@@ -384,8 +382,8 @@ func (flo *flow) to_string_bool(in bool_chan) (out string_chan) {
 		defer close(out)
 
 		for flo = flo.get(); flo != nil; flo = flo.get() {
-			bv := <-in
-			if bv == nil {
+			bv, ok := <-in
+			if !ok {
 				return
 			}
 
@@ -457,24 +455,29 @@ func (flo *flow) wait_fire(
 	in_when bool_chan,
 ) (
 	argv *argv_value,
-	when *bool_value,
+	when bool_value,
+	ok bool,
 ) {
 
+	done := 0
+
 	//  wait for both an argv[] and resolution of the when clause
-	for argv == nil || when == nil {
+	for done < 2 {
 		select {
 		case argv = <-in_argv:
 			if argv == nil {
-				return nil, nil
+				return nil, (bool_value{}), false
 			}
+			done++
 
-		case when = <-in_when:
-			if when == nil {
-				return nil, nil
+		case when, ok = <-in_when:
+			if !ok {
+				return nil, (bool_value{}), false
 			}
+			done++
 		}
 	}
-	return
+	return argv, when, true
 }
 
 //  send a constant empty, non-null argv upstream
@@ -625,7 +628,8 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 	return out
 }
 
-//  exec() a unix process if the "when" clause is boolean true.
+//  exec() a unix process if the "when" clause is boolean true and
+//  the argv is not null.
 
 func (flo *flow) exec(
 	cmd *command,
@@ -644,8 +648,8 @@ func (flo *flow) exec(
 			//  wait for resolution of both the argument
 			//  vector and the boolean "when" qualification.
 
-			argv, when := flo.wait_fire(in_argv, in_when)
-			if argv == nil {
+			argv, when, ok := flo.wait_fire(in_argv, in_when)
+			if !ok {
 				return
 			}
 
@@ -816,15 +820,15 @@ func (flo *flow) fanout_bool(
 			}
 		}()
 
-		put := func(bv *bool_value, bc bool_chan) {
+		put := func(bv bool_value, bc bool_chan) {
 
 			bc <- bv
 		}
 
 		for flo = flo.get(); flo != nil; flo = flo.get() {
 
-			bv := <-in
-			if bv == nil {
+			bv, ok := <-in
+			if !ok {
 				return
 			}
 
@@ -893,8 +897,8 @@ func (flo *flow) reduce_bool(inx []bool_chan) (out uint8_chan) {
 
 			bool_count := uint8(0)
 			for i := 0; i < inx_count; i++ {
-				bv := <-bool_merge
-				if bv == nil {
+				bv, ok := <-bool_merge
+				if !ok {
 					return
 				}
 				if bv.is_null == false {
@@ -1007,17 +1011,17 @@ func (flo *flow) wait_bool2(
 	for next == rum_WAIT {
 
 		select {
-		case l := <-in_left:
-			if l == nil {
+		case l, ok := <-in_left:
+			if !ok {
 				return rum_NIL
 			}
-			lv = l
+			lv = &l
 
-		case r := <-in_right:
-			if r == nil {
+		case r, ok := <-in_right:
+			if !ok {
 				return rum_NIL
 			}
-			rv = r
+			rv = &r
 		}
 		next = op[(lv.rummy()<<4)|rv.rummy()]
 	}

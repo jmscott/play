@@ -1,0 +1,9 @@
+#
+#  Synopsis:
+#	Example etc/profile suitable for login and cron scripts. 
+#
+export FURL_ROOT=${FURL_ROOT:=/home/furl}
+
+PATH=$FURL_ROOT/bin:$PATH
+
+test -e $FURL_ROOT/tmp && TMPDIR=$FURL_ROOT/tmp

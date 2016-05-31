@@ -12,8 +12,10 @@
 #	The command shasum may not exist in some unix distros,  like 2.8.18
 #	redhat.
 #
-SEQ_LIMIT=1000
+SEQ_LIMIT=$1
 set -x
+
+#  Need to move to Makefile
 rm -f regress.out
 (cd ../src && make clean hoq) || exit
 

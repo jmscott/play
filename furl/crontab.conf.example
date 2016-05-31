@@ -1,0 +1,98 @@
+FURL_ROOT=/home/furl
+FURL_NOTIFY=--notify 2147701797@txt.att.net --notify 6019187704@messaging.sprintpcs.com
+
+#
+#  What:
+#	Pull home page from www.skytel.com
+#  When:
+#	Every minute
+#
+* * * * * $FURL_ROOT/bin/furl --tag www.skytel.com --url http://www.skytel.com $FURL_NOTIFY >>$FURL_ROOT/log/www.skytel.com.log 2>&1
+
+#
+#  What:
+#	Clear log file www.skytel.com.log
+#  When:
+#	Every sunday at 2:16am
+#
+16 2 * * Sun echo "$(date): cleared by cron" >$FURL_ROOT/log/www.skytel.com.log 2>&1
+
+#
+#  What:
+#	Pull home page from https://www.skytel.com
+#  When:
+#	Every minute
+#
+* * * * * $FURL_ROOT/bin/furl --tag www.skytel.com-https --url https://www.skytel.com $FURL_NOTIFY >>$FURL_ROOT/log/www.skytel.com-https.log 2>&1
+
+#
+#  What:
+#	Clear log file www.skytel.com.log
+#  When:
+#	Every sunday at 2:16am
+#
+16 2 * * Sun echo "$(date): cleared by cron" >$FURL_ROOT/log/www.skytel.com-https.log 2>&1
+
+#
+#  What:
+#	Pull /wctp page from www.skytel.com
+#  When:
+#	Every minute
+#
+* * * * * $FURL_ROOT/bin/furl --tag www.skytel.com-wctp --url http://www.skytel.com/wctp $FURL_NOTIFY >>$FURL_ROOT/log/www.skytel.com-wctp.log 2>&1
+
+#
+#  What:
+#	Clear log file www.skytel.com-wctp.log
+#  When:
+#	Every sunday at 2:16am
+#
+16 2 * * Sun echo "$(date): cleared by cron" >$FURL_ROOT/log/www.skytel.com-wctp.log 2>&1
+
+#
+#  What:
+#	Pull post page from wctp.skytel.com
+#  When:
+#	Every minute
+#
+* * * * * $FURL_ROOT/bin/furl --tag wctp.skytel.com --url http://wctp.skytel.com/wctp $FURL_NOTIFY >>$FURL_ROOT/log/wctp.skytel.com.log 2>&1
+
+#
+#  What:
+#	Clear log file wctp.skytel.com.log
+#  When:
+#	Every sunday at 2:16am
+#
+16 2 * * Sun echo "$(date): cleared by cron" >$FURL_ROOT/log/wctp.skytel.com.log 2>&1
+
+#
+#  What:
+#	Pull post page from https://wctp.skytel.com/wctp
+#  When:
+#	Every minute
+#
+* * * * * $FURL_ROOT/bin/furl --tag wctp.skytel.com-https --url https://wctp.skytel.com/wctp $FURL_NOTIFY >>$FURL_ROOT/log/wctp.skytel.com-https.log 2>&1
+
+#
+#  What:
+#	Clear log file wctp.skytel.com-https.log
+#  When:
+#	Every sunday at 2:16am
+#
+16 2 * * Sun echo "$(date): cleared by cron" >$FURL_ROOT/log/wctp.skytel.com-https.log 2>&1
+
+#
+#  What:
+#	Clear out stale pid files
+#  When:
+#	System reboot
+#
+@reboot find $FURL_ROOT/run -name '*.pid' -print | xargs --no-run-if-empty rm
+
+#
+#  What:
+#	Clear out stale state files
+#  When:
+#	System reboot
+#
+@reboot find $FURL_ROOT/state -name '*.state' -print | xargs --no-run-if-empty rm

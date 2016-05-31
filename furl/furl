@@ -1,0 +1,330 @@
+#!/bin/bash
+#
+#  Synopsis:
+#	Fault/Alert for transitions in status of curl operation
+#  Usage:
+#	export FURL_ROOT=/home/furl
+#	furl							\
+#		--tag panoz					\
+#		--url http://panoz.setspace.com			\
+#		--notify jmscott@setspace.com			\
+#		--notify 2147701797@txt.att.net
+#		--data
+#  Note:
+#	Need to max curl status code on english, based on curl manual page.
+#
+#	State file is $FURL_ROOT/spool/state/$TAG.state.
+#
+#	Ought to add other options that test for either size or byte sequence
+#	in the file.
+#
+#	Need to address how to handle runaways.
+#
+PROG=$(basename $0)
+LOCK=
+TAG=
+URL=
+NOTIFY=
+MAX_TIMEOUT=30
+STATE_PATH=
+CURL_OUTPUT=
+WRITE_OUT=etc/write-out.conf
+CURL_CONFIG=
+
+die()
+{
+	log "ERROR: $PROG: $@" >&2
+	exit 1
+}
+
+panic()
+{
+	die "PANIC: $@"
+}
+
+warn()
+{
+	log "WARN: $@"
+}
+
+log()
+{
+	echo "$(date +'%Y/%m/%d %H:%M:%S'): ${TAG:-$PROG}#$$: $@"
+}
+
+leave()
+{
+	STATUS=$?
+	_STATUS=0
+
+	#
+	#  Zap the temporary curl file.
+	#
+	if [ -f "$CURL_OUTPUT" ];  then
+		if rm $CURL_OUTPUT;  then
+			true
+		else
+			log "ERROR: rm $CURL_OUTPUT failed"
+			_STATUS=1
+		fi
+	fi
+
+	if [ -n "$LOCK" ];  then
+		if rm $LOCK;  then
+			true
+		else
+			log "ERROR: rm $LOCK failed"
+			pwd
+			_STATUS=1
+		fi
+	fi
+	test $_STATUS = 0 || STATUS=$_STATUS
+	log 'good bye, cruel world'
+	exit $STATUS
+}
+
+notify()
+{
+	SUBJECT="$TAG: $1"
+	log "mail: $SUBJECT: $NOTIFY ..."
+	date | mail -s "$SUBJECT" $NOTIFY
+}
+
+log 'hello, world'
+trap leave EXIT
+
+#
+#  Go to $FURL_ROOT directory and source in etc/profile.
+#
+case "$FURL_ROOT" in
+'')
+	die "environment variable FURL_ROOT not defined"
+	;;
+*)
+	log "FURL_ROOT=$FURL_ROOT"
+	cd $FURL_ROOT || die "cd $FURL_ROOT failed"
+	test -r etc/profile || die "can't read $FURL_ROOT/etc/profile"
+	. etc/profile
+	if test -e spool/state;  then
+		true
+	else
+		warn "making directory: $(pwd)/spool/state"
+		mkdir -p spool/state || die 'mkdir spool/state failed'
+	fi
+	;;
+esac
+
+CURL_OUTPUT=${TMPDIR:=/tmp}/$PROG.$$
+log "curl output path: $CURL_OUTPUT"
+
+if [ -n "$WRITE_OUT" -a ! -f "$WRITE_OUT" ];  then
+	warn "can't read write out file: $WRITE_OUT"
+	WRITEOUT=
+fi
+
+#
+#  Process command line arguments.
+#
+while [ "$1" ];  do
+	ARG=$1
+	shift
+	case "$ARG" in
+	--url)
+		test -n "$1" || die 'option --url: missing url'
+		URL="$1"
+		shift
+		;;
+	--data)
+		test -n "$1" || die 'option --data: missing data value'
+		DATA="$1"
+		shift
+		;;
+	--curl-config)
+		test -n "$1" || die 'option --curl-config: missing file path'
+		CURL_CONFIG=$1
+		test -r "$CURL_CONFIG" ||
+			die "option --curl-config: can't read file $CURL_CONFIG"
+		shift
+		;;
+	--curl-option)
+		test -n "$1" || die 'option --curl-option: missing option'
+		CURL_OPTION="$CURL_OPTION $1"
+		shift
+		;;
+	--max-time)
+		test -n "$1" || die 'option --max-time: missing seconds'
+		MAX_TIME="$1"
+		shift
+		;;
+	--notify)
+		N="$1"
+		test -n "$1" || die 'option --notify: missing email address'
+		#
+		#  Accumlate email address with mutiple --notify
+		#
+		if [ -n "$NOTIFY" ];  then
+			NOTIFY="$NOTIFY $1"
+		else
+			NOTIFY="$1"
+		fi
+		shift
+		;;
+	--tag)
+		TAG=$1
+		shift
+		;;
+	--*)
+		die "unknown option: $ARG"
+		;;
+	*)
+		die "unknown argument: $ARG"
+		;;
+	esac
+done
+
+#
+#  Is another curl-fault running?
+#
+_LOCK=run/$PROG-$TAG.pid
+if [ -f $_LOCK ];  then
+	warn "lock file $_LOCK exists"
+	warn "rm $(pwd)/$_LOCK if you suspect an error"
+	leave 0
+fi
+echo $$ >$_LOCK || die "echo $$ >$_LOCK failed"
+LOCK=$_LOCK
+
+#
+#  URL argument is required unless --config exists.
+#
+if [ -n "$CURL_CONFIG" ];  then
+	log "curl config: $CURL_CONFIG"
+	cat $CURL_CONFIG
+	CURL_CONFIG="--config $CURL_CONFIG"
+else
+	test -n "$URL" || die 'missing required option --url'
+	log "url: $URL"
+	URL="--url $URL"
+fi
+
+test -n "$TAG" || die 'missing required option --tag'
+log "tag: $TAG"
+
+test -n "$NOTIFY" || die 'missing required option --notify'
+log "notify: $NOTIFY"
+
+if [ -n "$CURL_OPTION" ];  then
+	log "curl option: $CURL_OPTION"
+fi
+
+if [ -n "$MAX_TIME" ];  then
+	log "connect timeout: $MAX_TIME"
+	MAX_TIME="--max-time $MAX_TIME"
+fi
+
+log "temporary curl output: $CURL_OUTPUT"
+
+STATE_PATH=spool/state/$TAG.state
+log "state path: $STATE_PATH"
+
+
+#
+#  Missing state path implies we are starting, so send and alert message
+#  and let the next pass test the fault..
+#
+if [ ! -f $STATE_PATH ];  then
+	log "missing $STATE_PATH"
+	log "setting to start state"
+	echo start >$STATE_PATH
+	if [ -s $STATE_PATH ];  then
+		notify start
+		exit 0
+	fi
+	#
+	#  DO NOT send alert if write fails, to prevent runaways.
+	#  Really ought to prevent runaways by tracking last successfull sent.
+	#  furl needs a separate monitor for such situations.
+	#
+	panic "write to state file failed: $STATE_PATH"
+fi
+
+test -r $STATE_PATH || panic "can't read state file: $STATE_PATH"
+test -s $STATE_PATH || panic "empty state file: $STATE_PATH"
+
+STATE=$(cat $STATE_PATH)
+log "state: $STATE"
+
+if [ -n "$WRITE_OUT" ];  then
+	log "write out file: $WRITE_OUT"
+	WRITE_OUT="--write-out @$WRITE_OUT"
+fi
+log 'calling curl ...'
+
+curl -q $WRITE_OUT $CURL_CONFIG $CURL_OPTION $MAX_TIME		\
+	--silent						\
+	--output $CURL_OUTPUT					\
+	$URL
+STATUS=$?
+log "curl exit status: $STATUS"
+
+#
+#  Status didn't change, so do nothing.
+#
+if [ $STATUS = $STATE ];  then
+	log 'no change in status'
+	#
+	#  Touch the file for quick reference of time last test.
+	#  no exit status for touch??
+	#
+	touch --no-create $STATE_PATH
+	exit 0
+fi
+
+#
+#  State changed so update the status file.
+#  Notice that just because the state changed doesn't mean we realert.
+#
+echo $STATUS >$STATE_PATH
+test -s || panic "write state file failed: $STATE_PATH"
+
+#
+#  Handle the status fault.
+#
+case $STATUS in
+0)
+	#
+	#  Going from ok to failed state
+	#
+	case $STATE in
+	start)
+		log "going from start to ok state"
+		notify 'ok <- start'
+		;;
+	*)
+		log "going from failed($STATE) to ok state"
+		notify "ok <- failed($STATE)"
+		;;
+	esac
+	;;
+*)
+	#
+	#  Going to failed state
+	#
+	case $STATE in
+	0)
+		log "going from ok to failed"
+		notify "failed($STATUS) <- ok"
+		;;
+	start)
+		log "going from start to failed"
+		notify "failed($STATUS) <- start"
+		;;
+	*)
+		warn "failed status changed to another status during fault"
+		warn "previous status=$STATE, new status=$STATUS"
+		warn 'no alert notice sent'
+		touch --no-create $STATE_PATH
+		;;
+	esac
+	;;
+esac

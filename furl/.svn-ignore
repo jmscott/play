@@ -1,0 +1,9 @@
+state
+tmp
+log
+run
+etc
+profile
+write-out.conf
+*.state
+*.pid
