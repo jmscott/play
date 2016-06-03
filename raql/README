@@ -1,4 +1,4 @@
-raq - Rest Api Queries
+raql - Rest Api for Queries
 
 Build a REST service client and server using PostgreSQL query files and a 
 RAML configuration file.
