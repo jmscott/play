@@ -7,5 +7,7 @@ Probably the json configuration will be replaced with RAML or Swagger or both.
 
 	http://raml.org/
 	http://www.swagger.io
+	http://www.odata.org/
+	https://openapis.org/
 
 In the mean time the restd server is described with a simple json api.
