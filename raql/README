@@ -1,13 +1,10 @@
 raql - Rest Api for Queries
 
-Build a REST service client and server using PostgreSQL query files and a 
-RAML configuration file.
+Build a REST service server using PostgreSQL query files.
 
-Probably the json configuration will be replaced with RAML or Swagger or both.
+Eventually server configuration will be defined in a REST api meta language:
 
 	http://raml.org/
 	http://www.swagger.io
 	http://www.odata.org/
 	https://openapis.org/
-
-In the mean time the restd server is described with a simple json api.
