@@ -5,5 +5,5 @@ all: raqd
 clean:
 	rm -f raqd
 
-raqd: raqd.go
-	$(GO) build raqd.go
+raqd: raqd.go preamble.go
+	$(GO) build raqd.go preamble.go

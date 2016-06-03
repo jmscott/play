@@ -4,7 +4,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"html"
@@ -12,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"regexp"
 	"runtime"
 	"strings"
 	"syscall"
@@ -20,7 +18,7 @@ import (
 )
 
 var listen string = ":8080";
-var path_prefix = "/rest/pdfbox2/";
+var path_prefix = "/";
 
 var (
 	stderr = os.NewFile(uintptr(syscall.Stderr), "/dev/stderr")
@@ -37,6 +35,7 @@ type query_file struct {
 	source_path	string
 	query_cli_arg	map[string]query_cli_arg
 	in		*bufio.Reader
+
 	line_no		int
 	query_args	map[string]query_cli_arg
 }
@@ -46,39 +45,22 @@ var rest_queries = []query_file {
 	{"query/keyword",	"lib/keyword.sql", nil, nil, 0, nil},
 }
 
-var	preamble_begin_re *regexp.Regexp	
-var	preamble_end_re *regexp.Regexp	
-
-var	sql_json_begin_re *regexp.Regexp
-var	sql_json_end_re *regexp.Regexp
-var	sql_json_prefix_re *regexp.Regexp
-
 func init() {
 	
 	for _, q := range rest_queries {
 		q.query_cli_arg = make(map[string]query_cli_arg)
 	}
-
-	preamble_begin_re = regexp.MustCompile(`^\s*/[*]\s*$`)
-	preamble_end_re = regexp.MustCompile(`^\s*[*]/\s*$`)
-
-	//  regular expression for parsing comment preamble
-
-	sql_json_begin_re = regexp.MustCompile(
-	      `^\s*[*]\s*Command\s+Line\s+Arguments:\s*{\s*$`)
-	sql_json_prefix_re = regexp.MustCompile(`^\s*[*] *(.*)`)
-	sql_json_end_re = regexp.MustCompile(`^ [*]  }\s*$`)
 }
 
 func usage() {
-	fmt.Fprintf(stderr, "usage: rest-pdfbox2\n")
+	fmt.Fprintf(stderr, "usage: raqd <config.json>\n")
 }
 
 func ERROR(format string, args ...interface{}) {
 
 	fmt.Fprintf(
 		stderr,
-		"%s: rest-pdfbox2: ERROR: %s\n",
+		"%s: raqd: ERROR: %s\n",
 		time.Now().Format("2006/01/02 15:04:05"),
 		fmt.Sprintf(format, args...),
 	)
@@ -108,76 +90,35 @@ func die(format string, args ...interface{}) {
 
 func (q *query_file) load_preamble() {
 
-	const clia_redefined string =
-		`section "Command Line Arguments:" redefined`
-
-	var qjson bytes.Buffer
-
-	seen_clia_section := false
-	in_clia_section := false
-
-	_die := func(format string, args ...interface{}) {
-		die("%s: preamble: %s near line %d",
-			q.source_path,
-			fmt.Sprintf(format, args...),
-			q.line_no,
-		)
+	pre, _, err := parse_Ccomment_preamble(q.in)
+	if err != nil {
+		q.die("error parsing preamble: %s", err)
 	}
 
-	for {
-		line, err := q.in.ReadString('\n')
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			panic(err)
-		}
-		q.line_no++
+	//  section "Command Line Arguments" is json descriptions of args
 
- 		//  Command Line Arguments:  {
-
-		if sql_json_begin_re.MatchString(line) {
-			if seen_clia_section {
-				_die(clia_redefined)
-			}
-			seen_clia_section = true
-			in_clia_section = true
-			qjson.WriteString("{")
-			continue
-		}
-
-		if !in_clia_section {
-			continue
-		}
-
-		//  At end of json declation?
-
-		if sql_json_end_re.MatchString(line) {
-			in_clia_section = false
-			qjson.WriteString("}")
-			continue
-		}
-
-		//  Extract json line
-
-		matches := sql_json_prefix_re.FindStringSubmatch(line)
-		if len(matches) != 2 {
-			_die("unexpected prefix in json declaration")
-		}
-		_, _ = qjson.WriteString(matches[1])
-	}
-
-	//  verify json command line args exist
-	js := qjson.String()
+	js := pre["Command Line Arguments"]
 	if js == "" {
-		_die("missing json command section")
+		q.die("missing preamble section: Command Line Arguments")
 	}
+
+	//  insure the cli json is well formed
+
 	dec := json.NewDecoder(strings.NewReader(js))
-	err := dec.Decode(&q.query_args)
+	err = dec.Decode(&q.query_args)
 	if err != nil && err != io.EOF {
-		log("	json: %s", js)
-		_die("failed to decode json: %s", err.Error())
+		log("ERROR:	json: %s", js)
+		q.die("failed to decode cli json: %s", err.Error())
 	}
+}
+
+func (q *query_file) die(format string, args ...interface{}) {
+
+	msg := fmt.Sprintf(format, args...)
+	if q.line_no > 0 {
+		msg += fmt.Sprintf(" near line %d", q.line_no)
+	}
+	die("%s: %s", q.source_path, msg)
 }
 
 func (q *query_file) load() {
@@ -185,34 +126,28 @@ func (q *query_file) load() {
 	log("loading sql rest query: %s", q.query_path)
 	log("	sql source file: %s", q.source_path)
 
+	_die := func(format string, args ...interface{}) {
+		q.die("load: %s", fmt.Sprintf(format, args...))
+	}
+
 	inf, err := os.Open(q.source_path)
 	if err != nil {
-		die("%s", err)
+		_die("%s", err)
 	}
 	defer inf.Close()
 
 	q.in = bufio.NewReader(inf)
 
-	for {
-		line, err := q.in.ReadString('\n')
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			panic(err)
-		}
-		line = strings.TrimSuffix(line, "\n")
-		q.line_no++
+	//  first line of sql file must be "/*"
 
-		//  look for comment preamble at start of file
-
-		if preamble_begin_re.MatchString(line) {
-			if q.line_no == 1 {
-				q.load_preamble()
-			}
-			continue
-		}
+	line, err := q.in.ReadString('\n')
+	if err != nil {
+		_die(err.Error())
 	}
+	if line != "/*" {
+		_die("first line is not \"/*\"")
+	}
+	q.load_preamble()
 }
 
 func main() {
