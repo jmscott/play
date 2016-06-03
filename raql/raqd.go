@@ -17,8 +17,8 @@ import (
 	"time"
 )
 
-var listen string = ":8080";
-var path_prefix = "/";
+var listen string = ":8080"
+var path_prefix = "/"
 
 var (
 	stderr = os.NewFile(uintptr(syscall.Stderr), "/dev/stderr")
@@ -26,27 +26,27 @@ var (
 )
 
 type query_cli_arg struct {
-	name	string
-	pgtype	string
+	name   string
+	pgtype string
 }
 
 type query_file struct {
-	query_path	string
-	source_path	string
-	query_cli_arg	map[string]query_cli_arg
-	in		*bufio.Reader
+	query_path    string
+	source_path   string
+	query_cli_arg map[string]query_cli_arg
+	in            *bufio.Reader
 
-	line_no		int
-	query_args	map[string]query_cli_arg
+	line_no    int
+	query_args map[string]query_cli_arg
 }
 
-var rest_queries = []query_file {
+var rest_queries = []query_file{
 
-	{"query/keyword",	"lib/keyword.sql", nil, nil, 0, nil},
+	{"query/keyword", "lib/keyword.sql", nil, nil, 0, nil},
 }
 
 func init() {
-	
+
 	for _, q := range rest_queries {
 		q.query_cli_arg = make(map[string]query_cli_arg)
 	}
@@ -76,7 +76,7 @@ func log(format string, args ...interface{}) {
 
 func leave(status int) {
 	log("good bye, cruel world")
-	os.Exit(status);
+	os.Exit(status)
 }
 
 func die(format string, args ...interface{}) {
@@ -122,7 +122,7 @@ func (q *query_file) die(format string, args ...interface{}) {
 }
 
 func (q *query_file) load() {
-	
+
 	log("loading sql rest query: %s", q.query_path)
 	log("	sql source file: %s", q.source_path)
 
@@ -152,7 +152,7 @@ func (q *query_file) load() {
 
 func main() {
 
-	log("hello, world");
+	log("hello, world")
 
 	if len(os.Args) != 1 {
 		die(
@@ -188,11 +188,11 @@ func main() {
 	http.HandleFunc(
 		path_prefix,
 		func(w http.ResponseWriter, r *http.Request,
-	) {
-		url :=  html.EscapeString(r.URL.String())
-		fmt.Fprintf(w, "Rest: %s: %s", r.Method, url)
-		log("%s: %s: %s", r.RemoteAddr, r.Method, url)
-	})
+		) {
+			url := html.EscapeString(r.URL.String())
+			fmt.Fprintf(w, "Rest: %s: %s", r.Method, url)
+			log("%s: %s: %s", r.RemoteAddr, r.Method, url)
+		})
 
 	err := http.ListenAndServe(listen, nil)
 	if err != nil {

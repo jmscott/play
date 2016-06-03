@@ -12,7 +12,7 @@ import (
 
 func parse_Ccomment_preamble(
 	in *bufio.Reader,
-)(
+) (
 	pre map[string]string,
 	line_count int,
 	err error,
@@ -22,6 +22,9 @@ func parse_Ccomment_preamble(
 	var value bytes.Buffer
 
 	pre = make(map[string]string)
+
+	//  Note: Section prefix needs to match Unicode Graphic
+
 	section_re := regexp.MustCompile(`^ [*]  ([A-Z][^:]*):\s*(.*)$`)
 
 	for {
@@ -55,7 +58,7 @@ func parse_Ccomment_preamble(
 				pre[name] = value.String()
 				value.Truncate(0)
 			}
-				
+
 			name = matches[1]
 			if len(matches) == 3 {
 				value.WriteString(matches[1])
