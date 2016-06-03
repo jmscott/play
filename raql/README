@@ -2,3 +2,10 @@ raql - Rest Api for Queries
 
 Build a REST service client and server using PostgreSQL query files and a 
 RAML configuration file.
+
+Probably the json configuration will be replaced with RAML or Swagger or both.
+
+	http://raml.org/
+	http://www.swagger.io
+
+In the mean time the restd server is described with a simple json api.
