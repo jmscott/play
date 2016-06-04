@@ -3,8 +3,8 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
+	"io/ioutil"
 	"fmt"
 	"html"
 	"io"
@@ -17,50 +17,63 @@ import (
 	"time"
 )
 
-var listen string = ":8080"
-var path_prefix = "/"
-
 var (
 	stderr = os.NewFile(uintptr(syscall.Stderr), "/dev/stderr")
 	stdout = os.NewFile(uintptr(syscall.Stdout), "/dev/stdout")
 )
 
-type query_cli_arg struct {
-	name   string
-	pgtype string
+type Config struct {
+	file_path	string
+	Synopsis 	string	`synopsis`
+	HTTPListen		string	`json:"http-listen"`
+	RESTPathPrefix	string	`json:"rest-path-prefix"`
+	SQLQueries	map[string]*SQLQuery	`json:"sql-queries"`
 }
 
-type query_file struct {
-	query_path    string
-	source_path   string
-	query_cli_arg map[string]query_cli_arg
-	in            *bufio.Reader
-
-	line_no    int
-	query_args map[string]query_cli_arg
+type SQLQuery struct {
+	name		string
+	SourcePath	string `json:"source-path"`
 }
 
-var rest_queries = []query_file{
+func (conf *Config) load(config_path string) {
 
-	{"query/keyword", "lib/keyword.sql", nil, nil, 0, nil},
-}
+	conf.file_path = config_path
+	log("loading config file: %s", conf.file_path)
 
-func init() {
-
-	for _, q := range rest_queries {
-		q.query_cli_arg = make(map[string]query_cli_arg)
+	b, err := ioutil.ReadFile(conf.file_path)
+	if err != nil {
+		die("config load failed: %s", err)
 	}
+	
+	dec := json.NewDecoder(strings.NewReader(string(b)))
+
+	err = dec.Decode(&conf)
+	if err != nil && err != io.EOF {
+		die("config json decoding failed: %s", err)
+	}
+	log("rest path prefix: %s", conf.RESTPathPrefix)
+	log("http listen: %s", conf.HTTPListen)
+
+	log("%d sql query files {", len(conf.SQLQueries))
+	for n := range conf.SQLQueries {
+		q := conf.SQLQueries[n]
+		q.name = n
+		log("	%s: {", q.name)
+		log("		source-path: %s", q.SourcePath)		
+		log("	}")
+	}
+	log("}")
 }
 
 func usage() {
-	fmt.Fprintf(stderr, "usage: raqd <config.json>\n")
+	fmt.Fprintf(stderr, "usage: rasqld <config.json>\n")
 }
 
 func ERROR(format string, args ...interface{}) {
 
 	fmt.Fprintf(
 		stderr,
-		"%s: raqd: ERROR: %s\n",
+		"%s: rasqld: ERROR: %s\n",
 		time.Now().Format("2006/01/02 15:04:05"),
 		fmt.Sprintf(format, args...),
 	)
@@ -74,87 +87,18 @@ func log(format string, args ...interface{}) {
 	)
 }
 
-func leave(status int) {
-	log("good bye, cruel world")
-	os.Exit(status)
-}
-
 func die(format string, args ...interface{}) {
 
 	ERROR(format, args...)
-	leave(2)
-}
-
-//  Load the very first comment in the file and extract the
-//  json in the "Command Line Arguments:" section.
-
-func (q *query_file) load_preamble() {
-
-	pre, _, err := parse_Ccomment_preamble(q.in)
-	if err != nil {
-		q.die("error parsing preamble: %s", err)
-	}
-
-	//  section "Command Line Arguments" is json descriptions of args
-
-	js := pre["Command Line Arguments"]
-	if js == "" {
-		q.die("missing preamble section: Command Line Arguments")
-	}
-
-	//  insure the cli json is well formed
-
-	dec := json.NewDecoder(strings.NewReader(js))
-	err = dec.Decode(&q.query_args)
-	if err != nil && err != io.EOF {
-		log("ERROR:	json: %s", js)
-		q.die("failed to decode cli json: %s", err.Error())
-	}
-}
-
-func (q *query_file) die(format string, args ...interface{}) {
-
-	msg := fmt.Sprintf(format, args...)
-	if q.line_no > 0 {
-		msg += fmt.Sprintf(" near line %d", q.line_no)
-	}
-	die("%s: %s", q.source_path, msg)
-}
-
-func (q *query_file) load() {
-
-	log("loading sql rest query: %s", q.query_path)
-	log("	sql source file: %s", q.source_path)
-
-	_die := func(format string, args ...interface{}) {
-		q.die("load: %s", fmt.Sprintf(format, args...))
-	}
-
-	inf, err := os.Open(q.source_path)
-	if err != nil {
-		_die("%s", err)
-	}
-	defer inf.Close()
-
-	q.in = bufio.NewReader(inf)
-
-	//  first line of sql file must be "/*"
-
-	line, err := q.in.ReadString('\n')
-	if err != nil {
-		_die(err.Error())
-	}
-	if line != "/*" {
-		_die("first line is not \"/*\"")
-	}
-	q.load_preamble()
+	os.Exit(2)
 }
 
 func main() {
 
 	log("hello, world")
+	defer log("good bye, cruel world")
 
-	if len(os.Args) != 1 {
+	if len(os.Args) != 2 {
 		die(
 			"wrong number of arguments: got %d, expected 1",
 			len(os.Args),
@@ -170,23 +114,17 @@ func main() {
 		signal.Notify(c, syscall.SIGINT)
 		s := <-c
 		log("caught signal: %s", s)
-		leave(0)
+		os.Exit(0)
 	}()
+
+	var conf Config
+	conf.load(os.Args[1])
 
 	log("process id: %d", os.Getpid())
 	log("go version: %s", runtime.Version())
-	log("listen service: %s", listen)
-
-	log("loading sql files ...")
-	c := 0
-	for _, q := range rest_queries {
-		q.load()
-		c++
-	}
-	log("loaded %d sql files", c)
 
 	http.HandleFunc(
-		path_prefix,
+		conf.RESTPathPrefix,
 		func(w http.ResponseWriter, r *http.Request,
 		) {
 			url := html.EscapeString(r.URL.String())
@@ -194,9 +132,9 @@ func main() {
 			log("%s: %s: %s", r.RemoteAddr, r.Method, url)
 		})
 
-	err := http.ListenAndServe(listen, nil)
+	err := http.ListenAndServe(conf.HTTPListen, nil)
 	if err != nil {
 		die("%s", err)
 	}
-	leave(0)
+	os.Exit(0)
 }
