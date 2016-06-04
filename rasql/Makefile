@@ -1,12 +1,12 @@
 GO:=/usr/local/go/bin/go
-GOSRC=raqd.go preamble.go
+GOSRC=rasqld.go preamble.go
 
-all: raqd
+all: rasqld
 
 clean:
-	rm -f raqd
+	rm -f rasqld
 
-raqd: raqd.go preamble.go
+rasqld: rasqld.go preamble.go
 	$(GO) build $(GOSRC)
 fmt:
 	$(GO) fmt $(GOSRC)
