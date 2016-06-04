@@ -1,0 +1,15 @@
+{
+	"synopsis":		"PostgreSQL Information Schema",
+	"http-listen":		":8080",
+	"rest-path-prefix":	"/pg_catalog",
+
+	"sql-queries": {
+			"schema-size":		{
+				"source-path":	"lib/schema-size.sql"
+			},
+
+			"who-blocks-whom":	{
+				"source-path":	"lib/who-blocks-whom.sql"
+			}
+	}
+}
