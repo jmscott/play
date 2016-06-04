@@ -1,0 +1,10 @@
+raql - Rest Api for Queries
+
+Build a REST service server using PostgreSQL query files.
+
+Eventually server configuration will be defined in a REST api meta language:
+
+	http://raml.org/
+	http://www.swagger.io
+	http://www.odata.org/
+	https://openapis.org/
