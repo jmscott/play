@@ -4,10 +4,10 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"fmt"
 	"html"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
@@ -23,16 +23,16 @@ var (
 )
 
 type Config struct {
-	file_path	string
-	Synopsis 	string	`synopsis`
-	HTTPListen		string	`json:"http-listen"`
-	RESTPathPrefix	string	`json:"rest-path-prefix"`
-	SQLQueries	map[string]*SQLQuery	`json:"sql-queries"`
+	file_path      string
+	Synopsis       string               `synopsis`
+	HTTPListen     string               `json:"http-listen"`
+	RESTPathPrefix string               `json:"rest-path-prefix"`
+	SQLQueries     map[string]*SQLQuery `json:"sql-queries"`
 }
 
 type SQLQuery struct {
-	name		string
-	SourcePath	string `json:"source-path"`
+	name       string
+	SourcePath string `json:"source-path"`
 }
 
 func (conf *Config) load(config_path string) {
@@ -44,7 +44,7 @@ func (conf *Config) load(config_path string) {
 	if err != nil {
 		die("config load failed: %s", err)
 	}
-	
+
 	dec := json.NewDecoder(strings.NewReader(string(b)))
 
 	err = dec.Decode(&conf)
@@ -59,7 +59,7 @@ func (conf *Config) load(config_path string) {
 		q := conf.SQLQueries[n]
 		q.name = n
 		log("	%s: {", q.name)
-		log("		source-path: %s", q.SourcePath)		
+		log("		source-path: %s", q.SourcePath)
 		log("	}")
 	}
 	log("}")
