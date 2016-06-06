@@ -1,5 +1,5 @@
 {
-	"synopsis":		"PostgreSQL Information Schema",
+	"synopsis":		"PostgreSQL 9.6 System Catalog Schema",
 	"http-listen":		":8080",
 	"rest-path-prefix":	"/pg_catalog",
 
