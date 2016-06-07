@@ -1,6 +1,6 @@
-raql - Rest Api for Queries
+rasql - Rest Api for SQL
 
-Build a REST service server using PostgreSQL query files.
+Build a REST service server using PostgreSQL sql query files.
 
 Eventually server configuration will be defined in a REST api meta language:
 
