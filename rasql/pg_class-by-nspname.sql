@@ -1,6 +1,6 @@
 /*
  *  Synopsis:
- *	Fetch all classes in a pg_catalog.pg_class
+ *	Fetch all classes in a particular name space
  *
  *  Command Line Arguments: {
  *	"nspname": {
@@ -9,7 +9,7 @@
  *  }
  *
  *  Usage:
- *	psql -f pg_classes.sql --set nspname="'pg_catalog'"
+ *	psql -f pg_class-by-nsname.sql --set nspname="'pg_catalog'"
  */
 select
 	c.oid,

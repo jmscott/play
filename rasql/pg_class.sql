@@ -6,7 +6,7 @@
  *  }
  *
  *  Usage:
- *	psql -f pg_classes.sql
+ *	psql -f pg_class.sql
  */
 select
 	c.oid,
