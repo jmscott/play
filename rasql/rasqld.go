@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"html"
@@ -30,9 +31,73 @@ type Config struct {
 	SQLQueries     map[string]*SQLQuery `json:"sql-queries"`
 }
 
+type SQLQueryArguments struct {
+	name		string
+	pgtype		string
+}
+
 type SQLQuery struct {
 	name       string
 	SourcePath string `json:"source-path"`
+	SQLQueryArguments	map[string]string
+}
+
+func (q *SQLQuery) die(format string, args ...interface{}) {
+
+	die("sql query: %s: %s", q.SourcePath, fmt.Sprintf(format, args...))
+}
+
+func (q *SQLQuery) log(format string, args ...interface{}) {
+
+	log("sql query: %s: %s", q.SourcePath, fmt.Sprintf(format, args...))
+}
+
+func (q *SQLQuery) WARN(format string, args ...interface{}) {
+
+	log("WARN: sql query: %s: %s", q.SourcePath,
+		fmt.Sprintf(format, args...))
+}
+
+func (q *SQLQuery) load(conf *Config) {
+
+	log("loading sql file: %s", q.SourcePath)
+
+	sqlf, err := os.Open(q.SourcePath)
+	if err != nil {
+		q.die("%s", err)
+	}
+	defer sqlf.Close()
+
+	in := bufio.NewReader(sqlf)
+
+	//  first line of sql file must be "/*"
+
+	line, err := in.ReadString('\n')
+	if err != nil {
+		q.die(err.Error())
+	}
+	if line != "/*\n" {
+		q.die("first line is not \"/*\"")
+	}
+
+	//  load the preamble in the sql file
+
+	var pre CcommentPreamble = make(CcommentPreamble)
+	var line_count int
+
+	line_count, err = pre.parse(in)
+	line_count++
+	if err != nil {
+		q.die("preamble: %s near line %d", err, line_count)
+	}
+	if len(pre) == 0 {
+		q.WARN("preamble is empty")
+		return
+	}
+	if pre["Command Line Arguments"] == "" {
+		q.WARN("no Command Line Arguments section")
+	}
+	q.log("preamble: %d/%d sections/lines", len(pre), line_count)
 }
 
 func (conf *Config) load(config_path string) {
@@ -63,6 +128,12 @@ func (conf *Config) load(config_path string) {
 		log("	}")
 	}
 	log("}")
+
+	log("loading sql queries from files")
+	for n := range conf.SQLQueries {
+		q := conf.SQLQueries[n]
+		q.load(conf)
+	}
 }
 
 func usage() {

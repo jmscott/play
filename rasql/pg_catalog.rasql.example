@@ -4,12 +4,12 @@
 	"rest-path-prefix":	"/pg_catalog",
 
 	"sql-queries": {
-			"schema-size":		{
-				"source-path":	"lib/schema-size.sql"
+			"pg_class":		{
+				"source-path":	"pg_class.sql"
 			},
 
-			"who-blocks-whom":	{
-				"source-path":	"lib/who-blocks-whom.sql"
+			"pg_class-by-nspname":	{
+				"source-path":	"pg_class-by-nspname.sql"
 			}
 	}
 }

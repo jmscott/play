@@ -10,22 +10,19 @@ import (
 	"strings"
 )
 
-func parse_Ccomment_preamble(
+var section_re = regexp.MustCompile(`^ [*]  ([A-Z][^:]*):(.*)`)
+
+type CcommentPreamble map[string]string
+
+func (pre CcommentPreamble) parse(
 	in *bufio.Reader,
 ) (
-	pre map[string]string,
 	line_count int,
 	err error,
 ) {
 
 	var name string
 	var value bytes.Buffer
-
-	pre = make(map[string]string)
-
-	//  Note: Section prefix needs to match Unicode Graphic
-
-	section_re := regexp.MustCompile(`^ [*]  ([A-Z][^:]*):\s*(.*)$`)
 
 	for {
 		var line string
@@ -35,17 +32,24 @@ func parse_Ccomment_preamble(
 
 			//  EOF is an error until end of preamble seen
 
-			return nil, line_count, err
+			return line_count, err
 		}
 		line_count++
 
-		if line == " */" {
+		//  end of preamble
+
+		if line == " */\n" {
+
+			//  close final session
+			if name != "" {
+				pre[name] = value.String()
+			}
 			return
 		}
 
 		if !strings.HasPrefix(line, " *") {
 			err = errors.New("line must start with \" *\"")
-			return nil, line_count, err
+			return line_count, err
 		}
 
 		//  new section
@@ -53,18 +57,19 @@ func parse_Ccomment_preamble(
 		matches := section_re.FindStringSubmatch(line)
 		if len(matches) > 1 {
 
-			//  update section value
+			//  close the previous section
+
 			if name != "" {
 				pre[name] = value.String()
 				value.Truncate(0)
 			}
 
+			// new section
+
 			name = matches[1]
-			if len(matches) == 3 {
-				value.WriteString(matches[1])
-			}
-		} else {
-			value.WriteString(line)
+			value.WriteString(matches[2])
+		} else if name != "" {
+			value.WriteString(line[2:])
 		}
 	}
 }
