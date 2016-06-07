@@ -25,31 +25,28 @@ var (
 
 type Config struct {
 	file_path      string
-	Synopsis       string               `synopsis`
+	Synopsis       string               `json:"synopsis"`
 	HTTPListen     string               `json:"http-listen"`
 	RESTPathPrefix string               `json:"rest-path-prefix"`
 	SQLQueries     map[string]*SQLQuery `json:"sql-queries"`
 }
 
-type SQLQueryArguments struct {
-	name		string
-	pgtype		string
+type SQLQueryArg struct {
+	name	string
+	PGType	string	`json:"type"'`
 }
 
+type SQLQueryArgs map[string]SQLQueryArg
+
 type SQLQuery struct {
-	name       string
-	SourcePath string `json:"source-path"`
-	SQLQueryArguments	map[string]string
+	name              string
+	SourcePath        string `json:"source-path"`
+	SQLQueryArgs	SQLQueryArgs
 }
 
 func (q *SQLQuery) die(format string, args ...interface{}) {
 
 	die("sql query: %s: %s", q.SourcePath, fmt.Sprintf(format, args...))
-}
-
-func (q *SQLQuery) log(format string, args ...interface{}) {
-
-	log("sql query: %s: %s", q.SourcePath, fmt.Sprintf(format, args...))
 }
 
 func (q *SQLQuery) WARN(format string, args ...interface{}) {
@@ -60,7 +57,7 @@ func (q *SQLQuery) WARN(format string, args ...interface{}) {
 
 func (q *SQLQuery) load(conf *Config) {
 
-	log("loading sql file: %s", q.SourcePath)
+	log("	%s", q.SourcePath)
 
 	sqlf, err := os.Open(q.SourcePath)
 	if err != nil {
@@ -94,30 +91,70 @@ func (q *SQLQuery) load(conf *Config) {
 		q.WARN("preamble is empty")
 		return
 	}
-	if pre["Command Line Arguments"] == "" {
-		q.WARN("no Command Line Arguments section")
+
+	//  decode the json description of the command line arguments
+
+	cla := pre["Command Line Arguments"]
+	if cla == "" {
+		q.WARN("no \"Command Line Arguments\" section")
+		q.WARN("add empty section to elimate this warning")
 	}
-	q.log("preamble: %d/%d sections/lines", len(pre), line_count)
+	dec := json.NewDecoder(strings.NewReader(cla))
+	err = dec.Decode(&q.SQLQueryArgs)
+	if err != nil && err != io.EOF {
+		q.die("failed to decode json in command line arguments")
+	}
+	if len(q.SQLQueryArgs) == 0 {
+		log("		no command line arguments")
+		return
+	}
+	log("		%d arguments: {", len(q.SQLQueryArgs))
+	for n := range q.SQLQueryArgs {
+		qa := q.SQLQueryArgs[n]
+		qa.name = n
+		log("			%s:{pgtype:%s}", qa.name, qa.PGType)
+		
+		// verify PostgreSQL types
+
+		switch qa.PGType {
+		case "text":
+		case "smallint":
+		case "int":
+		case "int2":
+		case "int4":
+		case "int8":
+		default:
+			q.die("unknown pgtype: %s", qa.PGType)
+		}
+	}
+	log("		}")
 }
 
-func (conf *Config) load(config_path string) {
+func (conf *Config) load(path string) {
 
-	conf.file_path = config_path
+	conf.file_path = path
 	log("loading config file: %s", conf.file_path)
+
+	//  slurp config file into string
 
 	b, err := ioutil.ReadFile(conf.file_path)
 	if err != nil {
 		die("config load failed: %s", err)
 	}
 
-	dec := json.NewDecoder(strings.NewReader(string(b)))
+	//  decode json in config file
 
+	dec := json.NewDecoder(strings.NewReader(string(b)))
 	err = dec.Decode(&conf)
 	if err != nil && err != io.EOF {
 		die("config json decoding failed: %s", err)
 	}
+
 	log("rest path prefix: %s", conf.RESTPathPrefix)
 	log("http listen: %s", conf.HTTPListen)
+
+	//  summarize sql queries
+	//  Note: why not load queries from file here?
 
 	log("%d sql query files {", len(conf.SQLQueries))
 	for n := range conf.SQLQueries {
@@ -129,7 +166,9 @@ func (conf *Config) load(config_path string) {
 	}
 	log("}")
 
-	log("loading sql queries from files")
+	//  load sql queries from external files
+
+	log("loading sql queries from %d files", len(conf.SQLQueries))
 	for n := range conf.SQLQueries {
 		q := conf.SQLQueries[n]
 		q.load(conf)
