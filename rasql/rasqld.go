@@ -4,7 +4,6 @@ package main
 
 import (
 	"fmt"
-	"html"
 	"net/http"
 	"os"
 	"os/signal"
@@ -90,27 +89,14 @@ func main() {
 
 	cf.load(os.Args[1])
 
-	http.HandleFunc(
-		cf.RESTPathPrefix,
-		func(w http.ResponseWriter, r *http.Request) {
-			url := r.URL
+	//  install sql query handlers
 
-			if r.Method != http.MethodGet {
-				herror(
-					w,
-					http.StatusMethodNotAllowed,
-					"unknown method: %s",
-					r.Method,
-				)
-				return
-			}
-			path := url.Path
-
-			fmt.Fprintf(w, "Path: %s", path)
-
-			us := html.EscapeString(url.String())
-			log("%s: %s: %s", r.RemoteAddr, r.Method, us)
-		})
+	for n := range cf.SQLQueries {
+		http.HandleFunc(
+			fmt.Sprintf("%s/%s", cf.RESTPathPrefix, n),
+			cf.new_sql_handler(n),
+		)
+	}
 
 	log("listening: %s%s", cf.HTTPListen, cf.RESTPathPrefix)
 	err := http.ListenAndServe(cf.HTTPListen, nil)

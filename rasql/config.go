@@ -1,10 +1,11 @@
 package main
 
 import (
-	"strings"
+	"encoding/json"
 	"io"
 	"io/ioutil"
-	"encoding/json"
+	"net/http"
+	"strings"
 )
 
 type Config struct {
@@ -52,4 +53,17 @@ func (cf *Config) load(path string) {
 	cf.HTTPQueryArgs.load()
 
 	log("%s: loaded", cf.source_path)
+}
+
+func (cf *Config) new_sql_handler(query_name string) http.HandlerFunc {
+
+	sqlq := cf.SQLQueries[query_name]
+	if sqlq == nil {
+		panic("no sql query: " + query_name)
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		sqlq.handle(w, r, cf)
+	}
 }

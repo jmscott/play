@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
+	"net/http"
 	"os"
 	"strings"
 )
@@ -137,4 +139,26 @@ func (q *SQLQuery) load() {
 		}
 	}
 	log("    }")
+}
+
+func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
+
+	url := r.URL
+
+	if r.Method != http.MethodGet {
+		herror(
+			w,
+			http.StatusMethodNotAllowed,
+			"unknown method: %s",
+			r.Method,
+		)
+		return
+	}
+	path := url.Path
+
+	fmt.Fprintf(w, "Path: %s", path)
+
+	us := html.EscapeString(url.String())
+	log("%s: %s: %s", r.RemoteAddr, r.Method, us)
+	
 }
