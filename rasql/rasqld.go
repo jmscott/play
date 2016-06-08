@@ -43,13 +43,17 @@ func log(format string, args ...interface{}) {
 func die(format string, args ...interface{}) {
 
 	ERROR(format, args...)
-	os.Exit(2)
+	leave(2)
+}
+
+func leave(exit_status int) {
+	log("good bye, cruel world")
+	os.Exit(exit_status)
 }
 
 func main() {
 
 	log("hello, world")
-	defer log("good bye, cruel world")
 
 	if len(os.Args) != 2 {
 		die(
@@ -67,18 +71,18 @@ func main() {
 		signal.Notify(c, syscall.SIGINT)
 		s := <-c
 		log("caught signal: %s", s)
-		os.Exit(0)
+		leave(0)
 	}()
 
-	var conf Config
+	var cf Config
 
 	log("process id: %d", os.Getpid())
 	log("go version: %s", runtime.Version())
 
-	conf.load(os.Args[1])
+	cf.load(os.Args[1])
 
 	http.HandleFunc(
-		conf.RESTPathPrefix,
+		cf.RESTPathPrefix,
 		func(w http.ResponseWriter, r *http.Request,
 		) {
 			url := html.EscapeString(r.URL.String())
@@ -86,9 +90,9 @@ func main() {
 			log("%s: %s: %s", r.RemoteAddr, r.Method, url)
 		})
 
-	err := http.ListenAndServe(conf.HTTPListen, nil)
+	err := http.ListenAndServe(cf.HTTPListen, nil)
 	if err != nil {
 		die("%s", err)
 	}
-	os.Exit(0)
+	leave(0)
 }
