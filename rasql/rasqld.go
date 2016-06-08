@@ -103,6 +103,7 @@ func main() {
 			log("%s: %s: %s", r.RemoteAddr, r.Method, us)
 		})
 
+	log("listening for http requests: %s", cf.HTTPListen)
 	err := http.ListenAndServe(cf.HTTPListen, nil)
 	if err != nil {
 		die("%s", err)
