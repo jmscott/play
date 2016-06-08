@@ -6,7 +6,7 @@ all: rasqld
 clean:
 	rm -f rasqld
 
-rasqld: rasqld.go preamble.go
+rasqld: $(GOSRC)
 	$(GO) build $(GOSRC)
 fmt:
 	$(GO) fmt $(GOSRC)

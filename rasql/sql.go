@@ -12,14 +12,38 @@ import (
 type SQLQueryArg struct {
 	name	string
 	PGType	string	`json:"type"'`
+	order	uint8
 }
 
-type SQLQueryArgs map[string]SQLQueryArg
+type SQLQueryArgs map[string]*SQLQueryArg
 
 type SQLQuery struct {
 	name              string
 	SourcePath        string `json:"source-path"`
 	SQLQueryArgs	SQLQueryArgs
+}
+
+type SQLQueries map[string]*SQLQuery
+
+func (queries SQLQueries) load() {
+
+	log("%d sql query files in config {", len(queries))
+	for n := range queries {
+		q := queries[n]
+		q.name = n
+		log("	%s: {", q.name)
+		log("		source-path: %s", q.SourcePath)
+		log("	}")
+	}
+	log("}")
+
+	//  load sql queries from external files
+
+	log("loading sql queries from %d files", len(queries))
+	for n := range queries {
+		q := queries[n]
+		q.load()
+	}
 }
 
 func (q *SQLQuery) die(format string, args ...interface{}) {
@@ -33,7 +57,7 @@ func (q *SQLQuery) WARN(format string, args ...interface{}) {
 		fmt.Sprintf(format, args...))
 }
 
-func (q *SQLQuery) load(conf *Config) {
+func (q *SQLQuery) load() {
 
 	log("	%s", q.SourcePath)
 
@@ -82,9 +106,13 @@ func (q *SQLQuery) load(conf *Config) {
 	if err != nil && err != io.EOF {
 		q.die("failed to decode json in command line arguments")
 	}
+
 	if len(q.SQLQueryArgs) == 0 {
 		log("		no command line arguments")
 		return
+	}
+	if len(q.SQLQueryArgs) > 255 {
+		q.die("> 255 sql query arguments")
 	}
 	log("		%d arguments: {", len(q.SQLQueryArgs))
 	for n := range q.SQLQueryArgs {

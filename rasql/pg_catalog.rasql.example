@@ -11,5 +11,17 @@
 			"pg_class-by-nspname":	{
 				"source-path":	"pg_class-by-nspname.sql"
 			}
+	},
+
+	"http-GET-args": {
+		"q": {
+			"matches": "^.{0,255}",
+			"required": true
+		},
+		"lim": {
+			"default": "10",
+			"matches": "^(?:10|100|1000|10000)$",
+			"required": true
+		}
 	}
 }

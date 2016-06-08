@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"regexp"
 	"runtime"
 	"strings"
 	"syscall"
@@ -28,15 +27,7 @@ type Config struct {
 	Synopsis       string               `json:"synopsis"`
 	HTTPListen     string               `json:"http-listen"`
 	RESTPathPrefix string               `json:"rest-path-prefix"`
-	SQLQueries     map[string]*SQLQuery `json:"sql-queries"`
-}
-
-type HTTPQueryArg struct {
-	name	string
-	Default	string	`json:"default"`
-	Matches string `json:"matches"`
-	Required bool `json:"required"`
-	matches_re regexp.Regexp
+	SQLQueries                          `json:"sql-queries"`
 }
 
 func (conf *Config) load(path string) {
@@ -65,23 +56,7 @@ func (conf *Config) load(path string) {
 	//  summarize sql queries
 	//  Note: why not load queries from file here?
 
-	log("%d sql query files {", len(conf.SQLQueries))
-	for n := range conf.SQLQueries {
-		q := conf.SQLQueries[n]
-		q.name = n
-		log("	%s: {", q.name)
-		log("		source-path: %s", q.SourcePath)
-		log("	}")
-	}
-	log("}")
-
-	//  load sql queries from external files
-
-	log("loading sql queries from %d files", len(conf.SQLQueries))
-	for n := range conf.SQLQueries {
-		q := conf.SQLQueries[n]
-		q.load(conf)
-	}
+	conf.SQLQueries.load()
 }
 
 func usage() {
