@@ -11,7 +11,7 @@ import (
 
 type SQLQueryArg struct {
 	name   string
-	PGType string `json:"type"'`
+	PGType string `json:"type"`
 	order  uint8
 }
 
