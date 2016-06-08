@@ -24,10 +24,10 @@ var (
 
 type Config struct {
 	file_path      string
-	Synopsis       string               `json:"synopsis"`
-	HTTPListen     string               `json:"http-listen"`
-	RESTPathPrefix string               `json:"rest-path-prefix"`
-	SQLQueries                          `json:"sql-queries"`
+	Synopsis       string `json:"synopsis"`
+	HTTPListen     string `json:"http-listen"`
+	RESTPathPrefix string `json:"rest-path-prefix"`
+	SQLQueries     `json:"sql-queries"`
 }
 
 func (conf *Config) load(path string) {

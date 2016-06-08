@@ -10,17 +10,17 @@ import (
 )
 
 type SQLQueryArg struct {
-	name	string
-	PGType	string	`json:"type"'`
-	order	uint8
+	name   string
+	PGType string `json:"type"'`
+	order  uint8
 }
 
 type SQLQueryArgs map[string]*SQLQueryArg
 
 type SQLQuery struct {
-	name              string
-	SourcePath        string `json:"source-path"`
-	SQLQueryArgs	SQLQueryArgs
+	name         string
+	SourcePath   string `json:"source-path"`
+	SQLQueryArgs SQLQueryArgs
 }
 
 type SQLQueries map[string]*SQLQuery
@@ -119,7 +119,7 @@ func (q *SQLQuery) load() {
 		qa := q.SQLQueryArgs[n]
 		qa.name = n
 		log("			%s:{pgtype:%s}", qa.name, qa.PGType)
-		
+
 		// verify PostgreSQL types
 
 		switch qa.PGType {
