@@ -10,13 +10,15 @@ type HTTPQueryArg struct {
 	name	string
 	Default	string	`json:"default"`
 	Matches string `json:"matches"`
-	matches_re	regexp.Regexp
+	matches_re	*regexp.Regexp
 	Required bool `json:"required"`
 }
 
 type HTTPQueryArgs map[string]*HTTPQueryArg
 
 func (qa HTTPQueryArgs) load() {
+	var err error
+
 	log("http query args: %d args", len(qa))
 
 	alog := func(what, value string) {
@@ -37,6 +39,19 @@ func (qa HTTPQueryArgs) load() {
 		alog("required", fmt.Sprintf("%t", a.Required))
 		log("  }")
 
+		if a.Matches != "" {
+			a.matches_re, err = regexp.Compile(a.Matches)
+
+			if err != nil {
+				ERROR("query-arg: %s: Compile(matches) failed",
+					a.name,
+				)
+				die("query-arg %s: %s",
+					a.name,
+					err,
+				)
+			}
+		}
 	}
 }
 
