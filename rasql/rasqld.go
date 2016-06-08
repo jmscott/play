@@ -28,16 +28,17 @@ type Config struct {
 	HTTPListen     string `json:"http-listen"`
 	RESTPathPrefix string `json:"rest-path-prefix"`
 	SQLQueries     `json:"sql-queries"`
+	HTTPQueryArgs	`json:"http-query-args"`
 }
 
-func (conf *Config) load(path string) {
+func (cf *Config) load(path string) {
 
-	conf.file_path = path
-	log("loading config file: %s", conf.file_path)
+	cf.file_path = path
+	log("loading config file: %s", cf.file_path)
 
 	//  slurp config file into string
 
-	b, err := ioutil.ReadFile(conf.file_path)
+	b, err := ioutil.ReadFile(cf.file_path)
 	if err != nil {
 		die("config load failed: %s", err)
 	}
@@ -45,18 +46,19 @@ func (conf *Config) load(path string) {
 	//  decode json in config file
 
 	dec := json.NewDecoder(strings.NewReader(string(b)))
-	err = dec.Decode(&conf)
+	err = dec.Decode(&cf)
 	if err != nil && err != io.EOF {
 		die("config json decoding failed: %s", err)
 	}
 
-	log("rest path prefix: %s", conf.RESTPathPrefix)
-	log("http listen: %s", conf.HTTPListen)
+	log("rest path prefix: %s", cf.RESTPathPrefix)
+	log("http listen: %s", cf.HTTPListen)
 
 	//  summarize sql queries
 	//  Note: why not load queries from file here?
 
-	conf.SQLQueries.load()
+	cf.SQLQueries.load()
+	cf.HTTPQueryArgs.load()
 }
 
 func usage() {

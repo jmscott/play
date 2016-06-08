@@ -31,9 +31,9 @@ func (queries SQLQueries) load() {
 	for n := range queries {
 		q := queries[n]
 		q.name = n
-		log("	%s: {", q.name)
-		log("		source-path: %s", q.SourcePath)
-		log("	}")
+		log("  %s: {", q.name)
+		log("    source-path: %s", q.SourcePath)
+		log("  }")
 	}
 	log("}")
 
@@ -59,7 +59,7 @@ func (q *SQLQuery) WARN(format string, args ...interface{}) {
 
 func (q *SQLQuery) load() {
 
-	log("	%s", q.SourcePath)
+	log("  %s", q.SourcePath)
 
 	sqlf, err := os.Open(q.SourcePath)
 	if err != nil {
@@ -108,17 +108,20 @@ func (q *SQLQuery) load() {
 	}
 
 	if len(q.SQLQueryArgs) == 0 {
-		log("		no command line arguments")
+		log("    no command line arguments")
 		return
 	}
 	if len(q.SQLQueryArgs) > 255 {
 		q.die("> 255 sql query arguments")
 	}
-	log("		%d arguments: {", len(q.SQLQueryArgs))
+
+	//  verify pg sql types
+
+	log("    %d arguments: {", len(q.SQLQueryArgs))
 	for n := range q.SQLQueryArgs {
 		qa := q.SQLQueryArgs[n]
 		qa.name = n
-		log("			%s:{pgtype:%s}", qa.name, qa.PGType)
+		log("      %s:{pgtype:%s}", qa.name, qa.PGType)
 
 		// verify PostgreSQL types
 
@@ -133,5 +136,5 @@ func (q *SQLQuery) load() {
 			q.die("unknown pgtype: %s", qa.PGType)
 		}
 	}
-	log("		}")
+	log("    }")
 }

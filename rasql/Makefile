@@ -1,5 +1,5 @@
 GO:=/usr/local/go/bin/go
-GOSRC=rasqld.go preamble.go sql.go
+GOSRC=rasqld.go preamble.go sql.go http.go
 
 all: rasqld
 
