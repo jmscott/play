@@ -14,7 +14,7 @@
 
 	"http-query-args": {
 		"name": {
-			"matches": "^[[:graph:]]{1,255}",
+			"matches": "^[[:graph:]]{1,255}$",
 			"required": true
 		}
 	}
