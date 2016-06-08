@@ -38,8 +38,8 @@ func (cf *Config) load(path string) {
 		die("config json decoding failed: %s", err)
 	}
 
-	log("rest path prefix: %s", cf.RESTPathPrefix)
 	log("http listen: %s", cf.HTTPListen)
+	log("rest path prefix: %s", cf.RESTPathPrefix)
 
 	cf.SQLQueries.load()
 	cf.HTTPQueryArgs.load()
