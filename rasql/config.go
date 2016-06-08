@@ -38,7 +38,14 @@ func (cf *Config) load(path string) {
 		die("config json decoding failed: %s", err)
 	}
 
+	if cf.HTTPListen == "" {
+		die("config: http-listen not defined or empty")
+	}
 	log("http listen: %s", cf.HTTPListen)
+
+	if cf.RESTPathPrefix == "" {
+		cf.RESTPathPrefix = "/"
+	}
 	log("rest path prefix: %s", cf.RESTPathPrefix)
 
 	cf.SQLQueries.load()
