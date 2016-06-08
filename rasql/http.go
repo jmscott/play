@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http"
 	"regexp"
 	"fmt"
 )
@@ -37,4 +38,15 @@ func (qa HTTPQueryArgs) load() {
 		log("  }")
 
 	}
+}
+
+func herror(
+	w http.ResponseWriter,
+	status int,
+	format string,
+	args ...interface{},
+) {
+	msg := fmt.Sprintf(format, args...)
+	ERROR("%s", msg)
+	http.Error(w, msg, status)
 }

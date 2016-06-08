@@ -83,11 +83,24 @@ func main() {
 
 	http.HandleFunc(
 		cf.RESTPathPrefix,
-		func(w http.ResponseWriter, r *http.Request,
-		) {
-			url := html.EscapeString(r.URL.String())
-			fmt.Fprintf(w, "Rest: %s: %s", r.Method, url)
-			log("%s: %s: %s", r.RemoteAddr, r.Method, url)
+		func(w http.ResponseWriter, r *http.Request) {
+			url := r.URL
+
+			if r.Method != http.MethodGet {
+				herror(
+					w,
+					http.StatusMethodNotAllowed,
+					"unknown method: %s",
+					r.Method,
+				)
+				return
+			}
+			path := url.Path
+
+			fmt.Fprintf(w, "Path: %s", path)
+
+			us := html.EscapeString(url.String())
+			log("%s: %s: %s", r.RemoteAddr, r.Method, us)
 		})
 
 	err := http.ListenAndServe(cf.HTTPListen, nil)
