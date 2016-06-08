@@ -71,10 +71,11 @@ func main() {
 	}()
 
 	var conf Config
-	conf.load(os.Args[1])
 
 	log("process id: %d", os.Getpid())
 	log("go version: %s", runtime.Version())
+
+	conf.load(os.Args[1])
 
 	http.HandleFunc(
 		conf.RESTPathPrefix,

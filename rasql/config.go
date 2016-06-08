@@ -8,7 +8,8 @@ import (
 )
 
 type Config struct {
-	file_path      string
+	source_path      string
+
 	Synopsis       string `json:"synopsis"`
 	HTTPListen     string `json:"http-listen"`
 	RESTPathPrefix string `json:"rest-path-prefix"`
@@ -18,14 +19,15 @@ type Config struct {
 
 func (cf *Config) load(path string) {
 
-	cf.file_path = path
-	log("loading config file: %s", cf.file_path)
+	log("loading config file: %s", path)
+
+	cf.source_path = path
 
 	//  slurp config file into string
 
-	b, err := ioutil.ReadFile(cf.file_path)
+	b, err := ioutil.ReadFile(cf.source_path)
 	if err != nil {
-		die("config load failed: %s", err)
+		die("config read failed: %s", err)
 	}
 
 	//  decode json in config file
@@ -44,4 +46,6 @@ func (cf *Config) load(path string) {
 
 	cf.SQLQueries.load()
 	cf.HTTPQueryArgs.load()
+
+	log("%s: done", cf.source_path)
 }
