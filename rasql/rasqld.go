@@ -15,7 +15,6 @@ import (
 
 var (
 	stderr = os.NewFile(uintptr(syscall.Stderr), "/dev/stderr")
-	stdout = os.NewFile(uintptr(syscall.Stdout), "/dev/stdout")
 )
 
 func usage() {
@@ -26,7 +25,17 @@ func ERROR(format string, args ...interface{}) {
 
 	fmt.Fprintf(
 		stderr,
-		"%s: rasqld: ERROR: %s\n",
+		"%s: ERROR: %s\n",
+		time.Now().Format("2006/01/02 15:04:05"),
+		fmt.Sprintf(format, args...),
+	)
+}
+
+func WARN(format string, args ...interface{}) {
+
+	fmt.Fprintf(
+		stderr,
+		"%s: WARN: %s\n",
 		time.Now().Format("2006/01/02 15:04:05"),
 		fmt.Sprintf(format, args...),
 	)
@@ -34,7 +43,7 @@ func ERROR(format string, args ...interface{}) {
 
 func log(format string, args ...interface{}) {
 
-	fmt.Fprintf(stdout, "%s: %s\n",
+	fmt.Fprintf(stderr, "%s: %s\n",
 		time.Now().Format("2006/01/02 15:04:05"),
 		fmt.Sprintf(format, args...),
 	)
@@ -103,7 +112,7 @@ func main() {
 			log("%s: %s: %s", r.RemoteAddr, r.Method, us)
 		})
 
-	log("listening for http requests: %s", cf.HTTPListen)
+	log("listening: %s%s", cf.HTTPListen, cf.RESTPathPrefix)
 	err := http.ListenAndServe(cf.HTTPListen, nil)
 	if err != nil {
 		die("%s", err)
