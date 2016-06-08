@@ -41,11 +41,8 @@ func (cf *Config) load(path string) {
 	log("rest path prefix: %s", cf.RESTPathPrefix)
 	log("http listen: %s", cf.HTTPListen)
 
-	//  summarize sql queries
-	//  Note: why not load queries from file here?
-
 	cf.SQLQueries.load()
 	cf.HTTPQueryArgs.load()
 
-	log("%s: done", cf.source_path)
+	log("%s: loaded", cf.source_path)
 }
