@@ -12,7 +12,7 @@ import (
 )
 
 //  Prevent conflicts with future query names and new services.
-//  Note: move this list to a file!!
+//  Note: shouldn't these be derived from services defined in the confif file?
 
 var reserved_sql_query_name = map[string]bool{
 
