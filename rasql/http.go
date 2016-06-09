@@ -1,17 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
-	"fmt"
 )
 
 type HTTPQueryArg struct {
-	name	string
-	Default	string	`json:"default"`
-	Matches string `json:"matches"`
-	matches_re	*regexp.Regexp
-	Required bool `json:"required"`
+	name       string
+	Default    string `json:"default"`
+	Matches    string `json:"matches"`
+	matches_re *regexp.Regexp
+	Required   bool `json:"required"`
 }
 
 type HTTPQueryArgs map[string]*HTTPQueryArg

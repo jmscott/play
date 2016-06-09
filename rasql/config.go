@@ -9,13 +9,13 @@ import (
 )
 
 type Config struct {
-	source_path      string
+	source_path string
 
 	Synopsis       string `json:"synopsis"`
 	HTTPListen     string `json:"http-listen"`
 	RESTPathPrefix string `json:"rest-path-prefix"`
 	SQLQueries     `json:"sql-queries"`
-	HTTPQueryArgs	`json:"http-query-args"`
+	HTTPQueryArgs  `json:"http-query-args"`
 }
 
 func (cf *Config) load(path string) {

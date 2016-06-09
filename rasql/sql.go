@@ -160,5 +160,5 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 
 	us := html.EscapeString(url.String())
 	log("%s: %s: %s", r.RemoteAddr, r.Method, us)
-	
+
 }
