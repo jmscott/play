@@ -11,6 +11,50 @@ import (
 	"strings"
 )
 
+//  Prevent conflicts with future query names and new services.
+//  Note: move this list to a file!!
+
+var reserved_sql_query_name = map[string]bool{
+
+	//  common protocols and file formats
+
+	"api": true,
+	"help": true,
+	"html": true,
+	"http": true,
+	"https": true,
+	"json": true,
+	"mime": true,
+	"query": true,
+	"rest": true,
+	"sql": true,
+
+	//  common top level unix file system directories
+
+	"bin": true,
+	"cache": true,
+	"data": true,
+	"dev": true,
+	"dist": true,
+	"doc": true,
+	"etc": true,
+	"fs": true,
+	"lib": true,
+	"local": true,
+	"log": true,
+	"man": true,
+	"pkg": true,
+	"prod": true,
+	"run": true,
+	"schema": true,
+	"share": true,
+	"spool": true,
+	"src": true,
+	"support": true,
+	"tmp": true,
+	"www": true,
+}
+
 type SQLQueryArg struct {
 	name   string
 	PGType string `json:"type"`
@@ -32,6 +76,10 @@ func (queries SQLQuerySet) load() {
 	log("%d sql query files in config {", len(queries))
 	for n := range queries {
 		q := queries[n]
+		if reserved_sql_query_name[n] {
+			q.die("query name conflicts with reserved name: %s", n)
+		}
+
 		q.name = n
 		log("  %s: {", q.name)
 		log("    source-path: %s", q.SourcePath)
