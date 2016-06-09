@@ -25,9 +25,9 @@ type SQLQuery struct {
 	SQLQueryArgs SQLQueryArgs
 }
 
-type SQLQueries map[string]*SQLQuery
+type SQLQuerySet map[string]*SQLQuery
 
-func (queries SQLQueries) load() {
+func (queries SQLQuerySet) load() {
 
 	log("%d sql query files in config {", len(queries))
 	for n := range queries {
@@ -140,6 +140,8 @@ func (q *SQLQuery) load() {
 	}
 	log("    }")
 }
+
+// Reply to an sql query request 
 
 func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 

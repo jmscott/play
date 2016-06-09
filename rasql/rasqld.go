@@ -91,7 +91,7 @@ func main() {
 
 	//  install sql query handlers
 
-	for n := range cf.SQLQueries {
+	for n := range cf.SQLQuerySet {
 		http.HandleFunc(
 			fmt.Sprintf("%s/%s", cf.RESTPathPrefix, n),
 			cf.new_sql_handler(n),

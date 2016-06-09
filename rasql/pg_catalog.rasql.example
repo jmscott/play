@@ -3,7 +3,7 @@
 	"http-listen":		":8080",
 	"rest-path-prefix":	"/pg_catalog",
 
-	"sql-queries": {
+	"sql-query-set": {
 		"pg_class": {
 			"source-path":	"pg_class.sql"
 		},

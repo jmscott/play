@@ -14,7 +14,7 @@ type Config struct {
 	Synopsis       string `json:"synopsis"`
 	HTTPListen     string `json:"http-listen"`
 	RESTPathPrefix string `json:"rest-path-prefix"`
-	SQLQueries     `json:"sql-queries"`
+	SQLQuerySet     `json:"sql-query-set"`
 	HTTPQueryArgs  `json:"http-query-args"`
 }
 
@@ -49,7 +49,7 @@ func (cf *Config) load(path string) {
 	}
 	log("rest path prefix: %s", cf.RESTPathPrefix)
 
-	cf.SQLQueries.load()
+	cf.SQLQuerySet.load()
 	cf.HTTPQueryArgs.load()
 
 	log("%s: loaded", cf.source_path)
@@ -57,7 +57,7 @@ func (cf *Config) load(path string) {
 
 func (cf *Config) new_sql_handler(query_name string) http.HandlerFunc {
 
-	sqlq := cf.SQLQueries[query_name]
+	sqlq := cf.SQLQuerySet[query_name]
 	if sqlq == nil {
 		panic("no sql query: " + query_name)
 	}
