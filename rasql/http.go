@@ -14,9 +14,9 @@ type HTTPQueryArg struct {
 	Required   bool `json:"required"`
 }
 
-type HTTPQueryArgs map[string]*HTTPQueryArg
+type HTTPQueryArgSet map[string]*HTTPQueryArg
 
-func (qa HTTPQueryArgs) load() {
+func (qa HTTPQueryArgSet) load() {
 	var err error
 
 	log("http query args: %d args", len(qa))

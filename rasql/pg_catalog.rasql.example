@@ -12,7 +12,7 @@
 		}
 	},
 
-	"http-query-args": {
+	"http-query-arg-set": {
 		"name": {
 			"matches": "^[[:graph:]]{1,255}$",
 			"required": true

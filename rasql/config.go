@@ -15,7 +15,7 @@ type Config struct {
 	HTTPListen     string `json:"http-listen"`
 	RESTPathPrefix string `json:"rest-path-prefix"`
 	SQLQuerySet     `json:"sql-query-set"`
-	HTTPQueryArgs  `json:"http-query-args"`
+	HTTPQueryArgSet  `json:"http-query-arg-set"`
 }
 
 func (cf *Config) load(path string) {
@@ -50,7 +50,7 @@ func (cf *Config) load(path string) {
 	log("rest path prefix: %s", cf.RESTPathPrefix)
 
 	cf.SQLQuerySet.load()
-	cf.HTTPQueryArgs.load()
+	cf.HTTPQueryArgSet.load()
 
 	log("%s: loaded", cf.source_path)
 }
