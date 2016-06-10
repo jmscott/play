@@ -11,11 +11,11 @@ import (
 type Config struct {
 	source_path string
 
-	Synopsis       string `json:"synopsis"`
-	HTTPListen     string `json:"http-listen"`
-	RESTPathPrefix string `json:"rest-path-prefix"`
+	Synopsis        string `json:"synopsis"`
+	HTTPListen      string `json:"http-listen"`
+	RESTPathPrefix  string `json:"rest-path-prefix"`
 	SQLQuerySet     `json:"sql-query-set"`
-	HTTPQueryArgSet  `json:"http-query-arg-set"`
+	HTTPQueryArgSet `json:"http-query-arg-set"`
 }
 
 func (cf *Config) load(path string) {

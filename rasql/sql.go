@@ -14,18 +14,18 @@ import (
 )
 
 type SQLQueryArg struct {
-	name   string
-	PGType string `json:"type"`
+	name     string
+	PGType   string `json:"type"`
 	position uint8
 }
 
 type SQLQueryArgSet map[string]*SQLQueryArg
 
 type SQLQuery struct {
-	name         string
-	SourcePath   string `json:"source-path"`
+	name           string
+	SourcePath     string `json:"source-path"`
 	SQLQueryArgSet `json:"query-arg-set"`
-	sql_text     string
+	sql_text       string
 }
 
 var pgsql_command_prefix_re = regexp.MustCompile(`^[ \t]*\\`)
@@ -150,7 +150,7 @@ func (q *SQLQuery) load() {
 	log("%s: %s", q.SourcePath, q.sql_text)
 }
 
-// Reply to an sql query request 
+// Reply to an sql query request
 
 func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 
@@ -182,7 +182,7 @@ func (q *SQLQuery) parse_pgsql(in *bufio.Reader) {
 	var sql_text bytes.Buffer
 
 	position := uint8(0)
-	
+
 	replace_re := make(map[string]*regexp.Regexp)
 
 	for {
@@ -199,7 +199,6 @@ func (q *SQLQuery) parse_pgsql(in *bufio.Reader) {
 		if pgsql_command_prefix_re.MatchString(line) {
 			continue
 		}
-
 
 		//  find all command line :var references
 
@@ -236,8 +235,8 @@ func (q *SQLQuery) parse_pgsql(in *bufio.Reader) {
 			//  Note: why no ReplaceString()!!!
 
 			line = replace_re[v].ReplaceAllString(
-					line,
-					fmt.Sprintf(`$1$$%d`, qa.position),
+				line,
+				fmt.Sprintf(`$1$$%d`, qa.position),
 			)
 		}
 		sql_text.WriteString(line)
