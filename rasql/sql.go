@@ -2,72 +2,34 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"html"
 	"io"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 )
-
-//  Prevent conflicts with future query names and new services.
-//  Note: shouldn't these be derived from services defined in the confif file?
-
-var reserved_sql_query_name = map[string]bool{
-
-	//  common protocols and file formats
-
-	"api": true,
-	"help": true,
-	"html": true,
-	"http": true,
-	"https": true,
-	"json": true,
-	"mime": true,
-	"query": true,
-	"rest": true,
-	"sql": true,
-
-	//  common top level unix file system directories
-
-	"bin": true,
-	"cache": true,
-	"data": true,
-	"dev": true,
-	"dist": true,
-	"doc": true,
-	"etc": true,
-	"fs": true,
-	"lib": true,
-	"local": true,
-	"log": true,
-	"man": true,
-	"pkg": true,
-	"prod": true,
-	"run": true,
-	"schema": true,
-	"share": true,
-	"spool": true,
-	"src": true,
-	"support": true,
-	"tmp": true,
-	"www": true,
-}
 
 type SQLQueryArg struct {
 	name   string
 	PGType string `json:"type"`
-	order  uint8
+	position uint8
 }
 
-type SQLQueryArgs map[string]*SQLQueryArg
+type SQLQueryArgSet map[string]*SQLQueryArg
 
 type SQLQuery struct {
 	name         string
 	SourcePath   string `json:"source-path"`
-	SQLQueryArgs SQLQueryArgs
+	SQLQueryArgSet `json:"query-arg-set"`
+	sql_text     string
 }
+
+var pgsql_command_prefix_re = regexp.MustCompile(`^[ \t]*\\`)
+var pgsql_colon_var = regexp.MustCompile(`(?:[^:]|\A):[\w]+`)
 
 type SQLQuerySet map[string]*SQLQuery
 
@@ -76,9 +38,6 @@ func (queries SQLQuerySet) load() {
 	log("%d sql query files in config {", len(queries))
 	for n := range queries {
 		q := queries[n]
-		if reserved_sql_query_name[n] {
-			q.die("query name conflicts with reserved name: %s", n)
-		}
 
 		q.name = n
 		log("  %s: {", q.name)
@@ -152,24 +111,24 @@ func (q *SQLQuery) load() {
 		q.WARN("add empty section to elimate this warning")
 	}
 	dec := json.NewDecoder(strings.NewReader(cla))
-	err = dec.Decode(&q.SQLQueryArgs)
+	err = dec.Decode(&q.SQLQueryArgSet)
 	if err != nil && err != io.EOF {
 		q.die("failed to decode json in command line arguments")
 	}
 
-	if len(q.SQLQueryArgs) == 0 {
+	if len(q.SQLQueryArgSet) == 0 {
 		log("    no command line arguments")
 		return
 	}
-	if len(q.SQLQueryArgs) > 255 {
+	if len(q.SQLQueryArgSet) > 255 {
 		q.die("> 255 sql query arguments")
 	}
 
 	//  verify pg sql types
 
-	log("    %d arguments: {", len(q.SQLQueryArgs))
-	for n := range q.SQLQueryArgs {
-		qa := q.SQLQueryArgs[n]
+	log("    %d arguments: {", len(q.SQLQueryArgSet))
+	for n := range q.SQLQueryArgSet {
+		qa := q.SQLQueryArgSet[n]
 		qa.name = n
 		log("      %s:{pgtype:%s}", qa.name, qa.PGType)
 
@@ -187,6 +146,8 @@ func (q *SQLQuery) load() {
 		}
 	}
 	log("    }")
+	q.parse_pgsql(in)
+	log("%s: %s", q.SourcePath, q.sql_text)
 }
 
 // Reply to an sql query request 
@@ -211,4 +172,75 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 	us := html.EscapeString(url.String())
 	log("%s: %s: %s", r.RemoteAddr, r.Method, us)
 
+}
+
+//  parse a typical postgres sql file into a string suitable for Prepare()
+//  in particular, :name variables are extracted and \<directives> are stripped.
+
+func (q *SQLQuery) parse_pgsql(in *bufio.Reader) {
+
+	var sql_text bytes.Buffer
+
+	position := uint8(0)
+	
+	replace_re := make(map[string]*regexp.Regexp)
+
+	for {
+		line, err := in.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			die("parse_pgsql: io error: %s", err)
+		}
+
+		//  skip a psql command prefix "\d ..."
+
+		if pgsql_command_prefix_re.MatchString(line) {
+			continue
+		}
+
+
+		//  find all command line :var references
+
+		vars := pgsql_colon_var.FindAllString(line, -1)
+		if len(vars) == 0 {
+			sql_text.WriteString(line)
+			continue
+		}
+
+		//  swap the parameter name with $<pos>
+
+		for _, v := range vars {
+			if v[0:1] != ":" {
+				v = v[1:]
+			}
+			qa := q.SQLQueryArgSet[v[1:]]
+			if qa == nil {
+				q.WARN("pgsql variable not in preamble: %s", v)
+				continue
+			}
+			if qa.position == 0 {
+				if position == 255 {
+					q.die("pgsql variables: count > 254")
+				}
+				position++
+				qa.position = position
+
+				//  make a replacement re specific to
+				//  this argument
+
+				replace_re[v] = regexp.MustCompile(
+					fmt.Sprintf(`([^:]|\A)(%s)`, v))
+			}
+			//  Note: why no ReplaceString()!!!
+
+			line = replace_re[v].ReplaceAllString(
+					line,
+					fmt.Sprintf(`$1$$%d`, qa.position),
+			)
+		}
+		sql_text.WriteString(line)
+	}
+	q.sql_text = sql_text.String()
 }
