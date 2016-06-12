@@ -1,10 +1,4 @@
-rasql - Rest Api for SQL
+rasql - Rest API for SQL
 
-Build a REST service server using PostgreSQL sql query files.
-
-Eventually server configuration will be defined in a REST api meta language:
-
-	http://raml.org/
-	http://www.swagger.io
-	http://www.odata.org/
-	https://openapis.org/
+Build a simple REST server using PostgreSQL sql query files and json
+configuration file
