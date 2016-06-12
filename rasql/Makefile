@@ -1,4 +1,6 @@
 GO:=/usr/local/go/bin/go
+export GOPATH := /usr/local
+
 GOSRC=rasqld.go								\
 	config.go							\
 	http.go								\

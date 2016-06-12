@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	_ "github.com/lib/pq"
 	"bufio"
 	"bytes"
 	"encoding/json"
@@ -26,19 +28,21 @@ type SQLQuery struct {
 	SourcePath     string `json:"source-path"`
 	SQLQueryArgSet `json:"query-arg-set"`
 	sql_text       string
+	stmt		*sql.Stmt
 }
 
-var pgsql_command_prefix_re = regexp.MustCompile(`^[ \t]*\\`)
-var pgsql_colon_var = regexp.MustCompile(`(?:[^:]|\A):[\w]+`)
+var (
+	db *sql.DB
+	pgsql_command_prefix_re = regexp.MustCompile(`^[ \t]*\\`)
+	pgsql_colon_var = regexp.MustCompile(`(?:[^:]|\A):[\w]+`)
+)
 
 type SQLQuerySet map[string]*SQLQuery
 
 func (queries SQLQuerySet) load() {
 
 	log("%d sql query files in config {", len(queries))
-	for n := range queries {
-		q := queries[n]
-
+	for n, q := range queries {
 		q.name = n
 		log("  %s: {", q.name)
 		log("    source-path: %s", q.SourcePath)
@@ -52,6 +56,41 @@ func (queries SQLQuerySet) load() {
 	for n := range queries {
 		q := queries[n]
 		q.load()
+	}
+}
+
+func (qset SQLQuerySet) open() {
+
+	var err error
+
+	saw_PG := false
+	log("dumping PG* environment variables")
+	for _, env := range os.Environ() {
+		if strings.HasPrefix(env, "PG") {
+			log("	%s", env)
+			saw_PG = true
+		}
+	}
+	if !saw_PG {
+		log("no PG* enviromment variables")
+	}
+
+	db, err = sql.Open(
+		"postgres",
+		"sslmode=disable",
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	log("preparing %d queries", len(qset))
+	for n, q := range qset {
+		log("	%s", n)
+		q.stmt, err = db.Prepare(q.sql_text)
+		if err != nil {
+			ERROR("sql prepare failed:\n%s", q.sql_text)
+			die("%s", err)
+		}
 	}
 }
 
@@ -116,10 +155,6 @@ func (q *SQLQuery) load() {
 		q.die("failed to decode json in command line arguments")
 	}
 
-	if len(q.SQLQueryArgSet) == 0 {
-		log("    no command line arguments")
-		return
-	}
 	if len(q.SQLQueryArgSet) > 255 {
 		q.die("> 255 sql query arguments")
 	}
@@ -127,8 +162,7 @@ func (q *SQLQuery) load() {
 	//  verify pg sql types
 
 	log("    %d arguments: {", len(q.SQLQueryArgSet))
-	for n := range q.SQLQueryArgSet {
-		qa := q.SQLQueryArgSet[n]
+	for n, qa := range q.SQLQueryArgSet {
 		qa.name = n
 		log("      %s:{pgtype:%s}", qa.name, qa.PGType)
 
@@ -147,7 +181,6 @@ func (q *SQLQuery) load() {
 	}
 	log("    }")
 	q.parse_pgsql(in)
-	log("%s: %s", q.SourcePath, q.sql_text)
 }
 
 // Reply to an sql query request

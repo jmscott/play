@@ -12,9 +12,7 @@ import (
 	"time"
 )
 
-var (
-	stderr = os.NewFile(uintptr(syscall.Stderr), "/dev/stderr")
-)
+var stderr = os.NewFile(uintptr(syscall.Stderr), "/dev/stderr")
 
 func usage() {
 	fmt.Fprintf(stderr, "usage: rasqld <config.json>\n")
@@ -86,8 +84,11 @@ func main() {
 
 	log("process id: %d", os.Getpid())
 	log("go version: %s", runtime.Version())
+	log("inherited environment ...")
 
 	cf.load(os.Args[1])
+	cf.SQLQuerySet.open()
+	defer db.Close()
 
 	//  install sql query handlers
 
