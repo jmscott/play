@@ -19,6 +19,7 @@ type SQLQueryArg struct {
 	name     string
 	PGType   string `json:"type"`
 	position uint8
+	http_arg	*HTTPQueryArg
 }
 
 type SQLQueryArgSet map[string]*SQLQueryArg
@@ -179,6 +180,7 @@ func (q *SQLQuery) load() {
 		default:
 			q.die("unknown pgtype: %s", qa.PGType)
 		}
+
 	}
 	log("    }")
 	q.qargv = make([]*SQLQueryArg, len(q.SQLQueryArgSet))
@@ -191,11 +193,9 @@ func (q *SQLQuery) load() {
 	//  Note: build mapping for http args
 }
 
-// Reply to an sql query request
+//  Reply to an sql query request from a url
 
 func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
-
-	url := r.URL
 
 	if r.Method != http.MethodGet {
 		herror(
@@ -206,7 +206,39 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 		)
 		return
 	}
+	url := r.URL
 	path := url.Path
+
+	//  build the argv []interface{} for the queries
+
+	bad_req := func (format string, args ...interface{}) {
+		http.Error(
+			w,
+			fmt.Sprintf(format, args...),
+			http.StatusBadRequest,
+		)
+	}
+	req_qa := url.Query()
+	for _, qa := range q.qargv {
+		ha := qa.http_arg
+
+		rqa := req_qa[qa.name]
+		switch {
+		case rqa == nil:
+			bad_req("no http query arg: %s", qa.name)
+			return
+		case len(rqa) != 1:
+			bad_req("query arg given more than once: %s", qa.name)
+			return
+		case !ha.matches_re.MatchString(rqa[0]):
+			bad_req(
+				"query arg does not match(%s): %s",
+				ha.Matches,
+				qa.name,
+			)
+			return
+		}
+	}
 
 	fmt.Fprintf(w, "Path: %s", path)
 

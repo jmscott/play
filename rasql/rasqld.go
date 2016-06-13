@@ -92,7 +92,17 @@ func main() {
 
 	//  install sql query handlers
 
-	for n := range cf.SQLQuerySet {
+	for n, q := range cf.SQLQuerySet {
+
+		//  verify each sql query arg has an http argument
+		for nq, qa := range q.SQLQueryArgSet {
+			ha := cf.HTTPQueryArgSet[nq]
+			if ha == nil {
+				die("sql query arg has no http arg: %s", nq)
+			}
+			qa.http_arg = ha
+		}
+
 		http.HandleFunc(
 			fmt.Sprintf("%s/%s", cf.RESTPathPrefix, n),
 			cf.new_sql_handler(n),
