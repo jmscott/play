@@ -13,7 +13,7 @@
 	},
 
 	"http-query-arg-set": {
-		"name": {
+		"nspname": {
 			"matches": "^[[:graph:]]{1,255}$",
 			"required": true
 		}
