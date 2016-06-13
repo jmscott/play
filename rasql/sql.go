@@ -29,6 +29,7 @@ type SQLQuery struct {
 	SQLQueryArgSet `json:"query-arg-set"`
 	sql_text       string
 	stmt		*sql.Stmt
+	qargv		[]*SQLQueryArg
 }
 
 var (
@@ -180,7 +181,14 @@ func (q *SQLQuery) load() {
 		}
 	}
 	log("    }")
+	q.qargv = make([]*SQLQueryArg, len(q.SQLQueryArgSet))
 	q.parse_pgsql(in)
+
+	//  build argv table
+	for _, qa := range q.SQLQueryArgSet {
+		q.qargv[qa.position - 1] = qa
+	}
+	//  Note: build mapping for http args
 }
 
 // Reply to an sql query request
@@ -204,7 +212,6 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 
 	us := html.EscapeString(url.String())
 	log("%s: %s: %s", r.RemoteAddr, r.Method, us)
-
 }
 
 //  parse a typical postgres sql file into a string suitable for Prepare()
