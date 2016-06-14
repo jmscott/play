@@ -1,23 +1,26 @@
 package main
 
 import (
-	"database/sql"
-	_ "github.com/lib/pq"
 	"bufio"
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	_ "github.com/lib/pq"
 	"html"
 	"io"
 	"net/http"
 	"os"
+	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
 type SQLQueryArg struct {
 	name     string
 	PGType   string `json:"type"`
+	gokind	reflect.Kind
 	position uint8
 	http_arg	*HTTPQueryArg
 }
@@ -172,11 +175,13 @@ func (q *SQLQuery) load() {
 
 		switch qa.PGType {
 		case "text":
+			qa.gokind = reflect.String
 		case "smallint":
+			qa.gokind = reflect.Int16
 		case "int":
-		case "int2":
-		case "int4":
-		case "int8":
+			qa.gokind = reflect.Int32
+		case "bigint":
+			qa.gokind = reflect.Int64
 		default:
 			q.die("unknown pgtype: %s", qa.PGType)
 		}
@@ -188,7 +193,8 @@ func (q *SQLQuery) load() {
 
 	//  build argv table
 	for _, qa := range q.SQLQueryArgSet {
-		q.qargv[qa.position - 1] = qa
+		qa.position--
+		q.qargv[qa.position] = qa
 	}
 	//  Note: build mapping for http args
 }
@@ -209,34 +215,63 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 	url := r.URL
 	path := url.Path
 
+
 	//  build the argv []interface{} for the queries
 
-	bad_req := func (format string, args ...interface{}) {
-		http.Error(
-			w,
-			fmt.Sprintf(format, args...),
-			http.StatusBadRequest,
-		)
-	}
+	argv := make([]interface{}, len(q.SQLQueryArgSet))
 	req_qa := url.Query()
 	for _, qa := range q.qargv {
+
+		bada := func (format string, args ...interface{}) {
+			msg := fmt.Sprintf(
+					"query arg: %s: %s",
+					qa.name,
+					fmt.Sprintf(format, args...),
+			)
+			http.Error(w, msg, http.StatusBadRequest)
+			log("%s", msg)
+		}
 		ha := qa.http_arg
+
+		//  verify http query arg exists and matches regular expression
 
 		rqa := req_qa[qa.name]
 		switch {
 		case rqa == nil:
-			bad_req("no http query arg: %s", qa.name)
+			bada("missing")
 			return
 		case len(rqa) != 1:
-			bad_req("query arg given more than once: %s", qa.name)
+			bada("given more than once")
 			return
 		case !ha.matches_re.MatchString(rqa[0]):
-			bad_req(
-				"query arg does not match(%s): %s",
-				ha.Matches,
-				qa.name,
-			)
+			bada("does not match regexp: %s", ha.Matches)
 			return
+		}
+		ra := rqa[0]
+
+		//  parse http query arg into sql arg
+
+		switch qa.gokind {
+		case reflect.String:
+			argv[qa.position] = ra
+		case reflect.Int16:
+			i64, err := strconv.ParseInt(ra, 10, 16)
+			if err != nil {
+				bada("can not parse int16: %s", ra)
+			}
+			argv[qa.position] = int16(i64)
+		case reflect.Int32:
+			i64, err := strconv.ParseInt(ra, 10, 32)
+			if err != nil {
+				bada("can not parse int32: %s", ra)
+			}
+			argv[qa.position] = int32(i64)
+		case reflect.Int64:
+			i64, err := strconv.ParseInt(ra, 10, 32)
+			if err != nil {
+				bada("can not parse int32: %s", ra)
+			}
+			argv[qa.position] = i64
 		}
 	}
 

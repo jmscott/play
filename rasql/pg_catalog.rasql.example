@@ -14,8 +14,9 @@
 
 	"http-query-arg-set": {
 		"nspname": {
-			"matches": "^[[:graph:]]{1,255}$",
-			"required": true
+			"matches": "^[[:graph:]]{1,63}$",
+			"required": true,
+			"sql-query-var": "nspname"
 		}
 	}
 }

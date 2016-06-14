@@ -39,18 +39,19 @@ func (qa HTTPQueryArgSet) load() {
 		alog("required", fmt.Sprintf("%t", a.Required))
 		log("  }")
 
-		if a.Matches != "" {
-			a.matches_re, err = regexp.Compile(a.Matches)
+		if a.Matches == "" {
+			die("query arg: missing Matches regexp: %s", a.name)
+		}
+		a.matches_re, err = regexp.Compile(a.Matches)
 
-			if err != nil {
-				ERROR("query-arg: %s: Compile(matches) failed",
-					a.name,
-				)
-				die("query-arg %s: %s",
-					a.name,
-					err,
-				)
-			}
+		if err != nil {
+			ERROR("query-arg: %s: Compile(matches) failed",
+				a.name,
+			)
+			die("query-arg %s: %s",
+				a.name,
+				err,
+			)
 		}
 	}
 }
