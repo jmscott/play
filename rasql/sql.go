@@ -2,12 +2,12 @@ package main
 
 import (
 	"bufio"
+	"time"
 	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	_ "github.com/lib/pq"
-	"html"
 	"io"
 	"net/http"
 	"os"
@@ -213,8 +213,6 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 		return
 	}
 	url := r.URL
-	path := url.Path
-
 
 	//  build the argv []interface{} for the queries
 
@@ -258,27 +256,106 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 			i64, err := strconv.ParseInt(ra, 10, 16)
 			if err != nil {
 				bada("can not parse int16: %s", ra)
+				return
 			}
 			argv[qa.position] = int16(i64)
 		case reflect.Int32:
 			i64, err := strconv.ParseInt(ra, 10, 32)
 			if err != nil {
 				bada("can not parse int32: %s", ra)
+				return
 			}
 			argv[qa.position] = int32(i64)
 		case reflect.Int64:
 			i64, err := strconv.ParseInt(ra, 10, 32)
 			if err != nil {
 				bada("can not parse int32: %s", ra)
+				return
 			}
 			argv[qa.position] = i64
 		}
 	}
 
-	fmt.Fprintf(w, "Path: %s", path)
+	//  run the query
+	start_time := time.Now()
+	rows, err := q.stmt.Query(argv...)
+	if err != nil {
+		panic(err)
+	}
+	duration := time.Since(start_time)
+	defer rows.Close()
+	cols, err := rows.Columns()
+	if err != nil {
+		panic(err)
+	}
 
-	us := html.EscapeString(url.String())
-	log("%s: %s: %s", r.RemoteAddr, r.Method, us)
+	put := func(format string, args ...interface{}) {
+		fmt.Fprintf(w, format, args...)
+	}
+
+	//  make the row vector
+	rowv := make([]interface{}, len(cols))
+	for i := range rowv {
+		rowv[i] = new(sql.NullString)
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8");
+
+	//  write the reply with the query duration
+
+	put(`{
+  "sql-query-reply": {
+    "duration": %.9f,
+
+    "columns": [`,
+		duration.Seconds(),
+	)
+
+	//  write the columns
+
+	for i, c := range cols {
+		put(`%q`, c)
+		if i + 1 < len(cols) {
+			put(", ")
+		}
+	}
+
+	put(`
+    ],
+
+    "rows": [
+`,
+	)
+
+	//  write the rows
+
+	count := uint64(0)
+	for rows.Next() { 
+
+		if count > 0 {
+			put(",")
+		}
+		count++
+
+		err = rows.Scan(rowv...)
+		if err != nil {
+			panic(err)
+		}
+		put("      [")
+		for i, si := range rowv {
+			if i > 0 {
+				put(", ")
+			}
+			s := si.(*sql.NullString)
+			if s.Valid {
+				put("%q", s.String)
+			} else {
+				put("null")
+			}
+		}
+		put("]\n")
+	}
+	put("    ]\n  }\n}")
 }
 
 //  parse a typical postgres sql file into a string suitable for Prepare()
