@@ -282,8 +282,17 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 	if err != nil {
 		panic(err)
 	}
-	duration := time.Since(start_time)
+	duration := time.Since(start_time).Seconds()
 	defer rows.Close()
+
+	//  grumble about slow queries.
+	//
+	//  Note: log inbound ip address:port?
+
+	if duration > cf.WarnSlowSQLQueryDuration {
+		WARN("slow query: %s: %.9fs: %s", q.name, duration, url)
+	}
+
 	cols, err := rows.Columns()
 	if err != nil {
 		panic(err)
@@ -308,7 +317,7 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
     "duration": %.9f,
 
     "columns": [`,
-		duration.Seconds(),
+		duration,
 	)
 
 	//  write the columns

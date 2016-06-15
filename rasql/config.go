@@ -16,6 +16,11 @@ type Config struct {
 	RESTPathPrefix  string `json:"rest-path-prefix"`
 	SQLQuerySet     `json:"sql-query-set"`
 	HTTPQueryArgSet `json:"http-query-arg-set"`
+
+	//  Note:  also want to log slow http requests!
+	//         consider moving into WARN section.
+
+	WarnSlowSQLQueryDuration float64 `json:"warn-slow-sql-query-duration"`
 }
 
 func (cf *Config) load(path string) {
@@ -48,6 +53,7 @@ func (cf *Config) load(path string) {
 		cf.RESTPathPrefix = "/"
 	}
 	log("rest path prefix: %s", cf.RESTPathPrefix)
+	log("warn slow sql query duration: %0.9fs", cf.WarnSlowSQLQueryDuration)
 
 	cf.SQLQuerySet.load()
 	cf.HTTPQueryArgSet.load()
