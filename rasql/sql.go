@@ -152,7 +152,7 @@ func (q *SQLQuery) load() {
 	cla := pre["Command Line Arguments"]
 	if cla == "" {
 		q.WARN("no \"Command Line Arguments\" section")
-		q.WARN("add empty section to elimate this warning")
+		q.WARN("add empty {} section to eliminate this warning")
 	}
 	dec := json.NewDecoder(strings.NewReader(cla))
 	err = dec.Decode(&q.SQLQueryArgSet)
