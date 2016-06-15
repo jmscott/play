@@ -355,7 +355,7 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 		}
 		put("]\n")
 	}
-	put("    ]\n  }\n}")
+	put("    ]\n  }\n}\n")
 }
 
 //  parse a typical postgres sql file into a string suitable for Prepare()
