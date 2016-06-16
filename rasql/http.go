@@ -11,7 +11,6 @@ type HTTPQueryArg struct {
 	Default    string `json:"default"`
 	Matches    string `json:"matches"`
 	matches_re *regexp.Regexp
-	Required   bool `json:"required"`
 }
 
 type HTTPQueryArgSet map[string]*HTTPQueryArg
@@ -36,7 +35,6 @@ func (qa HTTPQueryArgSet) load() {
 
 		alog("default", a.Default)
 		alog("matches", a.Matches)
-		alog("required", fmt.Sprintf("%t", a.Required))
 		log("  }")
 
 		if a.Matches == "" {

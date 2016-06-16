@@ -234,18 +234,23 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 		//  verify http query arg exists and matches regular expression
 
 		rqa := req_qa[qa.name]
-		switch {
-		case rqa == nil:
-			bada("missing")
-			return
-		case len(rqa) != 1:
+		if rqa == nil {
+			if ha.Default == "" {
+				bada("missing")
+				return
+			}
+			rqa = make([]string, 1)
+			rqa[0] = ha.Default
+		}
+		if len(rqa) != 1 {
 			bada("given more than once")
-			return
-		case !ha.matches_re.MatchString(rqa[0]):
-			bada("does not match regexp: %s", ha.Matches)
 			return
 		}
 		ra := rqa[0]
+		if !ha.matches_re.MatchString(ra) {
+			bada("does not match regexp: %s", ha.Matches)
+			return
+		}
 
 		//  parse http query arg into sql arg
 
@@ -421,6 +426,10 @@ func (q *SQLQuery) parse_pgsql(in *bufio.Reader) {
 
 				//  make a replacement re specific to
 				//  this argument
+				//
+				//  Note: must test that default values
+				//        matches the pattern?
+				//	  also, matches MUST exist
 
 				replace_re[v] = regexp.MustCompile(
 					fmt.Sprintf(`([^:]|\A)(%s)`, v))
