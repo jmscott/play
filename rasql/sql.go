@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"time"
 	"bytes"
 	"database/sql"
 	"encoding/json"
@@ -15,14 +14,15 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type SQLQueryArg struct {
 	name     string
 	PGType   string `json:"type"`
-	gokind	reflect.Kind
+	gokind   reflect.Kind
 	position uint8
-	http_arg	*HTTPQueryArg
+	http_arg *HTTPQueryArg
 }
 
 type SQLQueryArgSet map[string]*SQLQueryArg
@@ -32,14 +32,14 @@ type SQLQuery struct {
 	SourcePath     string `json:"source-path"`
 	SQLQueryArgSet `json:"query-arg-set"`
 	sql_text       string
-	stmt		*sql.Stmt
-	qargv		[]*SQLQueryArg
+	stmt           *sql.Stmt
+	qargv          []*SQLQueryArg
 }
 
 var (
-	db *sql.DB
+	db                      *sql.DB
 	pgsql_command_prefix_re = regexp.MustCompile(`^[ \t]*\\`)
-	pgsql_colon_var = regexp.MustCompile(`(?:[^:]|\A):[\w]+`)
+	pgsql_colon_var         = regexp.MustCompile(`(?:[^:]|\A):[\w]+`)
 )
 
 type SQLQuerySet map[string]*SQLQuery
@@ -220,11 +220,11 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 	req_qa := url.Query()
 	for _, qa := range q.qargv {
 
-		bada := func (format string, args ...interface{}) {
+		bada := func(format string, args ...interface{}) {
 			msg := fmt.Sprintf(
-					"query arg: %s: %s",
-					qa.name,
-					fmt.Sprintf(format, args...),
+				"query arg: %s: %s",
+				qa.name,
+				fmt.Sprintf(format, args...),
 			)
 			http.Error(w, msg, http.StatusBadRequest)
 			log("%s", msg)
@@ -313,7 +313,7 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 		rowv[i] = new(sql.NullString)
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=utf-8");
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	//  write the reply with the query duration
 
@@ -329,7 +329,7 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 
 	for i, c := range cols {
 		put(`%q`, c)
-		if i + 1 < len(cols) {
+		if i+1 < len(cols) {
 			put(", ")
 		}
 	}
@@ -344,7 +344,7 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 	//  write the rows
 
 	count := uint64(0)
-	for rows.Next() { 
+	for rows.Next() {
 
 		if count > 0 {
 			put(",")
