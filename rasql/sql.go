@@ -40,12 +40,10 @@ var (
 	db                      *sql.DB
 	pgsql_command_prefix_re = regexp.MustCompile(`^[ \t]*\\`)
 	pgsql_colon_var         = regexp.MustCompile(`(?:[^:]|\A):[\w]+`)
-)
 
-var pgarg2re = map[string]*regexp.Regexp{
-	//  text
+	pgtype2re = map[string]*regexp.Regexp{
 	//  Note: what about null in the string?
-	"text":regexp.MustCompile(`^.{,1024}`),
+	"text":regexp.MustCompile(`^.{,1024}$`),
 
 	//  0 - 65535
 	"uint16":regexp.MustCompile(
@@ -55,7 +53,12 @@ var pgarg2re = map[string]*regexp.Regexp{
 	"uint32":regexp.MustCompile(
 `^(429496729[0-5]|42949672[0-8][0-9]|4294967[01][0-9]{2}|429496[0-6][0-9]{3}|42949[0-5][0-9]{4}|4294[0-8][0-9]{5}|429[0-3][0-9]{6}|42[0-8][0-9]{7}|4[01][0-9]{8}|[1-3][0-9]{9}|[1-9][0-9]{0,8}|0)$`),
 
-}
+
+	//  0 - 9223372036854775807
+	"ubigint":regexp.MustCompile(
+`(922337203685477580[0-7]|9223372036854775[0-7][0-9]{2}|922337203685477[0-4][0-9]{3}|92233720368547[0-6][0-9]{4}|9223372036854[0-6][0-9]{5}|922337203685[0-3][0-9]{6}|92233720368[0-4][0-9]{7}|9223372036[0-7][0-9]{8}|922337203[0-5][0-9]{9}|92233720[0-2][0-9]{10}|922337[01][0-9]{12}|92233[0-6][0-9]{13}|9223[0-2][0-9]{14}|922[0-2][0-9]{15}|92[01][0-9]{16}|9[01][0-9]{17}|[1-8][0-9]{18}|[1-9][0-9]{0,17}|0)`),
+
+})
 
 type SQLQuerySet map[string]*SQLQuery
 
@@ -191,12 +194,12 @@ func (q *SQLQuery) load() {
 		switch qa.PGType {
 		case "text":
 			qa.gokind = reflect.String
-		case "smallint":
-			qa.gokind = reflect.Int16
-		case "int":
-			qa.gokind = reflect.Int32
-		case "bigint":
-			qa.gokind = reflect.Int64
+		case "uint16":
+			qa.gokind = reflect.Uint16
+		case "uint32":
+			qa.gokind = reflect.Uint32
+		case "ubigint":
+			qa.gokind = reflect.Uint64
 		default:
 			q.die("unknown pgtype: %s", qa.PGType)
 		}

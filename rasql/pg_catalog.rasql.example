@@ -11,11 +11,5 @@
 			"source-path":	"pg_class-by-nspname.sql"
 		}
 	},
-	"warn-slow-sql-query-duration": 5,
-
-	"http-query-arg-set": {
-		"nspname": {
-			"matches": "^[[:graph:]]{1,63}$"
-		}
-	}
+	"warn-slow-sql-query-duration": 5
 }

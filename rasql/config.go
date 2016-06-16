@@ -58,6 +58,26 @@ func (cf *Config) load(path string) {
 	cf.SQLQuerySet.load()
 	cf.HTTPQueryArgSet.load()
 
+	//  add default http query args for sql args
+	for _, sq := range cf.SQLQuerySet {
+		for n, sqa := range sq.SQLQueryArgSet {
+			if cf.HTTPQueryArgSet == nil {
+				cf.HTTPQueryArgSet = make(HTTPQueryArgSet);
+			}
+			ha := cf.HTTPQueryArgSet[n]
+			if ha != nil {
+				continue
+			}
+			re := pgtype2re[sqa.PGType]
+			cf.HTTPQueryArgSet[n] = &HTTPQueryArg{
+				name: sqa.name,
+				Matches: re.String(),
+				matches_re: re,
+			}
+			log("added http query arg: %s(%s)", n, re.String())
+		}
+	}
+
 	log("%s: loaded", cf.source_path)
 }
 
