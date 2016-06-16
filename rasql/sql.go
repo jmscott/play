@@ -42,6 +42,21 @@ var (
 	pgsql_colon_var         = regexp.MustCompile(`(?:[^:]|\A):[\w]+`)
 )
 
+var pgarg2re = map[string]*regexp.Regexp{
+	//  text
+	//  Note: what about null in the string?
+	"text":regexp.MustCompile(`^.{,1024}`),
+
+	//  0 - 65535
+	"uint16":regexp.MustCompile(
+`^(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3}|0)$`),
+
+	//  0 - 4294967295
+	"uint32":regexp.MustCompile(
+`^(429496729[0-5]|42949672[0-8][0-9]|4294967[01][0-9]{2}|429496[0-6][0-9]{3}|42949[0-5][0-9]{4}|4294[0-8][0-9]{5}|429[0-3][0-9]{6}|42[0-8][0-9]{7}|4[01][0-9]{8}|[1-3][0-9]{9}|[1-9][0-9]{0,8}|0)$`),
+
+}
+
 type SQLQuerySet map[string]*SQLQuery
 
 func (queries SQLQuerySet) load() {
