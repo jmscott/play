@@ -57,7 +57,7 @@ var (
 
 	//  0 - 9223372036854775807
 	"ubigint":regexp.MustCompile(
-`(922337203685477580[0-7]|9223372036854775[0-7][0-9]{2}|922337203685477[0-4][0-9]{3}|92233720368547[0-6][0-9]{4}|9223372036854[0-6][0-9]{5}|922337203685[0-3][0-9]{6}|92233720368[0-4][0-9]{7}|9223372036[0-7][0-9]{8}|922337203[0-5][0-9]{9}|92233720[0-2][0-9]{10}|922337[01][0-9]{12}|92233[0-6][0-9]{13}|9223[0-2][0-9]{14}|922[0-2][0-9]{15}|92[01][0-9]{16}|9[01][0-9]{17}|[1-8][0-9]{18}|[1-9][0-9]{0,17}|0)`),
+`^(922337203685477580[0-7]|9223372036854775[0-7][0-9]{2}|922337203685477[0-4][0-9]{3}|92233720368547[0-6][0-9]{4}|9223372036854[0-6][0-9]{5}|922337203685[0-3][0-9]{6}|92233720368[0-4][0-9]{7}|9223372036[0-7][0-9]{8}|922337203[0-5][0-9]{9}|92233720[0-2][0-9]{10}|922337[01][0-9]{12}|92233[0-6][0-9]{13}|9223[0-2][0-9]{14}|922[0-2][0-9]{15}|92[01][0-9]{16}|9[01][0-9]{17}|[1-8][0-9]{18}|[1-9][0-9]{0,17}|0)$`),
 
 })
 
@@ -267,7 +267,7 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 		}
 		ra := rqa[0]
 		if !ha.matches_re.MatchString(ra) {
-			bada("does not match regexp: %s", ha.Matches)
+			bada("does not match regexp: %s: %s", ra, ha.Matches)
 			return
 		}
 
@@ -276,27 +276,29 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 		switch qa.gokind {
 		case reflect.String:
 			argv[qa.position] = ra
-		case reflect.Int16:
+		case reflect.Uint16:
 			i64, err := strconv.ParseInt(ra, 10, 16)
 			if err != nil {
 				bada("can not parse int16: %s", ra)
 				return
 			}
 			argv[qa.position] = int16(i64)
-		case reflect.Int32:
+		case reflect.Uint32:
 			i64, err := strconv.ParseInt(ra, 10, 32)
 			if err != nil {
 				bada("can not parse int32: %s", ra)
 				return
 			}
 			argv[qa.position] = int32(i64)
-		case reflect.Int64:
+		case reflect.Uint64:
 			i64, err := strconv.ParseInt(ra, 10, 32)
 			if err != nil {
 				bada("can not parse int32: %s", ra)
 				return
 			}
 			argv[qa.position] = i64
+		default:
+			panic("impossible gokind")
 		}
 	}
 
