@@ -43,7 +43,8 @@ var (
 
 	pgtype2re = map[string]*regexp.Regexp{
 	//  Note: what about null in the string?
-	"text":regexp.MustCompile(`^.{,1024}$`),
+	//        1000 is a limit imposed by package regexp
+	"text":regexp.MustCompile(`^.{0,1000}$`),
 
 	//  0 - 65535
 	"uint16":regexp.MustCompile(
@@ -352,8 +353,7 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 		}
 	}
 
-	put(`
-    ],
+	put(`],
 
     "rows": [
 `,
