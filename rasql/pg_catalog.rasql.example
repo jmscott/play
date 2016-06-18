@@ -11,5 +11,11 @@
 			"source-path":	"pg_class-by-nspname.sql"
 		}
 	},
+	"http-query-arg-set": {
+		"name" : {
+			"matches": "^.{1,63}$",
+			"sql-alias": "nspname"
+		}
+	},
 	"warn-slow-sql-query-duration": 5
 }

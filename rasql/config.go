@@ -58,35 +58,42 @@ func (cf *Config) load(path string) {
 	cf.SQLQuerySet.load()
 	cf.HTTPQueryArgSet.load()
 
-	//  add default http query args for sql args
-	for _, sq := range cf.SQLQuerySet {
-		for n, sqa := range sq.SQLQueryArgSet {
-			if cf.HTTPQueryArgSet == nil {
-				cf.HTTPQueryArgSet = make(HTTPQueryArgSet)
+	//  wire up sql aliases for the http query arguments
+
+	log("map http/sql query args ...")
+	for _, ha := range cf.HTTPQueryArgSet {
+		a := ha.SQLAlias
+		if a == "" {
+			if ha.Matches == "" {
+				die("query arg: missing \"matches\" regexp: %s",
+					ha.name)
 			}
-			ha := cf.HTTPQueryArgSet[n]
-			if ha != nil {
-				continue
+			continue
+		}
+
+		//  point sql arguments to current http query argument
+
+		found := false
+		for _, sq := range cf.SQLQuerySet {
+			for _, sqa := range sq.SQLQueryArgSet {
+				if sqa.name != a {
+					continue
+				}
+				log("  %s -> %s", sqa.name, ha.name)
+				found = true
+				sqa.http_arg = ha
 			}
-			re := pgtype2re[sqa.PGType]
-			cf.HTTPQueryArgSet[n] = &HTTPQueryArg{
-				name:       sqa.name,
-				Matches:    re.String(),
-				matches_re: re,
-			}
-			log("added http query arg: %s(%s)", n, re.String())
+		}
+		if !found {
+			die("sql alias '%s' has no query arg in http arg '%s'",
+					a, ha.name)
 		}
 	}
 
 	log("%s: loaded", cf.source_path)
 }
 
-func (cf *Config) new_sql_handler(query_name string) http.HandlerFunc {
-
-	sqlq := cf.SQLQuerySet[query_name]
-	if sqlq == nil {
-		panic("no sql query: " + query_name)
-	}
+func (cf *Config) new_sql_handler(sqlq *SQLQuery) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 

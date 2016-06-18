@@ -11,6 +11,7 @@ type HTTPQueryArg struct {
 	Default    string `json:"default"`
 	Matches    string `json:"matches"`
 	matches_re *regexp.Regexp
+	SQLAlias   string `json:"sql-alias"`
 }
 
 type HTTPQueryArgSet map[string]*HTTPQueryArg
@@ -35,10 +36,14 @@ func (qa HTTPQueryArgSet) load() {
 
 		alog("default", a.Default)
 		alog("matches", a.Matches)
+		alog("sql-alias", a.SQLAlias)
 		log("  }")
 
 		if a.Matches == "" {
-			die("query arg: missing Matches regexp: %s", a.name)
+			if a.SQLAlias != "" {
+				continue
+			}
+			die("query arg: missing \"matches\" regexp: %s", a.name)
 		}
 		a.matches_re, err = regexp.Compile(a.Matches)
 

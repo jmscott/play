@@ -20,6 +20,7 @@ import (
 type SQLQueryArg struct {
 	name     string
 	PGType   string `json:"type"`
+	pgtype_re *regexp.Regexp
 	gokind   reflect.Kind
 	position uint8
 	http_arg *HTTPQueryArg
@@ -106,7 +107,7 @@ func (qset SQLQuerySet) open() {
 		panic(err)
 	}
 
-	log("preparing %d queries", len(qset))
+	log("preparing %d queries in sql database", len(qset))
 	for n, q := range qset {
 		log("	%s", n)
 		q.stmt, err = db.Prepare(q.sql_text)
@@ -115,6 +116,7 @@ func (qset SQLQuerySet) open() {
 			die("%s", err)
 		}
 	}
+	log("all queries prepared")
 }
 
 func (q *SQLQuery) die(format string, args ...interface{}) {
@@ -203,18 +205,18 @@ func (q *SQLQuery) load() {
 		default:
 			q.die("unknown pgtype: %s", qa.PGType)
 		}
-
+		qa.pgtype_re = pgtype2re[qa.PGType]
 	}
 	log("    }")
 	q.qargv = make([]*SQLQueryArg, len(q.SQLQueryArgSet))
 	q.parse_pgsql(in)
 
-	//  build argv table
+	//  build query argument argument vector
+
 	for _, qa := range q.SQLQueryArgSet {
 		qa.position--
 		q.qargv[qa.position] = qa
 	}
-	//  Note: build mapping for http args
 }
 
 //  Reply to an sql query request from a url
@@ -232,7 +234,7 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 	}
 	url := r.URL
 
-	//  build the argv []interface{} for the queries
+	//  build the argv []interface{} for the sql query to execute
 
 	argv := make([]interface{}, len(q.SQLQueryArgSet))
 	req_qa := url.Query()
@@ -245,32 +247,63 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 				fmt.Sprintf(format, args...),
 			)
 			http.Error(w, msg, http.StatusBadRequest)
-			log("%s", msg)
+			ERROR("%s", msg)
 		}
+
+		var an string
+
+		//  does the sql query arg have an http alias?
+
 		ha := qa.http_arg
+		if ha == nil {
+			ha = cf.HTTPQueryArgSet[qa.name]
+			an = qa.name
+		} else {
+			an = ha.name
+		}
 
 		//  verify http query arg exists and matches regular expression
 
-		rqa := req_qa[qa.name]
+		rqa := req_qa[an]
+
+		//  no query arg on url so try default for http args
+
 		if rqa == nil {
-			if ha.Default == "" {
-				bada("missing")
+			if ha == nil || ha.Default == "" {
+				bada("missing url arg: %s", an)
 				return
 			}
 			rqa = make([]string, 1)
 			rqa[0] = ha.Default
 		}
+
+		//  sql query arguments can only be given once
+
 		if len(rqa) != 1 {
 			bada("given more than once")
 			return
 		}
 		ra := rqa[0]
-		if !ha.matches_re.MatchString(ra) {
-			bada("does not match regexp: %s: %s", ra, ha.Matches)
+
+		//  verify that the url query argment value matches proper
+		//  regular expression
+
+		var re *regexp.Regexp
+		re_what := ""
+		if ha == nil || ha.matches_re == nil {
+			re = qa.pgtype_re
+			re_what = "sql"
+		} else {
+			re = ha.matches_re
+			re_what = "http"
+		}
+		if !re.MatchString(ra) {
+			bada("value does not match %s regexp: %s: %s",
+							re_what, ra, re)
 			return
 		}
 
-		//  parse http query arg into sql arg
+		//  parse http query arg into sql arg for prepared query
 
 		switch qa.gokind {
 		case reflect.String:
@@ -301,7 +334,7 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 		}
 	}
 
-	//  run the query
+	//  run the sql query
 	start_time := time.Now()
 	rows, err := q.stmt.Query(argv...)
 	if err != nil {
@@ -311,8 +344,6 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 	defer rows.Close()
 
 	//  grumble about slow queries.
-	//
-	//  Note: log inbound ip address:port?
 
 	if duration > cf.WarnSlowSQLQueryDuration {
 		WARN("slow query: %s: %.9fs: %s", q.name, duration, url)
@@ -327,7 +358,8 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 		fmt.Fprintf(w, format, args...)
 	}
 
-	//  make the row vector
+	//  make the row string vector
+
 	rowv := make([]interface{}, len(cols))
 	for i := range rowv {
 		rowv[i] = new(sql.NullString)
