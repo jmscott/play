@@ -3,8 +3,6 @@
  *	Select all tuples from pg_stat_activity
  *  Command Line Arguments:
  *	{}
- *  Ordered By:
- *	datname, state, application_name, query_start
  */
 
 select
@@ -30,5 +28,5 @@ select
   from
   	pg_catalog.pg_stat_activity
   order by
-  	datname, state, application_name, query_start
+  	datname asc, state asc, application_name asc, query_start asc
 ;
