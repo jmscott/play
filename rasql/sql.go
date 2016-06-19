@@ -87,18 +87,6 @@ func (qset SQLQuerySet) open() {
 
 	var err error
 
-	saw_PG := false
-	log("dumping PG* environment variables")
-	for _, env := range os.Environ() {
-		if strings.HasPrefix(env, "PG") {
-			log("	%s", env)
-			saw_PG = true
-		}
-	}
-	if !saw_PG {
-		log("no PG* enviromment variables")
-	}
-
 	db, err = sql.Open(
 		"postgres",
 		"sslmode=disable",

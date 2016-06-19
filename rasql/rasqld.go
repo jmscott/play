@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"sort"
 	"syscall"
 	"time"
 )
@@ -84,7 +85,15 @@ func main() {
 
 	log("process id: %d", os.Getpid())
 	log("go version: %s", runtime.Version())
-	log("inherited environment ...")
+	log("process environment ...")
+
+	//  dump the process environment
+
+	env := os.Environ()
+	sort.Strings(env)
+	for _, e := range env {
+		log("  %s", e)
+	}
 
 	cf.load(os.Args[1])
 	cf.SQLQuerySet.open()
