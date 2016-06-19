@@ -9,6 +9,9 @@
 		},
 		"pg_class-by-nspname":	{
 			"source-path":	"pg_class-by-nspname.sql"
+		},
+		"pg_stat_activity":	{
+			"source-path":	"pg_stat_activity.sql"
 		}
 	},
 	"http-query-arg-set": {
