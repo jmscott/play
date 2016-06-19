@@ -174,28 +174,32 @@ func (q *SQLQuery) load() {
 
 	//  verify pg sql types
 
-	log("    %d arguments: {", len(q.SQLQueryArgSet))
-	for n, qa := range q.SQLQueryArgSet {
-		qa.name = n
-		log("      %s:{pgtype:%s}", qa.name, qa.PGType)
+	if len(q.SQLQueryArgSet) > 0 {
+		log("    %d arguments: {", len(q.SQLQueryArgSet))
+		for n, qa := range q.SQLQueryArgSet {
+			qa.name = n
+			log("      %s:{pgtype:%s}", qa.name, qa.PGType)
 
-		// verify PostgreSQL types
+			// verify PostgreSQL types
 
-		switch qa.PGType {
-		case "text":
-			qa.gokind = reflect.String
-		case "uint16":
-			qa.gokind = reflect.Uint16
-		case "uint32":
-			qa.gokind = reflect.Uint32
-		case "ubigint":
-			qa.gokind = reflect.Uint64
-		default:
-			q.die("unknown pgtype: %s", qa.PGType)
+			switch qa.PGType {
+			case "text":
+				qa.gokind = reflect.String
+			case "uint16":
+				qa.gokind = reflect.Uint16
+			case "uint32":
+				qa.gokind = reflect.Uint32
+			case "ubigint":
+				qa.gokind = reflect.Uint64
+			default:
+				q.die("unknown pgtype: %s", qa.PGType)
+			}
+			qa.pgtype_re = pgtype2re[qa.PGType]
 		}
-		qa.pgtype_re = pgtype2re[qa.PGType]
+		log("    }")
+	} else {
+		log("    no command line arguments")
 	}
-	log("    }")
 	q.qargv = make([]*SQLQueryArg, len(q.SQLQueryArgSet))
 	q.parse_pgsql(in)
 
