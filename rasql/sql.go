@@ -361,11 +361,11 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 
 	//  write the reply with the query duration
 
-	put(`{
-  "sql-query-reply": {
-    "duration": %.9f,
+	put(`[
+    "duration,colums,rows",
+    %.9f,
 
-    "columns": [`,
+    [`,
 		duration,
 	)
 
@@ -380,7 +380,7 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 
 	put(`],
 
-    "rows": [
+    [
 `,
 	)
 
@@ -412,7 +412,7 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 		}
 		put("]\n")
 	}
-	put("    ]\n  }\n}\n")
+	put("    ]\n]\n")
 }
 
 //  parse a typical postgres sql file into a string suitable for Prepare()
