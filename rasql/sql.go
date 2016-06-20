@@ -34,7 +34,7 @@ type SQLQuery struct {
 	SQLQueryArgSet `json:"query-arg-set"`
 	sql_text       string
 	stmt           *sql.Stmt
-	qargv          []*SQLQueryArg
+	argv          []*SQLQueryArg
 }
 
 var (
@@ -200,20 +200,30 @@ func (q *SQLQuery) load() {
 	} else {
 		log("    no command line arguments")
 	}
-	q.qargv = make([]*SQLQueryArg, len(q.SQLQueryArgSet))
+	q.argv = make([]*SQLQueryArg, len(q.SQLQueryArgSet))
 	q.parse_pgsql(in)
 
 	//  build query argument argument vector
 
 	for _, qa := range q.SQLQueryArgSet {
 		qa.position--
-		q.qargv[qa.position] = qa
+		q.argv[qa.position] = qa
 	}
 }
 
-//  Reply to an sql query request from a url
+//  run an sql query for a get request
 
-func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
+func (q *SQLQuery) db_query(
+	w http.ResponseWriter,
+	r *http.Request,
+	cf *Config,
+) (
+	duration float64,
+	columns []string,
+	rows *sql.Rows,
+	rowv []interface{},
+) {
+	var err error
 
 	if r.Method != http.MethodGet {
 		herror(
@@ -230,7 +240,7 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 
 	argv := make([]interface{}, len(q.SQLQueryArgSet))
 	req_qa := url.Query()
-	for _, qa := range q.qargv {
+	for _, qa := range q.argv {
 
 		bada := func(format string, args ...interface{}) {
 			msg := fmt.Sprintf(
@@ -327,92 +337,127 @@ func (q *SQLQuery) handle(w http.ResponseWriter, r *http.Request, cf *Config) {
 	}
 
 	//  run the sql query
+
 	start_time := time.Now()
-	rows, err := q.stmt.Query(argv...)
+	rows, err = q.stmt.Query(argv...)
 	if err != nil {
 		panic(err)
 	}
-	duration := time.Since(start_time).Seconds()
-	defer rows.Close()
 
 	//  grumble about slow queries.
 
+	duration = time.Since(start_time).Seconds()
 	if duration > cf.WarnSlowSQLQueryDuration {
 		WARN("slow query: %s: %.9fs: %s", q.name, duration, url)
 	}
 
-	cols, err := rows.Columns()
+	columns, err = rows.Columns()
 	if err != nil {
 		panic(err)
 	}
 
-	put := func(format string, args ...interface{}) {
-		fmt.Fprintf(w, format, args...)
-	}
-
 	//  make the row string vector
 
-	rowv := make([]interface{}, len(cols))
+	rowv = make([]interface{}, len(columns))
 	for i := range rowv {
 		rowv[i] = new(sql.NullString)
+	}
+	return
+}
+
+//  Reply to an sql query request from a url
+
+func (q *SQLQuery) handle_query_json(
+	w http.ResponseWriter,
+	r *http.Request,
+	cf *Config,
+) {
+	duration, columns, rows, rowv := q.db_query(w, r, cf)
+	if rowv == nil {
+		return
+	}
+	defer rows.Close()
+
+	putf := func(format string, args ...interface{}) {
+		fmt.Fprintf(w, format, args...)
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	//  write the reply with the query duration
 
-	put(`[
+	putf(`[
     "duration,colums,rows",
     %.9f,
-
-    [`,
+    `,
 		duration,
 	)
 
-	//  write the columns
+	//  write bytes string to client
 
-	for i, c := range cols {
-		put(`%q`, c)
-		if i+1 < len(cols) {
-			put(", ")
+	putb := func(b []byte) {
+		_, err := w.Write(b)
+		if err != nil {
+			panic(err)
 		}
 	}
 
-	put(`],
+	puts := func(s string) {
+		putb([]byte(s))
+	}
 
-    [
-`,
-	)
+	// put json string to client
 
-	//  write the rows
+	putjs := func(s string) {
+		b, err := json.Marshal(s)
+		if err != nil {
+			panic(err)
+		}
+		putb(b)
+	}
+
+	// write columns as json array to client
+
+	puta := func(a []string) {
+		b, err := json.Marshal(a)
+		if err != nil {
+			panic(err)
+		}
+		putb(b)
+	}
+
+	//  write the columns
+
+	puta(columns)
+	puts(",\n\n    [\n")
 
 	count := uint64(0)
 	for rows.Next() {
 
 		if count > 0 {
-			put(",")
+			putf(",\n")
 		}
 		count++
 
-		err = rows.Scan(rowv...)
+		err := rows.Scan(rowv...)
 		if err != nil {
 			panic(err)
 		}
-		put("      [")
+		putf("      [")
 		for i, si := range rowv {
 			if i > 0 {
-				put(", ")
+				putf(",")
 			}
 			s := si.(*sql.NullString)
 			if s.Valid {
-				put("%q", s.String)
+				putjs(s.String)
 			} else {
-				put("null")
+				putf("null")
 			}
 		}
-		put("]\n")
+		putf("]")
 	}
-	put("    ]\n]\n")
+	putf("\n    ]\n]\n")
 }
 
 //  parse a typical postgres sql file into a string suitable for Prepare()

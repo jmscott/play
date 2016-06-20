@@ -93,10 +93,10 @@ func (cf *Config) load(path string) {
 	log("%s: loaded", cf.source_path)
 }
 
-func (cf *Config) new_sql_handler(sqlq *SQLQuery) http.HandlerFunc {
+func (cf *Config) new_handler_query_json(sqlq *SQLQuery) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		sqlq.handle(w, r, cf)
+		sqlq.handle_query_json(w, r, cf)
 	}
 }

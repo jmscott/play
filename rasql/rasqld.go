@@ -104,7 +104,7 @@ func main() {
 	for n, q := range cf.SQLQuerySet {
 		http.HandleFunc(
 			fmt.Sprintf("%s/%s", cf.RESTPathPrefix, n),
-			cf.new_sql_handler(q),
+			cf.new_handler_query_json(q),
 		)
 	}
 
