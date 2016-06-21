@@ -18,12 +18,12 @@ import (
 )
 
 type SQLQueryArg struct {
-	name     string
-	PGType   string `json:"type"`
+	name      string
+	PGType    string `json:"type"`
 	pgtype_re *regexp.Regexp
-	gokind   reflect.Kind
-	position uint8
-	http_arg *HTTPQueryArg
+	gokind    reflect.Kind
+	position  uint8
+	http_arg  *HTTPQueryArg
 }
 
 type SQLQueryArgSet map[string]*SQLQueryArg
@@ -34,13 +34,13 @@ type SQLQuery struct {
 	SQLQueryArgSet `json:"query-arg-set"`
 	sql_text       string
 	stmt           *sql.Stmt
-	argv          []*SQLQueryArg
+	argv           []*SQLQueryArg
 }
 
 var (
 	db                      *sql.DB
-	tab			[]byte
-	newline			[]byte
+	tab                     []byte
+	newline                 []byte
 	pgsql_command_prefix_re = regexp.MustCompile(`^[ \t]*\\`)
 	pgsql_colon_var         = regexp.MustCompile(`(?:[^:]|\A):[\w]+`)
 
@@ -310,7 +310,7 @@ func (q *SQLQuery) db_query(
 		}
 		if !re.MatchString(ra) {
 			bada("value does not match %s regexp: %s: %s",
-							re_what, ra, re)
+				re_what, ra, re)
 			return
 		}
 
@@ -485,7 +485,7 @@ func (q *SQLQuery) handle_query_tsv(
 	defer rows.Close()
 
 	w.Header().Set("Content-Type",
-			"text/tab-separated-values; charset=utf-8")
+		"text/tab-separated-values; charset=utf-8")
 
 	//  write bytes string to client
 

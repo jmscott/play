@@ -86,7 +86,7 @@ func (cf *Config) load(path string) {
 		}
 		if !found {
 			die("sql alias '%s' has no query arg in http arg '%s'",
-					a, ha.name)
+				a, ha.name)
 		}
 	}
 
