@@ -100,3 +100,11 @@ func (cf *Config) new_handler_query_json(sqlq *SQLQuery) http.HandlerFunc {
 		sqlq.handle_query_json(w, r, cf)
 	}
 }
+
+func (cf *Config) new_handler_query_tsv(sqlq *SQLQuery) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		sqlq.handle_query_tsv(w, r, cf)
+	}
+}

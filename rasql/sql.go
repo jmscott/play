@@ -39,6 +39,8 @@ type SQLQuery struct {
 
 var (
 	db                      *sql.DB
+	tab			[]byte
+	newline			[]byte
 	pgsql_command_prefix_re = regexp.MustCompile(`^[ \t]*\\`)
 	pgsql_colon_var         = regexp.MustCompile(`(?:[^:]|\A):[\w]+`)
 
@@ -60,6 +62,13 @@ var (
 			`^(922337203685477580[0-7]|9223372036854775[0-7][0-9]{2}|922337203685477[0-4][0-9]{3}|92233720368547[0-6][0-9]{4}|9223372036854[0-6][0-9]{5}|922337203685[0-3][0-9]{6}|92233720368[0-4][0-9]{7}|9223372036[0-7][0-9]{8}|922337203[0-5][0-9]{9}|92233720[0-2][0-9]{10}|922337[01][0-9]{12}|92233[0-6][0-9]{13}|9223[0-2][0-9]{14}|922[0-2][0-9]{15}|92[01][0-9]{16}|9[01][0-9]{17}|[1-8][0-9]{18}|[1-9][0-9]{0,17}|0)$`),
 	}
 )
+
+func init() {
+	tab = make([]byte, 1)
+	tab[0] = 0x09
+	newline = make([]byte, 1)
+	newline[0] = 0x0a
+}
 
 type SQLQuerySet map[string]*SQLQuery
 
@@ -365,7 +374,7 @@ func (q *SQLQuery) db_query(
 	return
 }
 
-//  Reply to an sql query request from a url
+//  JSON reply to an sql query request from a url
 
 func (q *SQLQuery) handle_query_json(
 	w http.ResponseWriter,
@@ -416,7 +425,7 @@ func (q *SQLQuery) handle_query_json(
 		putb(b)
 	}
 
-	// write columns as json array to client
+	//  write a json array to the client
 
 	puta := func(a []string) {
 		b, err := json.Marshal(a)
@@ -458,6 +467,83 @@ func (q *SQLQuery) handle_query_json(
 		putf("]")
 	}
 	putf("\n    ]\n]\n")
+}
+
+//  Tab separated reply to an sql query request from a url
+//  Any tabs or newline in sql data are replaced with a space.
+//  See: https://www.iana.org/assignments/media-types/text/tab-separated-values
+
+func (q *SQLQuery) handle_query_tsv(
+	w http.ResponseWriter,
+	r *http.Request,
+	cf *Config,
+) {
+	_, columns, rows, rowv := q.db_query(w, r, cf)
+	if rowv == nil {
+		return
+	}
+	defer rows.Close()
+
+	w.Header().Set("Content-Type",
+			"text/tab-separated-values; charset=utf-8")
+
+	//  write bytes string to client
+
+	putb := func(b []byte) {
+		_, err := w.Write(b)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	//  write a string to client, replace tab and newline with space.
+	//  Note: would \r be a better replacement for \n ?
+
+	puts := func(s string) {
+		putb([]byte(
+			strings.Replace(
+				strings.Replace(
+					s,
+					"\t",
+					" ",
+					-1,
+				),
+				"\n",
+				" ",
+				-1,
+			),
+		))
+	}
+
+	//  write the columns to the client
+
+	for i, s := range columns {
+		if i > 0 {
+			putb(tab)
+		}
+		puts(s)
+	}
+	putb(newline)
+
+	//  write the rows to the client.  null is empty string
+
+	for rows.Next() {
+
+		err := rows.Scan(rowv...)
+		if err != nil {
+			panic(err)
+		}
+		for i, si := range rowv {
+			if i > 0 {
+				putb(tab)
+			}
+			s := si.(*sql.NullString)
+			if s.Valid {
+				puts(s.String)
+			}
+		}
+		putb(newline)
+	}
 }
 
 //  parse a typical postgres sql file into a string suitable for Prepare()

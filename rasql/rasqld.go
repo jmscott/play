@@ -102,9 +102,19 @@ func main() {
 	//  install sql query handlers at /<rest-path-prefix>/<sql-query>
 
 	for n, q := range cf.SQLQuerySet {
+
+		//  json handler, the default
+
 		http.HandleFunc(
 			fmt.Sprintf("%s/%s", cf.RESTPathPrefix, n),
 			cf.new_handler_query_json(q),
+		)
+
+		//  tsv handler
+
+		http.HandleFunc(
+			fmt.Sprintf("%s/tsv/%s", cf.RESTPathPrefix, n),
+			cf.new_handler_query_tsv(q),
 		)
 	}
 
