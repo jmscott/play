@@ -2,8 +2,7 @@
  *  Synopsis:
  *	Fetch all classes in a pg_catalog.pg_class
  *
- *  Command Line Arguments: {
- *  }
+ *  Command Line Arguments: {}
  *
  *  Usage:
  *	psql -f pg_class.sql
@@ -46,5 +45,5 @@ select
   	pg_catalog.pg_class c
 	  join pg_catalog.pg_namespace n on (n.oid = c.relnamespace)
   order by
-  	n.nspname, c.relname
+  	n.nspname asc, c.relname asc
 ;
