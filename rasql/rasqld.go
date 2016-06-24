@@ -99,6 +99,12 @@ func main() {
 	cf.SQLQuerySet.open()
 	defer db.Close()
 
+	log("path sql query index: %s", cf.RESTPathPrefix)
+	http.HandleFunc(
+		cf.RESTPathPrefix,
+		cf.handle_query_index_json,
+	)
+
 	//  install sql query handlers at /<rest-path-prefix>/<sql-query>
 
 	for n, q := range cf.SQLQuerySet {

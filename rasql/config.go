@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -107,4 +108,91 @@ func (cf *Config) new_handler_query_tsv(sqlq *SQLQuery) http.HandlerFunc {
 
 		sqlq.handle_query_tsv(w, r, cf)
 	}
+}
+
+func (cf *Config) handle_query_index_json(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
+	putf := func(format string, args ...interface{}) {
+		fmt.Fprintf(w, format, args...)
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+
+	//  write bytes string to client
+
+	putb := func(b []byte) {
+		_, err := w.Write(b)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	puts := func(s string) {
+		putb([]byte(s))
+	}
+
+	// put json string to client
+
+	putjs := func(s string) {
+		b, err := json.Marshal(s)
+		if err != nil {
+			panic(err)
+		}
+		putb(b)
+	}
+
+	//  write a json array to the client
+
+	puta := func(a []string) {
+		b, err := json.Marshal(a)
+		if err != nil {
+			panic(err)
+		}
+		putb(b)
+	}
+
+	puts(`[
+    "duration,colums,rows",
+    0.0,
+    `,
+	)
+
+	//  write the columns
+	var columns = [...]string{
+		"name",
+		"synopsis",
+		"description",
+		"source-path",
+		"query-arg_set",
+		"sql-text",
+	}
+
+	puta(columns[:])
+	puts(",\n\n    [\n")
+
+	count := uint64(0)
+	for n, q := range cf.SQLQuerySet {
+
+		if count > 0 {
+			putf(",\n")
+		}
+		count++
+
+		puts("[")
+		putjs(n)
+		puts(",")
+		putjs(q.synopsis)
+		puts(",")
+		putjs(q.description)
+		puts(",")
+		putjs(q.SourcePath)
+		puts(",")
+		putjs(q.sql_text)
+
+		putf("]")
+	}
+	putf("\n    ]\n]\n")
 }

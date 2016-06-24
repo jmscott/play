@@ -30,6 +30,8 @@ type SQLQueryArgSet map[string]*SQLQueryArg
 
 type SQLQuery struct {
 	name           string
+	synopsis       string
+	description    string
 	SourcePath     string `json:"source-path"`
 	SQLQueryArgSet `json:"query-arg-set"`
 	sql_text       string
@@ -43,6 +45,7 @@ var (
 	newline                 []byte
 	pgsql_command_prefix_re = regexp.MustCompile(`^[ \t]*\\`)
 	pgsql_colon_var         = regexp.MustCompile(`(?:[^:]|\A):[\w]+`)
+	trim_re                 = regexp.MustCompile(`^[ \t\n]+|[ \t\n]+$`)
 
 	pgtype2re = map[string]*regexp.Regexp{
 		//  Note: what about null in the string?
@@ -51,15 +54,15 @@ var (
 
 		//  0 - 65535
 		"uint16": regexp.MustCompile(
-			`^(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3}|0)$`),
+			`^(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{0,3}|0)$`),
 
 		//  0 - 4294967295
 		"uint32": regexp.MustCompile(
-			`^(429496729[0-5]|42949672[0-8][0-9]|4294967[01][0-9]{2}|429496[0-6][0-9]{3}|42949[0-5][0-9]{4}|4294[0-8][0-9]{5}|429[0-3][0-9]{6}|42[0-8][0-9]{7}|4[01][0-9]{8}|[1-3][0-9]{9}|[1-9][0-9]{0,8}|0)$`),
+			`^(?:429496729[0-5]|42949672[0-8][0-9]|4294967[01][0-9]{2}|429496[0-6][0-9]{3}|42949[0-5][0-9]{4}|4294[0-8][0-9]{5}|429[0-3][0-9]{6}|42[0-8][0-9]{7}|4[01][0-9]{8}|[1-3][0-9]{9}|[1-9][0-9]{0,8}|0)$`),
 
 		//  0 - 9223372036854775807
 		"ubigint": regexp.MustCompile(
-			`^(922337203685477580[0-7]|9223372036854775[0-7][0-9]{2}|922337203685477[0-4][0-9]{3}|92233720368547[0-6][0-9]{4}|9223372036854[0-6][0-9]{5}|922337203685[0-3][0-9]{6}|92233720368[0-4][0-9]{7}|9223372036[0-7][0-9]{8}|922337203[0-5][0-9]{9}|92233720[0-2][0-9]{10}|922337[01][0-9]{12}|92233[0-6][0-9]{13}|9223[0-2][0-9]{14}|922[0-2][0-9]{15}|92[01][0-9]{16}|9[01][0-9]{17}|[1-8][0-9]{18}|[1-9][0-9]{0,17}|0)$`),
+			`^(?:922337203685477580[0-7]|9223372036854775[0-7][0-9]{2}|922337203685477[0-4][0-9]{3}|92233720368547[0-6][0-9]{4}|9223372036854[0-6][0-9]{5}|922337203685[0-3][0-9]{6}|92233720368[0-4][0-9]{7}|9223372036[0-7][0-9]{8}|922337203[0-5][0-9]{9}|92233720[0-2][0-9]{10}|922337[01][0-9]{12}|92233[0-6][0-9]{13}|9223[0-2][0-9]{14}|922[0-2][0-9]{15}|92[01][0-9]{16}|9[01][0-9]{17}|[1-8][0-9]{18}|[1-9][0-9]{0,17}|0)$`),
 	}
 )
 
@@ -163,6 +166,9 @@ func (q *SQLQuery) load() {
 		q.WARN("preamble is empty")
 		return
 	}
+
+	q.synopsis = trim_re.ReplaceAllLiteralString(pre["Synopsis"], "")
+	q.description = trim_re.ReplaceAllLiteralString(pre["Description"], "")
 
 	//  decode the json description of the command line arguments
 
@@ -444,7 +450,7 @@ func (q *SQLQuery) handle_query_json(
 	for rows.Next() {
 
 		if count > 0 {
-			putf(",\n")
+			puts(",\n")
 		}
 		count++
 
@@ -452,21 +458,21 @@ func (q *SQLQuery) handle_query_json(
 		if err != nil {
 			panic(err)
 		}
-		putf("      [")
+		puts("      [")
 		for i, si := range rowv {
 			if i > 0 {
-				putf(",")
+				puts(",")
 			}
 			s := si.(*sql.NullString)
 			if s.Valid {
 				putjs(s.String)
 			} else {
-				putf("null")
+				puts("null")
 			}
 		}
-		putf("]")
+		puts("]")
 	}
-	putf("\n    ]\n]\n")
+	puts("\n    ]\n]\n")
 }
 
 //  Tab separated reply to an sql query request from a url
