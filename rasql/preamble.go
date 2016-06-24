@@ -32,7 +32,7 @@ func (pre CcommentPreamble) parse(
 
 			//  EOF is an error until end of preamble seen
 
-			return line_count, err
+			return
 		}
 		line_count++
 
@@ -49,7 +49,7 @@ func (pre CcommentPreamble) parse(
 
 		if !strings.HasPrefix(line, " *") {
 			err = errors.New("line must start with \" *\"")
-			return line_count, err
+			return
 		}
 
 		//  new section
@@ -65,8 +65,12 @@ func (pre CcommentPreamble) parse(
 			}
 
 			// new section
-
+				
 			name = matches[1]
+			if pre[name] != "" {
+				err = errors.New("section redefined: " + name)
+				return
+			}
 			value.WriteString(matches[2])
 		} else if name != "" {
 			value.WriteString(line[2:])
