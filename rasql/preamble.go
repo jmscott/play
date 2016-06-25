@@ -65,7 +65,7 @@ func (pre CcommentPreamble) parse(
 			}
 
 			// new section
-				
+
 			name = matches[1]
 			if pre[name] != "" {
 				err = errors.New("section redefined: " + name)

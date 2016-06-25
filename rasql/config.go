@@ -120,7 +120,6 @@ func (cf *Config) handle_query_index_json(
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-
 	//  write bytes string to client
 
 	putb := func(b []byte) {
