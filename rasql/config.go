@@ -165,7 +165,7 @@ func (cf *Config) handle_query_index_json(
 		"synopsis",
 		"description",
 		"source-path",
-		"query-arg_set",
+		"query-arg-set",
 		"sql-text",
 	}
 
