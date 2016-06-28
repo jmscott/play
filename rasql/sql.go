@@ -18,7 +18,7 @@ import (
 )
 
 type SQLQueryArg struct {
-	name      string
+	path      string
 	PGType    string `json:"type"`
 	pgtype_re *regexp.Regexp
 	gokind    reflect.Kind
@@ -192,8 +192,8 @@ func (q *SQLQuery) load() {
 	if len(q.SQLQueryArgSet) > 0 {
 		log("    %d arguments: {", len(q.SQLQueryArgSet))
 		for n, qa := range q.SQLQueryArgSet {
-			qa.name = n
-			log("      %s:{pgtype:%s}", qa.name, qa.PGType)
+			qa.path = n
+			log("      %s:{pgtype:%s}", qa.path, qa.PGType)
 
 			// verify PostgreSQL types
 
@@ -260,7 +260,7 @@ func (q *SQLQuery) db_query(
 		bada := func(format string, args ...interface{}) {
 			msg := fmt.Sprintf(
 				"query arg: %s: %s",
-				qa.name,
+				qa.path,
 				fmt.Sprintf(format, args...),
 			)
 			http.Error(w, msg, http.StatusBadRequest)
@@ -273,8 +273,8 @@ func (q *SQLQuery) db_query(
 
 		ha := qa.http_arg
 		if ha == nil {
-			ha = cf.HTTPQueryArgSet[qa.name]
-			an = qa.name
+			ha = cf.HTTPQueryArgSet[qa.path]
+			an = qa.path
 		} else {
 			an = ha.name
 		}
