@@ -75,14 +75,14 @@ func (cf *Config) load(path string) {
 		//  point sql arguments to current http query argument
 
 		found := false
-		for _, sq := range cf.SQLQuerySet {
-			for _, sqa := range sq.SQLQueryArgSet {
-				if sqa.name != a {
+		for _, q := range cf.SQLQuerySet {
+			for _, qa := range q.SQLQueryArgSet {
+				if qa.path != a {
 					continue
 				}
-				log("  %s -> %s", sqa.name, ha.name)
+				log("  %s -> %s", qa.path, ha.name)
 				found = true
-				sqa.http_arg = ha
+				qa.http_arg = ha
 			}
 		}
 		if !found {
@@ -160,13 +160,11 @@ func (cf *Config) handle_query_index_json(
 	)
 
 	//  write the columns
+
 	var columns = [...]string{
-		"name",
+		"path",
 		"synopsis",
 		"description",
-		"source-path",
-		"query-arg-set",
-		"sql-text",
 	}
 
 	puta(columns[:])
@@ -186,10 +184,6 @@ func (cf *Config) handle_query_index_json(
 		putjs(q.synopsis)
 		puts(",")
 		putjs(q.description)
-		puts(",")
-		putjs(q.SourcePath)
-		puts(",")
-		putjs(q.sql_text)
 
 		putf("]")
 	}
