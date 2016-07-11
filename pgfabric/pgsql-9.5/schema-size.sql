@@ -1,8 +1,6 @@
 /*
  *  Synopsis:
  *	Enumerate total size of schemas in a database
- *  Blame:
- *	jmscott@setspace.com
  *  Note:
  *	Higher, inaccurate results are obtained when not qualifying on
  *	pg_class.relkind = 'r' .  Why?  Apparently the same object
