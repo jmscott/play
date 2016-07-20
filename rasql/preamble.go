@@ -1,4 +1,4 @@
-//Parse a C style comment written jmscott preamble syntax
+//Parse a C style comment written in jmscott preamble syntax
 
 package main
 
