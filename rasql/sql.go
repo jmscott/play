@@ -19,7 +19,7 @@ import (
 
 type SQLQueryArg struct {
 	path      string
-	PGType    string `json:"type"`
+	pg_type   string
 	pgtype_re *regexp.Regexp
 	gokind    reflect.Kind
 	position  uint8
@@ -46,6 +46,10 @@ var (
 	pgsql_command_prefix_re = regexp.MustCompile(`^[ \t]*\\`)
 	pgsql_colon_var         = regexp.MustCompile(`(?:[^:]|\A):[\w]+`)
 	trim_re                 = regexp.MustCompile(`^[ \t\n]+|[ \t\n]+$`)
+	clv_re                  = regexp.MustCompile(
+						`\s*(\w{1,63})::(\w{1,63})\s*$`)
+
+	//  map pgtypes to regular expressions that matches domain
 
 	pgtype2re = map[string]*regexp.Regexp{
 		//  Note: what about null in the string?
@@ -170,17 +174,43 @@ func (q *SQLQuery) load() {
 	q.synopsis = trim_re.ReplaceAllLiteralString(pre["Synopsis"], "")
 	q.description = trim_re.ReplaceAllLiteralString(pre["Description"], "")
 
-	//  decode the json description of the command line arguments
+	//  parse the declaration of the command line variables in the section
+	//
+	//  Command Line Variables:
+	//
+	//	name1::pgtype
+	//	name2::pgtype
 
-	cla := pre["Command Line Arguments"]
-	if cla == "" {
-		q.WARN("no \"Command Line Arguments\" section")
-		q.WARN("add empty {} section to eliminate this warning")
+	clv, exists := pre["Command Line Variables"]
+	if !exists {
+		q.WARN("no \"Command Line Variables\" section")
+		q.WARN("add empty section to eliminate this warning")
 	}
-	dec := json.NewDecoder(strings.NewReader(cla))
-	err = dec.Decode(&q.SQLQueryArgSet)
-	if err != nil && err != io.EOF {
-		q.die("failed to decode json in command line arguments")
+
+	q.SQLQueryArgSet = make(map[string]*SQLQueryArg, 0)
+	vars := bufio.NewReader(strings.NewReader(clv))
+	for {
+		line, err := vars.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			q.die("Command Line Variables: %s", err)
+		}
+
+		//  extract the variable declaration that matches
+		//
+		//	name::pgtype
+
+		matches := clv_re.FindStringSubmatch(line)
+		if len(matches) != 3 {
+			continue
+		}
+
+		q.SQLQueryArgSet[matches[1]] = &SQLQueryArg{
+			path: matches[1],
+			pg_type: matches[2],
+		}
 	}
 
 	if len(q.SQLQueryArgSet) > 255 {
@@ -189,32 +219,29 @@ func (q *SQLQuery) load() {
 
 	//  verify pg sql types
 
-	if len(q.SQLQueryArgSet) > 0 {
-		log("    %d arguments: {", len(q.SQLQueryArgSet))
-		for n, qa := range q.SQLQueryArgSet {
-			qa.path = n
-			log("      %s:{pgtype:%s}", qa.path, qa.PGType)
+	log("    %d arguments:", len(q.SQLQueryArgSet))
+	for n, qa := range q.SQLQueryArgSet {
+		qa.path = n
+		log("      %s:{pgtype:%s}",qa.path, qa.pg_type)
 
-			// verify PostgreSQL types
+		// verify PostgreSQL types
+		// Note: replace with table lookup
 
-			switch qa.PGType {
-			case "text":
-				qa.gokind = reflect.String
-			case "uint16":
-				qa.gokind = reflect.Uint16
-			case "uint32":
-				qa.gokind = reflect.Uint32
-			case "ubigint":
-				qa.gokind = reflect.Uint64
-			default:
-				q.die("unknown pgtype: %s", qa.PGType)
-			}
-			qa.pgtype_re = pgtype2re[qa.PGType]
+		switch qa.pg_type {
+		case "text":
+			qa.gokind = reflect.String
+		case "uint16":
+			qa.gokind = reflect.Uint16
+		case "uint32":
+			qa.gokind = reflect.Uint32
+		case "ubigint":
+			qa.gokind = reflect.Uint64
+		default:
+			q.die("unknown pgtype: %s", qa.pg_type)
 		}
-		log("    }")
-	} else {
-		log("    no command line arguments")
+		qa.pgtype_re = pgtype2re[qa.pg_type]
 	}
+
 	q.argv = make([]*SQLQueryArg, len(q.SQLQueryArgSet))
 	q.parse_pgsql(in)
 

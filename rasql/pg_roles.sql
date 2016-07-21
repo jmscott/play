@@ -2,7 +2,7 @@
  *  Synopsis:
  *	Fetch all roles in the pg_rols view
  *
- *  Command Line Arguments: {}
+ *  Command Line Variables:
  *
  *  Usage:
  *	psql -f pg_class.sql

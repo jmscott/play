@@ -2,7 +2,7 @@
  *  Synopsis:
  *	Fetch all classes in a pg_catalog.pg_class
  *
- *  Command Line Arguments: {}
+ *  Command Line Variables:
  *
  *  Usage:
  *	psql -f pg_class.sql

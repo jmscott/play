@@ -1,8 +1,8 @@
 /*
  *  Synopsis:
  *	Select all tuples from pg_stat_activity
- *  Command Line Arguments:
- *	{}
+ *
+ *  Command Line Variables:
  */
 
 select
