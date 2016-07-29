@@ -18,6 +18,7 @@ import (
 )
 
 type SQLQueryArg struct {
+	//  Note: should "path" be "name"?
 	path      string
 	pg_type   string
 	pgtype_re *regexp.Regexp
@@ -46,8 +47,8 @@ var (
 	pgsql_command_prefix_re = regexp.MustCompile(`^[ \t]*\\`)
 	pgsql_colon_var         = regexp.MustCompile(`(?:[^:]|\A):[\w]+`)
 	trim_re                 = regexp.MustCompile(`^[ \t\n]+|[ \t\n]+$`)
-	clv_re                  = regexp.MustCompile(
-						`\s*(\w{1,63})::(\w{1,63})\s*$`)
+	psql_clv_re             = regexp.MustCompile(
+					`^\s*(\w{1,63})\s+(\w{1,63})\s*$`)
 
 	//  map pgtypes to regular expressions that matches domain
 
@@ -178,8 +179,8 @@ func (q *SQLQuery) load() {
 	//
 	//  Command Line Variables:
 	//
-	//	name1::pgtype
-	//	name2::pgtype
+	//	name1	pgtype
+	//	name2	pgtype
 
 	clv, exists := pre["Command Line Variables"]
 	if !exists {
@@ -200,9 +201,9 @@ func (q *SQLQuery) load() {
 
 		//  extract the variable declaration that matches
 		//
-		//	name::pgtype
+		//	name	pgtype
 
-		matches := clv_re.FindStringSubmatch(line)
+		matches := psql_clv_re.FindStringSubmatch(line)
 		if len(matches) != 3 {
 			continue
 		}
@@ -248,8 +249,14 @@ func (q *SQLQuery) load() {
 	//  build query argument argument vector
 
 	for _, qa := range q.SQLQueryArgSet {
-		qa.position--
-		q.argv[qa.position] = qa
+		if qa.position == 0 {
+			q.WARN("unused sql command line variable: %s", qa.path)
+			q.WARN("remove %s declaration to eliminate warning")
+			q.argv = q.argv[0:len(q.argv) - 1]
+		} else {
+			qa.position--
+			q.argv[qa.position] = qa
+		}
 	}
 }
 
@@ -280,7 +287,7 @@ func (q *SQLQuery) db_query(
 
 	//  build the argv []interface{} for the sql query to execute
 
-	argv := make([]interface{}, len(q.SQLQueryArgSet))
+	argv := make([]interface{}, len(q.argv))
 	req_qa := url.Query()
 	for _, qa := range q.argv {
 
