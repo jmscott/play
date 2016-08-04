@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"encoding/csv"
 	"fmt"
 	_ "github.com/lib/pq"
 	"io"
@@ -509,7 +510,7 @@ func (q *SQLQuery) handle_query_json(
 	puts("\n    ]\n]\n")
 }
 
-//  Tab separated reply to an sql query request from a url
+//  Tab separated reply to an sql query request from a url.
 //  Any tabs or newline in sql data are replaced with a space.
 //  See: https://www.iana.org/assignments/media-types/text/tab-separated-values
 
@@ -583,6 +584,61 @@ func (q *SQLQuery) handle_query_tsv(
 			}
 		}
 		putb(newline)
+	}
+}
+
+//  Comma separated spreadsheet reply to an sql query request from a url.
+
+func (q *SQLQuery) handle_query_csv(
+	w http.ResponseWriter,
+	r *http.Request,
+	cf *Config,
+) {
+	_, columns, rows, rowv := q.db_query(w, r, cf)
+
+	if rowv == nil {
+		return
+	}
+	defer rows.Close()
+
+	w.Header().Set("Content-Type", "text/csv;  charset=utf-8")
+
+	out := csv.NewWriter(w)
+
+	put := func(r []string) {
+		err := out.Write(r)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	//  write the column headers
+	put(columns)
+
+	//  write the rows
+
+	row := make([]string, len(rowv))
+	for rows.Next() {
+
+		err := rows.Scan(rowv...)
+		if err != nil {
+			panic(err)
+		}
+		for i, si := range rowv {
+			s := si.(*sql.NullString)
+			if s.Valid {
+				row[i] = s.String
+			} else {
+				row[i] = ""
+			}
+		}
+		put(row)
+	}
+
+	out.Flush()
+	err := out.Error()
+	if err != nil {
+		panic(err)
 	}
 }
 

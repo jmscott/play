@@ -110,6 +110,14 @@ func (cf *Config) new_handler_query_tsv(sqlq *SQLQuery) http.HandlerFunc {
 	}
 }
 
+func (cf *Config) new_handler_query_csv(sqlq *SQLQuery) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		sqlq.handle_query_csv(w, r, cf)
+	}
+}
+
 func (cf *Config) handle_query_index_json(
 	w http.ResponseWriter,
 	r *http.Request,

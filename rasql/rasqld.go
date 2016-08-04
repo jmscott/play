@@ -122,6 +122,13 @@ func main() {
 			fmt.Sprintf("%s/tsv/%s", cf.RESTPathPrefix, n),
 			cf.new_handler_query_tsv(q),
 		)
+
+		//  csv handler
+
+		http.HandleFunc(
+			fmt.Sprintf("%s/csv/%s", cf.RESTPathPrefix, n),
+			cf.new_handler_query_csv(q),
+		)
 	}
 
 	log("listening: %s%s", cf.HTTPListen, cf.RESTPathPrefix)
