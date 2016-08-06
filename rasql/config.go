@@ -61,7 +61,7 @@ func (cf *Config) load(path string) {
 
 	//  wire up sql aliases for the http query arguments
 
-	log("map http/sql query args ...")
+	log("bind http query args to sql variables query args ...")
 	for _, ha := range cf.HTTPQueryArgSet {
 		a := ha.SQLAlias
 		if a == "" {
