@@ -4,10 +4,10 @@ import (
 	"bufio"
 	"bytes"
 	"database/sql"
-	"encoding/json"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
-	_ "github.com/lib/pq"
+	"html"
 	"io"
 	"net/http"
 	"os"
@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	_ "github.com/lib/pq"
 )
 
 type SQLQueryArg struct {
@@ -640,6 +641,64 @@ func (q *SQLQuery) handle_query_csv(
 	if err != nil {
 		panic(err)
 	}
+}
+func (q *SQLQuery) handle_query_html(
+	w http.ResponseWriter,
+	r *http.Request,
+	cf *Config,
+) {
+	_, columns, rows, rowv := q.db_query(w, r, cf)
+
+	if rowv == nil {
+		return
+	}
+	defer rows.Close()
+
+	w.Header().Set("Content-Type", "text/html;  charset=utf-8")
+
+	put := func(s string) {
+		w.Write([]byte(s))
+	}
+
+	put_row := func(element string, row []string) {
+
+		put("\n <tr>\n")
+		for _, s := range row {
+			put(`  <`)
+			put(element)
+			put(`>`)
+			put(html.EscapeString(s))
+			put(`</`)
+			put(element)
+			put(`>`)
+		}
+		put("\n </tr>\n")
+	}
+
+	put("<table>\n")
+
+	put_row(`th`, columns)
+
+	//  write the rows
+
+	row := make([]string, len(rowv))
+	for rows.Next() {
+
+		err := rows.Scan(rowv...)
+		if err != nil {
+			panic(err)
+		}
+		for i, si := range rowv {
+			s := si.(*sql.NullString)
+			if s.Valid {
+				row[i] = s.String
+			} else {
+				row[i] = ""
+			}
+		}
+		put_row(`td`, row)
+	}
+	put(`</table>`)
 }
 
 //  parse a typical postgres sql file into a string suitable for Prepare()
