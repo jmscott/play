@@ -134,7 +134,7 @@ func (q *SQLQuery) die(format string, args ...interface{}) {
 func (q *SQLQuery) WARN(format string, args ...interface{}) {
 
 	log("WARN: sql query: %s: %s", q.SourcePath,
-		fmt.Sprintf(format, args...))
+					fmt.Sprintf(format, args...))
 }
 
 func (q *SQLQuery) load() {
@@ -276,30 +276,35 @@ func (q *SQLQuery) db_query(
 ) {
 	var err error
 
+	//  reply with status error to remote client
+
+	client_error := func(
+				status int,
+				format string,
+				args ...interface{},
+	) {
+		msg := fmt.Sprintf(format, args...)
+		ERROR("%s: %s", r.RemoteAddr, r.URL)
+		ERROR("%s: %s", r.RemoteAddr, msg)
+		http.Error(w, msg, status)
+	}
+
+	//  only allow http GET method
+
 	if r.Method != http.MethodGet {
-		msg := fmt.Sprintf("http method not allowed: %s", r.Method)
-		ERROR("%s", msg)
-		http.Error(w, msg, http.StatusMethodNotAllowed)
+		client_error(
+			http.StatusMethodNotAllowed,
+			"http method not allowed: %s",
+			r.Method,
+		)
 		return
 	}
-	url := r.URL
 
 	//  build the argv []interface{} for the sql query to execute
 
 	argv := make([]interface{}, len(q.argv))
-	req_qa := url.Query()
+	req_qa := r.URL.Query()
 	for _, qa := range q.argv {
-
-		bada := func(format string, args ...interface{}) {
-			msg := fmt.Sprintf(
-				"query arg: %s: %s",
-				qa.path,
-				fmt.Sprintf(format, args...),
-			)
-			http.Error(w, msg, http.StatusBadRequest)
-			ERROR("%s", msg)
-		}
-
 		var an string
 
 		//  does the sql query arg have an http alias?
@@ -311,6 +316,19 @@ func (q *SQLQuery) db_query(
 		} else {
 			an = ha.name
 		}
+
+		bada := func(format string, args ...interface{}) {
+			msg := fmt.Sprintf(
+				"query arg: %s: %s",
+				ha.name,
+				fmt.Sprintf(format, args...),
+			)
+			client_error(
+				http.StatusBadRequest,
+				"%s", msg,
+			)
+		}
+
 
 		//  verify http query arg exists and matches regular expression
 
@@ -348,7 +366,7 @@ func (q *SQLQuery) db_query(
 			re_what = "http"
 		}
 		if !re.MatchString(ra) {
-			bada("value does not match %s regexp: %s: %s",
+			bada("value does not match %s regexp: %s !~ %s",
 				re_what, ra, re)
 			return
 		}
@@ -396,7 +414,11 @@ func (q *SQLQuery) db_query(
 
 	duration = time.Since(start_time).Seconds()
 	if duration > cf.WarnSlowSQLQueryDuration {
-		WARN("slow query: %s: %.9fs: %s", q.name, duration, url)
+		q.WARN("slow query %.9fs: %s: %s",
+			duration,
+			r.RemoteAddr,
+			r.URL,
+		)
 	}
 
 	columns, err = rows.Columns()
