@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
 	"regexp"
 )
 
@@ -48,24 +46,10 @@ func (qa HTTPQueryArgSet) load() {
 		a.matches_re, err = regexp.Compile(a.Matches)
 
 		if err != nil {
-			ERROR("query-arg: %s: Compile(matches) failed",
-				a.name,
-			)
-			die("query-arg %s: %s",
+			die("query-arg: %s: Compile(matches) failed: %s",
 				a.name,
 				err,
 			)
 		}
 	}
-}
-
-func herror(
-	w http.ResponseWriter,
-	status int,
-	format string,
-	args ...interface{},
-) {
-	msg := fmt.Sprintf(format, args...)
-	ERROR("%s", msg)
-	http.Error(w, msg, status)
 }

@@ -277,12 +277,9 @@ func (q *SQLQuery) db_query(
 	var err error
 
 	if r.Method != http.MethodGet {
-		herror(
-			w,
-			http.StatusMethodNotAllowed,
-			"unknown method: %s",
-			r.Method,
-		)
+		msg := fmt.Sprintf("http method not allowed: %s", r.Method)
+		ERROR("%s", msg)
+		http.Error(w, msg, http.StatusMethodNotAllowed)
 		return
 	}
 	url := r.URL
