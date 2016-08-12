@@ -9,6 +9,9 @@ GOSRC=rasqld.go								\
 
 all: rasqld
 
+install: rasqld
+	cp rasqld /usr/local/bin
+
 clean:
 	rm -f rasqld
 
