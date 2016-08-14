@@ -98,6 +98,9 @@ func (cf *Config) new_handler_query_json(sqlq *SQLQuery) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		if cf.auth(w, r) == false {
+			return
+		}
 		sqlq.handle_query_json(w, r, cf)
 	}
 }
@@ -114,6 +117,9 @@ func (cf *Config) new_handler_query_csv(sqlq *SQLQuery) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		if cf.auth(w, r) == false {
+			return
+		}
 		sqlq.handle_query_csv(w, r, cf)
 	}
 }
@@ -122,14 +128,25 @@ func (cf *Config) new_handler_query_html(sqlq *SQLQuery) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		if cf.auth(w, r) == false {
+			return
+		}
 		sqlq.handle_query_html(w, r, cf)
 	}
+}
+
+func (cd *Config) auth(w http.ResponseWriter, r *http.Request) bool {
+	return true
 }
 
 func (cf *Config) handle_query_index_json(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	if cf.auth(w, r) == false {
+		return
+	}
+
 	putf := func(format string, args ...interface{}) {
 		fmt.Fprintf(w, format, args...)
 	}

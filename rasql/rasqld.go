@@ -105,7 +105,13 @@ func main() {
 		cf.handle_query_index_json,
 	)
 
-	//  install sql query handlers at /<rest-path-prefix>/<sql-query>
+	//  install sql query handlers 
+	//
+	//	/<rest-path-prefix>/<sql-query>
+	//	/<rest-path-prefix>/csv/<sql-query>
+	//	/<rest-path-prefix>/tsv/<sql-query>
+	//	/<rest-path-prefix>/html/<sql-query>
+	//
 
 	for n, q := range cf.SQLQuerySet {
 
