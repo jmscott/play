@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"regexp"
 	"strings"
 )
 
@@ -17,6 +20,9 @@ type Config struct {
 	RESTPathPrefix  string `json:"rest-path-prefix"`
 	SQLQuerySet     `json:"sql-query-set"`
 	HTTPQueryArgSet `json:"http-query-arg-set"`
+	BasicAuthPath string `json:"basic-auth-path"`
+
+	basic_auth map[string]string
 
 	//  Note:  also want to log slow http requests!
 	//         consider moving into WARN section.
@@ -90,15 +96,47 @@ func (cf *Config) load(path string) {
 				ha.name, a)
 		}
 	}
+	cf.load_auth()
 
 	log("%s: loaded", cf.source_path)
 }
 
+func (cf *Config) check_basic_auth(
+	w http.ResponseWriter,
+	r *http.Request,
+)  bool {
+
+	user, pass, _ := r.BasicAuth()
+	if user != "" && cf.basic_auth[user] == pass {
+		return true
+	}
+
+	w.Header().Set("WWW-Authenticate", "Basic realm=\"rasql\"")
+	if user == "" {
+		reply_ERROR(http.StatusUnauthorized, w, r,
+			"missing basic authorization")
+	} else {
+		reply_ERROR(http.StatusUnauthorized, w, r,
+			"unauthorized user: %s", user)
+	}
+	return false
+}
+
 func (cf *Config) new_handler_query_json(sqlq *SQLQuery) http.HandlerFunc {
+
+	//  no authorization required
+
+	if len(cf.basic_auth) == 0 {
+		return func(w http.ResponseWriter, r *http.Request) {
+			sqlq.handle_query_json(w, r, cf)
+		}
+	}
+
+	//  authorization required before handling the query
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		if cf.auth(w, r) == false {
+		if cf.check_basic_auth(w, r) == false {
 			return
 		}
 		sqlq.handle_query_json(w, r, cf)
@@ -117,9 +155,6 @@ func (cf *Config) new_handler_query_csv(sqlq *SQLQuery) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		if cf.auth(w, r) == false {
-			return
-		}
 		sqlq.handle_query_csv(w, r, cf)
 	}
 }
@@ -128,25 +163,74 @@ func (cf *Config) new_handler_query_html(sqlq *SQLQuery) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		if cf.auth(w, r) == false {
-			return
-		}
 		sqlq.handle_query_html(w, r, cf)
 	}
 }
 
-func (cd *Config) auth(w http.ResponseWriter, r *http.Request) bool {
-	return true
+//  Note: consider using package https://github.com/abbot/go-http-auth
+
+func (cf *Config) load_auth() {
+
+	ba_log := func (format string, args ...interface{}) {
+
+		log("basic auth: %s", fmt.Sprintf(format, args...))
+	}
+
+	ba_die := func (format string, args ...interface{}) {
+
+		die("basic auth: %s", fmt.Sprintf(format, args...))
+	}
+
+	cf.basic_auth = nil
+	if cf.BasicAuthPath == "" {
+		ba_log("password file not defined")
+		ba_log("no password required to access queries")
+		return
+	}
+	cf.basic_auth = make(map[string]string)
+	ba_log("password file: %s", cf.BasicAuthPath)
+
+	f, err := os.Open(cf.BasicAuthPath)
+	if err != nil {
+		ba_die("can not open password file: %s", err)
+	}
+	defer f.Close()
+
+	in := bufio.NewReader(f)
+	white_re := regexp.MustCompile(`^\s*$`)
+	comment_re := regexp.MustCompile(`^\s*#`)
+	entry_re := regexp.MustCompile(`^([[:alpha:]0-9]{1,32}):(..*)`)
+
+	ba_log("loading passwords ...")
+	lc := uint32(0)
+	for {
+		line, err := in.ReadString('\n')
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			ba_die("error reading password: %s", err)
+		}
+		lc++
+		if white_re.MatchString(line) || comment_re.MatchString(line) {
+			continue
+		}
+		fields := entry_re.FindStringSubmatch(line)
+		if fields == nil {
+			die("syntax error in password file near line %d", lc)
+		}
+		if len(fields) != 3 {
+			panic("len(password entry) != 3")
+		}
+		cf.basic_auth[fields[1]] = fields[2]
+	}
+	log("loaded %d password entries", len(cf.basic_auth))
 }
 
 func (cf *Config) handle_query_index_json(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	if cf.auth(w, r) == false {
-		return
-	}
-
 	putf := func(format string, args ...interface{}) {
 		fmt.Fprintf(w, format, args...)
 	}

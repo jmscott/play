@@ -19,6 +19,18 @@ func usage() {
 	fmt.Fprintf(stderr, "usage: rasqld <config.json>\n")
 }
 
+func reply_ERROR(
+	status int,
+	w http.ResponseWriter,
+	r *http.Request,
+	format string, args ...interface{}) {
+
+	msg := fmt.Sprintf(format, args...)
+
+	ERROR("%s: %s", r.RemoteAddr, msg) 
+	http.Error(w, msg, status)
+}
+
 func ERROR(format string, args ...interface{}) {
 
 	fmt.Fprintf(

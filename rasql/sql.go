@@ -288,8 +288,7 @@ func (q *SQLQuery) db_query(
 	) {
 		msg := fmt.Sprintf(format, args...)
 		ERROR("%s: %s", r.RemoteAddr, r.URL)
-		ERROR("%s: %s", r.RemoteAddr, msg)
-		http.Error(w, msg, status)
+		reply_ERROR(status, w, r, "%s", msg)
 	}
 
 	//  only allow http GET method

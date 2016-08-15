@@ -23,5 +23,7 @@
 			"sql-alias": "nspname"
 		}
 	},
-	"warn-slow-sql-query-duration": 5
+	"warn-slow-sql-query-duration": 5,
+
+	"basic-auth-path":"password-rasql.example"
 }
