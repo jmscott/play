@@ -7,7 +7,7 @@
  *  Usage:
  *	psql -f pg_class.sql
  */
-select
+SELECT
 	n.nspname,
 	c.relname,
 	c.relnamespace,
@@ -41,9 +41,9 @@ select
 	c.relacl,
 	c.reloptions,
 	c.oid
-  from
+  FROM
   	pg_catalog.pg_class c
-	  join pg_catalog.pg_namespace n on (n.oid = c.relnamespace)
-  order by
+	  JOIN pg_catalog.pg_namespace n ON (n.oid = c.relnamespace)
+  ORDER BY
   	n.nspname asc, c.relname asc
 ;

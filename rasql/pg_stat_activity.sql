@@ -8,7 +8,7 @@
  *	psql -f pg_stat_activity.sql	
  */
 
-select
+SELECT
 	datid,
 	datname,
 	pid,
@@ -28,11 +28,11 @@ select
 	backend_xid,
 	backend_xmin,
 	query
-  from
+  FROM
   	pg_catalog.pg_stat_activity
-  order by
-  	datname asc,
-	state asc,
-	application_name asc,
-	query_start asc
+  ORDER BY
+  	datname ASC,
+	state ASC,
+	application_name ASC,
+	query_start ASC
 ;

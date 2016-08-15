@@ -7,7 +7,7 @@
  *  Usage:
  *	psql -f pg_roles.sql
  */
-select
+SELECT
 	rolname,
 	rolsuper,
 	rolinherit,
@@ -21,8 +21,8 @@ select
 	rolbypassrls,
 	rolconfig,
 	oid
-  from
+  FROM
   	pg_catalog.pg_roles
-  order by
+  ORDER BY
   	rolname asc
 ;

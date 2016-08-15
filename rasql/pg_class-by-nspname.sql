@@ -6,7 +6,7 @@
  *  Usage:
  *	psql -f pg_class-by-nsname.sql --set nspname="'pg_catalog'"
  */
-select
+SELECT
 	n.nspname,
 	c.relname,
 	c.relnamespace,
@@ -40,11 +40,11 @@ select
 	c.relacl,
 	c.reloptions,
 	c.oid
-  from
+  FROM
   	pg_catalog.pg_class c
-	  join pg_catalog.pg_namespace n on (n.oid = c.relnamespace)
-  where
+	  JOIN pg_catalog.pg_namespace n ON (n.oid = c.relnamespace)
+  WHERE
   	n.nspname = :nspname
-  order by
+  ORDER BY
   	c.relname
 ;
