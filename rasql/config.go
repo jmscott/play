@@ -145,24 +145,63 @@ func (cf *Config) new_handler_query_json(sqlq *SQLQuery) http.HandlerFunc {
 
 func (cf *Config) new_handler_query_tsv(sqlq *SQLQuery) http.HandlerFunc {
 
+	//  no authorization required
+
+	if len(cf.basic_auth) == 0 {
+		return func(w http.ResponseWriter, r *http.Request) {
+			sqlq.handle_query_tsv(w, r, cf)
+		}
+	}
+
+	//  authorization required before handling the query
+
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		if cf.check_basic_auth(w, r) == false {
+			return
+		}
 		sqlq.handle_query_tsv(w, r, cf)
 	}
 }
 
 func (cf *Config) new_handler_query_csv(sqlq *SQLQuery) http.HandlerFunc {
 
+	//  no authorization required
+
+	if len(cf.basic_auth) == 0 {
+		return func(w http.ResponseWriter, r *http.Request) {
+			sqlq.handle_query_csv(w, r, cf)
+		}
+	}
+
+	//  authorization required before handling the query
+
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		if cf.check_basic_auth(w, r) == false {
+			return
+		}
 		sqlq.handle_query_csv(w, r, cf)
 	}
 }
 
 func (cf *Config) new_handler_query_html(sqlq *SQLQuery) http.HandlerFunc {
 
+	//  no authorization required
+
+	if len(cf.basic_auth) == 0 {
+		return func(w http.ResponseWriter, r *http.Request) {
+			sqlq.handle_query_html(w, r, cf)
+		}
+	}
+
+	//  authorization required before handling the query
+
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		if cf.check_basic_auth(w, r) == false {
+			return
+		}
 		sqlq.handle_query_html(w, r, cf)
 	}
 }
@@ -227,10 +266,15 @@ func (cf *Config) load_auth() {
 	log("loaded %d password entries", len(cf.basic_auth))
 }
 
+//  Note: why only json output?  Need to generalize!
+
 func (cf *Config) handle_query_index_json(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
+	if !cf.check_basic_auth(w, r) {
+		return
+	}
 	putf := func(format string, args ...interface{}) {
 		fmt.Fprintf(w, format, args...)
 	}
