@@ -46,6 +46,9 @@ var (
 	db                      *sql.DB
 	tab                     []byte
 	newline                 []byte
+
+	//  Note: why global regular expressions?
+
 	pgsql_command_prefix_re = regexp.MustCompile(`^[ \t]*\\`)
 	pgsql_colon_var         = regexp.MustCompile(`(?:[^:]|\A):[\w]+`)
 	trim_re                 = regexp.MustCompile(`^[ \t\n]+|[ \t\n]+$`)
