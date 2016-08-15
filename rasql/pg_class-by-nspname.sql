@@ -2,7 +2,7 @@
  *  Synopsis:
  *	Fetch all classes in a particular name space
  *  Command Line Variables:
- *	nspname::text
+ *	nspname	text
  *  Usage:
  *	psql -f pg_class-by-nsname.sql --set nspname="'pg_catalog'"
  */
