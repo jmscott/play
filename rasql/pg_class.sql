@@ -8,7 +8,6 @@
  *	psql -f pg_class.sql
  */
 select
-	c.oid,
 	n.nspname,
 	c.relname,
 	c.relnamespace,
@@ -40,7 +39,8 @@ select
 	c.relfrozenxid,
 	c.relminmxid,
 	c.relacl,
-	c.reloptions
+	c.reloptions,
+	c.oid
   from
   	pg_catalog.pg_class c
 	  join pg_catalog.pg_namespace n on (n.oid = c.relnamespace)

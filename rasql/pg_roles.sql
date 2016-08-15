@@ -5,7 +5,7 @@
  *  Command Line Variables:
  *
  *  Usage:
- *	psql -f pg_class.sql
+ *	psql -f pg_roles.sql
  */
 select
 	rolname,

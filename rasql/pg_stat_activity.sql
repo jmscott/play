@@ -3,6 +3,9 @@
  *	Select all tuples from pg_stat_activity
  *
  *  Command Line Variables:
+ *
+ *  Usage:
+ *	psql -f pg_stat_activity.sql	
  */
 
 select
@@ -28,5 +31,8 @@ select
   from
   	pg_catalog.pg_stat_activity
   order by
-  	datname asc, state asc, application_name asc, query_start asc
+  	datname asc,
+	state asc,
+	application_name asc,
+	query_start asc
 ;
