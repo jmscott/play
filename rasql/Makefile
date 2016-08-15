@@ -20,7 +20,7 @@ rasqld: $(GOSRC)
 fmt:
 	$(GO) fmt $(GOSRC)
 vet:
-	#  vet wants formating functions to end in 'f'.  jmscott doesn't.
+	#  vet wants formating functions to end in 'f'.  jmscott doesn't want.
 	#  -printf=0 eliminates "possible formatting directive in log call"
 	#  gripes
 	$(GO) tool vet -printf=0 $(GOSRC)
