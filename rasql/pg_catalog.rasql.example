@@ -1,6 +1,11 @@
 {
 	"synopsis":		"PostgreSQL 9.6 System Catalog Schema",
 	"http-listen":		":8080",
+
+	"OFF-http-listen-tls":	":443",
+	"OFF-tls-cert-path":	"cert.pem",
+	"OFF-tls-key-path":		"key.pem",
+
 	"rest-path-prefix":	"/pg_catalog",
 
 	"sql-query-set": {

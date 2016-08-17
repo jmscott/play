@@ -156,10 +156,31 @@ func main() {
 		)
 	}
 
-	log("listening: %s%s", cf.HTTPListen, cf.RESTPathPrefix)
-	err := http.ListenAndServe(cf.HTTPListen, nil)
-	if err != nil {
-		die("%s", err)
+	if cf.HTTPListen != "" {
+		log("listening: %s%s", cf.HTTPListen, cf.RESTPathPrefix)
+		go func() {
+			err := http.ListenAndServe(cf.HTTPListen, nil)
+			die("http listen error: %s", err)
+		}()
 	}
-	leave(0)
+	if cf.HTTPListenTLS != "" {
+		if cf.TLSCertPath == "" {
+			die("http listen tls: missing tls-cert-path")
+		}
+		if cf.TLSKeyPath == "" {
+			die("http listen tls: missing tls-key-path")
+		}
+		log("tls listening: %s%s", cf.HTTPListenTLS, cf.RESTPathPrefix)
+		go func() {
+			err := http.ListenAndServeTLS(
+					cf.HTTPListenTLS,
+					cf.TLSCertPath,
+					cf.TLSKeyPath,
+					nil,
+			)
+			die("http listen tls: %s", err)
+		}()
+	}
+	pause := make(chan interface{})
+	<-pause
 }

@@ -24,3 +24,12 @@ vet:
 	#  -printf=0 eliminates "possible formatting directive in log call"
 	#  gripes
 	$(GO) tool vet -printf=0 $(GOSRC)
+pem:
+	#
+	#  Generate test pem files for public certificate and private keys.
+	# 
+	#  See json fields "tls-cert-path" and "tls-key-path" in file
+	#  pg_catalog.rasql.example.
+	#
+	openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 \
+			-keyout key.pem -out cert.pem

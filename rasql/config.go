@@ -17,6 +17,7 @@ type Config struct {
 
 	Synopsis        string `json:"synopsis"`
 	HTTPListen      string `json:"http-listen"`
+	HTTPListenTLS   string `json:"http-listen-tls"`
 	RESTPathPrefix  string `json:"rest-path-prefix"`
 	SQLQuerySet     `json:"sql-query-set"`
 	HTTPQueryArgSet `json:"http-query-arg-set"`
@@ -28,6 +29,8 @@ type Config struct {
 	//         consider moving into WARN section.
 
 	WarnSlowSQLQueryDuration float64 `json:"warn-slow-sql-query-duration"`
+	TLSCertPath string `json:"tls-cert-path"`
+	TLSKeyPath string `json:"tls-key-path"`
 }
 
 func (cf *Config) load(path string) {
@@ -111,13 +114,16 @@ func (cf *Config) check_basic_auth(
 		return true
 	}
 
+	//  tell client to authenticate.  only grumble if user attempted
+	//  a login and password.  not clear if failed empty attempts ought
+	//  to be logged.
+
 	w.Header().Set("WWW-Authenticate", "Basic realm=\"rasql\"")
-	if user == "" {
+	if user != "" {
 		reply_ERROR(http.StatusUnauthorized, w, r,
-			"missing basic authorization")
+				"either password or user %s is invalid", user)
 	} else {
-		reply_ERROR(http.StatusUnauthorized, w, r,
-			"unauthorized user: %s", user)
+		http.Error(w, "missing authorization", http.StatusUnauthorized)
 	}
 	return false
 }
