@@ -2,9 +2,9 @@
 	"synopsis":		"PostgreSQL 9.6 System Catalog Schema",
 	"http-listen":		":8080",
 
-	"OFF-http-listen-tls":	":443",
-	"OFF-tls-cert-path":	"cert.pem",
-	"OFF-tls-key-path":		"key.pem",
+	"REMOVE-ME-http-listen-tls":	":443",
+	"REMOVE-ME-tls-cert-path":	"cert.pem",
+	"REMOVE-ME-tls-key-path":	"key.pem",
 
 	"rest-path-prefix":	"/pg_catalog",
 
