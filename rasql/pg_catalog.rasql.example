@@ -3,8 +3,8 @@
 	"http-listen":		":8080",
 
 	"REMOVE-ME-http-listen-tls":	":443",
-	"REMOVE-ME-tls-cert-path":	"cert.pem",
-	"REMOVE-ME-tls-key-path":	"key.pem",
+	"REMOVE-ME-tls-cert-path":	"fake-cert.pem",
+	"REMOVE-ME-tls-key-path":	"fake-key.pem",
 
 	"rest-path-prefix":	"/pg_catalog",
 
