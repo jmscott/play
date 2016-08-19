@@ -21,7 +21,7 @@ type Config struct {
 	RESTPathPrefix  string `json:"rest-path-prefix"`
 	SQLQuerySet     `json:"sql-query-set"`
 	HTTPQueryArgSet `json:"http-query-arg-set"`
-	BasicAuthPath string `json:"basic-auth-path"`
+	BasicAuthPath   string `json:"basic-auth-path"`
 
 	basic_auth map[string]string
 
@@ -29,8 +29,8 @@ type Config struct {
 	//         consider moving into WARN section.
 
 	WarnSlowSQLQueryDuration float64 `json:"warn-slow-sql-query-duration"`
-	TLSCertPath string `json:"tls-cert-path"`
-	TLSKeyPath string `json:"tls-key-path"`
+	TLSCertPath              string  `json:"tls-cert-path"`
+	TLSKeyPath               string  `json:"tls-key-path"`
 }
 
 func (cf *Config) load(path string) {
@@ -107,7 +107,7 @@ func (cf *Config) load(path string) {
 func (cf *Config) check_basic_auth(
 	w http.ResponseWriter,
 	r *http.Request,
-)  bool {
+) bool {
 
 	user, pass, _ := r.BasicAuth()
 	if user != "" && cf.basic_auth[user] == pass {
@@ -121,7 +121,7 @@ func (cf *Config) check_basic_auth(
 	w.Header().Set("WWW-Authenticate", "Basic realm=\"rasql\"")
 	if user != "" {
 		reply_ERROR(http.StatusUnauthorized, w, r,
-				"either password or user %s is invalid", user)
+			"either password or user %s is invalid", user)
 	} else {
 		http.Error(w, "missing authorization", http.StatusUnauthorized)
 	}
@@ -216,12 +216,12 @@ func (cf *Config) new_handler_query_html(sqlq *SQLQuery) http.HandlerFunc {
 
 func (cf *Config) load_auth() {
 
-	ba_log := func (format string, args ...interface{}) {
+	ba_log := func(format string, args ...interface{}) {
 
 		log("basic auth: %s", fmt.Sprintf(format, args...))
 	}
 
-	ba_die := func (format string, args ...interface{}) {
+	ba_die := func(format string, args ...interface{}) {
 
 		die("basic auth: %s", fmt.Sprintf(format, args...))
 	}

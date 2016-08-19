@@ -27,7 +27,7 @@ func reply_ERROR(
 
 	msg := fmt.Sprintf(format, args...)
 
-	ERROR("%s: %s", r.RemoteAddr, msg) 
+	ERROR("%s: %s", r.RemoteAddr, msg)
 	http.Error(w, msg, status)
 }
 
@@ -117,7 +117,7 @@ func main() {
 		cf.handle_query_index_json,
 	)
 
-	//  install sql query handlers 
+	//  install sql query handlers
 	//
 	//	/<rest-path-prefix>/<sql-query>
 	//	/<rest-path-prefix>/csv/<sql-query>
@@ -173,10 +173,10 @@ func main() {
 		log("tls listening: %s%s", cf.HTTPListenTLS, cf.RESTPathPrefix)
 		go func() {
 			err := http.ListenAndServeTLS(
-					cf.HTTPListenTLS,
-					cf.TLSCertPath,
-					cf.TLSKeyPath,
-					nil,
+				cf.HTTPListenTLS,
+				cf.TLSCertPath,
+				cf.TLSKeyPath,
+				nil,
 			)
 			die("http listen tls: %s", err)
 		}()

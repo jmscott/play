@@ -7,6 +7,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	_ "github.com/lib/pq"
 	"html"
 	"io"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	_ "github.com/lib/pq"
 )
 
 type SQLQueryArg struct {
@@ -43,9 +43,9 @@ type SQLQuery struct {
 }
 
 var (
-	db                      *sql.DB
-	tab                     []byte
-	newline                 []byte
+	db      *sql.DB
+	tab     []byte
+	newline []byte
 
 	//  Note: why global regular expressions?
 
@@ -53,7 +53,7 @@ var (
 	pgsql_colon_var         = regexp.MustCompile(`(?:[^:]|\A):[\w]+`)
 	trim_re                 = regexp.MustCompile(`^[ \t\n]+|[ \t\n]+$`)
 	psql_clv_re             = regexp.MustCompile(
-					`^\s*(\w{1,63})\s+(\w{1,63})\s*$`)
+		`^\s*(\w{1,63})\s+(\w{1,63})\s*$`)
 
 	//  map pgtypes to regular expressions that matches domain
 
@@ -137,7 +137,7 @@ func (q *SQLQuery) die(format string, args ...interface{}) {
 func (q *SQLQuery) WARN(format string, args ...interface{}) {
 
 	log("WARN: sql query: %s: %s", q.SourcePath,
-					fmt.Sprintf(format, args...))
+		fmt.Sprintf(format, args...))
 }
 
 func (q *SQLQuery) load() {
@@ -214,7 +214,7 @@ func (q *SQLQuery) load() {
 		}
 
 		q.SQLQueryArgSet[matches[1]] = &SQLQueryArg{
-			path: matches[1],
+			path:    matches[1],
 			pg_type: matches[2],
 		}
 	}
@@ -228,7 +228,7 @@ func (q *SQLQuery) load() {
 	log("    %d arguments:", len(q.SQLQueryArgSet))
 	for n, qa := range q.SQLQueryArgSet {
 		qa.path = n
-		log("      %s:{pgtype:%s}",qa.path, qa.pg_type)
+		log("      %s:{pgtype:%s}", qa.path, qa.pg_type)
 
 		// verify PostgreSQL types
 		// Note: replace with table lookup
@@ -257,7 +257,7 @@ func (q *SQLQuery) load() {
 		if qa.position == 0 {
 			q.WARN("unused sql command line variable: %s", qa.path)
 			q.WARN("remove %s declaration to eliminate warning")
-			q.argv = q.argv[0:len(q.argv) - 1]
+			q.argv = q.argv[0 : len(q.argv)-1]
 		} else {
 			qa.position--
 			q.argv[qa.position] = qa
@@ -282,9 +282,9 @@ func (q *SQLQuery) db_query(
 	//  reply with status error to remote client
 
 	client_error := func(
-				status int,
-				format string,
-				args ...interface{},
+		status int,
+		format string,
+		args ...interface{},
 	) {
 		msg := fmt.Sprintf(format, args...)
 		ERROR("%s: %s", r.RemoteAddr, r.URL)
@@ -330,7 +330,6 @@ func (q *SQLQuery) db_query(
 				"%s", msg,
 			)
 		}
-
 
 		//  verify http query arg exists and matches regular expression
 
