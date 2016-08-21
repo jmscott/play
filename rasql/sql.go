@@ -536,8 +536,8 @@ func (q *SQLQuery) handle_query_tsv(
 	r *http.Request,
 	cf *Config,
 ) {
-	_, columns, rows, rowv := q.db_query(w, r, cf)
-	if rowv == nil {
+	_, columns, rows, vals := q.db_query(w, r, cf)
+	if vals == nil {
 		return
 	}
 	defer rows.Close()
@@ -587,11 +587,11 @@ func (q *SQLQuery) handle_query_tsv(
 
 	for rows.Next() {
 
-		err := rows.Scan(rowv...)
+		err := rows.Scan(vals...)
 		if err != nil {
 			panic(err)
 		}
-		for i, si := range rowv {
+		for i, si := range vals {
 			if i > 0 {
 				putb(tab)
 			}
@@ -611,9 +611,9 @@ func (q *SQLQuery) handle_query_csv(
 	r *http.Request,
 	cf *Config,
 ) {
-	_, columns, rows, rowv := q.db_query(w, r, cf)
+	_, columns, rows, vals := q.db_query(w, r, cf)
 
-	if rowv == nil {
+	if vals == nil {
 		return
 	}
 	defer rows.Close()
@@ -634,14 +634,14 @@ func (q *SQLQuery) handle_query_csv(
 
 	//  write the rows
 
-	row := make([]string, len(rowv))
+	row := make([]string, len(vals))
 	for rows.Next() {
 
-		err := rows.Scan(rowv...)
+		err := rows.Scan(vals...)
 		if err != nil {
 			panic(err)
 		}
-		for i, si := range rowv {
+		for i, si := range vals {
 			s := si.(*sql.NullString)
 			if s.Valid {
 				row[i] = s.String
@@ -663,9 +663,9 @@ func (q *SQLQuery) handle_query_html(
 	r *http.Request,
 	cf *Config,
 ) {
-	_, columns, rows, rowv := q.db_query(w, r, cf)
+	_, columns, rows, vals := q.db_query(w, r, cf)
 
-	if rowv == nil {
+	if vals == nil {
 		return
 	}
 	defer rows.Close()
@@ -697,14 +697,14 @@ func (q *SQLQuery) handle_query_html(
 
 	//  write the rows
 
-	row := make([]string, len(rowv))
+	row := make([]string, len(vals))
 	for rows.Next() {
 
-		err := rows.Scan(rowv...)
+		err := rows.Scan(vals...)
 		if err != nil {
 			panic(err)
 		}
-		for i, si := range rowv {
+		for i, si := range vals {
 			s := si.(*sql.NullString)
 			if s.Valid {
 				row[i] = s.String
