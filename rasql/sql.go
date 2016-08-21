@@ -605,6 +605,9 @@ func (q *SQLQuery) handle_query_tsv(
 }
 
 //  Comma separated spreadsheet reply to an sql query request from a url.
+//
+//  Note:
+//	All columns are formated/escaped as string.
 
 func (q *SQLQuery) handle_query_csv(
 	w http.ResponseWriter,
