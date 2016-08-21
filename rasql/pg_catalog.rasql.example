@@ -2,9 +2,9 @@
 	"synopsis":		"PostgreSQL 9.6 System Catalog Schema",
 	"http-listen":		"localhost:8080",
 
-	"tls-http-listen":	"localhost:443",
-	"tls-cert-path":	"self-signed.cert",
-	"tls-key-path":	"self-signed.key",
+	"REMOVE-ME-tls-http-listen":	"localhost:443",
+	"REMOVE-ME-tls-cert-path":	"self-signed.cert",
+	"REMOVE-ME-tls-key-path":	"self-signed.key",
 
 	"rest-path-prefix":	"/pg_catalog",
 
