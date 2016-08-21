@@ -17,10 +17,10 @@ type Config struct {
 
 	Synopsis        string `json:"synopsis"`
 	HTTPListen      string `json:"http-listen"`
-	HTTPListenTLS   string `json:"http-listen-tls"`
 	RESTPathPrefix  string `json:"rest-path-prefix"`
 	SQLQuerySet     `json:"sql-query-set"`
 	HTTPQueryArgSet `json:"http-query-arg-set"`
+
 	BasicAuthPath   string `json:"basic-auth-path"`
 
 	basic_auth map[string]string
@@ -29,6 +29,10 @@ type Config struct {
 	//         consider moving into WARN section.
 
 	WarnSlowSQLQueryDuration float64 `json:"warn-slow-sql-query-duration"`
+
+	//  https paramters
+
+	TLSHTTPListen   string `json:"tls-http-listen"`
 	TLSCertPath              string  `json:"tls-cert-path"`
 	TLSKeyPath               string  `json:"tls-key-path"`
 }

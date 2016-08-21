@@ -2,7 +2,7 @@
 	"synopsis":		"PostgreSQL 9.6 System Catalog Schema",
 	"http-listen":		"localhost:8080",
 
-	"http-listen-tls":	"localhost:443",
+	"tls-http-listen":	"localhost:443",
 	"tls-cert-path":	"self-signed.cert",
 	"tls-key-path":	"self-signed.key",
 
@@ -22,13 +22,15 @@
 			"source-path":	"pg_roles.sql"
 		}
 	},
+
 	"http-query-arg-set": {
 		"name" : {
 			"matches": "^.{1,63}$",
 			"sql-alias": "nspname"
 		}
 	},
+
 	"warn-slow-sql-query-duration": 5,
 
-	"basic-auth-path":"password-rasql.example"
+	"basic-auth-path": "password-rasql.example"
 }

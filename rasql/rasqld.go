@@ -163,17 +163,17 @@ func main() {
 			die("http listen error: %s", err)
 		}()
 	}
-	if cf.HTTPListenTLS != "" {
+	if cf.TLSHTTPListen != "" {
 		if cf.TLSCertPath == "" {
 			die("http listen tls: missing tls-cert-path")
 		}
 		if cf.TLSKeyPath == "" {
 			die("http listen tls: missing tls-key-path")
 		}
-		log("tls listening: %s%s", cf.HTTPListenTLS, cf.RESTPathPrefix)
+		log("tls listening: %s%s", cf.TLSHTTPListen, cf.RESTPathPrefix)
 		go func() {
 			err := http.ListenAndServeTLS(
-				cf.HTTPListenTLS,
+				cf.TLSHTTPListen,
 				cf.TLSCertPath,
 				cf.TLSKeyPath,
 				nil,
