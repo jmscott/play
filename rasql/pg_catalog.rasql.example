@@ -2,7 +2,7 @@
 	"synopsis":		"PostgreSQL 9.6 System Catalog Schema",
 	"http-listen":		"localhost:8080",
 
-	"REMOVE-ME-http-listen-tls":	"localhost:4043",
+	"REMOVE-ME-http-listen-tls":	"localhost:443",
 	"REMOVE-ME-tls-cert-path":	"fake-cert.pem",
 	"REMOVE-ME-tls-key-path":	"fake-key.pem",
 
