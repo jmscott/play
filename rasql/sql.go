@@ -458,7 +458,7 @@ func (q *SQLQuery) handle_query_json(
 	//  write the reply with the query duration
 
 	putf(`[
-    "duration,colums,rows",
+    "duration,columns,rows",
     %.9f,
     `,
 		duration,
