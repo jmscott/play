@@ -275,7 +275,7 @@ func (q *SQLQuery) db_query(
 	duration float64,
 	columns []string,
 	rows *sql.Rows,
-	rowv []interface{},
+	vals []interface{},
 ) {
 	var err error
 
@@ -427,11 +427,11 @@ func (q *SQLQuery) db_query(
 		panic(err)
 	}
 
-	//  make the row string vector
+	//  make the row interface{} vector
 
-	rowv = make([]interface{}, len(columns))
-	for i := range rowv {
-		rowv[i] = new(sql.NullString)
+	vals = make([]interface{}, len(columns))
+	for i := range vals {
+		vals[i] = new(interface{})
 	}
 	return
 }
@@ -443,8 +443,8 @@ func (q *SQLQuery) handle_query_json(
 	r *http.Request,
 	cf *Config,
 ) {
-	duration, columns, rows, rowv := q.db_query(w, r, cf)
-	if rowv == nil {
+	duration, columns, rows, vals := q.db_query(w, r, cf)
+	if vals == nil {
 		return
 	}
 	defer rows.Close()
@@ -477,16 +477,6 @@ func (q *SQLQuery) handle_query_json(
 		putb([]byte(s))
 	}
 
-	// put json string to client
-
-	putjs := func(s string) {
-		b, err := json.Marshal(s)
-		if err != nil {
-			panic(err)
-		}
-		putb(b)
-	}
-
 	//  write a json array to the client
 
 	puta := func(a []string) {
@@ -496,8 +486,6 @@ func (q *SQLQuery) handle_query_json(
 		}
 		putb(b)
 	}
-
-	//  write the columns
 
 	puta(columns)
 	puts(",\n\n    [\n")
@@ -510,21 +498,29 @@ func (q *SQLQuery) handle_query_json(
 		}
 		count++
 
-		err := rows.Scan(rowv...)
+		err := rows.Scan(vals...)
 		if err != nil {
 			panic(err)
 		}
+
 		puts("      [")
-		for i, si := range rowv {
+		for i := 0; i < len(vals); i++ {
 			if i > 0 {
 				puts(",")
 			}
-			s := si.(*sql.NullString)
-			if s.Valid {
-				putjs(s.String)
-			} else {
-				puts("null")
+
+			var b []byte
+
+			switch v := (*vals[i].(*interface{})).(type) {
+			case []byte:
+				b, err = json.Marshal(string(v))
+			default:
+				b, err = json.Marshal(v)
 			}
+			if err != nil {
+				panic(err)
+			}
+			putb(b)
 		}
 		puts("]")
 	}
