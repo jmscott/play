@@ -1,5 +1,7 @@
 package main
 
+//  Note: errors are NOT returned as json for json queries!!
+
 import (
 	"bufio"
 	"bytes"
