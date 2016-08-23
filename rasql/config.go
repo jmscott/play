@@ -12,6 +12,9 @@ import (
 	"strings"
 )
 
+//  Note: added SQLQuerySetFileFilter for slurping all matching sql files
+//        in a directory.
+
 type Config struct {
 	source_path string
 
