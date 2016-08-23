@@ -432,8 +432,22 @@ func (q *SQLQuery) db_query(
 	//  make the row interface{} vector
 
 	vals = make([]interface{}, len(columns))
+	return
+}
+
+func (q *SQLQuery) db_query2text(
+	w http.ResponseWriter,
+	r *http.Request,
+	cf *Config,
+) (
+	duration float64,
+	columns []string,
+	rows *sql.Rows,
+	vals []interface{},
+) {
+	duration, columns, rows, vals = q.db_query(w, r, cf)
 	for i := range vals {
-		vals[i] = new(interface{})
+		vals[i] = &sql.NullString{}
 	}
 	return
 }
@@ -450,6 +464,12 @@ func (q *SQLQuery) handle_query_json(
 		return
 	}
 	defer rows.Close()
+
+	//  json needs raw sql base types to properly marshal
+
+	for i := range vals {
+		vals[i] = new(interface{})
+	}
 
 	putf := func(format string, args ...interface{}) {
 		fmt.Fprintf(w, format, args...)
@@ -538,7 +558,7 @@ func (q *SQLQuery) handle_query_tsv(
 	r *http.Request,
 	cf *Config,
 ) {
-	_, columns, rows, vals := q.db_query(w, r, cf)
+	_, columns, rows, vals := q.db_query2text(w, r, cf)
 	if vals == nil {
 		return
 	}
@@ -609,14 +629,14 @@ func (q *SQLQuery) handle_query_tsv(
 //  Comma separated spreadsheet reply to an sql query request from a url.
 //
 //  Note:
-//	All columns are formated/escaped as string.
+//	All columns are formated/escaped as string.  Seems wrong.
 
 func (q *SQLQuery) handle_query_csv(
 	w http.ResponseWriter,
 	r *http.Request,
 	cf *Config,
 ) {
-	_, columns, rows, vals := q.db_query(w, r, cf)
+	_, columns, rows, vals := q.db_query2text(w, r, cf)
 
 	if vals == nil {
 		return
@@ -663,12 +683,13 @@ func (q *SQLQuery) handle_query_csv(
 		panic(err)
 	}
 }
+
 func (q *SQLQuery) handle_query_html(
 	w http.ResponseWriter,
 	r *http.Request,
 	cf *Config,
 ) {
-	_, columns, rows, vals := q.db_query(w, r, cf)
+	_, columns, rows, vals := q.db_query2text(w, r, cf)
 
 	if vals == nil {
 		return
