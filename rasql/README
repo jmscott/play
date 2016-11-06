@@ -1,4 +1,0 @@
-rasql - Rest API for SQL
-
-Build a simple REST server using PostgreSQL sql query files and json
-configuration file
