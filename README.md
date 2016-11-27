@@ -1,5 +1,5 @@
 Experimental Code
 # Project
-- PgFabric - Monitoring Scripts for Pg 9.5
+- PgFabric - Monitoring Scripts for Pg 9.6
 - hoq - a trivial interpreter written in go yacc, designed to teach CSP, inspired by "hoc"
 - furl - Fault URL - monitor urls and send email when in fault
