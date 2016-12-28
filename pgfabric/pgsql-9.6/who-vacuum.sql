@@ -2,7 +2,7 @@
  *  Synopsis:
  *	Which tuples qualify for auto vacuum.
  *   Note:
- *	Need
+ *	What about per table values for settings?
  */
 \x auto
 WITH rel_stat as (
