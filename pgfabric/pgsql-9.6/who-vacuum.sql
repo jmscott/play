@@ -30,7 +30,7 @@ SELECT
 	to_char(st.reltuples, '9G999G999G999') AS "Tuple Count",
 	to_char(st.n_dead_tup, '9G999G999G999') AS "Dead Tuple Count",
 	to_char(st.av_threshold, '9G999G999G999') AS
-		"Autovacuum Threshold",
+		"AutoVacuum Threshold",
 	CASE
          WHEN
 	 	st.av_threshold < st.n_dead_tup
@@ -38,11 +38,11 @@ SELECT
 	 	'Yes'
          ELSE
 	 	'No'
-	END AS "Expect Autovacuum"
+	END AS "Expect AutoVacuum"
  FROM
  	rel_stat st
  ORDER BY
- 	"Expect Autovacuum" DESC,
+ 	"Expect AutoVacuum" DESC,
 	st.schemaname,
 	st.relname;
 
