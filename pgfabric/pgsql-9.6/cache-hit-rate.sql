@@ -1,3 +1,9 @@
+/*
+ *  Synopsis:
+ *	Hit rate of cache.
+ *  Note:
+ *	Derviced from a blob post at citusdb.
+ */
 SELECT
 	sum(heap_blks_read) AS "Heap Blocks Read",
 	sum(heap_blks_hit)  AS "Heap Blocks Hit",
