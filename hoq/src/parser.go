@@ -720,11 +720,7 @@ var yyExca = [...]int{
 	-2, 29,
 }
 
-const yyNprod = 35
 const yyPrivate = 57344
-
-var yyTokenNames []string
-var yyStates []string
 
 const yyLast = 74
 

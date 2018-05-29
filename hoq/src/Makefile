@@ -3,6 +3,7 @@
 #	Simple makefile to build hoq
 #
 GO=/usr/local/go/bin/go
+GOYACC=goyacc
 
 GOSRC=hoq.go 								\
 	ast.go								\
@@ -11,7 +12,7 @@ GOSRC=hoq.go 								\
 	opcode.go							\
 	parser.go							\
 	rummy.go							\
-	tsort.go
+	tsort.go							\
 
 all: hoq
 
@@ -22,7 +23,7 @@ hoq: $(GOSRC)
 	$(GO) build $(GOSRC)
 
 parser.go: parser.y
-	$(GO) tool yacc -o parser.go parser.y || (rm -f parser.go; exit 1)
+	$(GOYACC) -o parser.go parser.y || (rm -f parser.go; exit 1)
 	$(GO) fmt parser.go
 fmt:
 	$(GO) fmt $(GOSRC)
