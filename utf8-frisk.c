@@ -13,6 +13,8 @@
  *  Blame:
  *  	jmscott@setspace.com
  *  Note:
+ *	Null char in the input stream cased undefined behavior.  This is a bug.
+ *
  *	Perhaps an "--number" option to list the line numbers of broken lines.
  *
  *	The well known iconv program should have a --skip-line option to
