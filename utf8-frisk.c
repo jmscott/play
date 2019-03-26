@@ -63,8 +63,6 @@ static char progname[] = "utf8-frisk";
 #define EXIT_BAD_IO		4
 #define EXIT_BAD_INVO		9
 
-#define MAX_LINE	(64 * 1024)
-
 /*
  *  States of utf8 scanner.
  */
@@ -120,7 +118,7 @@ _strcat(char *tgt, int tgtsize, char *src)
 static void
 die(int status, char *msg1)
 {
-	char msg[MAX_LINE];
+	char msg[4096];
 	static char ERROR[] = "ERROR: ";
 	static char	colon[] = ": ";
 	static char nl[] = "\n";
@@ -376,8 +374,14 @@ main(int argc, char **argv)
 			seen_wf = 1;
 		} else
 			seen_bad = 1;
-	if (len < 0)
-		die2(EXIT_BAD_IO, "getline(stdin) failed: %s",strerror(errno));
+	if (len < 0) {
+		if (errno > 0)
+			die2(
+				EXIT_BAD_IO,
+				"getline(stdin) failed: %s",
+				strerror(errno)
+			);
+	}
 	if (seen_bad)
 		exit(EXIT_BAD_UTF8);
 	if (seen_wf)
