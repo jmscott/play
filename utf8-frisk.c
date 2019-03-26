@@ -13,8 +13,6 @@
  *  Blame:
  *  	jmscott@setspace.com
  *  Note:
- *	Null char in the input stream cased undefined behavior.  This is a bug.
- *
  *	Perhaps an "--number" option to list the line numbers of broken lines.
  *
  *	The well known iconv program should have a --skip-line option to
@@ -155,16 +153,15 @@ die2(int status, char *msg1, char *msg2)
  *  Are the characters in the line well formed UTF8 sequences?
  */
 static int
-is_utf8wf(unsigned char *p)
+is_utf8wf(unsigned char *p, unsigned char *p_end)
 {
 	unsigned int code_point = 0;
 	int state = STATE_START;
 	unsigned char c;
 
 again:
+	while (p < p_end) {
 	c = *p++;
-	if (c == '\n' || c == 0)
-		return state == STATE_START ? 1 : 0;
 
 	switch (state) {
 	case STATE_START:
@@ -331,10 +328,8 @@ again:
 			return 0;
 		state = STATE_START;
 		goto again;
-	}
-
-	/* NOT REACHED */
-	return 0;
+	}}
+	return state == STATE_START ? 1 : 0;
 }
 
 /*
@@ -371,12 +366,11 @@ main(int argc, char **argv)
 	size_t cap = 0;
 	ssize_t len;
 	while ((len = getline((char **)&line, &cap, stdin)) > 0)
-		if (is_utf8wf(line)) {
+		if (is_utf8wf(line, line + len)) {
 			_write(line, len);
 			seen_wf = 1;
 		} else
 			seen_bad = 1;
-fprintf(stderr, "WTF: len=%ld\n", len);
 	if (len < 0) {
 		if (errno > 0)
 			die2(
