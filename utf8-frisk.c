@@ -161,7 +161,7 @@ is_utf8wf(unsigned char *p)
 
 again:
 	c = *p++;
-	if (c == '\n')
+	if (c == '\n' || c == 0)
 		return state == STATE_START ? 1 : 0;
 
 	switch (state) {
@@ -374,6 +374,7 @@ main(int argc, char **argv)
 			seen_wf = 1;
 		} else
 			seen_bad = 1;
+fprintf(stderr, "WTF: len=%ld\n", len);
 	if (len < 0) {
 		if (errno > 0)
 			die2(
