@@ -1,0 +1,10 @@
+--  keeping in the spirit of using the output of a channel to feed the input of a 
+chennel, consider simplifying the command exec structure by piping to
+flowd-exevc.
+
+--  differentiate linear pipes from graph go routines.  in other words, make
+    one-way, two-way pipes part of the
+
+--  overall, reduce the size of the golang code, other than for obvious
+    performance optimizations.  partiuclarly emphasize pipe to long running
+    processes.
