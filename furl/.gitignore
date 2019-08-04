@@ -1,0 +1,10 @@
+*.pid
+*.state
+etc
+log
+profile
+run
+spool
+state
+tmp
+write-out.conf
