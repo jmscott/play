@@ -129,7 +129,14 @@ main(int argc, char **argv) {
 		die("wrong number of arguments");
 	char buf[PIPE_MAX];
 	
-	while ((nr = _read(buf, sizeof buf)))
+	while ((nr = _read(buf, sizeof buf)) > 0) {
+		char *q = buf;
+		char *q_limit = q + nr;
+		while (q < q_limit) {
+			*q <<= 1;
+			q++;
+		}
 		_write(buf, nr);
+	}
 	exit(EXIT_OK);
 }
