@@ -26,12 +26,10 @@ LIBs="
 "
 
 COMPILED="
-	bit-shift-left-one
 	utf8-frisk
 "
 
 BINs="
-	bit-shift-left-one
 	utf8-frisk
 "
 
@@ -42,7 +40,6 @@ BINs="
 #HTDOCs=""
 
 SRCs="
-	bit-shift-left-one.c
 	utf8-frisk.c
 "
 

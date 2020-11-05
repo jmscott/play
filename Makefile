@@ -35,9 +35,6 @@ install: all
 utf8-frisk: utf8-frisk.c
 	cc -Wall -Wextra -o utf8-frisk utf8-frisk.c
 
-bit-shift-left-one: bit-shift-left-one.c
-	cc -Wall -Wextra -o bit-shift-left-one bit-shift-left-one.c
-
 dist: all
 	make-dist play.dist
 
