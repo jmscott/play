@@ -2,16 +2,31 @@
  *  Synopsis:
  *	Common routies used clang programs in play/bit-entropy.
  *  Usage:
- *	#include "./common.h"
+ *	#include "./common.c"
  */
+
+#include <sys/errno.h>
+#include <unistd.h>
+#include <string.h>
+
+extern char *prog;			//  defined in program file.
 
 #define EXIT_OK		0
 #define EXIT_FAIL	2
+#ifndef PIPE_MAX
 #define PIPE_MAX	4096
+#endif
 
+#ifdef COMMON_NEED_DIE2
+#define COMMON_NEED_DIE
+#define COMMON_NEED_STRCAT
+#endif
+
+
+#ifdef COMMON_NEED_STRCAT
 /*
  * Synopsis:
- *      Fast, safe and simple string concatenator
+ *      Fast, safe and ergonomically simple string concatenator
  *  Usage:
  *      buf[0] = 0
  *      _strcat(buf, sizeof buf, "hello, world");
@@ -33,6 +48,7 @@ _strcat(char *restrict tgt, int tgtsize, const char *restrict src)
         // target always null terminated
         *tgt = 0;
 }
+#endif
 
 static void
 die(char *msg)
@@ -47,8 +63,10 @@ die(char *msg)
 	buf[sizeof buf - 2] = '\n';
 	buf[sizeof buf - 1] = 0;
 	write(2, buf, strlen(buf)); 
-	exit(EXIT_FAIL);
+	_exit(EXIT_FAIL);
 }
+
+#ifdef COMMON_NEED_DIE2
 
 static void
 die2(char *msg1, char *msg2)
@@ -63,7 +81,9 @@ die2(char *msg1, char *msg2)
 
         die(msg);
 }
+#endif
 
+#ifdef COMMON_NEED_READ
 /*
  *  read() bytes from stdin, restarting on interrupt and dying on error.
  */
@@ -84,7 +104,9 @@ again:
         /*NOTREACHED*/
         return -1;
 }
+#endif
 
+#ifdef COMMON_NEED_WRITE
 /*
  *  write() exactly nbytes bytes to stdout,
  *  restarting on interrupt and dying on error.
@@ -105,3 +127,4 @@ again:
         if (nbytes > 0)
                 goto again;
 }
+#endif
