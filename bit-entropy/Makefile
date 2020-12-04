@@ -10,5 +10,5 @@ all: $(COMPILED)
 clean:
 	rm -f $(COMPILED)
 
-shift-xor-pop-count-v1: shift-xor-pop-count-v1.c common.c
-	cc -Wall -Wextra -o shift-xor-pop-count-v1 shift-xor-pop-count-v1.c
+shift-xor: shift-xor.c common.c
+	cc -Wall -Wextra -o shift-xor shift-xor.c

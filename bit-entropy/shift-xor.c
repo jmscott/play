@@ -3,10 +3,13 @@
  *	Count bits in blob XOR'ed with itself shifted one bit to the left, V1.
  *  Usage:
  *	shift-xor-pop-count-v1 <blob-size> <ignore-bits>
+ *  Note:
+ *	Incorrect algo for blob-size == 1
  */
 
 #define COMMON_NEED_SIZE64
 #define COMMON_NEED_READ
+#define COMMON_NEED_WRITE
 
 #include "./common.c"
 
@@ -29,20 +32,34 @@ main(int argc, char **argv) {
 	if (ignore_bits >= blob_size)
 		die("ignore bits can not >= blob size");
 
-	void *buf = malloc(blob_size);
-	if (buf == NULL)
-		die2("malloc(blob) failed", argv[1]);
+	void *blob = malloc(blob_size * 2);
+	if (blob == NULL)
+		die2("malloc(blob+xor) failed", argv[1]);
+	void *xor = blob + blob_size;
 
 	//  Slurp the entire blob into ram memory.
 	size_t nr;
-	void *p = buf;
+	void *p = blob;
 	while ((nr = _read(p, PIPE_MAX)) > 0) {
 		p += nr;
-		if ((uint64_t)(p - buf) > blob_size)
+		if ((uint64_t)(p - blob) > blob_size)
 			die("blob too big");
 	}
-	if ((uint64_t)(p - buf) != blob_size)
+	if ((uint64_t)(p - blob) != blob_size)
 		die("blob too small");
+
+	unsigned char *b = (unsigned char *)blob;
+	unsigned char *b_limit = b + blob_size - 1;
+	unsigned char *x = (unsigned char *)xor;
+
+	unsigned char c;
+	while (b < b_limit) {
+		c = *b++;
+		*x++ = (c ^ (c << 1)) | ((c & 0x1) ^ ((*b >> 7) & 0x1));
+	}
+	c = *b;
+	*x = (c ^ (c << 1)) | ((c & 0x1) ^ ((*b >> 7) & 0x1));
+	_write(xor, blob_size);
 
 	_exit(EXIT_OK);
 }
