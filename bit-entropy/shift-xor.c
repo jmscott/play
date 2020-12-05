@@ -13,7 +13,7 @@
 
 #include "./common.c"
 
-char	*prog = "shift-xor-pop-count-v1";
+char	*prog = "shift-xor";
 
 int
 main(int argc, char **argv) {
