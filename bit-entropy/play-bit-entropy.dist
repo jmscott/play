@@ -1,0 +1,67 @@
+#
+#  Synopsis:
+#	Configuration file read by make-dist to build tar files.
+#  See:
+#	https://github.com/jmscott/work/blob/master/make-dist
+#  Note:
+#	For a GNU Makefile to extract the shell variables defined in this
+#	dist file, include the following line in Makefile:
+#
+#		BINs := $(shell (. ./root.dist && echo $$BINs))
+#		SBINs := $(shell (. ./root.dist && echo $$SBINs))
+#		LIBs := $(shell (. ./root.dist && echo $$LIBs))
+#		HTDOCs := $(shell (. ./root.dist && echo $$HTDOCs))
+#		CGIBINs := $(shell (. ./root.dist && echo $$CGIBINs))
+#
+
+#  Define PRODUCT to change name of tar file from $(basename $(pwd))
+#  to, say, foobar-YYYYMMDD_hhmmss.tar.bz2
+
+#PRODUCT=foobar
+PRODUCT=play-bit-entropy
+
+#LIBs="
+#"
+
+BINs="
+	shift-xor
+"
+
+COMPILED="
+	$BINs
+"
+
+#SBINs="
+#"
+
+#CGIBINs="
+#"
+
+#HTDOCs="
+#"
+
+SRCs="
+	shift-xor.c
+"
+
+#  Uncomment to create etc/ directory
+#ETC=""
+
+#  Uncomment to create spool/ directory
+#SPOOL=""
+
+#  Uncomment to create data/ directory
+#DATA=""
+
+#  Uncomment to create run/ directory
+#RUN=""
+
+#  Uncomment to create log/ directory
+#LOG=""
+
+#  Uncomment to create cache/ directory
+#CACHE=""
+
+#  Uncomment to create tmp/ directory
+#TMP=""
+
