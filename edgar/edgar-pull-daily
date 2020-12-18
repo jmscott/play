@@ -12,7 +12,9 @@ log()
 
 die()
 {
-	log "ERROR: $@" >&2
+	MSG="$ERROR: $@"
+	test -d run/ && echo "$MSG" >>run/$(basename $0).fault
+	log "$MSG" >&2
 }
 
 get_quarter()
