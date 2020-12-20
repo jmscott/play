@@ -13,7 +13,7 @@ log()
 
 die()
 {
-	MSG="$ERROR: $@"
+	MSG="ERROR: $@"
 	test -d run/ && echo "$MSG" >>run/$(basename $0).fault
 	log "$MSG" >&2
 }
