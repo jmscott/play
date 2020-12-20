@@ -1,0 +1,65 @@
+#!/bin/bash
+#
+#  Synopsis:
+#	Pull yesterday's edgar reports.
+#  Usage:
+#	1 0 * * * * cd support/edgar; /usr/local/jmscott/bin/edgar-pull-daily
+#
+
+log()
+{
+	echo "$(date +'%Y/%m/%d %H:%M:%S'): $@"
+}
+
+die()
+{
+	MSG="$ERROR: $@"
+	test -d run/ && echo "$MSG" >>run/$(basename $0).fault
+	log "$MSG" >&2
+}
+
+get_quarter()
+{
+	MONTH=$1
+	case $MONTH in
+	01|02|03)
+		QUARTER=1
+		;;
+	04|05|06)
+		QUARTER=2
+		;;
+	07|08|09)
+		QUARTER=3
+		;;
+	10|11|12)
+		QUARTER=4
+		;;
+	*)
+		die "unknown month: $MONTH"
+		;;
+	esac
+	echo $QUARTER
+}
+
+test $# = 0 || die "wrong command line arguments: got $#, expected 0"
+
+log 'hello, world'
+
+YEAR=$(date -v '-1d' +'%Y')
+MONTH=$(date -v '-1d' +'%m')
+DAY=$(date -v '-1d' +'%d')
+log "report year: $YEAR"
+log "report month: $MONTH"
+log "report day: $DAY"
+
+QTR=QTR$(get_quarter $MONTH)
+log "report quarter: $QTR"
+
+FILE=$YEAR$MONTH$DAY.nc.tar.gz
+URL="https://www.sec.gov/Archives/edgar/Feed/$YEAR/$QTR/$FILE"
+log "zip file url: $URL"
+
+log 'fetching zip file from sec ...'
+wget "$URL" || die "wget sec failed: exit status=$?"
+
+trap 'log good bye, cruel world' EXIT
