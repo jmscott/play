@@ -60,6 +60,6 @@ URL="https://www.sec.gov/Archives/edgar/Feed/$YEAR/$QTR/$FILE"
 log "zip file url: $URL"
 
 log 'fetching zip file from sec ...'
-wget "$URL" || die "wget sec failed: exit status=$?"
+wget -q "$URL" || die "wget sec failed: exit status=$?"
 
 trap 'log good bye, cruel world' EXIT
