@@ -22,17 +22,14 @@
  *	More examples of \COPY are desparatly needed on the PG web site:
  *
  *		https://www.postgresql.org/docs/current/sql-copy.html
- *
- *	Is "secedgar" a reasonable name for the schema?
- *	Perhaps "usasec" would be more accurate.
  */
 
 \set ON_ERROR_STOP 1
-SET search_path to secedgar,public;
+SET search_path to jmscott,public;
 
 BEGIN;
 
-DROP SCHEMA IF EXISTS secedgar;
+CREATE SCHEMA IF NOT EXISTS jmscott;
 
 DROP DOMAIN IF EXISTS siccode CASCADE;
 CREATE DOMAIN siccode AS text CHECK (
