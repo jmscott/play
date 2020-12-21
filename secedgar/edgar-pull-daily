@@ -45,9 +45,9 @@ test $# = 0 || die "wrong command line arguments: got $#, expected 0"
 
 log 'hello, world'
 
-YEAR=$(date -v '-1d' +'%Y')
-MONTH=$(date -v '-1d' +'%m')
-DAY=$(date -v '-1d' +'%d')
+YEAR=$(date --date=yesterday +'%Y')
+MONTH=$(date --date=yesterday +'%m')
+DAY=$(date --date=yesterday +'%d')
 log "report year: $YEAR"
 log "report month: $MONTH"
 log "report day: $DAY"
