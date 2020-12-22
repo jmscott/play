@@ -4,6 +4,8 @@
 #	Pull yesterday's edgar reports from www.sec.gov/Archives/edgar/Feed
 #  Usage:
 #	13 2 * * * * cd support/edgar; /usr/local/jmscott/bin/edgar-pull-daily
+#  Note:
+#	Depends on GNU date.
 #
 
 log()
@@ -44,6 +46,7 @@ get_quarter()
 test $# = 0 || die "wrong command line arguments: got $#, expected 0"
 
 log 'hello, world'
+trap 'log good bye, cruel world' EXIT
 
 YEAR=$(date --date=yesterday +'%Y')
 MONTH=$(date --date=yesterday +'%m')
@@ -68,5 +71,3 @@ log "zip file url: $URL"
 
 log 'fetching zip file from sec ...'
 wget "$URL" || die "wget sec failed: exit status=$?"
-
-trap 'log good bye, cruel world' EXIT
