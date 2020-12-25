@@ -29,6 +29,14 @@ extern char *prog;			//  defined in main() file.
 #define COMMON_NEED_DIE2
 #endif
 
+#ifdef COMMON_NEED_READ
+#define COMMON_NEED_DIE2
+#endif
+
+#ifdef COMMON_NEED_WRITE
+#define COMMON_NEED_DIE2
+#endif
+
 #ifdef COMMON_NEED_DIE2
 #define COMMON_NEED_DIE
 #define COMMON_NEED_STRCAT
