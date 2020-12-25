@@ -1,0 +1,1166 @@
+SIC	NAME
+----	Total
+07--	Agricultural Services, Forestry, Fisheries
+0700	Agricultural Services
+0710	Soil Preparation Services
+0720	Crop Services
+0740	Veterinary Services
+0750	Animal Services, Except Veterinary
+0760	Farm Labor And Management Services
+0761	Farm Labor Contractors
+0762	Farm Management Services
+0780	Landscape And Horticultural Services
+0800	Forestry
+0900	Fishing, Hunting, And Trapping
+098\	AGR Administrative And Auxiliary
+10--	Mining
+1000	Metal Mining
+1010	Iron Ores
+1020	Copper Ores
+1030	Lead And Zinc Ores
+1040	Gold And Silver Ores
+1041	Gold Ores
+1044	Silver Ores
+1050	Bauxite And Other Aluminum Ores
+1060	Ferroalloy Ores, Except Vanadium
+1080	Metal Mining Services
+1090	Miscellaneous Metal Ores
+1094	Uranium-Radium-Vanadium Ores
+1099	Metal Ores, nec
+1100	Anthracite Mining
+1112	Anthracite Mining Services
+1200	Bituminous Coal And Lignite Mining
+1211	Bituminous Coal And Lignite
+1213	Bituminous & Lignite Mining Services
+1300	Oil And Gas Extraction
+1310	Crude Petroleum And Natural Gas
+1320	Natural Gas Liquids
+1380	Oil And Gas Field Services
+1381	Drilling Oil And Gas Wells
+1382	Oil And Gas Exploration Services
+1389	Oil And Gas Field Services, nec
+1400	Nonmetallic Minerals, Except Fuels
+1410	Dimension Stone
+1420	Crushed And Broken Stone
+1422	Crushed And Broken Limestone
+1423	Crushed And Broken Granite
+1429	Crushed And Broken Stone, nec
+1440	Sand And Gravel
+1442	Construction Sand And Gravel
+1446	Industrial Sand
+1450	Clay, Ceramic & Refractory Minerals
+1452	Bentonite
+1453	Fire Clay
+1454	Fuller's Earth
+1455	Kaolin And Ball Clay
+1459	Clay And Related Minerals, nec
+1470	Chemical And Fertilizer Minerals
+1472	Barite
+1473	Fluorspar
+1474	Potash, Soda, And Borate Minerals
+1475	Phosphate Rock
+1476	Rock Salt
+1477	Sulfur
+1479	Chemical And Fertilizer Mining, nec
+1480	Nonmetallic Minerals Services
+1490	Miscellaneous Nonmetallic Minerals
+1492	Gypsum
+1496	Talc, Soapstone, And Pyrophyllite
+1499	Nonmetallic Minerals, nec
+149\	MIN Administrative And Auxiliary
+15--	Construction
+1500	General Building Contractors
+1510	General Building Contractors Residencial Bldgs
+1530	Operative Builders
+1600	Heavy Construction Contractors
+1610	Highway And Street Construction
+1620	Heavy Construction, Except Highway
+1700	Special Trade Contractors
+1710	Plumbing, Heating, Air Conditioning
+1720	Painting, Paper Hanging, Decorating
+1730	Electrical Work
+1740	Masonny,Stonework, And Plastering
+1741	Masonry And Other Stonework
+1742	Plastering, Dry Wall And Insulation
+1743	Terrazzo, Tile, Marble, Mosaic Work
+1750	Carpentering And Flooring
+1751	Carpentering
+1752	Floor Laying And Floor Work, nec
+1760	Roofing And Sheet Metal Work
+1770	Concrete Work
+1780	Water Well Drilling
+1790	Misc. Special Trade Contractors
+1791	Structural Steel Erection
+1793	Glass And Glazing Work
+1794	Excavating And Foundation Work
+1795	Wrecking And Demolition Work
+1796	Installing Building Equipment, nec
+1799	Special Trade Contractors, nec
+179\	CON Administrative And Auxiliary
+20--	Manufacturing
+2000	Food And Kindred Products
+2010	Meat Products
+2011	Meat Packing Plants
+2013	Sausages And Other Prepared Meats
+2016	Poultry Dressing Plants
+2017	Poultry And Egg Processing
+2020	Dairy Products
+2021	Creamery Butter
+2022	Cheese, Natural And Processed
+2023	Condensed And Evaporated Milk
+2024	Ice Cream And Frozen Desserts
+2026	Fluid Milk
+2030	Preserved Fruits And Vegetables
+2032	Canned Specialties
+2033	Canned Fruits And Vegetables
+2034	Dehydrated Fruits, Vegetables, Soups
+2035	Pickles, Sauces, And Salad Dressings
+2037	Frozen Fruits And Vegetables
+2038	Frozen Specialties
+2040	Grain Mill Products
+2041	Flour And Other Grain Mill Products
+2043	Cereal Breakfast Foods
+2044	Rice Milling
+2045	Blended And Prepared Flour
+2046	Wet Corn Milling
+2047	Dog, Cat, And Other Pet Food
+2048	Prepared Feeds, nec
+2050	Bakery Products
+2051	Bread, Cake, And Related Products
+2052	Cookies And Crackers
+2060	Sugar And Confectionery Products
+2061	Raw Cane Sugar
+2062	Cane Sugar Refining
+2063	Beet Sugar
+2065	Confectionery Products
+2066	Chocolate And Cocoa Products
+2067	Chewing Gum
+2070	Fats And Oils
+2074	Cottonseed Oil Mills
+2075	Soybean Oil Mills
+2076	Vegetable Oil Mills, nec
+2077	Animal And Marine Fats And Oils
+2079	Shortening And Cooking Oils
+2080	Beverages
+2082	Malt Beverages
+2083	Malt
+2084	Wines, Brandy, And Brandy Spirits
+2085	Distilled Liquor, Except Brandy
+2086	Bottled And Canned Soft Drinks
+2087	Flavoring Extracts And Sirups, nec
+2090	Misc. Foods And Kindred Products
+2091	Canned And Cured Seafoods
+2092	Fresh Or Frozen Packaged Fish
+2095	Roasted Coffee
+2097	Manufactured Ice
+2098	Macaroni And Spaghetti
+2099	Food Preparations, nec
+2100	Tobacco Manufactures
+2110	Cigarettes
+2120	Cigars
+2130	Chewing And Smoking Tobacco
+2140	Tobacco Stemming And Redrying
+2200	Textile Mill Products
+2210	Weaving Mills, Cotton
+2220	Weaving Mills, Synthetics
+2230	Weaving And Finishing Mills, Wool
+2240	Narrow Fabric Mills
+2250	Knitting Mills
+2251	Women's Hosiery, Except Socks
+2252	Hosiery, nec
+2253	Knit Outerwear Mills
+2254	Knit Underwear Mills
+2257	Circular Knit Fabric Mills
+2258	Warp Knit Fabric Mills
+2259	Knitting Mills, nec
+2260	Textile Finishing, Except Wool
+2261	Finishing Plants, Cotton
+2262	Finishing Plants, Synthetics
+2269	Finishing Plants, nec
+2270	Floor Covering Mills
+2271	Woven Carpets And Rugs
+2272	Tufted Carpets And Rugs
+2279	Carpets And Rugs, nec
+2280	Yarn And Thread Mills
+2281	Yarn Mills, Except Wool
+2282	Throwing And Winding Mills
+2283	Wool Yarn Mills
+2284	Thread Mills
+2290	Miscellaneous Textile Goods
+2291	Felt Goods, Exc. Woven Felts & Hats
+2292	Lace Goods
+2293	Paddings And Upholstery Filling
+2294	Processed Textile Waste
+2295	Coated Fabrics, Not Rubberized
+2296	Tire Cord And Fabric
+2297	Nonwoven Fabrics
+2298	Cordage And Twine
+2299	Textile Goods, nec
+2300	Apparel And Other Textile Products
+2310	Men's And Boys' Suits And Coats
+2320	Men's And Boys' Furnishings
+2321	Men's And Boys' Shirts And Nightwear
+2322	Men's And Boys' Underwear
+2323	Men's And Boys' Neckwear
+2327	Men's And Boys' Separate Trousers
+2328	Men's And Boys' Work Clothing
+2329	Men's And Boys' Clothing, nec
+2330	Women's And Misses' Outerwear
+2331	Women's & Misses' Blouses & Waists
+2335	Women's And Misses' Dresses
+2337	Women's And Misses' Suits And Coats
+2339	Women's And Misses' Outerwear, nec
+2340	Women's And Children's Undergarments
+2341	Women's And Children's Underwear
+2342	Brassieres And Allied Garments
+2350	Hats, Caps, And Millinery
+2351	Millinery
+2352	Hats And Caps, Except Millinery
+2360	Children's Outerwear
+2361	Children's Dresses And Blouses
+2363	Children's Coats And Suits
+2369	Children's Outerwear, nec
+2370	Fur Goods
+2380	Miscellaneous Apparel And Accessories
+2381	Fabric Dress And Work Gloves
+2384	Robes And Dressing Gowns
+2385	Waterproof Outergarments
+2386	Leather And Sheep Lined Clothing
+2387	Apparel Belts
+2389	Apparel And Accessories, nec
+2390	Misc. Fabricated Textile Products
+2391	Curtains And Draperies
+2392	House Furnishings, nec
+2393	Textile Bags
+2394	Canvas And Related Products
+2395	Pleating And Stitching
+2396	Automotive And Apparel Trimmings
+2397	Schiffli Machine Embroideries
+2399	Fabricated Textile Products, nec
+2400	Lumber And Wood Products
+2410	Logging Camps & Logging Contractors
+2420	Sawmills And Planing Mills
+2421	Sawmills And Planing Mills, General
+2426	Hardwood Dimension And Flooring
+2429	Special Product Sawmills, nec
+2430	Millwork, Plywood & Structural Members
+2431	Millwork
+2434	Wood Kitchen Cabinets
+2435	Hardwood Veneer And Plywood
+2436	Softwood Veneer And Plywood
+2439	Structural Wood Members, nec
+2440	Wood Containers
+2441	Nailed Wood Boxes And Shook
+2448	Wood Pallets And Skids
+2449	Wood Containers, nec
+2450	Wood Buildings And Mobile Homes
+2451	Mobile Homes
+2452	Prefabricated Wood Buildings
+2490	Miscellaneous Wood Products
+2491	Wood Preserving
+2492	Particleboard
+2499	Wood Products, nec
+2500	Furniture And Fixtures
+2510	Household Furniture
+2511	Wood Household Furniture
+2512	Upholstered Household Furniture
+2514	Metal Household Furniture
+2515	Mattresses And Bedsprings
+2517	Wood TV and Radio Cabinets
+2519	Household Furniture, nec
+2520	Office Furniture
+2521	Wood Office Furniture
+2522	Metal Office Furniture
+2530	Public Building & Related Furniture
+2540	Partitions And Fixtures
+2541	Wood Partitions And Fixtures
+2542	Metal Partitions And Fixtures
+2590	Miscellaneous Furniture And Fixtures
+2591	Drapery Hardware & Blinds & Shades
+2599	Furniture And Fixtures, nec
+2600	Paper And Allied Products
+2610	Pulp Mills
+2620	Paper Mills, Except Building Paper
+2630	Paperboard Mills
+2640	Misc. Converted Paper Products
+2641	Paper Coating And Glazing
+2642	Envelopes
+2643	Bags, Except Textile Bags
+2645	Die-Cut Paper And Board
+2646	Pressed And Molded Pulp Goods
+2647	Sanitary Paper Products
+2648	Stationery Products
+2649	Converted Paper Products, nec
+2650	Paperboard Containers And Boxes
+2651	Folding Paperboard Boxes
+2652	Set-Up Paperboard Boxes
+2653	Corrugated And Solid Fiber Boxes
+2654	Sanitary Food Containers
+2655	Fiber Cans, Drums & Similar Products
+2660	Building Paper And Board Mills
+2700	Printing And Publishing
+2710	Newspapers
+2720	Periodicals
+2730	Books
+2731	Book Publishing
+2732	Book Printing
+2740	Miscellaneous Publishing
+2750	Commercial Printing
+2751	Commercial Printing, Letterpress
+2752	Commercial Printing, Lithographic
+2753	Engraving And Plate Printing
+2754	Commercial Printing, Gravure
+2760	Manifold Business Forms
+2770	Greeting Card Publishing
+2780	Blankbooks And Bookbinding
+2782	Blankbooks And Looseleaf Binders
+2789	Bookbinding And Related Work
+2790	Printing Trade Services
+2791	Typesetting
+2793	Photoengraving
+2794	Electrotyping And Stereotyping
+2795	Lithographic Platemaking Services
+2800	Chemicals And Allied Products
+2810	Industrial Inorganic Chemicals
+2812	Alkalies And Chlorine
+2813	Industrial Gases
+2816	Inorganic Pigments
+2819	Industrial Inorganic Chemicals, nec
+2820	Plastics Materials And Synthetics
+2821	Plastics Materials And Resins
+2822	Synthetic Rubber
+2823	Cellulosic Man-Made Fibers
+2824	Organic Fibers, Noncellulosic
+2830	Drugs
+2831	Biological Products
+2833	Medicinals And Botanicals
+2834	Pharmaceutical Preparations
+2840	Soap, Cleaners, And Toilet Goods
+2841	Soap And Other Detergents
+2842	Polishes And Sanitation Goods
+2843	Surface Active Agents
+2844	Toilet Preparations
+2850	Paints And Allied Products
+2860	Industrial Organic Chemicals
+2861	Gum And Wood Chemicals
+2865	Cyclic Crudes And Intermediates
+2869	Industrial Organic Chemicals, nec
+2870	Agricultural Chemicals
+2873	Nitrogenous Fertilizers
+2874	Phosphatic Fertilizers
+2875	Fertilizers, Mixing Only
+2879	Agricultural Chemicals, nec
+2890	Miscellaneous Chemical Products
+2891	Adhesives And Sealants
+2892	Explosives
+2893	Printing Ink
+2895	Carbon Black
+2899	Chemical Preparations, nec
+2900	Petroleum And Coal Products
+2910	Petroleum Refining
+2950	Paving And Roofing Materials
+2951	Paving Mixtures And Blocks
+2952	Asphalt Felts And Coatings
+2990	Misc. Petroleum And Coal Products
+2992	Lubricating Oils And Greases
+2999	Petroleum And Coal Products, nec
+3000	Rubber And Misc. Plastics Products
+3010	Tires And Inner Tubes
+3020	Rubber And Plastics Footwear
+3030	Reclaimed Rubber
+3040	Rubber And Plastics Hose And Belting
+3060	Fabricated Rubber Products, nec
+3070	Miscellaneous Plastics Products
+3100	Leather And Leather Products
+3110	Leather Tanning And Finishing
+3130	Footwear Cut Stock
+3140	Footwear, Except Rubber
+3142	House Slippers
+3143	Men's Footwear, Except Athletic
+3144	Women's Footwear, Except Athletic
+3149	Footwear, Except Rubber, nec
+3150	Leather Gloves And Mittens
+3160	Luggage
+3170	Handbags And Personal Leather Goods
+3171	Women's Handbags And Purses
+3172	Personal Leather Goods, nec
+3190	Leather Goods, nec
+3200	Stone, Clay, And Glass Products
+3210	Flat Glass
+3220	Glass And Glassware, Pressed Or Blown
+3221	Glass Containers
+3229	Pressed And Blown Glass, nec
+3230	Products Of Purchased Glass
+3240	Cement, Hydraulic
+3250	Structural Clay Products
+3251	Brick And Structural Clay Tile
+3253	Ceramic Wall And Floor Tile
+3255	Clay Refractories
+3259	Structural Clay Products, nec
+3260	Pottery And Related Products
+3261	Vitreous Plumbing Fixtures
+3262	Vitreous China Food Utensils
+3263	Fine Earthenware Food Utensils
+3264	Porcelain Electrical Supplies
+3269	Pottery Products, nec
+3270	Concrete, Gypsum, And Plaster Products
+3271	Concrete Block And Brick
+3272	Concrete Products, nec
+3273	Ready-Mixed Concrete
+3274	Lime
+3275	Gypsum Products
+3280	Cut Stone And Stone Products
+3290	Misc. Nonmetallic Mineral Products
+3291	Abrasive Products
+3292	Asbestos Products
+3293	Gaskets, Packing And Sealing Devices
+3295	Minerals, Ground Or Treated
+3296	Mineral Wool
+3297	Nonclay Refractories
+3299	Nonmetallic Mineral Products, nec
+3300	Primary Metal Industries
+3310	Blast Furnace And Basic Steel Products
+3312	Blast Furnaces And Steel Mills
+3313	Electrometallurgical Products
+3315	Steel Wire And Related Products
+3316	Cold Finishing Of Steel Shapes
+3317	Steel Pipe And Tubes
+3320	Iron And Steel Foundries
+3321	Gray Iron Foundries
+3322	Malleable Iron Foundries
+3324	Steel Investment Foundries
+3325	Steel Foundries, nec
+3330	Primary Nonferrous Metals
+3331	Primary Copper
+3332	Primary Lead
+3333	Primary Zinc
+3334	Primary Aluminum
+3339	Primary Nonferrous Metals, nec
+3340	Secondary Nonferrous Metals
+3350	Nonferrous Rolling And Drawing
+3351	Copper Rolling And Drawing
+3353	Aluminum Sheet, Plate, And Foil
+3354	Aluminum Extruded Products
+3355	Aluminum Rolling And Drawing, nec
+3356	Nonferrous Rolling And Drawing, nec
+3357	Nonferrous Wire Drawing & Insulating
+3360	Nonferrous Foundries
+3361	Aluminum Foundries
+3362	Brass, Bronze, And Copper Foundries
+3369	Nonferrous Foundries, nec
+3390	Miscellaneous Primary Metal Products
+3398	Metal Heat Treating
+3399	Primary Metal Products, nec
+3400	Fabricated Metal Products
+3410	Metal Cans And Shipping Containers
+3411	Metal Cans
+3412	Metal Barrels, Drums, And Pails
+3420	Cutlery, Hand Tools, And Hardware
+3421	Cutlery
+3423	Hand And Edge Tools, nec
+3425	Hand Saws And Saw Blades
+3429	Hardware, nec
+3430	Plumbing And Heating, Except Electric
+3431	Metal Sanitary Ware
+3432	Plumbing Fittings And Brass Goods
+3433	Heating Equipment, Except Electric
+3440	Fabricated Structural Metal Products
+3441	Fabricated Structural Metal
+3442	Metal Doors, Sash, And Trim
+3443	Fabricated Plate Work (Boiler Shops)
+3444	Sheet Metal Work
+3446	Architectural Metal Work
+3448	Prefabricated Metal Buildings
+3449	Miscellaneous Metal Work
+3450	Screw Machine Products, Bolts, etc.
+3451	Screw Machine Products
+3452	Bolts, Nuts, Rivets, And Washers
+3460	Metal Forgings And Stampings
+3462	Iron And Steel Forgings
+3463	Nonferrous Forgings
+3465	Automotive Stampings
+3466	Crowns And Closures
+3469	Metal Stampings, nec
+3470	Metal Services, nec
+3471	Plating And Polishing
+3479	Metal Coating And Allied Services
+3480	Ordnance And Accessories, nec
+3482	Small Arms Ammunition
+3483	Ammunition, Exc. For Small Arms, nec
+3484	Small Arms
+3489	Ordnance And Accessories, nec
+3490	Misc. Fabricated Metal Products
+3493	Steel Springs, Except Wire
+3494	Valves And Pipe Fittings
+3495	Wire Springs
+3496	Misc. Fabricated Wire Products
+3497	Metal Foil And Leaf
+3498	Fabricated Pipe And Fittings
+3499	Fabricated Metal Products, nec
+3500	Machinery, Except Electrical
+3510	Engines And Turbines
+3511	Turbines And Turbine Generator Sets
+3519	Internal Combustion Engines, nec
+3520	Farm And Garden Machinery
+3523	Farm Machinery And Equipment
+3524	Lawn And Garden Equipment
+3530	Construction And Related Machinery
+3531	Construction Machinery
+3532	Mining Machinery
+3533	Oil Field Machinery
+3534	Elevators And Moving Stairways
+3535	Conveyors And Conveying Equipment
+3536	Hoists, Cranes, And Monorails
+3537	Industrial Trucks And Tractors
+3540	Metalworking Machinery
+3541	Machine Tools, Metal Cutting Types
+3542	Machine Tools, Metal Forming Types
+3544	Special Dies, Tools, Jigs & Fixtures
+3545	Machine Tool Accessories
+3546	Power Driven Hand Tools
+3547	Rolling Mill Machinery
+3549	Metalworking Machinery, nec
+3550	Special Industry Machinery
+3551	Food Products Machinery
+3552	Textile Machinery
+3553	Woodworking Machinery
+3554	Paper Industries Machinery
+3555	Printing Trades Machinery
+3559	Special Industry Machinery, nec
+3560	General Industrial Machinery
+3561	Pumps And Pumping Equipment
+3562	Ball And Roller Bearings
+3563	Air And Gas Compressors
+3564	Blowers And Fans
+3565	Industrial Patterns
+3566	Speed Changers, Drives, And Gears
+3567	Industrial Furnaces And Ovens
+3568	Power Transmission Equipment, nec
+3569	General Industrial Machinery, nec
+3570	Office And Computing Machines
+3572	Typewriters
+3573	Electronic Computing Equipment
+3574	Calculating And Accounting Machines
+3576	Scales And Balances, Exc. Laboratory
+3579	Office Machines, nec
+3580	Refrigeration And Service Machinery
+3581	Automatic Merchandising Machines
+3582	Commercial Laundry Equipment
+3585	Refrigeration And Heating Equipment
+3586	Measuring And Dispensing Pumps
+3589	Service Industry Machinery, nec
+3590	Misc. Machinery, Except Electrical
+3592	Carburetors, Pistons, Rings, Valves
+3599	Machinery, Except Electrical, nec
+3600	Electric And Electronic Equipment
+3610	Electric Distributing Equipment
+3612	Transformers
+3613	Switchgear And Switchboard Apparatus
+3620	Electrical Industrial Apparatus
+3621	Motors And Generators
+3622	Industrial Controls
+3623	Welding Apparatus, Electric
+3624	Carbon And Graphite Products
+3629	Electrical Industrial Apparatus, nec
+3630	Household Appliances
+3631	Household Cooking Equipment
+3632	Household Refrigerators And Freezers
+3633	Household Laundry Equipment
+3634	Electric Housewares And Fans
+3635	Household Vacuum Cleaners
+3636	Sewing Machines
+3639	Household Appliances, nec
+3640	Electric Lighting And Wiring Equipment
+3641	Electric Lamps
+3643	Current-Carrying Wiring Devices
+3644	Noncurrent-Carrying Wiring Divices
+3645	Residential Lighting Fixtures
+3646	Commercial Lighting Fixtures
+3647	Vehicular Lighting Equipment
+3648	Lighting Equipment, nec
+3650	Radio And TV Receiving Equipment
+3651	Radio And TV Receiving Sets
+3652	Phonograph Records
+3660	Communication Equipment
+3661	Telephone And Telegraph Apparatus
+3662	Radio And TV Communication Equipment
+3670	Electronic Components And Accessories
+3671	Electron Tubes, Receiving Type
+3672	Cathode Ray Television Picture Tubes
+3673	Electron Tubes, Transmitting
+3674	Semiconductors And Related Devices
+3675	Electronic Capacitors
+3676	Electronic Resistors
+3677	Electronic Coils And Transformers
+3678	Electronic Connectors
+3679	Electronic Components, nec
+3690	Misc. Electrical Equipment & Supplies
+3691	Storage Batteries
+3692	Primary Batteries, Dry And Wet
+3693	X-Ray Apparatus And Tubes
+3694	Engine Electrical Equipment
+3699	Electrical Equipment & Supplies, nec
+3700	Transportation Equipment
+3710	Motor Vehicles And Equipment
+3711	Motor Vehicles And Car Bodies
+3713	Truck And Bus Bodies
+3714	Motor Vehicle Parts And Accessories
+3715	Truck Trailers
+3716	Motor Homes
+3720	Aircraft And Parts
+3721	Aircraft
+3724	Aircraft Engines And Engine Parts
+3728	Aircraft Equipment, nec
+3730	Ship And Boat Building And Repairing
+3731	Ship Building And Repairing
+3732	Boat building And Repairing
+3740	Railroad Equipment
+3750	Motorcycles, Bicycles, And Parts
+3760	Guided Missiles, Space Vehicles, Parts
+3761	Guided Missiles And Space Vehicles
+3764	Space Propulsion Units And Parts
+3769	Space Vehicle Equipment, nec
+3790	Miscellaneous Transportation Equipment
+3792	Travel Trailers And Campers
+3795	Tanks And Tank Components
+3799	Transportation Equipment, nec
+3800	Instruments And Related Products
+3810	Engineering & Scientific Instruments
+3820	Measuring And Controlling Devices
+3822	Environmental Controls
+3823	Process Control Instruments
+3824	Fluid Meters And Counting Devices
+3825	Instruments To Measure Electricity
+3829	Measuring & Controlling Eevices, nec
+3830	Optical Instruments And Lenses
+3840	Medical Instruments And Supplies
+3841	Surgical And Medical Instruments
+3842	Surgical Appliances And Supplies
+3843	Dental Equipment And Supplies
+3850	Ophthalmic Goods
+3860	Photographic Equipment And Supplies
+3870	Watches, Clocks, And Watchcases
+3900	Miscellaneous Manufacturing Industries
+3910	Jewelry, Silverware, And Plated Ware
+3911	Jewelry, Precious Metal
+3914	Silverware And Plated Ware
+3915	Jewelers' Materials & Lapidary Work
+3930	Musical Instruments
+3940	Toys And Sporting Goods
+3942	Dolls
+3944	Games, Toys, And Children's Vehicles
+3949	Sporting And Athletic Goods, nec
+3950	Pens, Pencils, Office And Art Supplies
+3951	Pens And Mechanical Pencils
+3952	Lead Pencils And Art Goods
+3953	Marking Devices
+3955	Carbon Paper And Inked Ribbons
+3960	Costume Jewelry And Notions
+3961	Costume Jewelry
+3962	Artificial Flowers
+3963	Buttons
+3964	Needles, Pins, And Fasteners
+3990	Miscellaneous Manufactures
+3991	Brooms And Brushes
+3993	Signs And Advertising Displays
+3995	Burial Caskets
+3996	Hard Surface Floor Coverings
+3999	Manufacturing Industries, nec
+399\	MFG Administrative And Auxiliary
+40--	Transportation And Public Utilities
+4100	Local And Interurban Passenger Transit
+4110	Local And Suburban Transportation
+4111	Local And Suburban Transit
+4119	Local Passenger Transportation, nec
+4120	Taxicabs
+4130	Intercity Highway Transportation
+4140	Transportation Charter Service
+4141	Local Passenger Charter Service
+4142	Charter Service, Except Loca
+4150	School Buses
+4170	Bus Terminal And Service Facilities
+4171	Bus Terminal Facilities
+4172	Bus Service Facilities
+4200	Trucking And Warehousing
+4210	Trucking, Local And Long Distance
+4220	Public Warehousing
+4221	Farm Product Warehousing And Storage
+4222	Refrigerated Warehousing
+4224	Household Goods Warehousing
+4225	General Warehousing And Storage
+4226	Special Warehousing And Storage, nec
+4230	Trucking Terminal Facilities
+4400	Water Transportation
+4410	Deep Sea Foreign Transportation
+4420	Deep Sea Domestic Transportation
+4421	Noncontiguous Area Transportation
+4422	Coastwise Transportation
+4423	Intercoastal Transportation
+4430	Great Lakes Transportation
+4440	Transportation On Rivers And Canals
+4450	Local Water Transportation
+4460	Water Transportation Services
+4463	Marine Cargo Handling
+4464	Canal Operation
+4469	Water Transportation Services, nec
+4500	Transportation By Air
+4510	Certificated Air Transportation
+4580	Air Transportation Services
+4600	Pipe Lines, Except Natural Gas
+4610	Pipe Lines, Except Natural Gas
+4619	Pipe Lines, nec
+4700	Transportation Services
+4710	Freight Forwarding
+4720	Arrangement Of Transportation
+4722	Passenger Transportation Arrangement
+4723	Freight Transportation Arrangement
+4740	Rental Of Railroad Cars
+4780	Miscellaneous Transportation Services
+4782	Inspection And Weighing Services
+4800	Communication
+4810	Telephone Communication
+4820	Telegraph Communication
+4830	Radio And Television Broadcasting
+4890	Communication Services, nec
+4900	Electric, Gas, And Sanitary Services
+4910	Electric Services
+4920	Gas Production And Distribution
+4930	Combination Utility Services
+4931	Electric And Other Services Combined
+4932	Gas And Other Services Combined
+4939	Combination Utility Services, nec
+4940	Water Supply
+4950	Sanitary Services
+4960	Steam Supply
+4970	Irrigation Systems
+497\	TRN Administrative And Auxiliary
+50--	Wholesale Trade
+5000	Wholesale Trade-Durable Goods
+5010	Motor Vehicles & Automotive Equipment
+5012	Automobiles And Other Motor Vehicles (Selling)
+5012	Automobiles And Other Motor Vehicles (Agent/Broker)
+5013	Automotive Parts And Supplies (Selling)
+5013	Automotive Parts And Supplies (Agent/Broker)
+5014	Tires And Tubes (Selling)
+5014	Tires And Tubes (Agent/Broker)
+5020	Furniture And Home Furnishings
+5021	Furniture (Selling)
+5021	Furniture (Agent/Broker)
+5023	Home Furnishings (Selling)
+5023	Home Furnishings (Agent/Broker)
+5030	Lumber And Construction Materials
+5031	Lumber, Plywood And Millwork (Selling)
+5031	Lumber, Plywood And Millwork (Agent/Broker)
+5039	Construction Materials, nec (Selling)
+5039	Construction Materials, nec (Agent/Broker)
+5040	Sporting Goods, Toys And Hobby Goods
+5041	Sporting And Recreational Goods (Selling)
+5041	Sporting And Recreational Goods (Agent/Broker)
+5042	Toys And Hobby Goods And Supplies (Selling)
+5042	Toys And Hobby Goods And Supplies (Agent/Broker)
+5043	Photographic Equipment And Supplies (Selling)
+5043	Photographic Equipment And Supplies (Agent/Broker)
+5050	Metals And Minerals, Except Petroleum
+5051	Metals Service Centers And Offices (Selling)
+5051	Metals Service Centers And Offices (Agent/Broker)
+5052	Coal And Other Minerals And Ores (Selling)
+5052	Coal And Other Minerals And Ores (Agent/Broker)
+5060	Electrical Goods
+5063	Electrical Apparatus And Equipment (Selling)
+5063	Electrical Apparatus And Equipment (Agent/Broker)
+5064	Electrical Appliances, TV And Radios (Selling)
+5064	Electrical Appliances, TV And Radios (Agent/Broker)
+5065	Electronic Parts And Equipment (Selling)
+5065	Electronic Parts And Equipment (Agent/Broker)
+5070	Hardware, Plumbing & Heating Equipment
+5072	Hardware (Selling)
+5072	Hardware (Agent/Broker)
+5074	Plumbing & Hydronic Heating Supplies (Selling)
+5074	Plumbing & Hydronic Heating Supplies (Agent/Broker)
+5075	Warm Air Heating & Air Conditioning (Selling)
+5075	Warm Air Heating & Air Conditioning (Agent/Broker)
+5078	Refrigeration Equipment And Supplies (Selling)
+5078	Refrigeration Equipment And Supplies (Agent/Broker)
+5080	Machinery, Equipment, And Supplies
+5081	Commercial Machines And Equipment (Selling)
+5081	Commercial Machines And Equipment (Agent/Broker)
+5082	Construction And Mining Machinery (Selling)
+5082	Construction And Mining Machinery (Agent/Broker)
+5083	Farm Machinery And Equipment (Selling)
+5083	Farm Machinery And Equipment (Agent/Broker)
+5084	Industrial Machinery And Equipment (Selling)
+5084	Industrial Machinery And Equipment (Agent/Broker)
+5085	Industrial Supplies (Selling)
+5085	Industrial Supplies (Agent/Broker)_
+5086	Professional Equipment And Supplies (Selling)
+5086	Professional Equipment And Supplies (Agent/Broker)
+5087	Service Establishment Equipment (Selling)
+5087	Service Establishment Equipment (Agent/Broker)
+5088	Transportation Equipment & Supplies (Selling)
+5088	Transportation Equipment & Supplies (Agent/Broker)
+5090	Miscellaneous Durable Goods
+5093	Scrap And Waste Materials (Selling)
+5093	Scrap And Waste Materials (Ggent/Broker)
+5094	Jewelry, Watches, & Precious Stones (Selling)
+5094	Jewelry, Watches, & Precious Stones (Agent/Broker)
+5099	Durable Goods, nec (Selling)
+5099	Durable Goods, nec (Agent/Broker)
+5100	Wholesale Trade-Nondurable Goods
+5110	Paper And Paper Products
+5111	Printing And Writing Paper (Selling)
+5111	Printing And Writing Paper (Agent/Broker)
+5112	Stationery Supplies (Selling)
+5112	Stationery Supplies (Agent/Broker)
+5113	Industrial & Personal Service Paper (Selling)
+5113	Industrial & Personal Service Paper (Agent/Broker)
+5120	Drugs, Proprietaries, And Sundries
+5130	Apparel, Piece Goods And Notions
+5133	Piece Goods (Selling)
+5133	Piece Goods (Agent/Broker)
+5134	Notions And Other Dry Goods (Selling)
+5134	Notions And Other Dry Goods (Agent/Broker)
+5136	Men's Clothing And Furnishings (Selling)
+5136	Men's Clothing And Furnishings (Agent/Broker)
+5137	Women's And Children's Clothing (Selling)
+5137	Women's And Children's Clothing (Agent/Broker)
+5139	Footwear (Selling)
+5139	Footwear (Agent/Broker)
+5140	Groceries And Related Products
+5141	Groceries, General Line (Selling)
+5141	Groceries, General Line (Agent/Broker)
+5142	Frozen Foods (Selling)
+5142	Frozen Foods (Agent/Broker)
+5143	Dairy Products (Selling)
+5143	Dairy Products (Agent/Broker)
+5144	Poultry And Poultry Products (Selling)
+5144	Poultry And Poultry Products (Agent/Broker)
+5145	Confectionery (Selling)
+5145	Confectionery (Agent/Broker)
+5146	Fish And Seafoods (Selling)
+5146	Fish And Seafoods (Agent/Broker)
+5147	Meats And Meat Products (Selling)
+5147	Meats And Meat Products (Agent/Broker)
+5148	Fresh Fruits And Vegatables (Selling)
+5148	Fresh Fruits And Vegetables (Agent/Broker)
+5149	Groceries And Related Products, nec (Selling)
+5149	Groceries And Related Products, nec (Agent/Broker)
+5150	Farm-Product Raw Materials
+5152	Cotton (Selling)
+5152	Cotton (Agent/Broker)
+5153	Grain (Selling)
+5153	Grain (Agent/Broker)
+5154	Livestock (Selling)
+5154	Livestock (Agent/Broker)
+5159	Farm-Product Raw Materilas, nec (Selling)
+5159	Farm-Product Raw Materials, nec (Agent/Broker)
+5160	Chemicals And Allied Products
+5170	Petroleum And Petroleum Products
+5171	Petroleum Bulk Stations & Terminals (Selling)
+5171	Petroleum Bulk Stations & Terminals (Agent/Broker)
+5172	Petroleum Products, nec (Selling)
+5172	Petroleum Products, nec (Agent/Broker)
+5180	Beer, Wine, And Distilled Beverages
+5181	Beer And Ale (Selling)
+5181	Beer And Ale (Agent/Broker)
+5182	Wines And Distilled Beverages (Selling)
+5182	Wines And Distilled Beverages (Agent/Broker)
+5190	Misc. Nondurable Goods
+5191	Farm Supplies (Selling)
+5191	Farm Supplies (Agent/Broker)
+5194	Tobacco And Tobacco Products (Selling)
+5194	Tobacco And Tobacco Products (Agent/Broker)
+5198	Paints, Varnishes, And Supplies (Selling)
+5198	Paints, Varnishes, And Supplies (Agent/Broker)
+5199	Nondurable Goods, nec (Selling)
+5199	Nondurable Goods, nec (Agent/Broker)
+519\	WHO Administrative And Auxiliary
+52--	Retail Trade
+5200	Building Materials & Garden Supplies
+5210	Lumber And Other Building Materials
+5230	Paint, Glass, And Wallpaper Stores
+5250	Hardware Stores
+5260	Retail Nurseries And Garden Stores
+5270	Mobile Home Dealers
+5300	General Merchandise Stores
+5310	Department Stores
+5330	Variety Stores
+5390	Misc. General Merchandise Stores
+5400	Food Stores
+5410	Grocery Stores
+5420	Meat Markets & Freezer Provisioners
+5422	Freezer And Locker Meat Provisioners
+5423	Meat And Fish (Seafood) Markets
+5430	Fruit Stores And Vegetable Markets
+5440	Candy, Nut, And Confectionery Stores
+5450	Dairy Products Stores
+5460	Retail Bakeries
+5490	Miscellaneous Food Stores
+5500	Automotive Dealers & Service Stations
+5510	New And Used Car Dealers
+5520	Used Car Dealers
+5530	Auto And Home Supply Stores
+5540	Gasoline Service Stations
+5550	Boat Dealers
+5560	Recreation & Utility Trailer Dealers
+5570	Motorcycle Dealers
+5590	Automotive Dealers, nec
+5600	Apparel And Accessory Stores
+5610	Men's & Boys' Clothing & Furnishings
+5620	Women's Ready-To-Wear Stores
+5630	Women's Accessory & Specialty Stores
+5640	Children's And Infants' Wear Stores
+5650	Family Clothing Stores
+5660	Shoe Stores
+5680	Furriers And Fur Shops
+5690	Miscellaneous Apparel & Accessories
+5700	Furniture And Home Furnishings Stores
+5710	Furniture And Home Furnishings Stores
+5712	Furniture Stores
+5713	Floor Covering Stores
+5714	Drapery And Upholstery Stores
+5719	Misc. Home Furnishings Stores
+5720	Household Appliance Stores
+5730	Radio, Television, And Music Stores
+5732	Radio And Television Stores
+5733	Music Stores
+5800	Eating And Drinking Places
+5812	Eating Places
+5813	Drinking Places
+5900	Miscellaneous Retail
+5910	Drug Stores And Proprietary Stores
+5920	Liquor Stores
+5930	Used Merchandise Stores
+5940	Miscellaneous Shopping Goods Stores
+5941	Sporting Goods And Bicycle Shops
+5942	Book Stores
+5943	Stationery Stores
+5944	Jewelry Stores
+5945	Hobby, Toy, And Game Shops
+5946	Camera & Photographic Supply Stores
+5947	Gift, Novelty, And Souvenir Shops
+5948	Luggage And Leather Goods Stores
+5949	Sewing, Needlework, And Piece Goods
+5960	Nonstore Retailers
+5961	Mail Order Houses
+5962	Merchandising Machine Operators
+5963	Direct Selling Organizations
+5980	Fuel And Ice Dealers
+5982	Fuel And Ice Dealers, nec
+5983	Fuel Oil Dealers
+5984	Liquified Petroleum Gas Dealers
+5990	Retail Stores, nec
+5992	Florists
+5993	Cigar Stores And Stands
+5994	News Dealers And Newsstands
+5999	Miscellaneous Retail Stores, nec
+599\	RET Administrative And Auxiliary
+60--	Finance, Insurance, And Real Estate
+6000	Banking
+6010	Federal Reserve Banks
+6020	Commercial And Stock Savings Banks
+6030	Mutual Savings Banks
+6040	Trust Companies, Nondeposit
+6050	Functions Closely Related To Banking
+6100	Credit Agencies Other Than Banks
+6110	Rediscount And Financing Institutions
+6112	Rediscounting, Not For Agricultural
+6120	Savings And Loan Associations
+6130	Agricultural Credit Institutions
+6140	Personal Credit Institutions
+6150	Business Credit Institutions
+6160	Mortgage Bankers And Brokers
+6200	Security, Commodity Brokers & Services
+6210	Security Brokers And Dealers
+6220	Commodity Contracts Brokers, Dealers
+6230	Security And Commodity Exchanges
+6280	Security And Commodity Services
+6300	Insurance Carriers
+6310	Life Insurance
+6320	Medical Service And Health Insurance
+6321	Accident And Health Insurance
+6324	Hospital And Medical Service Plans
+6330	Fire, Marine, And Casualty Insurance
+6350	Surety Insurance
+6360	Title Insurance
+6370	Pension, Health, And Welfare Funds
+6390	Insurance Carriers, nec
+6400	Insurance Agents, Brokers, & Service
+6500	Real Estate
+6510	Real Estate Operators And Lessors
+6530	Real Estate Agents And Managers
+6540	Title Abstract Offices
+6550	Subdividers And Developers
+6552	Subdividers And Developers, nec
+6553	Cemetery Subdividers And Developers
+6600	Combined Real Estate, Insurance, etc
+6700	Holding And Other Investment Offices
+6710	Holding Offices
+6720	Investment Offices
+6730	Trusts
+6732	Educational, Religious, etc. Trusts
+6733	Trusts, nec
+6790	Miscellaneous Investing
+6794	Patent Owners And Lessors
+6798	Real Estate Investment Trusts
+6799	Investors, nec
+679\	FIN Administrative And Auxiliary
+70--	Services
+7000	Hotels And Other Lodging  Places
+7010	Hotels, Motels, And Tourist Courts
+7020	Rooming And Boarding Houses
+7030	Camps And Trailering Parks
+7032	Sporting And Recreational Camps
+7033	Trailering Parks For Transients
+7040	Membership-Basis Organization Hotels
+7200	Personal Services
+7210	Laundry, Cleaning, & Garment Services
+7211	Power Laundries, Family & Commercial
+7212	Garment Pressing & Cleaners' Agents
+7213	Linen Supply
+7214	Diaper Service
+7215	Coin-Operated Laundries And Cleaning
+7216	Dry Cleaning Plants, Except Rug
+7217	Carpet And Upholstery Cleaning
+7218	Industrial Launderers
+7219	Laundry And Garment Services, nec
+7220	Photographic Studios, Portrait
+7230	Beauty Shops
+7240	Barber Shops
+7250	Shoe Repair And Hat Cleaning Shops
+7260	Funeral Service And Crematories
+7290	Miscellaneous Personal Services
+7300	Business Services
+7310	Advertising
+7311	Advertising Agencies
+7312	Outdoor Advertising Services
+7313	Radio, TV, Publisher Representatives
+7319	Advertising, nec
+7320	Credit Reporting And Collection
+7330	Mailing, Reproduction, Stenographic
+7331	Direct Mail Advertising Services
+7332	Blueprinting And Photocopying
+7333	Commercial Photography And Art
+7339	Stenographic And Reproduction, nec
+7340	Services To Buildings
+7341	Window Cleaning
+7342	Disinfecting And Exterminating
+7349	Building Maintenance Services, nec
+7350	News Syndicates
+7360	Personnel Supply Services
+7361	Employment Agencies
+7362	Temporary Help Supply Services
+7369	Personnel Supply Services, nec
+7370	Computer And Data Processing Services
+7372	Computer Programming And Software
+7374	Data Processing Services
+7379	Computer Related Services, nec
+7390	Miscellaneous Business Services
+7391	Research & Development Laboratories
+7392	Management And Public Relations
+7393	Detective And Protective Services
+7394	Equipment Rental And Leasing
+7395	Photofinishing Laboratories
+7396	Trading Stamp Services
+7397	Commercial Testing Laboratories
+7399	Business Services, nec
+7500	Auto Repair, Services, And Garages
+7510	Automotive Rentals, Without Drivers
+7512	Passenger Car Rental And Leasing
+7513	Truck Rental And Leasing
+7519	Utility Trailer Rental
+7520	Automobile Parking
+7523	Parking Lots
+7525	Parking Structures
+7530	Automotive Repair Shops
+7531	Top And Body Repair Shops
+7534	Tire Retreading And Repair Shops
+7535	Paint Shops
+7538	General Automotive Repair Shops
+7539	Automotive Repair Shops, nec
+7540	Automotive Services, Except Repair
+7542	Car Washes
+7549	Automotive Services, nec
+7600	Miscellaneous Repair Services
+7620	Electrical Repair Shops
+7622	Radio And Television Repair
+7623	Refrigeration Service And Repair
+7629	Electrical Repair Shops, nec
+7630	Watch, Clock, And Jewelry Repair
+7640	Reupholstery And Furniture Repair
+7690	Miscellaneous Repair Shops
+7692	Welding Repair
+7694	Armature Rewinding Shops
+7699	Repair Services, nec
+7800	Motion Pictures
+7810	Motion Picture Production & Services
+7813	Motion Picture Production, Except TV
+7814	Motion Picture Production For TV
+7819	Services Allied To Motion Pictures
+7820	Motion Picture Distribution & Services
+7823	Motion Picture Film Exchanges
+7824	Film Or Tape Distribution For TV
+7829	Motion Picture Distribution Services
+7830	Motion Picture Theaters
+7832	Motion Picture Theaters, EX Drive-in
+7833	Drive-in Motion Picture Theaters
+7900	Amusement & Recreation Services, nec
+7910	Dance Halls, Studios, And Schools
+7920	Producers, Orchestras, Entertainers
+7922	Theatrical Producers And Services
+7929	Entertainers & Entertainment Groups
+7930	Bowling And Billiard Establishments
+7932	Billiard And Pool Establishments
+7933	Bowling Alleys
+7940	Commercial Sports
+7941	Sports Clubs, Managers, & Promoters
+7948	Racing, Including Track Operation
+7990	Misc. Amusement, Recreational Services
+7992	Public Golf Courses
+7993	Coin-operated Amusement Devices
+7996	Amusement Parks
+7997	Membership Sports & Recreation Clubs
+7999	Amusement And Recreation, nec
+8000	Health Services
+8010	Offices Of Physicians
+8020	Offices Of Dentists
+8030	Offices Of Osteopathic Physicians
+8040	Offices Of Other Health Practitioners
+8041	Offices Of Chiropractors
+8042	Offices Of Optometrists
+8049	Offices Of Health Practitioners, nec
+8050	Nursing And Personal Care Facilities
+8060	Hospitals
+8070	Medical And Dental Laboratories
+8071	Medical Laboratories
+8072	Dental Laboratories
+8080	Outpatient Care Facilities
+8090	Health And Allied Services, nec
+8100	Legal Services
+8200	Educational Services
+8210	Elementary And Secondary Schools
+8220	Colleges And Universities
+8230	Libraries And Information Centers
+8240	Correspondence And Vocational Schools
+8241	Correspondence Schools
+8290	Schools & Educational Services, nec
+8300	Social Services
+8310	Social Services,Nec
+8360	Residential Care
+8400	Museums, Botanical, Zoological Gardens
+8410	Museums And Art Galleries
+8420	Botanical And Zoological Gardens
+8600	Membership Organizations
+8610	Business Associations
+8620	Professional Organizations
+8630	Labor Organizations
+8640	Civic And Social Associations
+8650	Political Organizations
+8660	Religious Organizations
+8690	Membership Organizations, nec
+8900	Miscellaneous Services
+8910	Engineering & Architectural Services
+8920	Noncommercial Research Organizations
+8930	Accounting, Auditing, & Bookkeeping
+8990	Services, nec
+899\	SER Administrative And Auxiliary
+99--	Unclassified Establishments

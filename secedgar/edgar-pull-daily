@@ -1,9 +1,11 @@
 #!/bin/bash
 #
 #  Synopsis:
-#	Pull yesterday's edgar reports.
+#	Pull yesterday's edgar reports from www.sec.gov/Archives/edgar/Feed
 #  Usage:
-#	1 0 * * * * cd support/edgar; /usr/local/jmscott/bin/edgar-pull-daily
+#	13 2 * * * * cd support/edgar; /usr/local/jmscott/bin/edgar-pull-daily
+#  Note:
+#	Depends on GNU date.
 #
 
 log()
@@ -13,7 +15,7 @@ log()
 
 die()
 {
-	MSG="$ERROR: $@"
+	MSG="ERROR: $@"
 	test -d run/ && echo "$MSG" >>run/$(basename $0).fault
 	log "$MSG" >&2
 }
@@ -44,13 +46,21 @@ get_quarter()
 test $# = 0 || die "wrong command line arguments: got $#, expected 0"
 
 log 'hello, world'
+trap 'log good bye, cruel world' EXIT
 
-YEAR=$(date -v '-1d' +'%Y')
-MONTH=$(date -v '-1d' +'%m')
-DAY=$(date -v '-1d' +'%d')
+YEAR=$(date --date=yesterday +'%Y')
+MONTH=$(date --date=yesterday +'%m')
+DAY=$(date --date=yesterday +'%d')
 log "report year: $YEAR"
 log "report month: $MONTH"
 log "report day: $DAY"
+
+if [ ! -d spool ];  then
+	log "dir does not exist: $(pwd)/spool"
+	mkdir -p spool || die "mkdir spool failed: exit status=$?"
+fi
+
+cd spool || die "cd spool failed: exit status=$?"
 
 QTR=QTR$(get_quarter $MONTH)
 log "report quarter: $QTR"
@@ -61,5 +71,3 @@ log "zip file url: $URL"
 
 log 'fetching zip file from sec ...'
 wget "$URL" || die "wget sec failed: exit status=$?"
-
-trap 'log good bye, cruel world' EXIT
