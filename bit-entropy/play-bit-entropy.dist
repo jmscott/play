@@ -24,6 +24,7 @@ PRODUCT=play-bit-entropy
 #"
 
 BINs="
+	bit-pop-count
 	shift-xor
 "
 
@@ -41,6 +42,7 @@ COMPILED="
 #"
 
 SRCs="
+	bit-pop-count.c
 	shift-xor.c
 "
 
