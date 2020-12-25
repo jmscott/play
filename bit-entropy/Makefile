@@ -12,3 +12,6 @@ clean:
 
 shift-xor: shift-xor.c common.c
 	cc -Wall -Wextra -o shift-xor shift-xor.c
+
+bit-pop-count: bit-pop-count.c common.c
+	cc -Wall -Wextra -o bit-pop-count bit-pop-count.c
