@@ -1,11 +1,12 @@
 include local.mk
+include play.mk
 
-PLAY_PREFIX=$(INSTALL_PREFIX)/play
+DIST=./jmscott-play.dist
 
-BINs := $(shell (. ./play.dist && echo $$BINs))
-SRCs := $(shell (. ./play.dist && echo $$SRCs))
-LIBs := $(shell (. ./play.dist && echo $$LIBs))
-COMPILED := $(shell (. ./play.dist && echo $$COMPILED))
+BINs := $(shell (. $(DIST) && echo $$BINs))
+SRCs := $(shell (. $(DIST) && echo $$SRCs))
+LIBs := $(shell (. $(DIST) && echo $$LIBs))
+COMPILED := $(shell (. $(DIST) && echo $$COMPILED))
 
 all: $(COMPILED)
 
@@ -36,7 +37,7 @@ utf8-frisk: utf8-frisk.c
 	cc -Wall -Wextra -o utf8-frisk utf8-frisk.c
 
 dist: all
-	make-dist play.dist
+	make-dist $(DIST)
 
 distclean:
 	rm -rf $(PLAY_PREFIX)/bin

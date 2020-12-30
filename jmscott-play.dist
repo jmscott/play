@@ -22,7 +22,7 @@ PRODUCT=jmscott-play
 LIBs="
 	local-darwin.mk.example
 	local-linux.mk.example
-	play.dist
+	jmscott-play.dist
 "
 
 COMPILED="
