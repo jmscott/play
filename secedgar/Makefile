@@ -15,8 +15,12 @@ install:
 		-d $(PLAY_PREFIX)
 	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=	\
 		-d $(PLAY_PREFIX)/sbin
+	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=	\
+		-d $(PLAY_PREFIX)/spool
 	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=rx	\
 		-d $(PLAY_PREFIX)/lib
+	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=	\
+		-d $(PLAY_PREFIX)/tmp
 
 	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m ugo=xr	\
 		$(SBINs)						\
