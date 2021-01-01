@@ -3,21 +3,48 @@
 #  Synopsis:
 #	Pull yesterday's edgar reports from www.sec.gov/Archives/edgar/Feed
 #  Usage:
-#	13 2 * * * * cd support/edgar; /usr/local/jmscott/bin/edgar-pull-daily
-#  Note:
-#	Depends on GNU date.
+#	#
+#	#  successfully pulled files pushed from $JMSCOTT_ROOT/tmp to
+#	#  $JMSCOTT_ROOT/spool
+#	#
+#	export JMSCOTT_ROOT=$HOME/opt/jmscott
 #
+#	#
+#	#  script needs gnu date for calculating 'yesterday', so, on macports,
+#	#  add gnuutils path, or where ever 'date' lives.
+#	#
+#	PATH=/opt/local/libexec/gnubin:$PATH
+#
+#	LOG=$JMSCOTT_ROOT/log/edgar-pull-daily-$(date +%a).log
+#	13 2 * * Tue-Sat edgar-pull-daily >>$LOG 2>&1
+#  Note:
+#	Rename the script edgar-wget-daily.
+#
+#	For missing files on edgar, wget sees the confusing http error
+#
+#		ERROR 403: Forbidden.
+#
+#	instead of 404: Not found.  this could confuse a stupid person.
+#
+#	Depends on GNU data to calcuate 'yesterday'.
+#
+
+now()
+{
+	date +'%Y/%m/%d %H:%M:%S'
+}
 
 log()
 {
-	echo "$(date +'%Y/%m/%d %H:%M:%S'): $@"
+	echo "$(now): $@"
 }
 
 die()
 {
 	MSG="ERROR: $@"
-	test -d run/ && echo "$MSG" >>run/$(basename $0).fault
+	test -d run/ && echo "$(now): $MSG" >>run/$(basename $0).fault
 	log "$MSG" >&2
+	exit 1
 }
 
 get_quarter()
@@ -43,31 +70,48 @@ get_quarter()
 	echo $QUARTER
 }
 
-test $# = 0 || die "wrong command line arguments: got $#, expected 0"
+test $# = 0 || die "wrong count of cli arguments: got $#, expected 0"
+test "$JMSCOTT_ROOT" || die 'env var not defined: JMSCOTT_ROOT'
 
 log 'hello, world'
 trap 'log good bye, cruel world' EXIT
 
+log "JMSCOTT_ROOT=$JMSCOTT_ROOT"
+cd $JMSCOTT_ROOT || die "cd jmscott failed: exit status=$?"
+
 YEAR=$(date --date=yesterday +'%Y')
-MONTH=$(date --date=yesterday +'%m')
-DAY=$(date --date=yesterday +'%d')
+test $? = 0 || die "date yester year failed: exit status=$?"
 log "report year: $YEAR"
+
+MONTH=$(date --date=yesterday +'%m')
+test $? = 0 || die "date yester month failed: exit status=$?"
 log "report month: $MONTH"
+
+DAY=$(date --date=yesterday +'%d')
+test $? = 0 || die "date yester day failed: exit status=$?"
 log "report day: $DAY"
 
-if [ ! -d spool ];  then
-	log "dir does not exist: $(pwd)/spool"
-	mkdir -p spool || die "mkdir spool failed: exit status=$?"
-fi
+mkdir -p spool || die "mkdir spool/ failed: exit status=$?"
+mkdir -p tmp || die "mkdir tmp/ failed: exit status=$?"
+mkdir -p run || die "mkdir run/ failed: exit status=$?"
 
-cd spool || die "cd spool failed: exit status=$?"
+cd tmp || die "cd tmp failed: exit status=$?"
 
 QTR=QTR$(get_quarter $MONTH)
 log "report quarter: $QTR"
 
 FILE=$YEAR$MONTH$DAY.nc.tar.gz
-URL="https://www.sec.gov/Archives/edgar/Feed/$YEAR/$QTR/$FILE"
-log "zip file url: $URL"
+log "download file: $FILE"
+test -e ../spool/$FILE && die "file exists in spool: ../spool/$FILE"
 
-log 'fetching zip file from sec ...'
+URL="https://www.sec.gov/Archives/edgar/Feed/$YEAR/$QTR/$FILE"
+log "pull url: $URL"
+
+log 'fetching from sec edgar ...'
 wget "$URL" || die "wget sec failed: exit status=$?"
+test -e $FILE || die "sec file does not exist: $FILE"
+
+log "moving zip to dir ../spool/: $FILE"
+mv $FILE ../spool || die "mv spool failed: exit status=$?"
+
+exit 0
