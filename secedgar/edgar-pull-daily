@@ -29,6 +29,8 @@
 #	Depends on GNU data to calcuate 'yesterday'.
 #
 
+FEED_URL=https://www.sec.gov/Archives/edgar/Feed/
+
 now()
 {
 	date +'%Y/%m/%d %H:%M:%S'
@@ -104,7 +106,8 @@ FILE=$YEAR$MONTH$DAY.nc.tar.gz
 log "download file: $FILE"
 test -e ../spool/$FILE && die "file exists in spool: ../spool/$FILE"
 
-URL="https://www.sec.gov/Archives/edgar/Feed/$YEAR/$QTR/$FILE"
+log "feed url (see for missing): $FEED_URL"
+URL="$FEED_URL/$YEAR/$QTR/$FILE"
 log "pull url: $URL"
 
 log 'fetching from sec edgar ...'
@@ -113,5 +116,9 @@ test -e $FILE || die "sec file does not exist: $FILE"
 
 log "moving zip to dir ../spool/: $FILE"
 mv $FILE ../spool || die "mv spool failed: exit status=$?"
+
+log 'listing tar files in spool ...'
+du -csh ../spool/2*.nc.tar.gz
+gunzip -l ../spool/2*.nc.tar.gz
 
 exit 0
