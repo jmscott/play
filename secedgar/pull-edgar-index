@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+#  Synopsis:
+#	Pull list/index of YYYYMMDD.nc.tar.gz files for a particular quarter.
+#  Usage:
+#	pull-edgar-index 2021 1 >files
+#
+
+BASE_URL=https://www.sec.gov/Archives/edgar/Feed/
+
+die()
+{
+	echo "ERROR: $@" >&2
+	exit 1
+}
+
+test $# = 2 || die "wrong number of arguments: got $#, expected $#"
+
+YEAR=$1
+case "$YEAR" in
+[23][0-9][0-9][0-9])
+	;;
+*)
+	die "unrecognized year: $YEAR"
+	;;
+esac
+
+QTR=$2
+case "$QTR" in
+1|2|3|4)
+	;;
+*)
+	die "unrecognized quarter: $QTR"
+	;;
+esac
+
+curl $BASE_URL/$YEAR/QTR$QTR/						|
+	fgrep .nc.tar.gz						|
+	sed 's/.*href="//'						|
+	sed 's/".*//'							|
+	sort -u
