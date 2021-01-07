@@ -30,7 +30,7 @@ LIBs="
 
 SBINs="
 	edgar-pull-daily
-	pull-edgar-index
+	edgar-pull-index
 "
 
 CGIBINs="
