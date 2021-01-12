@@ -119,6 +119,5 @@ mv $FILE ../spool || die "mv spool failed: exit status=$?"
 
 log 'listing tar files in spool ...'
 du -csh ../spool/2*.nc.tar.gz
-gunzip -l ../spool/2*.nc.tar.gz
 
 exit 0
