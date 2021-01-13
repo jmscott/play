@@ -1,0 +1,1279 @@
+
+DATA ELEMENT: SUBMISSION
+TAG: <SUBMISSION>
+DESCRIPTION: Initial dissemination tag. Required.
+LENGTH: Tag only
+END TAG: </SUBMISSION>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: CORRECTION
+TAG: <CORRECTION>
+DESCRIPTION: Identifies post acceptance correction transaction. This tag is only present for a correction to a filing. Optional.
+LENGTH: Tag only
+END TAG: NA
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: TIMESTAMP
+TAG: <TIMESTAMP>
+DESCRIPTION: Edgar Dissemination date-time, used for Post Acceptance Corrections only.  Defines the time which the correction is disseminated by EDGAR, supplied by the R/A Subsystem. Optional.
+LENGTH: 15
+END TAG: NA
+CHARACTERISTIC: Date
+LIMITS: NA
+FORMAT: YYYYMMDD:HHMMSS
+
+DATA ELEMENT: PAPER
+TAG: <PAPER>
+DESCRIPTION: Identifies the submission as a Paper submission. Optional.
+LENGTH: Tag only
+END TAG: NA
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+38
+
+DATA ELEMENT: PRIVATE-TO-PUBLIC
+TAG: <PRIVATE-TO-PUBLIC>
+DESCRIPTION: Identifies an SEC-approved private-to-public document dissemination. This tag is only present in a *.pr dissemination (a private-to-public dissemination).  Optional.
+LENGTH: Tag only
+END TAG: NA
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: ACCESSION NUMBER
+TAG: <ACCESSION-NUMBER>
+DESCRIPTION: EDGAR assigned identifier unique to each submission. Required.
+LENGTH: 20
+END TAG: NA
+CHARACTERISTIC: AlphaNumeric LIMITS: NA
+FORMAT: (10-Char CIK)+"-"+YY+"-"+(6-Char sequence #)
+
+DATA ELEMENT: DELETION
+TAG: <DELETION>
+DESCRIPTION: Identifies post acceptance correction filing deletion. This tag is present after accession number only when the filing is being deleted. Optional.
+LENGTH: Tag only
+END TAG: NA
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: CONFORMED SUBMISSION TYPE
+TAG: <TYPE>
+DESCRIPTION: Conformed type of submission being disseminated. Required.
+LENGTH: 20
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric, spaces and hyphens allowed.
+LIMITS: Refer to EDGAR Filer Manual Volume II chapter entitled “Index To Forms”.
+FORMAT: NA
+
+DATA ELEMENT: CATEGORY
+TAG: <CATEGORY>
+DESCRIPTION: Category of submission being disseminated. Optional.
+LENGTH: 20
+END TAG: NA
+CHARACTERISTIC: Alphanumeric, spaces and hyphens allowed.
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: CONFIRMINGCOPY
+TAG: <CONFIRMING-COPY>
+DESCRIPTION: This tag defines this submission as being a confirming copy to a paper submission.
+LENGTH: Tag only
+END TAG: NA
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: PUBLIC DOCUMENT COUNT
+TAG: <PUBLIC-DOCUMENT-COUNT>
+DESCRIPTION: Number of PUBLIC documents in the submission, including rendered XBRL documents; if any.
+LENGTH: 3
+END TAG: NA
+CHARACTERISTIC: Numeric
+LIMITS: 001-999
+FORMAT: NA
+
+DATA ELEMENT: REFERENCE 462B
+TAG: <REFERENCE-462B>
+DESCRIPTION: Refers to a prospectus relating to a registration statement updated pursuant to Rule 462B. The value represents the file number of the prior registration statement. Optional.
+LENGTH: 15
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: ###-#####[#][-XX[X][X]] where # is a number, [] is optional, and X is alphanumeric.
+
+DATA ELEMENT: REFERENCES429
+40
+TAG: <REFERENCES-429>
+DESCRIPTION: Refers to a prospectus relating to two or more registration statements updated pursuant to Rule 429. The value represents the file numbers of the prior registration statements. Optional & Repeatable.
+LENGTH: 15
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: ###-#####[#][-XX[X][X]] where # is a number, [] is optional, and X
+is alphanumeric.
+
+DATA ELEMENT: CONFORMED PERIOD OF REPORT
+TAG: <PERIOD>
+DESCRIPTION: End date of reporting period of filing. Optional.
+LENGTH: 8
+END TAG: NA
+CHARACTERISTIC: Date
+LIMITS: NA
+FORMAT: YYYYMMDD
+
+DATA ELEMENT: DEPOSITOR CIK
+TAG: <DEPOSITOR-CIK>
+DESCRIPTION: The Central Index Key of the Depositor of an asset-backed securities offering. Optional
+LENGTH: 10
+END TAG: NA
+CHARACTERISTIC: Numeric
+LIMITS: 0000000001-9999999999
+FORMAT: NA
+
+DATA ELEMENT: SPONSOR CIK
+TAG: <SPONSOR-CIK>
+DESCRIPTION: The Central Index Key of the Sponsor of an asset-backed securities offering. Optional
+LENGTH: 10
+END TAG: NA
+CHARACTERISTIC: Numeric
+LIMITS: 0000000001-9999999999
+FORMAT: NA
+
+DATA ELEMENT: ITEM
+INFORMATION TAG: <ITEMS>
+41
+DESCRIPTION: Identifies 1 or more items declared in the filings. Optional & Repeatable.  Applies to forms: 1-U, 1-U/A, 8-K, 8-K/A, 8-K12B, 8-K12B/A, 8-K12G3, 8- K12G3/A, 8-K15D5, 8-K15D5/A, ABS-15G, ABS-15G/A, D, D/A, REGDEX, REGDEX/A, SD, SD/A
+LENGTH: 4
+END TAG: NA
+CHARACTERISTIC: AlphaNumeric LIMITS: NA
+FORMAT: #.##
+
+DATA ELEMENT: MA-I INDIVIDUAL
+TAG: <MA-I_INDIVIDUAL>
+DESCRIPTION: This element specifies the filer supplied name of the individual for whom an MA-I or MA-I/A submission was submitted. Optional.
+LENGTH: 8
+END TAG: NA
+CHARACTERISTIC: Date
+LIMITS: NA
+FORMAT: YYYYMMDD
+
+DATA ELEMENT: FILED AS OF DATE
+TAG: <FILING-DATE>
+DESCRIPTION: EDGAR assigned official filing date, or post acceptance new filing date (Post Acceptance Correction). Required.
+LENGTH: 8
+END TAG: NA
+CHARACTERISTIC: Date
+LIMITS: NA
+FORMAT: YYYYMMDD
+
+DATA ELEMENT: DATE AS OF CHANGE
+TAG: <DATE-OF-FILING-DATE-CHANGE>
+DESCRIPTION: Date when the last Post Acceptance occurred. Optional.
+LENGTH: 8
+END TAG: NA
+CHARACTERISTIC: Date
+LIMITS: NA
+FORMAT: YYYYMMDD
+
+DATA ELEMENT: EFFECTIVENESSDATE
+TAG: <EFFECTIVENESS-DATE>
+DESCRIPTION: The effective date of the submission. Optional.
+LENGTH: 8
+END TAG: NA
+CHARACTERISTIC: Date
+LIMITS: NA
+FORMAT: YYYYMMDD
+
+DATA ELEMENT: ACTION DATE
+TAG: <ACTION-DATE>
+DESCRIPTION: The grant or issue date for Orders or Notices. Optional.
+LENGTH: 8
+END TAG: NA
+CHARACTERISTIC: Date
+LIMITS: NA
+FORMAT: YYYYMMDD
+
+DATA ELEMENT: RECEIVED DATE
+TAG: <RECEIVED-DATE>
+DESCRIPTION: The received date for Orders or Notices. Optional.
+LENGTH: 8
+END TAG: NA
+CHARACTERISTIC: Date
+LIMITS: NA
+FORMAT: YYYYMMDD
+
+DATA ELEMENT: GROUP MEMBERS
+TAG: <GROUP-MEMBERS>
+DESCRIPTION: This identifies group members in this submission.
+Optional and repeatable.
+LENGTH: 60
+END TAG: NA
+CHARACTERISTIC: Alphanumeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: ABS RULE
+TAG: <ABS-RULE>
+DESCRIPTION: This element identifies the ABS rule selected for the submission. Optional.
+LENGTH: 10
+END TAG: </ABS-RULE>
+CHARACTERISTIC: Alphanumeric
+LIMITS: The valid values for this element are RULE-15GA1 or RULE15GA2. FORMAT: NA
+43
+
+DATA ELEMENT: PERIOD START
+TAG: <PERIOD-START>
+DESCRIPTION: This identifies start date of reporting for the submission. Optional.
+LENGTH: 8
+END TAG: NA
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: YYYYMMDD
+
+DATA ELEMENT: NO INITIAL PERIOD ACTIVITY
+TAG: <NO-INITIAL-PERIOD-ACTIVITY>
+DESCRIPTION: Identifies if the Securitizer has any activity to report for the initial period pursuant to Rule 15Ga-1(c)(1). Optional.
+LENGTH: 1
+END TAG: NA
+CHARACTERISTIC: Alphanumeric
+LIMITS: The valid values for this element are “Y” or “N”.
+FORMAT: NA
+
+DATA ELEMENT: NO QUARTERLY ACTIVITY
+TAG: <NO-QUARTERLY-ACTIVITY>
+DESCRIPTION: Identifies if the Securitizer has any activity to report for the quarterly period pursuant to Rule 15Ga-1(c)(2)(i). Optional.
+LENGTH: 1
+END TAG: NA
+CHARACTERISTIC: Alphanumeric
+LIMITS: The valid values for this element are “Y” or “N”.
+FORMAT: NA
+
+DATA ELEMENT: NO ANNUAL ACTIVITY
+TAG: <NO-ANNUAL-ACTIVITY>
+DESCRIPTION: Identifies if the Securitizer has any activity to report for the annual period pursuant to Rule 15Ga-1(c)(2)(ii). Optional.
+LENGTH: 1
+END TAG: NA
+CHARACTERISTIC: Alphanumeric
+LIMITS: The valid values for this element are “Y” or “N”.
+FORMAT: NA
+
+DATA ELEMENT: REGISTEREDENTITY
+TAG: <REGISTERED-ENTITY>
+44
+DESCRIPTION: This element identifies if the ABS-15Ga-2 submission is for a registered or unregistered entity. Optional.
+LENGTH: 1
+END TAG: NA
+CHARACTERISTIC: Alphanumeric
+LIMITS: The valid values for this element are “Y” or “N”.
+FORMAT: NA
+
+DATA ELEMENT: ABS ASSET CLASS
+TAG: <ABS-ASSET-CLASS>
+DESCRIPTION: This element specifies the ABS Asset Class for the submission. Optional.
+LENGTH: 50
+END TAG: </ABS-ASSET-CLASS>
+CHARACTERISTIC: Alphanumeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: ISSUING ENTITY NAME
+TAG: <ISSUING-ENTITY-NAME>
+DESCRIPTION: This element specifies the filer supplied name of the Issuing Entity associated with the submission. Optional.
+LENGTH: 150
+END TAG: NA
+CHARACTERISTIC: Alphanumeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: FILER
+TAG: <FILER>
+DESCRIPTION: Initial tag for nested Filer information. Related data will be grouped together depending on submission type. The relevant tag will be reported
+for each grouping of company data. The tag is required and repeatable as
+a filing is being made on behalf of more than one Filer (person or entity).
+LENGTH: Tag only
+END TAG: </FILER>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: DEPOSITOR
+TAG: <DEPOSITOR>
+DESCRIPTION: Initial tag for nested Depositor information. Related data will be grouped together depending on submission type. The tag is optional.
+LENGTH: Tag only
+END TAG: </DEPOSITOR>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: SECURITIZER
+TAG: <SECURITIZER>
+DESCRIPTION: Initial tag for nested Securitizer information. Related data will be grouped together depending on submission type. The tag is optional.
+LENGTH: Tag only
+END TAG: </SECURITIZER>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: ISSUING_ENTITY
+TAG: <ISSUING_ENTITY>
+DESCRIPTION: Initial tag for nested Issuing Entity information. Related data will be grouped together depending on submission type. The tag is optional.
+LENGTH: Tag only
+END TAG: </ISSUING_ENTITY>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: UNDERWRITER
+TAG: <UNDERWRITER>
+DESCRIPTION: Initial tag for nested Underwriter information. Related data will be grouped together depending on submission type. The tag is optional.
+LENGTH: Tag only
+END TAG: </UNDERWRITER>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: FILED BY
+TAG: <FILED-BY>
+DESCRIPTION: Initial tag for nested company information that filed the submission. The relevant tag is required as a filing is being made on behalf of more than one Filer (person or entity).
+LENGTH: Tag only
+END TAG: </FILED-BY>
+46
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: SUBJECTCOMPANY
+TAG: <SUBJECT-COMPANY>
+DESCRIPTION: Initial tag for nested company information. Related data will be grouped together depending on submission type. The relevant tag is optional and repeatable as a filing is being made on behalf of more than one Filer (person or entity).
+LENGTH: Tag only
+END TAG: </SUBJECT-COMPANY>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: REPORTING OWNER
+TAG: <REPORTING-OWNER>
+DESCRIPTION: Initial tag for nested owner information. Related data will be grouped together depending on submission type. The relevant tag will be reported for each grouping of company data. The relevant tag is optional and repeatable as a filing is being made on behalf of more than one Filer (person or entity).
+LENGTH: Tag only
+END TAG: </REPORTING-OWNER>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: ISSUER
+TAG: <ISSUER>
+DESCRIPTION: Initial tag for nested company information. Related data will be grouped together depending on submission type. The relevant tag is required as a filing is being made on behalf of more than one Filer (person or entity).
+LENGTH: Tag only
+END TAG: </ISSUER>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: SERIAL COMPANY
+TAG: <SERIAL-COMPANY>
+DESCRIPTION: Initial tag for nested company information. Related data will be grouped together depending on submission type. The relevant tag will be reported for 47 each grouping of company data. The relevant tag is optional and repeatable
+as a filing is being made on behalf of more than one Filer (person or entity).
+LENGTH: Tag only
+END TAG: </SERIAL-COMPANY>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: FILED FOR
+TAG: <FILED-FOR>
+DESCRIPTION: Initial tag for nested company information. Related data will be grouped together depending on submission type. The relevant tag will be reported for each grouping of company data. The relevant tag is optional and repeatable as a filing is being made on behalf of more than one Filer (person or entity).
+This tag nest is used only in dissem headers for SEC Uploads (<CONFORMED- SUBMISSION-TYPE>UPLOAD).
+LENGTH: Tag only
+END TAG: </FILED-FOR>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: COMPANY DATA
+TAG: <COMPANY-DATA>
+DESCRIPTION: Initial tag for nested company information, related data will be grouped together. The information enclosed in this grouping represent the latest company conformed data submitted to the SEC. Required in each Filer nest.
+LENGTH: Tag only
+END TAG: </COMPANY-DATA>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: OWNER DATA
+TAG: <OWNER-DATA>
+DESCRIPTION: Initial tag for nested owner information, related data will be grouped together. The information enclosed in this grouping represents the latest owner conformed data submitted to the SEC. Required in each reporting- owner nest.
+LENGTH: Tag only
+END TAG: </OWNER-DATA>
+48
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: COMPANY/OWNERCONFORMED
+NAME TAG: <CONFORMED-NAME>
+DESCRIPTION: Filer/Registrant/Owner conformed name as it appears in the SEC's database.  Required in each company data nest.
+LENGTH: 150
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: CIK
+TAG: <CIK>
+DESCRIPTION: Filer/Registrant Central Index Key, which was supplied by the SEC following receipt of the Form ID. Required in each company data nest and Merger series and classes (contracts) information.
+LENGTH: 10
+END TAG: NA
+CHARACTERISTIC: Numeric
+LIMITS: 0000000001-9999999999
+FORMAT: NA
+
+DATA ELEMENT: SIC
+TAG: <ASSIGNED-SIC>
+DESCRIPTION: Company's Standard Industrial Classification code. Required in each company data nest.
+LENGTH: 4
+END TAG: NA
+CHARACTERISTIC: Numeric
+LIMITS: Values taken from the SIC code file/table on
+EDGAR. FORMAT: NA
+
+DATA ELEMENT: RELATIONSHIP
+TAG: <RELATIONSHIP>
+DESCRIPTION: Identifies the filer’s relationship with the company, e.g., Director, Officer etc.
+LENGTH: 10
+49
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: IRS NUMBER
+TAG: <IRS-NUMBER>
+DESCRIPTION: Filer/Registrant/SubjectCompany/Issuer IRSnumber.  Required in each subject company tag nest. Serial Company IRS Number is not disseminated.
+LENGTH: 10
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: 99-9999999
+
+DATA ELEMENT: STATE OF INCORPORATION
+TAG: <STATE-OF-INCORPORATION>
+DESCRIPTION: Company State of Incorporation. Optional.
+LENGTH: 2
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: Values from the State and Country Codes held in EDGAR.
+FORMAT: NA
+
+DATA ELEMENT: FISCAL YEAR END
+TAG: <FISCAL-YEAR-END>
+DESCRIPTION: Company Fiscal Year End. Optional.
+LENGTH: 4
+END TAG: NA
+CHARACTERISTIC: Date
+LIMITS: NA
+FORMAT: MMDD
+
+DATA ELEMENT: FILING-VALUES
+TAG: <FILING-VALUES>
+DESCRIPTION: Initial tag for nested filing values. A form may be filed under more than 1 act. Required and Repeatable within each filer nest, except filed by
+LENGTH: Tag only
+END TAG: </FILING-VALUES>
+CHARACTERISTIC: NA
+LIMITS: NA
+50
+FORMAT: NA
+
+DATA ELEMENT: DELETION
+TAG: <DELETION>
+DESCRIPTION: Identifies post acceptance correction file number deletion. This tag is present after filing values to specify the file number deleted.  Optional.
+LENGTH: Tag only
+END TAG: NA
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: FORM TYPE
+TAG: <FORM-TYPE>
+DESCRIPTION: Used to identify the form type filed for each filer. Required by Filer.
+LENGTH: 10
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric, spaces and hyphens allowed. Required in each filing
+values tag nest.
+LIMITS: Refer to EDGAR Filer Manual Volume II chapter entitled “Index To Forms”.
+FORMAT: NA
+
+DATA ELEMENT: SEC ACT
+TAG: <ACT>
+DESCRIPTION: Identification of the act(s) under which certain IM filings are made. The form type may be filed under more than one act. Required in each filing values tag nest.
+LENGTH: 2
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: Refer to FTTD published by SEC.
+FORMAT: NA
+
+DATA ELEMENT: SEC FILE NUMBER
+TAG: <FILE-NUMBER>
+DESCRIPTION: SEC Conformed File Number. Required in each filing values tag nest.
+LENGTH: 15
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: ###-#####[#][-XX[X][X]] where # is a number, [] is optional, and X is
+51
+alphanumeric.
+
+DATA ELEMENT: FILM NUMBER
+TAG: <FILM-NUMBER>
+DESCRIPTION: Also known as the Document Control Number (DCN) Microfilm number assigned to submission. Required for each Subject Company or Registrant, or Owner, not for Filed By or Issuer.
+LENGTH: 10
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: YY######
+
+DATA ELEMENT: BUSINESSADDRESS
+TAG: <BUSINESS-ADDRESS>
+DESCRIPTION: Company Business Address. Optional.
+LENGTH: Tag Only
+END TAG: </BUSINESS-ADDRESS>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: BUSINESS STREET 1
+TAG: <STREET1>
+DESCRIPTION: Company Business Street 1. Optional.
+LENGTH: 40
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: BUSINESS STREET 2
+TAG: <STREET2>
+DESCRIPTION: Company Business Street 2. Optional.
+LENGTH: 40
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: BUSINESS CITY
+TAG: <CITY>
+DESCRIPTION: Company Business City. Optional.
+LENGTH: 30
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: BUSINESS STATE
+TAG: <STATE>
+DESCRIPTION: Company Business State. Optional.
+LENGTH: 2
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: Values from the State and Country Codes table held in EDGAR.
+FORMAT: NA
+
+DATA ELEMENT: BUSINESS ZIP
+TAG: <ZIP>
+DESCRIPTION: Company Business Zip. Optional.
+LENGTH: 10
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: BUSINESS PHONE
+TAG: <PHONE>
+DESCRIPTION: Company Business Phone. Optional.
+LENGTH: 12
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: MAIL ADDRESS
+TAG: <MAIL-ADDRESS>
+DESCRIPTION: Company Mail Address. Optional.
+LENGTH: Tag Only
+END TAG: </MAIL-ADDRESS>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+53
+
+DATA ELEMENT: MAIL STREET 1
+TAG: <STREET1>
+DESCRIPTION: Company Mail Street 1. Optional.
+LENGTH: 40
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: MAIL STREET 2
+TAG: <STREET2>
+DESCRIPTION: Company Mail Street 2. Optional.
+LENGTH: 40
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: MAIL CITY
+TAG: <CITY>
+DESCRIPTION: Company Mail City. Optional.
+LENGTH: 30
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: MAIL STATE
+TAG: <STATE>
+DESCRIPTION: Company Mail State. Optional.
+LENGTH: 2
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: Values from the State and Country Codes file from OADPS.
+FORMAT: NA
+
+DATA ELEMENT: MAIL ZIP
+TAG: <ZIP>
+DESCRIPTION: Company Mail Zip. Optional.
+LENGTH: 10
+END TAG: NA
+54
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: FORMERCOMPANY
+TAG: <FORMER-COMPANY>
+DESCRIPTION: Former company name. Optional and repeatable up to three times.
+LENGTH: Tag only
+END TAG: </FORMER-COMPANY>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: FORMER OWNER NAME
+TAG: <FORMER-NAME>
+DESCRIPTION: Former reporting owner name. Optional and repeatable up to three times.
+LENGTH: Tag only
+END TAG: </FORMER-NAME>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: FORMER CONFORMED NAME
+TAG: <FORMER-CONFORMED-NAME>
+DESCRIPTION: Former Company name. Required in each former company tag nest.
+LENGTH: 150
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: DATE OF NAME CHANGE
+TAG: <DATE-CHANGED>
+DESCRIPTION: Date when company name was changed. Required in each former company
+tag nest.
+LENGTH: 8
+END TAG: NA
+CHARACTERISTIC: Date
+LIMITS: NA
+FORMAT: YYYYMMDD
+55
+
+DATA ELEMENT: PUBLIC REFERENCE ACCESSION NUMBER
+TAG: <PUBLIC-REFERENCE-ACC>
+DESCRIPTION: Present only in SEC UPLOADS. Reference to a specific submission (via Accession number). Optional.
+END TAG: NA
+LENGTH: 20
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: (10-CharCIK)+"-"+YY+"-"+(6-Char sequence #)
+
+DATA ELEMENT: SERIES AND CLASSES CONTRACTS DATA
+TAG: <SERIES-AND-CLASSES-CONTRACTS-DATA>
+DESCRIPTION: Initial tag for nested series and classes (contracts) information. Related data will be grouped together. The tag is required per relevant form type and investment company type.
+LENGTH: Tag only
+END TAG: </SERIES-AND-CLASSES-CONTRACTS-DATA>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: NEW SERIES AND CLASSES CONTRACTS
+TAG: <NEW-SERIES-AND-CLASSES-CONTRACTS>
+DESCRIPTION: Initial tag for identifying new series and classes (contracts) information.  Related data will be grouped together. The tag is optional per relevant form type.
+LENGTH: Tag only
+END TAG: </NEW-SERIES-AND-CLASSES-CONTRACTS>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: EXISTING SERIES AND CLASSES CONTRACTS
+TAG: <EXISTING-SERIES-AND-CLASSES-CONTRACTS>
+DESCRIPTION: Initial tag for identifying existing series and classes (contracts) information.  Related data will be grouped together. The tag is optional per relevant form type.
+LENGTH: Tag only
+END TAG: </EXISTING-SERIES-AND-CLASSES-CONTRACTS>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+56
+
+DATA ELEMENT: MERGER SERIES AND CLASSES CONTRACTS
+TAG: <MERGER-SERIES-AND-CLASSES-CONTRACTS>
+DESCRIPTION: Initial tag for identifying merger series and classes (contracts) information.  Related data will be grouped together. The tag is optional per relevant form type.
+LENGTH: Tag only
+END TAG: </MERGER-SERIES-AND-CLASSES-CONTRACTS>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: OWNER CIK
+TAG: <OWNER-CIK>
+DESCRIPTION: Series and Classes (Contracts) Owner Central Index Key, which was supplied by the SEC following receipt of the Form ID. Required for identifying new and existing series and classes (contracts).
+LENGTH: 10
+END TAG: NA
+CHARACTERISTIC: Numeric
+LIMITS: 0000000001-9999999999
+FORMAT: NA
+
+DATA ELEMENT: NEW SERIES
+TAG: <NEW-SERIES>
+DESCRIPTION: Initial tag for identifying new series information. Required and repeatable for New Series and Classes Contracts.
+LENGTH: Tag only
+END TAG: </NEW-SERIES>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: SERIES ID
+TAG: <SERIES-ID>
+DESCRIPTION: Series ID number, which was supplied by the SEC following receipt of new series information. Required for all scenarios (new, existing, merger) for
+series and classes (contracts).
+LENGTH: 10
+END TAG: NA
+CHARACTERISTIC: AlphaNumeric
+LIMITS: S000000001-S999999999
+FORMAT: S#########
+57
+
+DATA ELEMENT: SERIES NAME
+TAG: <SERIES-NAME>
+DESCRIPTION: Series name, which was supplied by the filer during receipt new series information. Required for all scenarios (new, existing, merger) for series and classes (contracts).
+LENGTH: 150
+END TAG: NA
+CHARACTERISTIC: AlphaNumeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: NEW CLASSES CONTRACTS
+TAG: <NEW-CLASSES-CONTRACTS>
+DESCRIPTION: Initial tag for identifying new classes (contracts) information. Required and repeatable for New Series and Classes Contracts.
+LENGTH: Tag only
+END TAG: </NEW-CLASSES-CONTRACTS>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: CLASSCONTRACT
+TAG: <CLASS-CONTRACT>
+DESCRIPTION: Initial tag for identifying new, existing, or merger class (contract) information.  Required and repeatable.
+LENGTH: Tag only
+END TAG: </CLASS-CONTRACT>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: CLASS CONTRACT ID
+TAG: <CLASS-CONTRACT-ID>
+DESCRIPTION: Class (contract) ID number, which was supplied by the SEC following receipt of new class (contract) information. Required for all scenarios (new,
+existing, merger) for series and classes (contracts).
+LENGTH: 10
+END TAG: NA
+CHARACTERISTIC: AlphaNumeric
+LIMITS: C000000001-C999999999
+FORMAT: C#########
+58
+
+DATA ELEMENT: CLASS CONTRACT NAME
+TAG: <CLASS-CONTRACT-NAME>
+DESCRIPTION: Class (contract) name, which was supplied by the filer during receipt of new class (contract) information. Required for all scenarios (new, existing, merger) for series and classes (contracts).
+LENGTH: 150
+END TAG: NA
+CHARACTERISTIC: AlphaNumeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: SERIES
+TAG: <SERIES>
+DESCRIPTION: Initial tag for identifying existing and merger series information. Required and repeatable for Existing and Merger Series and Classes Contracts.
+LENGTH: Tag only
+END TAG: </SERIES>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: CLASS CONTRACT TICKER SYMBOL
+TAG: <CLASS-CONTRACT-TICKER-SYMBOL>
+DESCRIPTION: Class (contract) ticker symbol, which was supplied by the filer during receipt of existing class (contract) information. Optional for all existing and merger scenarios for series and classes (contracts).
+LENGTH: 10
+END TAG: NA
+CHARACTERISTIC: AlphaNumeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: MERGER
+TAG: <MERGER>
+DESCRIPTION: Initial tag for identifying merger series and classes (contracts) information.  Required and repeatable for Merger Series and Classes Contracts.
+LENGTH: Tag only
+END TAG: </MERGER>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+59
+
+DATA ELEMENT: ACQUIRINGDATA
+TAG: <ACQUIRING-DATA>
+DESCRIPTION: Initial tag for identifying the acquiring series and class (contract) information as part of reporting merger information. Required for Merger Series and ClassesContracts.
+LENGTH: Tag only
+END TAG: </ACQUIRING-DATA>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: TARGET DATA
+TAG: <TARGET-DATA>
+DESCRIPTION: Initial tag for identifying the target series and class (contract) information as part of reporting merger information. Required and repeatable for Merger Series and Classes Contracts.
+LENGTH: Tag only
+END TAG: </TARGET-DATA>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: MULTI ACCESSION NUMBERS
+TAG: <MULTI-ACCESSION-NUMBERS>
+DESCRIPTION: Tag to hold multiple accession numbers for the form types NPORT-EX and NPORT-EX/A
+LENGTH: Tag only
+END TAG: </MULTI-ACCESSION-NUMBERS>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: WITHDRAWN ACCESSION NUMBER
+TAG: <WITHDRAWN -ACCESSION-NUMBER>
+DESCRIPTION: Tag to hold the withdrawn accession number for the form type ATS-N-W
+LENGTH: 20
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: (10-Char CIK)+"-"+YY+"-"+(6-Char sequence #)
+
+DATA ELEMENT: PREVIOUS ACCESSION NUMBER
+TAG: <PREVIOUS-ACCESSION-NUMBER>
+DESCRIPTION: Tag to hold the accession number being amended for the form types ATS-N/MA, 60 ATS-N/UA, ATS-N/CA, and ATS-N/OFA.
+LENGTH: 20
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: (10-Char CIK)+"-"+YY+"-"+(6-Char sequence #)
+
+DATA ELEMENT: FILER WELL-KNOWN SEASONED ISSUER
+TAG: <IS-FILER-A-WELL-KNOWN-SEASONED-ISSUER>
+DESCRIPTION: Identifies if the primary registrant meets the well-known seasoned issuer criteria noted in Rule 405 of Regulation C under the Securities Act of 1933 [17 CFR 230.405]. Optional.
+LENGTH: 1
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: The valid values for this element are “Y” or “N”.
+FORMAT: NA
+
+DATA ELEMENT: FILER NEW REGISTRANT
+TAG: <IS-FILER-A-NEW-REGISTRANT>
+DESCRIPTION: Identifies if the primary registrant has been registered or regulated under the Investment Company Act for less than 12 calendar months preceding the filing.  Optional.
+LENGTH: 1
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: The valid values for this element are “Y” or “N”.
+FORMAT: NA
+
+DATA ELEMENT: FILER PURSUANT TO GENERAL INSTRUCTIONS
+TAG: <FILED-PURSUANT-TO-GENERAL-INSTRUCTION-A2>
+DESCRIPTION: Identifies if the filing is pursuant to General Instruction A.2. Optional.
+LENGTH: 1
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: The valid values for this element are “Y” or “N”.
+FORMAT: NA
+
+DATA ELEMENT: FILER FUND 24F-2 ELIGIBLE
+TAG: <IS-FUND-24F2-ELIGIBLE>
+DESCRIPTION: Identifies if the fund is 24F-2 eligible. Optional.
+LENGTH: 1
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+DESCRIPTION: Company Business City. Optional.
+LENGTH: 30
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: BUSINESS STATE
+TAG: <STATE>
+DESCRIPTION: Company Business State. Optional.
+LENGTH: 2
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: Values from the State and Country Codes table held in EDGAR.
+FORMAT: NA
+
+DATA ELEMENT: BUSINESS ZIP
+TAG: <ZIP>
+DESCRIPTION: Company Business Zip. Optional.
+LENGTH: 10
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: BUSINESS PHONE
+TAG: <PHONE>
+DESCRIPTION: Company Business Phone. Optional.
+LENGTH: 12
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: MAIL ADDRESS
+TAG: <MAIL-ADDRESS>
+DESCRIPTION: Company Mail Address. Optional.
+LENGTH: Tag Only
+END TAG: </MAIL-ADDRESS>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+53
+
+DATA ELEMENT: MAIL STREET 1
+TAG: <STREET1>
+DESCRIPTION: Company Mail Street 1. Optional.
+LENGTH: 40
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: MAIL STREET 2
+TAG: <STREET2>
+DESCRIPTION: Company Mail Street 2. Optional.
+LENGTH: 40
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: MAIL CITY
+TAG: <CITY>
+DESCRIPTION: Company Mail City. Optional.
+LENGTH: 30
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: MAIL STATE
+TAG: <STATE>
+DESCRIPTION: Company Mail State. Optional.
+LENGTH: 2
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: Values from the State and Country Codes file from OADPS.
+FORMAT: NA
+
+DATA ELEMENT: MAIL ZIP
+TAG: <ZIP>
+DESCRIPTION: Company Mail Zip. Optional.
+LENGTH: 10
+END TAG: NA
+54
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: FORMERCOMPANY
+TAG: <FORMER-COMPANY>
+DESCRIPTION: Former company name. Optional and repeatable up to three times.
+LENGTH: Tag only
+END TAG: </FORMER-COMPANY>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: FORMER OWNER NAME
+TAG: <FORMER-NAME>
+DESCRIPTION: Former reporting owner name. Optional and repeatable up to three times.
+LENGTH: Tag only
+END TAG: </FORMER-NAME>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: FORMER CONFORMED NAME
+TAG: <FORMER-CONFORMED-NAME>
+DESCRIPTION: Former Company name. Required in each former company tag nest.
+LENGTH: 150
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: DATE OF NAME CHANGE
+TAG: <DATE-CHANGED>
+DESCRIPTION: Date when company name was changed. Required in each former company
+tag nest.
+LENGTH: 8
+END TAG: NA
+CHARACTERISTIC: Date
+LIMITS: NA
+FORMAT: YYYYMMDD
+55
+
+DATA ELEMENT: PUBLIC REFERENCE ACCESSION NUMBER
+TAG: <PUBLIC-REFERENCE-ACC>
+DESCRIPTION: Present only in SEC UPLOADS. Reference to a specific submission (via Accession number). Optional.
+END TAG: NA
+LENGTH: 20
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: (10-CharCIK)+"-"+YY+"-"+(6-Char sequence #)
+
+DATA ELEMENT: SERIES AND CLASSES CONTRACTS DATA
+TAG: <SERIES-AND-CLASSES-CONTRACTS-DATA>
+DESCRIPTION: Initial tag for nested series and classes (contracts) information. Related data will be grouped together. The tag is required per relevant form type and investment company type.
+LENGTH: Tag only
+END TAG: </SERIES-AND-CLASSES-CONTRACTS-DATA>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: NEW SERIES AND CLASSES CONTRACTS
+TAG: <NEW-SERIES-AND-CLASSES-CONTRACTS>
+DESCRIPTION: Initial tag for identifying new series and classes (contracts) information.  Related data will be grouped together. The tag is optional per relevant form type.
+LENGTH: Tag only
+END TAG: </NEW-SERIES-AND-CLASSES-CONTRACTS>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: EXISTING SERIES AND CLASSES CONTRACTS
+TAG: <EXISTING-SERIES-AND-CLASSES-CONTRACTS>
+DESCRIPTION: Initial tag for identifying existing series and classes (contracts) information.  Related data will be grouped together. The tag is optional per relevant form type.
+LENGTH: Tag only
+END TAG: </EXISTING-SERIES-AND-CLASSES-CONTRACTS>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+56
+
+DATA ELEMENT: MERGER SERIES AND CLASSES CONTRACTS
+TAG: <MERGER-SERIES-AND-CLASSES-CONTRACTS>
+DESCRIPTION: Initial tag for identifying merger series and classes (contracts) information.  Related data will be grouped together. The tag is optional per relevant form type.
+LENGTH: Tag only
+END TAG: </MERGER-SERIES-AND-CLASSES-CONTRACTS>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: OWNER CIK
+TAG: <OWNER-CIK>
+DESCRIPTION: Series and Classes (Contracts) Owner Central Index Key, which was supplied by the SEC following receipt of the Form ID. Required for identifying new and existing series and classes (contracts).
+LENGTH: 10
+END TAG: NA
+CHARACTERISTIC: Numeric
+LIMITS: 0000000001-9999999999
+FORMAT: NA
+
+DATA ELEMENT: NEW SERIES
+TAG: <NEW-SERIES>
+DESCRIPTION: Initial tag for identifying new series information. Required and repeatable for New Series and Classes Contracts.
+LENGTH: Tag only
+END TAG: </NEW-SERIES>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: SERIES ID
+TAG: <SERIES-ID>
+DESCRIPTION: Series ID number, which was supplied by the SEC following receipt of new series information. Required for all scenarios (new, existing, merger) for series and classes (contracts).
+LENGTH: 10
+END TAG: NA
+CHARACTERISTIC: AlphaNumeric
+LIMITS: S000000001-S999999999
+FORMAT: S#########
+57
+
+DATA ELEMENT: SERIES NAME
+TAG: <SERIES-NAME>
+DESCRIPTION: Series name, which was supplied by the filer during receipt new series information. Required for all scenarios (new, existing, merger) for series and classes (contracts).
+LENGTH: 150
+END TAG: NA
+CHARACTERISTIC: AlphaNumeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: NEW CLASSES CONTRACTS
+TAG: <NEW-CLASSES-CONTRACTS>
+DESCRIPTION: Initial tag for identifying new classes (contracts) information. Required and repeatable for New Series and Classes Contracts.
+LENGTH: Tag only
+END TAG: </NEW-CLASSES-CONTRACTS>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: CLASSCONTRACT
+TAG: <CLASS-CONTRACT>
+DESCRIPTION: Initial tag for identifying new, existing, or merger class (contract) information.  Required and repeatable.
+LENGTH: Tag only
+END TAG: </CLASS-CONTRACT>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: CLASS CONTRACT ID
+TAG: <CLASS-CONTRACT-ID>
+DESCRIPTION: Class (contract) ID number, which was supplied by the SEC following receipt of new class (contract) information. Required for all scenarios (new, existing, merger) for series and classes (contracts).
+LENGTH: 10
+END TAG: NA
+CHARACTERISTIC: AlphaNumeric
+LIMITS: C000000001-C999999999
+FORMAT: C#########
+58
+
+DATA ELEMENT: CLASS CONTRACT NAME
+TAG: <CLASS-CONTRACT-NAME>
+DESCRIPTION: Class (contract) name, which was supplied by the filer during receipt of new class (contract) information. Required for all scenarios (new, existing, merger) for series and classes (contracts).
+LENGTH: 150
+END TAG: NA
+CHARACTERISTIC: AlphaNumeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: SERIES
+TAG: <SERIES>
+DESCRIPTION: Initial tag for identifying existing and merger series information. Required and repeatable for Existing and Merger Series and Classes Contracts.
+LENGTH: Tag only
+END TAG: </SERIES>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: CLASS CONTRACT TICKER SYMBOL
+TAG: <CLASS-CONTRACT-TICKER-SYMBOL>
+DESCRIPTION: Class (contract) ticker symbol, which was supplied by the filer during receipt of existing class (contract) information. Optional for all existing and merger scenarios for series and classes (contracts).
+LENGTH: 10
+END TAG: NA
+CHARACTERISTIC: AlphaNumeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: MERGER
+TAG: <MERGER>
+DESCRIPTION: Initial tag for identifying merger series and classes (contracts) information.  Required and repeatable for Merger Series and Classes Contracts.
+LENGTH: Tag only
+END TAG: </MERGER>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+59
+
+DATA ELEMENT: ACQUIRINGDATA
+TAG: <ACQUIRING-DATA>
+DESCRIPTION: Initial tag for identifying the acquiring series and class (contract) information as part of reporting merger information. Required for Merger Series and ClassesContracts.
+LENGTH: Tag only
+END TAG: </ACQUIRING-DATA>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: TARGET DATA
+TAG: <TARGET-DATA>
+DESCRIPTION: Initial tag for identifying the target series and class (contract) information as part of reporting merger information. Required and repeatable for Merger Series and Classes Contracts.
+LENGTH: Tag only
+END TAG: </TARGET-DATA>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: MULTI ACCESSION NUMBERS
+TAG: <MULTI-ACCESSION-NUMBERS>
+DESCRIPTION: Tag to hold multiple accession numbers for the form types NPORT-EX and NPORT-EX/A
+LENGTH: Tag only
+END TAG: </MULTI-ACCESSION-NUMBERS>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: WITHDRAWN ACCESSION NUMBER
+TAG: <WITHDRAWN -ACCESSION-NUMBER>
+DESCRIPTION: Tag to hold the withdrawn accession number for the form type ATS-N-W
+LENGTH: 20
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: (10-Char CIK)+"-"+YY+"-"+(6-Char sequence #)
+
+DATA ELEMENT: PREVIOUS ACCESSION NUMBER
+TAG: <PREVIOUS-ACCESSION-NUMBER>
+DESCRIPTION: Tag to hold the accession number being amended for the form types ATS-N/MA, 60 ATS-N/UA, ATS-N/CA, and ATS-N/OFA.
+LENGTH: 20
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: (10-Char CIK)+"-"+YY+"-"+(6-Char sequence #)
+
+DATA ELEMENT: FILER WELL-KNOWN SEASONED ISSUER
+TAG: <IS-FILER-A-WELL-KNOWN-SEASONED-ISSUER>
+DESCRIPTION: Identifies if the primary registrant meets the well-known seasoned issuer criteria noted in Rule 405 of Regulation C under the Securities Act of 1933 [17 CFR 230.405]. Optional.
+LENGTH: 1
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: The valid values for this element are “Y” or “N”.
+FORMAT: NA
+
+DATA ELEMENT: FILER NEW REGISTRANT
+TAG: <IS-FILER-A-NEW-REGISTRANT>
+DESCRIPTION: Identifies if the primary registrant has been registered or regulated under the Investment Company Act for less than 12 calendar months preceding the filing.  Optional.
+LENGTH: 1
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: The valid values for this element are “Y” or “N”.
+FORMAT: NA
+
+DATA ELEMENT: FILER PURSUANT TO GENERAL INSTRUCTIONS
+TAG: <FILED-PURSUANT-TO-GENERAL-INSTRUCTION-A2>
+DESCRIPTION: Identifies if the filing is pursuant to General Instruction A.2. Optional.
+LENGTH: 1
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: The valid values for this element are “Y” or “N”.
+FORMAT: NA
+
+DATA ELEMENT: FILER FUND 24F-2 ELIGIBLE
+TAG: <IS-FUND-24F2-ELIGIBLE>
+DESCRIPTION: Identifies if the fund is 24F-2 eligible. Optional.
+LENGTH: 1
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: The valid values for this element are “Y” or “N”.
+FORMAT: NA

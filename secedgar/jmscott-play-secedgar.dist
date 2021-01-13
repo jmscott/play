@@ -23,6 +23,7 @@ PRODUCT=jmscott-play-secedgar
 LIBs="
 	jmscott-play-secedgar.dist
 	schema.sql
+	SGML-SUBMISSION
 "
 
 #BINs="
