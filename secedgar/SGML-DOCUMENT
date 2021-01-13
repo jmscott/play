@@ -1,0 +1,158 @@
+
+DATA ELEMENT: DOCUMENT
+TAG: <DOCUMENT>
+DESCRIPTION: Initial tag for nested document information. Required and repeatable.
+LENGTH: Tag only
+END TAG: </DOCUMENT>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: CONFORMED DOCUMENT TYPE
+TAG: <TYPE>
+DESCRIPTION: EDGAR conformed document type. Required in each document tag nest.
+LENGTH: 20
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: Refer to EDGAR Filer Manual Volume II chapter entitled “Index To Forms”.
+FORMAT: NA
+
+DATA ELEMENT: DOCUMENT SEQUENCE
+TAG: <SEQUENCE>
+DESCRIPTION: Document sequence number. Required in each document tag nest.
+LENGTH: 3
+END TAG: NA
+CHARACTERISTIC: Numeric
+LIMITS: 001-999
+FORMAT: NA
+
+DATA ELEMENT: FILENAME
+TAG: <FILENAME>
+DESCRIPTION: Document File name. Required in each document tag nest.
+LENGTH: 32
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+63
+FORMAT: NA
+
+DATA ELEMENT: DOCUMENTDESCRIPTION
+TAG: <DESCRIPTION>
+DESCRIPTION: Describes what is contained in the document. Optional.
+LENGTH: 255
+END TAG: NA
+CHARACTERISTIC: Alpha-Numeric
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: RENDERED XBRL DOCUMENT
+TAG: <DESCRIPTION>IDEA: XBRL DOCUMENT
+DESCRIPTION: Identifies a Rendered XBRL Document. Required for all Rendered XBRL
+documents.
+LENGTH: Tag only
+END TAG: NA
+CHARACTERISTICS: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: DOCUMENT TEXT
+TAG: <TEXT>
+DESCRIPTION: Identifies beginning of document text. Required in each document tag nest.
+LENGTH: Tag only
+END TAG: </TEXT>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: PDF
+TAG: <PDF>
+DESCRIPTION: Identifies beginning of UUencoded PDF document. Optional under Document
+text.
+LENGTH: Tag only
+END TAG: </PDF>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+64
+
+DATA ELEMENT: XML
+TAG: <XML>
+DESCRIPTION: Identifies beginning of XML document and XML tagging elements. Optional under Document text.
+LENGTH: Tag only
+END TAG: </XML>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: XBRL
+TAG: <XBRL>
+DESCRIPTION: Identifies beginning of XBRL document and XBRL tagging elements. Optional under Document text.
+LENGTH: Tag only
+END TAG: </XBRL>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: TABLE
+TAG: <TABLE>
+DESCRIPTION: Identifies beginning of table in text document. Optional and repeatable in Document text.
+LENGTH: Tag only
+END TAG: </TABLE>
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: CAPTION
+TAG: </CAPTION>
+DESCRIPTION: Identifies a table caption. Optional and repeatable in document text.
+LENGTH: Tag Only
+END TAG: NA
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+65
+
+DATA ELEMENT: STUB
+TAG: <S>
+DESCRIPTION: Identifies a stub header. Optional and repeatable in document text.
+LENGTH: Tag only
+END TAG: NA
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: COLUMN
+TAG: <C>
+DESCRIPTION: Identifies a column header. Optional and repeatable in document text.
+LENGTH: Tag only
+END TAG: NA
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: TABLE FOOTNOTES SECTION
+TAG: <FN>
+DESCRIPTION: Footnotes Section in a table. Optional and repeatable in document text.
+LENGTH: Tag only
+END TAG: NA
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: FOOTNOTES
+TAG: <F1>-<F99>
+DESCRIPTION: Footnotes in document text. Optional and repeatable in document text.
+LENGTH: Tag only
+END TAG: NA
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
+
+DATA ELEMENT: PAGE
+TAG: <PAGE>
+DESCRIPTION: Identifies Filer-indicated page break. Optional and repeatable in document text.
+LENGTH: Tag Only
+END TAG: NA
+CHARACTERISTIC: NA
+LIMITS: NA
+FORMAT: NA
