@@ -1,0 +1,31 @@
+#!/usr/bin/env perl
+#
+#  Synopsis:
+#	Extract counts of all ^<ELEMENT> fields in non-cooked SEC daily file.
+#  Usage:
+#	nc2element-count <9999999997-21-000077.nc
+#
+
+my %COUNT;
+
+my $ele_re = '[A-Z][A-Z0-9_-]+';
+
+while (<>) {
+	last if /^<TEXT>/;
+	next if m/^<\/$ele_re>/;
+	die "line is not element: $_" unless m/^<($ele_re)>/;
+	my $ele = $1;
+
+	#  panic for <ELEMENTS> with chars other than xml valid
+	#die "element contains unknown chars: $_" if m/^<[A-Z].*[^A-Z0-9_-].*>/;
+
+	if ($COUNT{$ele} > 0) {
+		$COUNT{$ele}++;
+	} else {
+		$COUNT{$ele} = 1;
+	}
+}
+
+foreach my $k (sort keys %COUNT) {
+	print "$k	$COUNT{$k}\n";
+}

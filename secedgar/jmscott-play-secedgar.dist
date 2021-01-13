@@ -31,16 +31,14 @@ LIBs="
 SBINs="
 	edgar-pull-daily
 	edgar-pull-index
+	nc2element_count
 "
 
-CGIBINs="
-"
+#CGIBINs=""
 
-HTDOCs="
-"
+#HTDOCs=""
 
-SRCs="
-"
+#SRCs=""
 
 #  Uncomment to create etc/ directory
 #ETC=""
