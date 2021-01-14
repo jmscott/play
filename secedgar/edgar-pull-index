@@ -18,7 +18,7 @@ test $# = 2 || die "wrong number of arguments: got $#, expected $#"
 
 YEAR=$1
 case "$YEAR" in
-[23][0-9][0-9][0-9])
+[123][0-9][0-9][0-9])
 	;;
 *)
 	die "unrecognized year: $YEAR"
