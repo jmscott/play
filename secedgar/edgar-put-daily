@@ -1,0 +1,45 @@
+#!/bin/bash
+#
+#  Synopsis:
+#	Do blob-put-file of daily pull edgar data.
+#  Usage:
+#	edgar-put-daily spool/20210129.nc.tar.gz
+#  Exit Status:
+#	0	ok, spool file put
+#	1	failure
+#
+
+PROG=$(basename $0)
+TMP_JSON=${TMPDIR:=/tmp}/$PROG.$$
+
+log()
+{
+	echo "$(date +'%Y/%m/%d %H:%M:%S'): $PROG: $@"
+}
+
+leave()
+{
+	rm -f $TMP_JSON || log "ERROR: rm tmp json failed: exit status=$?" >&2
+	log 'good bye, cruel world'
+}
+
+die()
+{
+	log "ERROR: $@" >&2
+	exit 1
+}
+
+log 'hello, world'
+trap 'leave' EXIT TERM INT
+
+test $# = 1 || die "wrong number of arguments: got $#, expected 1"
+DAILY=$1
+test -r $DAILY || die "can not read daily file: $DAILY"
+log "BLOBIO_SERVICE=$BLOBIO_SERVICE"
+log "PATH=$PATH"
+log "daily zip: $DAILY"
+log "daily size: $(du -h $DAILY | cut -f1)"
+
+log 'bio-put-file ...'
+
+exit 0
