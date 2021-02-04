@@ -3,7 +3,7 @@
 #  Synopsis:
 #	Pull list/index of YYYYMMDD.nc.tar.gz files for a particular quarter.
 #  Usage:
-#	pull-edgar-index 2021 1 >files
+#	edgar-pull-index 20210129.nc.tar.gz
 #
 
 BASE_URL=https://www.sec.gov/Archives/edgar/Feed/
