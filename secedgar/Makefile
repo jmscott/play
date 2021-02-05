@@ -40,3 +40,6 @@ world:
 	$(MAKE) $(MFLAGS) clean
 	$(MAKE) $(MFLAGS) distclean
 	$(MAKE) $(MFLAGS) install
+dev-links:
+	test -e data || ln -s . data
+	test -e run || ln -s . run
