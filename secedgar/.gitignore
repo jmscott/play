@@ -1,1 +1,4 @@
-spool/
+data
+run
+spool
+tmp
