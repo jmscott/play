@@ -31,6 +31,7 @@ LIBs="
 #"
 
 SBINs="
+	edgar-put-daily
 	edgar-pull-daily
 	edgar-pull-index
 	nc2element_count
