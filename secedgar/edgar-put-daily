@@ -109,7 +109,8 @@ blobio put								\
 	--service $BLOBIO_SERVICE					||
   die "blobio put final json failed: exit status=$?"
 
-log 'log to data/edgar-put-daily.json'
-echo "$(RFC3339Nano)	$JSON_BLOB" >>data/edgar-put-daily.json		||
-	die "echo >edgar-put-daily.json failed: exit status=$?"
+REQ="data/$PROG.jreq"
+log "log request as json: $REQ"
+echo "$(RFC3339Nano)	$JSON_BLOB" >>$REQ				||
+		die "echo request failed: exit status=$?"
 exit 0
