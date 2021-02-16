@@ -25,11 +25,12 @@
  */
 
 \set ON_ERROR_STOP 1
-SET search_path to jmscott,public;
+SET search_path to secedgar,public;
 
 BEGIN;
 
-CREATE SCHEMA IF NOT EXISTS jmscott;
+DROP SCHEMA IF EXISTS secedgar CASCADE;
+CREATE SCHEMA secedgar;
 
 DROP DOMAIN IF EXISTS siccode CASCADE;
 CREATE DOMAIN siccode AS text CHECK (
