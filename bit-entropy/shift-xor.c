@@ -20,7 +20,6 @@ main(int argc, char **argv) {
 
 	uint64_t blob_size, ignore_bits;
 
-	(void)argv;
 	if (argc != 3)
 		die("wrong argument count: expected 2 args");
 
