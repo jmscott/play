@@ -21,10 +21,11 @@
 PRODUCT=jmscott-play-secedgar
 
 LIBs="
-	jmscott-play-secedgar.dist
-	schema.sql
 	SGML-DOCUMENT
 	SGML-SUBMISSION
+	jmscott-play-secedgar.dist
+	psqlrc.example
+	schema.sql
 "
 
 #BINs="
