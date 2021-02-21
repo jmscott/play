@@ -7,7 +7,7 @@
 #	#  successfully pulled files pushed from $JMSCOTT_ROOT/tmp to
 #	#  $JMSCOTT_ROOT/spool
 #	#
-#	export JMSCOTT_ROOT=$HOME/opt/jmscott
+#	export SECEDGAR_ROOT=$HOME/opt/jmscott
 #
 #	#
 #	#  script needs gnu date for calculating 'yesterday', so, on macports,
