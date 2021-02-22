@@ -25,6 +25,7 @@ LIBs="
 	SGML-SUBMISSION
 	jmscott-play-secedgar.dist
 	psqlrc.example
+	report.sql
 	schema.sql
 "
 
