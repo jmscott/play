@@ -1,12 +1,14 @@
 #!/bin/bash
 #
 #  Synopsis:
-#	Do blob-put-file of daily pull edgar data.
+#	Do blob-put-file of daily pull edgar data and meta json.
 #  Usage:
 #	edgar-put-daily spool/20210129.nc.tar.gz
 #  Exit Status:
 #	0	ok, spool file put
 #	1	failure
+#  Note:
+#	Requires script $BLOBIO_ROOT/bin/bio-put-file.
 #
 
 PROG=$(basename $0)
