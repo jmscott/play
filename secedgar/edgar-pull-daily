@@ -4,8 +4,8 @@
 #	Pull yesterday's edgar reports from www.sec.gov/Archives/edgar/Feed
 #  Usage:
 #	#
-#	#  successfully pulled files pushed from $JMSCOTT_ROOT/tmp to
-#	#  $JMSCOTT_ROOT/spool
+#	#  successfully pulled files pushed from $SECEDGAR_ROOT/tmp to
+#	#  $SECEDGAR_ROOT/spool
 #	#
 #	export SECEDGAR_ROOT=$HOME/opt/jmscott
 #
@@ -15,7 +15,7 @@
 #	#
 #	PATH=/opt/local/libexec/gnubin:$PATH
 #
-#	LOG=$JMSCOTT_ROOT/log/edgar-pull-daily-$(date +%a).log
+#	LOG=$SECEDGAR_ROOT/log/edgar-pull-daily-$(date +%a).log
 #	13 2 * * Tue-Sat edgar-pull-daily >>$LOG 2>&1
 #  Note:
 #	Rename the script edgar-wget-daily.
@@ -73,13 +73,13 @@ get_quarter()
 }
 
 test $# = 0 || die "wrong count of cli arguments: got $#, expected 0"
-test "$JMSCOTT_ROOT" || die 'env var not defined: JMSCOTT_ROOT'
+test "$SECEDGAR_ROOT" || die 'env var not defined: SECEDGAR_ROOT'
 
 log 'hello, world'
 trap 'log good bye, cruel world' EXIT
 
-log "JMSCOTT_ROOT=$JMSCOTT_ROOT"
-cd $JMSCOTT_ROOT || die "cd jmscott failed: exit status=$?"
+log "SECEDGAR_ROOT=$SECEDGAR_ROOT"
+cd $SECEDGAR_ROOT || die "cd jmscott failed: exit status=$?"
 
 YEAR=$(date --date=yesterday +'%Y')
 test $? = 0 || die "date yester year failed: exit status=$?"
@@ -116,6 +116,10 @@ test -e $FILE || die "sec file does not exist: $FILE"
 
 log "moving zip to dir ../spool/: $FILE"
 mv $FILE ../spool || die "mv spool failed: exit status=$?"
+
+FILE="spool/$FILE"
+log "egar-put-daily: $FILE"
+edgar-put-daily $FILE || die "edgar-put-daily failed: exit status=$?"
 
 log 'listing tar files in spool ...'
 du -csh ../spool/2*.nc.tar.gz
