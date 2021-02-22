@@ -86,7 +86,7 @@ case $STATUS in
 	;;
 esac
 
-#  make summary blob tieing the whole jobs together.
+#  make summary blob tiing the whole job together.
 
 cat >$TMP_JSON <<END
 {
@@ -103,13 +103,13 @@ cat >$TMP_JSON <<END
 END
 JSON_BLOB=$BLOBIO_ALGORITHM:$(
 	blobio eat --algorithm $BLOBIO_ALGORITHM --input-path $TMP_JSON
-) || die "blobio eat final json failed: exit status=$?"
-log "final json blob: $JSON_BLOB"
+) || die "blobio eat request json failed: exit status=$?"
+log "request json blob: $JSON_BLOB"
 blobio put								\
 	--udig $JSON_BLOB						\
 	--input-path $TMP_JSON						\
 	--service $BLOBIO_SERVICE					||
-  die "blobio put final json failed: exit status=$?"
+  die "blobio put request json failed: exit status=$?"
 
 REQ="data/$PROG.jreq"
 log "log request as json: $REQ"
