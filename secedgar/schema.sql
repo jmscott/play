@@ -152,4 +152,28 @@ CREATE TABLE sic86_87
 
 \COPY sic86_87 FROM 'sic86_87.txt' DELIMITER E'\t' CSV HEADER
 
+DROP VIEW IF EXISTS daily_zip;
+CREATE VIEW daily_zip AS
+  WITH zips AS (
+    SELECT
+  	doc
+	  ->'secedgar.play.jmscott.github.com'
+	  ->'command-line'
+	AS doc
+      FROM
+    	jsonorg.jsonb_255
+      WHERE
+  	jsonb_path_exists(doc, '
+		$."secedgar.play.jmscott.github.com"
+			."command-line"
+			."command"
+		? (@ == "edgar-put-daily")
+	')
+) SELECT
+	(doc->>'zip-blob')::udig AS zip_blob,
+	doc->>'zip-path' AS zip_path
+    FROM
+    	zips
+;
+
 COMMIT;
