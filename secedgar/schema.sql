@@ -171,7 +171,8 @@ CREATE VIEW daily_zip AS
 	')
 ) SELECT
 	(doc->>'zip-blob')::udig AS zip_blob,
-	doc->>'zip-path' AS zip_path
+	doc->>'zip-path' AS zip_path,
+	(doc->>'now')::timestamptz AS now
     FROM
     	zips
 ;
