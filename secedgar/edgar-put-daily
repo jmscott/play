@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #  Synopsis:
-#	Do blob-put-file of daily pull edgar data and meta json.
+#	Do blob-put-file of daily edgar zip, plus meta job json.
 #  Usage:
 #	edgar-put-daily spool/20210129.nc.tar.gz
 #  Exit Status:
@@ -26,7 +26,8 @@ log()
 
 fault()
 {
-	echo "$(now): ERROR: $@" >>run/$PROG.fault
+	FAULT=$SECEDGAR_ROOT/run/$PROG.fault
+	echo "$(now): ERROR: $@" >>$FAULT
 }
 
 leave()
@@ -47,19 +48,20 @@ trap 'leave' EXIT TERM INT
 
 test $# = 1 || die "wrong number of arguments: got $#, expected 1"
 DAILY=$1
-test -r $DAILY || die "can not read daily file: $DAILY"
+log "daily file: $DAILY"
 log "BLOBIO_SERVICE=$BLOBIO_SERVICE"
 log "BLOBIO_ALGORITHM=$BLOBIO_ALGORITHM"
 
 log "SECEDGAR_ROOT=$SECEDGAR_ROOT"
 test -n "$SECEDGAR_ROOT" || die 'env not defined: SECEDGAR_ROOT'
-cd $SECEDGAR_ROOT || die "cd $SECEDGAR_ROOT failed: exit status=$?"
+test -d $SECEDGAR_ROOT || die "no directory: $SECEDGAR_ROOT"
 
 log "PATH=$PATH"
 log "daily zip: $DAILY"
 log "daily size: $(du -h $DAILY | cut -f1)"
 
 log "bio-put-file daily: ... $DAILY"
+log "tmp put json: $TMP_JSON"
 bio-put-file $DAILY >$TMP_JSON || die "bio-put-file failed: exit status=$?"
 
 ZIP_BLOB=$(grep '^	[@>][a-z]' $TMP_JSON)
@@ -67,13 +69,13 @@ test $? = 0 || die "grep zip blob json failed: exit status=$?"
 ZIP_BLOB=$(echo "$ZIP_BLOB" | cut -c3-)
 log "zip daily blob: $ZIP_BLOB"
 
-JSON_BLOB=$(grep '^	>>[a-z]' $TMP_JSON)
+PUT_JSON_BLOB=$(grep '^	>>[a-z]' $TMP_JSON)
 test $? = 0 || die "grep json blob failed: exit status=$?"
-JSON_BLOB=$(echo "$JSON_BLOB" | cut -c4-)
-log "json put blob: $JSON_BLOB"
+PUT_JSON_BLOB=$(echo "$PUT_JSON_BLOB" | cut -c4-)
+log "json put blob: $PUT_JSON_BLOB"
 
 #  paranoid check of correctness of udig
-blobio eat --udig $JSON_BLOB --service $BLOBIO_SERVICE
+blobio eat --udig $PUT_JSON_BLOB --service $BLOBIO_SERVICE
 STATUS=$?
 case $STATUS in
 0)
@@ -94,25 +96,25 @@ cat >$TMP_JSON <<END
 		"command-line" : {
 			"command": "$PROG",
 			"zip-path": "$(echo -n $DAILY | escape-json-string)",
-			"json-put-blob": "$JSON_BLOB",
+			"json-put-blob": "$PUT_JSON_BLOB",
 			"zip-blob": "$ZIP_BLOB",
 			"now": "$(RFC3339Nano)"
 		}
 	}
 }
 END
-JSON_BLOB=$BLOBIO_ALGORITHM:$(
+JOB_JSON=$BLOBIO_ALGORITHM:$(
 	blobio eat --algorithm $BLOBIO_ALGORITHM --input-path $TMP_JSON
-) || die "blobio eat request json failed: exit status=$?"
-log "request json blob: $JSON_BLOB"
+) || die "blobio eat job json failed: exit status=$?"
+log "job json blob: $JOB_JSON"
 blobio put								\
-	--udig $JSON_BLOB						\
+	--udig $JOB_JSON						\
 	--input-path $TMP_JSON						\
 	--service $BLOBIO_SERVICE					||
-  die "blobio put request json failed: exit status=$?"
+  die "blobio put job json failed: exit status=$?"
 
-REQ="data/$PROG.jreq"
-log "log request as json: $REQ"
-echo "$(RFC3339Nano)	$JSON_BLOB" >>$REQ				||
-		die "echo request failed: exit status=$?"
+DATA="data/$PROG.jjob"
+log "job json data: $DATA"
+echo "$(RFC3339Nano)	$JOB_JSON" >>$DATA				||
+		die "echo job >data failed: exit status=$?"
 exit 0
