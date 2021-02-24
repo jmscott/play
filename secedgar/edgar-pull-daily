@@ -81,7 +81,6 @@ test -n "$SECEDGAR_ROOT" || die 'env var not defined: SECEDGAR_ROOT'
 log "SECEDGAR_ROOT=$SECEDGAR_ROOT"
 cd $SECEDGAR_ROOT || die "cd SECEDGAR_ROOT failed: exit status=$?"
 
-log "profile: 
 PROFILE=etc/profile
 log "profile: $PROFILE"
 test -r $PROFILE || die "can not read etc/profile: $PROFILE"
