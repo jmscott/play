@@ -118,7 +118,7 @@ log "moving zip to dir ../spool/: $FILE"
 mv $FILE ../spool || die "mv spool failed: exit status=$?"
 
 FILE="spool/$FILE"
-log "egar-put-daily: $FILE"
+log "edgar-put-daily: $FILE"
 edgar-put-daily $FILE || die "edgar-put-daily failed: exit status=$?"
 
 log 'listing tar files in spool ...'
