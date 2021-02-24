@@ -44,7 +44,7 @@ log()
 die()
 {
 	MSG="ERROR: $@"
-	test -d run/ && echo "$(now): $MSG" >>run/$(basename $0).fault
+	echo "$(now): $MSG" >>run/$(basename $0).fault
 	log "$MSG" >&2
 	exit 1
 }
@@ -73,13 +73,22 @@ get_quarter()
 }
 
 test $# = 0 || die "wrong count of cli arguments: got $#, expected 0"
-test "$SECEDGAR_ROOT" || die 'env var not defined: SECEDGAR_ROOT'
 
 log 'hello, world'
 trap 'log good bye, cruel world' EXIT
 
+test -n "$SECEDGAR_ROOT" || die 'env var not defined: SECEDGAR_ROOT'
 log "SECEDGAR_ROOT=$SECEDGAR_ROOT"
-cd $SECEDGAR_ROOT || die "cd jmscott failed: exit status=$?"
+cd $SECEDGAR_ROOT || die "cd SECEDGAR_ROOT failed: exit status=$?"
+
+log "profile: 
+PROFILE=etc/profile
+log "profile: $PROFILE"
+test -r $PROFILE || die "can not read etc/profile: $PROFILE"
+. $PROFILE
+
+TMPDIR=${TMPDIR:=/tmp}
+log "TMPDIR=$TMPDIR"
 
 YEAR=$(date --date=yesterday +'%Y')
 test $? = 0 || die "date yester year failed: exit status=$?"
@@ -93,11 +102,7 @@ DAY=$(date --date=yesterday +'%d')
 test $? = 0 || die "date yester day failed: exit status=$?"
 log "report day: $DAY"
 
-mkdir -p spool || die "mkdir spool/ failed: exit status=$?"
-mkdir -p tmp || die "mkdir tmp/ failed: exit status=$?"
-mkdir -p run || die "mkdir run/ failed: exit status=$?"
-
-cd tmp || die "cd tmp failed: exit status=$?"
+cd $TMPDIR || die "cd tmp failed: exit status=$?"
 
 QTR=QTR$(get_quarter $MONTH)
 log "report quarter: $QTR"
@@ -110,18 +115,21 @@ log "feed url (see for missing): $FEED_URL"
 URL="$FEED_URL/$YEAR/$QTR/$FILE"
 log "pull url: $URL"
 
-log 'fetching from sec edgar ...'
-wget "$URL" || die "wget sec failed: exit status=$?"
+log 'pulling zip from sec edgar ...'
+wget --report-speed=bits --output-file - "$URL"			||
+		die "wget secedgar failed: exit status=$?"
 test -e $FILE || die "sec file does not exist: $FILE"
+test -s $FILE || die 'sec file is empty'
 
 log "moving zip to dir ../spool/: $FILE"
-mv $FILE ../spool || die "mv spool failed: exit status=$?"
+SPOOL=$SECEDGAR_ROOT/spool
+log "mv zip file to spool: $SPOOL"
+mv $FILE $SPOOL || die "mv spool failed: exit status=$?"
+log "return to root: $SECEDGAR_ROOT"
+cd $SECEDGAR_ROOT || die "return cd SECEDGAR_ROOT failed: exit status=$?"
 
 FILE="spool/$FILE"
 log "edgar-put-daily: $FILE"
-edgar-put-daily $FILE || die "edgar-put-daily failed: exit status=$?"
-
-log 'listing tar files in spool ...'
-du -csh ../spool/2*.nc.tar.gz
+TMPDIR=. edgar-put-daily $FILE || die "edgar-put-daily failed: exit status=$?"
 
 exit 0
