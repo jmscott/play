@@ -24,6 +24,7 @@ LIBs="
 	SGML-DOCUMENT
 	SGML-SUBMISSION
 	jmscott-play-secedgar.dist
+	profile.example
 	psqlrc.example
 	report.sql
 	schema.sql
@@ -52,17 +53,16 @@ SBINs="
 SPOOL=""
 
 #  Uncomment to create data/ directory
-#DATA=""
+DATA=""
 
 #  Uncomment to create run/ directory
-#RUN=""
+RUN=""
 
 #  Uncomment to create log/ directory
-#LOG=""
+LOG=""
 
 #  Uncomment to create cache/ directory
 #CACHE=""
 
 #  Uncomment to create tmp/ directory
 TMP=""
-

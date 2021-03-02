@@ -43,3 +43,6 @@ world:
 dev-links:
 	test -e data || ln -s . data
 	test -e run || ln -s . run
+	test -e etc || ln -s . etc
+	test -e spool || ln -s . spool
+	test -e profile || cp profile.example profile

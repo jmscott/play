@@ -1,0 +1,6 @@
+export SECEDGAR_ROOT=${SECEDGAR_ROOT:=$HOME/opt/secedgar}
+export BLOBIO_ROOT=/usr/local/blobio
+export BLOBIO_SERVICE=bio4:127.0.0.1:1798?tmo=255
+export BLOBIO_ALGORITHM=bc160
+
+PATH=$PATH:$BLOBIO_ROOT/bin
