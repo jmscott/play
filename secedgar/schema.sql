@@ -172,7 +172,7 @@ CREATE VIEW daily_zip AS
 ) SELECT
 	(doc->>'zip-blob')::udig AS zip_blob,
 	doc->>'zip-path' AS zip_path,
-	(doc->>'now')::timestamptz AS request_time
+	(doc->>'now')::timestamptz AS job_time
     FROM
     	zips
 ;
