@@ -34,10 +34,11 @@ LIBs="
 #"
 
 SBINs="
-	edgar-put-daily
 	edgar-pull-daily
 	edgar-pull-index
+	edgar-put-daily
 	nc2element_count
+	spool-nc-zip2attic
 "
 
 #CGIBINs=""

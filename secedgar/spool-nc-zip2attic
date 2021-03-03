@@ -1,0 +1,104 @@
+#
+#  Synopsis:
+#	Put *.nc.tar.gz files in spool/ and move to dir attic/YYYY/spool.
+#  Usage
+#	export SECEDGAR_ROOT=$HOME/opt/secedgar
+#	spool-nc-zip2attic >>log/spool-nc-zip2attic.log 2>&1
+#
+#	#  fault errors on dir $SECEDGAR_ROOT/run/
+#	cat $SECEDGAR_ROOT/run/spool-nc-zip2attic.fault
+#
+PSQL='psql --no-psqlrc --quiet'
+
+now()
+{
+	date +'%Y/%m/%d %H:%M:%S'
+}
+
+log()
+{
+	echo "$(now): $@"
+}
+
+die()
+{
+	MSG="ERROR: $@"
+	echo "$(now): $MSG" >>run/$(basename $0).fault
+	log "$MSG" >&2
+	exit 1
+}
+
+test $# = 0 || die "wrong number of arguments: got $#, expected 0"
+log 'hello, world'
+trap 'log good bye, cruel world' EXIT TERM QUIT
+
+test -n "$SECEDGAR_ROOT" || die 'env not defined: SECEDGAR_ROOT'
+log "SECEDGAR_ROOT=$SECEDGAR_ROOT"
+cd "$SECEDGAR_ROOT" || die "cd secedgar root failed: exit status=$?"
+
+test -r etc/profile || die "can not read profile: $(pwd)/etc/profile"
+. etc/profile
+
+log "PATH=$PATH"
+log 'dumping postgresql/PG env vars ...'
+env | grep '^PG[A-Z]' | fgrep -v PGPASSWORD | while read NV;  do
+	log "$NV"
+done
+
+log 'scanning spool/ directory ...'
+find spool								\
+	-follow								\
+	-maxdepth 1							\
+	-name '[23][0-9][0-2][0-9][01][0-9][0-3][0-9].nc.tar.gz'	|
+	while read ZP;  do
+		log "zip path: $ZP"
+		log 'does a put zip job exist ... ?'
+		ZP_EXISTS=$(
+  $PSQL --set zp="$ZP" <<END
+\\set ON_ERROR_STOP 1
+\\pset tuples_only
+\\pset format unaligned
+
+	SELECT EXISTS (
+	  SELECT
+		zip_path
+	  FROM
+	  	secedgar.daily_zip
+	  WHERE
+	  	zip_path = :'zp'
+	)
+END
+	)
+		test $? = 0 || die "psql zip exists failed: exit status=$?"
+		case "$ZP_EXISTS" in
+		f)
+			log 'zip job does not exist'
+			log 'putting edgar-put-daily ...'
+			edgar-put-daily $ZP				||
+				die "edgar-put-daily failed: exit status=$?"
+			;;
+		t)
+			log 'zip job exists, so put not done'
+			;;
+		*)
+			die "psql zip exists: unexpected output: $ZP_EXISTS"
+			;;
+		esac
+		YEAR=$(
+			echo "$ZP"					|
+			sed 's/spool\///'				|
+			sed 's/....\.nc\.tar\.gz//'
+		)
+		case "$YEAR" in
+		[23][0-9][0-2][0-9])
+			;;
+		*)
+			die "zip path: unknown year: $YEAR"
+			;;
+		esac
+		ATTIC=attic/$YEAR
+		log "attic path: $ATTIC"
+		mkdir -p $ATTIC	|| die "mkdir attic failed: exit status=$?"
+		log 'moving zip to attic ...'
+		mv -v $ZP $ATTIC || die "mv attic failed: exit status=$?"
+	done
