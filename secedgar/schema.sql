@@ -177,4 +177,25 @@ CREATE VIEW daily_zip AS
     	zips
 ;
 
+DROP DOMAIN IF EXISTS tsv_text CASCADE;
+CREATE DOMAIN tsv_text AS text
+  CHECK (
+	value ~ '[[:graph:]]'
+	AND
+	length(value) < 255
+  ) NOT NULL
+;
+
+DROP TABLE IF EXISTS tsv_SGML_SUBMISSION;
+CREATE TABLE tsv_SGML_SUBMISSION (
+	DATA_ELEMENT	tsv_text,
+	TAG		tsv_text,
+	DESCRIPTION	tsv_text,
+	LENGTH		tsv_text,
+	END_TAG		tsv_text,
+	CHARACTERISTIC	tsv_text,
+	LIMITS		tsv_text,
+	FORMAT		tsv_text
+);
+
 COMMIT;
