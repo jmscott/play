@@ -34,6 +34,7 @@ LIBs="
 #"
 
 SBINs="
+	SGML-SUBMISSION2tsv
 	edgar-pull-daily
 	edgar-pull-index
 	edgar-put-daily

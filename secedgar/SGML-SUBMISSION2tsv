@@ -1,0 +1,108 @@
+#!/usr/bin/env perl
+#
+#  Synopsis:
+#	Convert SGML-SUBMISSION document to tab separated spreadsheet.
+#  Note:
+#	Need to locate url on sec website for document SGML-SUBMISSION!
+#
+
+#
+#  Note:
+#	value __UNDEFINED__ must not be in SGML-SUBMISSION file!
+#
+my %COLUMN = (
+	'DATA ELEMENT' 		=> '__UNDEFINED__',
+	'TAG' 			=> '__UNDEFINED__',
+	'DESCRIPTION'		=> '__UNDEFINED__',
+	'LENGTH'		=> '__UNDEFINED__',
+	'END TAG'		=> '__UNDEFINED__',
+	'CHARACTERISTIC'	=> '__UNDEFINED__',
+	'LIMITS'		=> '__UNDEFINED__',
+	'FORMAT'		=> '__UNDEFINED__',
+);
+
+#  need to record active field being parsed due to format bugs
+#  in SGML-SUBMISSION file.  random numbers appear, as well as
+#  lines continuing from previous lines.  the pain never ends.
+
+my $active_field;		#  field being parsed
+
+sub flush {
+	return if $COLUMN{'DATA ELEMENT'} eq '__UNDEFINED__';
+
+	@COLUMN{ keys %COLUMN} =~ s/\t+/ /g;
+
+	print
+		$COLUMN{'DATA ELEMENT'}, "\t",
+		$COLUMN{'TAG'}, "\t",
+		$COLUMN{'DESCRIPTION'}, "\t",
+		$COLUMN{'LENGTH'}, "\t",
+		$COLUMN{'END TAG'}, "\t",
+		$COLUMN{'CHARACTERISTIC'}, "\t",
+		$COLUMN{'LIMITS'}, "\t",
+		$COLUMN{'FORMAT'},
+		"\n"
+	;
+
+	@COLUMN{ keys %COLUMN} = ('__UNDEFINED__') x scalar(%COLUMN);
+	undef $active_field;
+}
+
+print <<END;
+DATA ELEMENT	TAG	DESCRIPTION	LENGTH	END TAG	CHARACTERISTIC	LIMITS	FORMAT
+END
+
+while (my $line = <STDIN>) {
+	chomp $line;
+	if ($line =~ m/^\s*$/) {
+		flush;
+		next;
+	}
+	unless ($line =~ m/^([A-Z][A-Z ]*)\s*:\s*(.*)$/) {
+		#  random numbers appear in SEC file, for some reason.
+		#  just ignore.
+		next if $line =~ m/^[0-9]+$/;
+
+		#  assume untagged line is continuation of previous field.
+		die "not active field for continuation record"
+			unless $active_field
+		;
+
+		$COLUMN{$active_field} .= ' ' . $line;
+		next;
+	}
+	my ($fld, $val) = ($1, $2);
+
+	#  yet another bug in SEC SGML-SUBMISSION file.
+	#  'INFORMATION|NAME TAG' appear to be same as 'TAG'.
+
+	$fld = 'TAG' if $fld =~ /^(:?INFORMATION|NAME) TAG$/;
+	die "unknown field: $fld" unless $COLUMN{$fld};
+
+	if ($COLUMN{$fld} && $COLUMN{$fld} ne '__UNDEFINED__') {
+		if ($COLUMN{'DATA ELEMENT'} eq 'FILER FUND 24F-2 ELIGIBLE') {
+			next if
+				$fld eq 'DESCRIPTION' &&
+				$val eq 'Company Business City. Optional.'
+			;
+			next if
+				$fld eq 'LENGTH' &&
+				$val eq '30'
+			;
+			next if
+				$fld eq 'END TAG' &&
+				$val eq 'NA'
+			;
+			next if
+				$fld eq 'CHARACTERISTIC' &&
+				$val eq 'Alpha-Numeric'
+			;
+		}
+
+		die "column value duplicated: $fld: $COLUMN{$fld}"
+			if ($COLUMN{$fld} && $COLUMN{$fld} ne '__UNDEFINED__')
+		;
+	}
+	$COLUMN{$fld} = $val;
+	$active_field = $fld;
+}
