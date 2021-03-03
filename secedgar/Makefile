@@ -42,6 +42,7 @@ world:
 	$(MAKE) $(MFLAGS) install
 dev-links:
 	test -e attic || ln -s . attic
+	test -e sbin || ln -s . sbin
 	test -e data || ln -s . data
 	test -e run || ln -s . run
 	test -e etc || ln -s . etc
