@@ -1,0 +1,17 @@
+DATA ELEMENT	TAG	DESCRIPTION	LENGTH	END TAG	CHARACTERISTIC	LIMITS	FORMAT
+DOCUMENT	<DOCUMENT>	Initial tag for nested document information. Required and repeatable.	Tag only	</DOCUMENT>	NA	NA	NA
+CONFORMED DOCUMENT TYPE	<TYPE>	EDGAR conformed document type. Required in each document tag nest.	20	NA	Alpha-Numeric	Refer to EDGAR Filer Manual Volume II chapter entitled “Index To Forms”.	NA
+DOCUMENT SEQUENCE	<SEQUENCE>	Document sequence number. Required in each document tag nest.	3	NA	Numeric	001-999	NA
+FILENAME	<FILENAME>	Document File name. Required in each document tag nest.	32	NA	Alpha-Numeric	NA	NA
+DOCUMENTDESCRIPTION	<DESCRIPTION>	Describes what is contained in the document. Optional.	255	NA	Alpha-Numeric	NA	NA
+RENDERED XBRL DOCUMENT	<DESCRIPTION>IDEA: XBRL DOCUMENT	Identifies a Rendered XBRL Document. Required for all Rendered XBRL documents.	Tag only	NA	NA	NA	NA
+DOCUMENT TEXT	<TEXT>	Identifies beginning of document text. Required in each document tag nest.	Tag only	</TEXT>	NA	NA	NA
+PDF	<PDF>	Identifies beginning of UUencoded PDF document. Optional under Document text.	Tag only	</PDF>	NA	NA	NA
+XML	<XML>	Identifies beginning of XML document and XML tagging elements. Optional under Document text.	Tag only	</XML>	NA	NA	NA
+XBRL	<XBRL>	Identifies beginning of XBRL document and XBRL tagging elements. Optional under Document text.	Tag only	</XBRL>	NA	NA	NA
+TABLE	<TABLE>	Identifies beginning of table in text document. Optional and repeatable in Document text.	Tag only	</TABLE>	NA	NA	NA
+CAPTION	</CAPTION>	Identifies a table caption. Optional and repeatable in document text.	Tag Only	NA	NA	NA	NA
+STUB	<S>	Identifies a stub header. Optional and repeatable in document text.	Tag only	NA	NA	NA	NA
+COLUMN	<C>	Identifies a column header. Optional and repeatable in document text.	Tag only	NA	NA	NA	NA
+TABLE FOOTNOTES SECTION	<FN>	Footnotes Section in a table. Optional and repeatable in document text.	Tag only	NA	NA	NA	NA
+FOOTNOTES	<F1>-<F99>	Footnotes in document text. Optional and repeatable in document text.	Tag only	NA	NA	NA	NA
