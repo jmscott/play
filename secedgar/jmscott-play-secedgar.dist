@@ -22,6 +22,7 @@ PRODUCT=jmscott-play-secedgar
 
 LIBs="
 	SGML-DOCUMENT
+	SGML-DOCUMENT.tsv
 	SGML-SUBMISSION
 	SGML-SUBMISSION.tsv
 	jmscott-play-secedgar.dist
@@ -42,6 +43,7 @@ LIBs="
 #"
 
 SBINs="
+	SGML-DOCUMENT2tsv
 	SGML-SUBMISSION2tsv
 	edgar-pull-daily
 	edgar-pull-index
