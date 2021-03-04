@@ -19,7 +19,11 @@
  *		sic86_87.txt
  *		sic88_97.txt
  *  Note:
- *	More examples of \COPY are desparatly needed on the PG web site:
+ *	Add source url in comments for SGML files!
+ *
+ *	Add SQL COMMENTS to all tables, dork!
+ *
+ *	More examples of \COPY are desperately needed on the PG web site:
  *
  *		https://www.postgresql.org/docs/current/sql-copy.html
  */
@@ -182,8 +186,13 @@ CREATE DOMAIN tsv_text AS text
   CHECK (
 	value ~ '[[:graph:]]'
 	AND
-	length(value) < 255
+	length(value) < 512
+	AND
+	value !~ E'\t'
   ) NOT NULL
+;
+COMMENT ON DOMAIN tsv_text IS
+  'Text field extracted from SGML files of SEC'
 ;
 
 DROP TABLE IF EXISTS tsv_SGML_SUBMISSION;
@@ -197,5 +206,10 @@ CREATE TABLE tsv_SGML_SUBMISSION (
 	LIMITS		tsv_text,
 	FORMAT		tsv_text
 );
+COMMENT ON TABLE tsv_SGML_SUBMISSION IS
+  'Contents of scrubbed SEC file SGML_SUBMISSION.tsv'
+;
+
+\COPY tsv_SGML_SUBMISSION FROM 'SGML-SUBMISSION.tsv'
 
 COMMIT;
