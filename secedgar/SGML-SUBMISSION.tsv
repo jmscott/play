@@ -1,0 +1,138 @@
+DATA ELEMENT	TAG	DESCRIPTION	LENGTH	END TAG	CHARACTERISTIC	LIMITS	FORMAT
+SUBMISSION	<SUBMISSION>	Initial dissemination tag. Required.	Tag only	</SUBMISSION>	NA	NA	NA
+CORRECTION	<CORRECTION>	Identifies post acceptance correction transaction. This tag is only present for a correction to a filing. Optional.	Tag only	NA	NA	NA	NA
+TIMESTAMP	<TIMESTAMP>	Edgar Dissemination date-time, used for Post Acceptance Corrections only.  Defines the time which the correction is disseminated by EDGAR, supplied by the R/A Subsystem. Optional.	15	NA	Date	NA	YYYYMMDD:HHMMSS
+PAPER	<PAPER>	Identifies the submission as a Paper submission. Optional.	Tag only	NA	NA	NA	NA
+PRIVATE-TO-PUBLIC	<PRIVATE-TO-PUBLIC>	Identifies an SEC-approved private-to-public document dissemination. This tag is only present in a *.pr dissemination (a private-to-public dissemination).  Optional.	Tag only	NA	NA	NA	NA
+ACCESSION NUMBER	<ACCESSION-NUMBER>	EDGAR assigned identifier unique to each submission. Required.	20	NA	AlphaNumeric LIMITS: NA	__UNDEFINED__	(10-Char CIK)+"-"+YY+"-"+(6-Char sequence #)
+DELETION	<DELETION>	Identifies post acceptance correction filing deletion. This tag is present after accession number only when the filing is being deleted. Optional.	Tag only	NA	NA	NA	NA
+CONFORMED SUBMISSION TYPE	<TYPE>	Conformed type of submission being disseminated. Required.	20	NA	Alpha-Numeric, spaces and hyphens allowed.	Refer to EDGAR Filer Manual Volume II chapter entitled “Index To Forms”.	NA
+CATEGORY	<CATEGORY>	Category of submission being disseminated. Optional.	20	NA	Alphanumeric, spaces and hyphens allowed.	NA	NA
+CONFIRMINGCOPY	<CONFIRMING-COPY>	This tag defines this submission as being a confirming copy to a paper submission.	Tag only	NA	NA	NA	NA
+PUBLIC DOCUMENT COUNT	<PUBLIC-DOCUMENT-COUNT>	Number of PUBLIC documents in the submission, including rendered XBRL documents; if any.	3	NA	Numeric	001-999	NA
+REFERENCE 462B	<REFERENCE-462B>	Refers to a prospectus relating to a registration statement updated pursuant to Rule 462B. The value represents the file number of the prior registration statement. Optional.	15	NA	Alpha-Numeric	NA	###-#####[#][-XX[X][X]] where # is a number, [] is optional, and X is alphanumeric.
+REFERENCES429	<REFERENCES-429>	Refers to a prospectus relating to two or more registration statements updated pursuant to Rule 429. The value represents the file numbers of the prior registration statements. Optional & Repeatable.	15	NA	Alpha-Numeric	NA	###-#####[#][-XX[X][X]] where # is a number, [] is optional, and X is alphanumeric.
+CONFORMED PERIOD OF REPORT	<PERIOD>	End date of reporting period of filing. Optional.	8	NA	Date	NA	YYYYMMDD
+DEPOSITOR CIK	<DEPOSITOR-CIK>	The Central Index Key of the Depositor of an asset-backed securities offering. Optional	10	NA	Numeric	0000000001-9999999999	NA
+SPONSOR CIK	<SPONSOR-CIK>	The Central Index Key of the Sponsor of an asset-backed securities offering. Optional	10	NA	Numeric	0000000001-9999999999	NA
+ITEM	<ITEMS>	Identifies 1 or more items declared in the filings. Optional & Repeatable.  Applies to forms: 1-U, 1-U/A, 8-K, 8-K/A, 8-K12B, 8-K12B/A, 8-K12G3, 8- K12G3/A, 8-K15D5, 8-K15D5/A, ABS-15G, ABS-15G/A, D, D/A, REGDEX, REGDEX/A, SD, SD/A	4	NA	AlphaNumeric LIMITS: NA	__UNDEFINED__	#.##
+MA-I INDIVIDUAL	<MA-I_INDIVIDUAL>	This element specifies the filer supplied name of the individual for whom an MA-I or MA-I/A submission was submitted. Optional.	8	NA	Date	NA	YYYYMMDD
+FILED AS OF DATE	<FILING-DATE>	EDGAR assigned official filing date, or post acceptance new filing date (Post Acceptance Correction). Required.	8	NA	Date	NA	YYYYMMDD
+DATE AS OF CHANGE	<DATE-OF-FILING-DATE-CHANGE>	Date when the last Post Acceptance occurred. Optional.	8	NA	Date	NA	YYYYMMDD
+EFFECTIVENESSDATE	<EFFECTIVENESS-DATE>	The effective date of the submission. Optional.	8	NA	Date	NA	YYYYMMDD
+ACTION DATE	<ACTION-DATE>	The grant or issue date for Orders or Notices. Optional.	8	NA	Date	NA	YYYYMMDD
+RECEIVED DATE	<RECEIVED-DATE>	The received date for Orders or Notices. Optional.	8	NA	Date	NA	YYYYMMDD
+GROUP MEMBERS	<GROUP-MEMBERS>	This identifies group members in this submission. Optional and repeatable.	60	NA	Alphanumeric	NA	NA
+ABS RULE	<ABS-RULE>	This element identifies the ABS rule selected for the submission. Optional.	10	</ABS-RULE>	Alphanumeric	The valid values for this element are RULE-15GA1 or RULE15GA2. FORMAT: NA	__UNDEFINED__
+PERIOD START	<PERIOD-START>	This identifies start date of reporting for the submission. Optional.	8	NA	NA	NA	YYYYMMDD
+NO INITIAL PERIOD ACTIVITY	<NO-INITIAL-PERIOD-ACTIVITY>	Identifies if the Securitizer has any activity to report for the initial period pursuant to Rule 15Ga-1(c)(1). Optional.	1	NA	Alphanumeric	The valid values for this element are “Y” or “N”.	NA
+NO QUARTERLY ACTIVITY	<NO-QUARTERLY-ACTIVITY>	Identifies if the Securitizer has any activity to report for the quarterly period pursuant to Rule 15Ga-1(c)(2)(i). Optional.	1	NA	Alphanumeric	The valid values for this element are “Y” or “N”.	NA
+NO ANNUAL ACTIVITY	<NO-ANNUAL-ACTIVITY>	Identifies if the Securitizer has any activity to report for the annual period pursuant to Rule 15Ga-1(c)(2)(ii). Optional.	1	NA	Alphanumeric	The valid values for this element are “Y” or “N”.	NA
+REGISTEREDENTITY	<REGISTERED-ENTITY>	This element identifies if the ABS-15Ga-2 submission is for a registered or unregistered entity. Optional.	1	NA	Alphanumeric	The valid values for this element are “Y” or “N”.	NA
+ABS ASSET CLASS	<ABS-ASSET-CLASS>	This element specifies the ABS Asset Class for the submission. Optional.	50	</ABS-ASSET-CLASS>	Alphanumeric	NA	NA
+ISSUING ENTITY NAME	<ISSUING-ENTITY-NAME>	This element specifies the filer supplied name of the Issuing Entity associated with the submission. Optional.	150	NA	Alphanumeric	NA	NA
+FILER	<FILER>	Initial tag for nested Filer information. Related data will be grouped together depending on submission type. The relevant tag will be reported for each grouping of company data. The tag is required and repeatable as a filing is being made on behalf of more than one Filer (person or entity).	Tag only	</FILER>	NA	NA	NA
+DEPOSITOR	<DEPOSITOR>	Initial tag for nested Depositor information. Related data will be grouped together depending on submission type. The tag is optional.	Tag only	</DEPOSITOR>	NA	NA	NA
+SECURITIZER	<SECURITIZER>	Initial tag for nested Securitizer information. Related data will be grouped together depending on submission type. The tag is optional.	Tag only	</SECURITIZER>	NA	NA	NA
+ISSUING_ENTITY	<ISSUING_ENTITY>	Initial tag for nested Issuing Entity information. Related data will be grouped together depending on submission type. The tag is optional.	Tag only	</ISSUING_ENTITY>	NA	NA	NA
+UNDERWRITER	<UNDERWRITER>	Initial tag for nested Underwriter information. Related data will be grouped together depending on submission type. The tag is optional.	Tag only	</UNDERWRITER>	NA	NA	NA
+FILED BY	<FILED-BY>	Initial tag for nested company information that filed the submission. The relevant tag is required as a filing is being made on behalf of more than one Filer (person or entity).	Tag only	</FILED-BY>	NA	NA	NA
+SUBJECTCOMPANY	<SUBJECT-COMPANY>	Initial tag for nested company information. Related data will be grouped together depending on submission type. The relevant tag is optional and repeatable as a filing is being made on behalf of more than one Filer (person or entity).	Tag only	</SUBJECT-COMPANY>	NA	NA	NA
+REPORTING OWNER	<REPORTING-OWNER>	Initial tag for nested owner information. Related data will be grouped together depending on submission type. The relevant tag will be reported for each grouping of company data. The relevant tag is optional and repeatable as a filing is being made on behalf of more than one Filer (person or entity).	Tag only	</REPORTING-OWNER>	NA	NA	NA
+ISSUER	<ISSUER>	Initial tag for nested company information. Related data will be grouped together depending on submission type. The relevant tag is required as a filing is being made on behalf of more than one Filer (person or entity).	Tag only	</ISSUER>	NA	NA	NA
+SERIAL COMPANY	<SERIAL-COMPANY>	Initial tag for nested company information. Related data will be grouped together depending on submission type. The relevant tag will be reported for 47 each grouping of company data. The relevant tag is optional and repeatable as a filing is being made on behalf of more than one Filer (person or entity).	Tag only	</SERIAL-COMPANY>	NA	NA	NA
+FILED FOR	<FILED-FOR>	Initial tag for nested company information. Related data will be grouped together depending on submission type. The relevant tag will be reported for each grouping of company data. The relevant tag is optional and repeatable as a filing is being made on behalf of more than one Filer (person or entity). This tag nest is used only in dissem headers for SEC Uploads (<CONFORMED- SUBMISSION-TYPE>UPLOAD).	Tag only	</FILED-FOR>	NA	NA	NA
+COMPANY DATA	<COMPANY-DATA>	Initial tag for nested company information, related data will be grouped together. The information enclosed in this grouping represent the latest company conformed data submitted to the SEC. Required in each Filer nest.	Tag only	</COMPANY-DATA>	NA	NA	NA
+OWNER DATA	<OWNER-DATA>	Initial tag for nested owner information, related data will be grouped together. The information enclosed in this grouping represents the latest owner conformed data submitted to the SEC. Required in each reporting- owner nest.	Tag only	</OWNER-DATA>	NA	NA	NA
+COMPANY/OWNERCONFORMED	<CONFORMED-NAME>	Filer/Registrant/Owner conformed name as it appears in the SEC's database.  Required in each company data nest.	150	NA	Alpha-Numeric	NA	NA
+CIK	<CIK>	Filer/Registrant Central Index Key, which was supplied by the SEC following receipt of the Form ID. Required in each company data nest and Merger series and classes (contracts) information.	10	NA	Numeric	0000000001-9999999999	NA
+SIC	<ASSIGNED-SIC>	Company's Standard Industrial Classification code. Required in each company data nest.	4	NA	Numeric	Values taken from the SIC code file/table on EDGAR. FORMAT: NA	__UNDEFINED__
+RELATIONSHIP	<RELATIONSHIP>	Identifies the filer’s relationship with the company, e.g., Director, Officer etc.	10	NA	Alpha-Numeric	NA	NA
+IRS NUMBER	<IRS-NUMBER>	Filer/Registrant/SubjectCompany/Issuer IRSnumber.  Required in each subject company tag nest. Serial Company IRS Number is not disseminated.	10	NA	Alpha-Numeric	NA	99-9999999
+STATE OF INCORPORATION	<STATE-OF-INCORPORATION>	Company State of Incorporation. Optional.	2	NA	Alpha-Numeric	Values from the State and Country Codes held in EDGAR.	NA
+FISCAL YEAR END	<FISCAL-YEAR-END>	Company Fiscal Year End. Optional.	4	NA	Date	NA	MMDD
+FILING-VALUES	<FILING-VALUES>	Initial tag for nested filing values. A form may be filed under more than 1 act. Required and Repeatable within each filer nest, except filed by	Tag only	</FILING-VALUES>	NA	NA	NA
+DELETION	<DELETION>	Identifies post acceptance correction file number deletion. This tag is present after filing values to specify the file number deleted.  Optional.	Tag only	NA	NA	NA	NA
+FORM TYPE	<FORM-TYPE>	Used to identify the form type filed for each filer. Required by Filer.	10	NA	Alpha-Numeric, spaces and hyphens allowed. Required in each filing values tag nest.	Refer to EDGAR Filer Manual Volume II chapter entitled “Index To Forms”.	NA
+SEC ACT	<ACT>	Identification of the act(s) under which certain IM filings are made. The form type may be filed under more than one act. Required in each filing values tag nest.	2	NA	Alpha-Numeric	Refer to FTTD published by SEC.	NA
+SEC FILE NUMBER	<FILE-NUMBER>	SEC Conformed File Number. Required in each filing values tag nest.	15	NA	Alpha-Numeric	NA	###-#####[#][-XX[X][X]] where # is a number, [] is optional, and X is alphanumeric.
+FILM NUMBER	<FILM-NUMBER>	Also known as the Document Control Number (DCN) Microfilm number assigned to submission. Required for each Subject Company or Registrant, or Owner, not for Filed By or Issuer.	10	NA	Alpha-Numeric	NA	YY######
+BUSINESSADDRESS	<BUSINESS-ADDRESS>	Company Business Address. Optional.	Tag Only	</BUSINESS-ADDRESS>	NA	NA	NA
+BUSINESS STREET 1	<STREET1>	Company Business Street 1. Optional.	40	NA	Alpha-Numeric	NA	NA
+BUSINESS STREET 2	<STREET2>	Company Business Street 2. Optional.	40	NA	Alpha-Numeric	NA	NA
+BUSINESS CITY	<CITY>	Company Business City. Optional.	30	NA	Alpha-Numeric	NA	NA
+BUSINESS STATE	<STATE>	Company Business State. Optional.	2	NA	Alpha-Numeric	Values from the State and Country Codes table held in EDGAR.	NA
+BUSINESS ZIP	<ZIP>	Company Business Zip. Optional.	10	NA	Alpha-Numeric	NA	NA
+BUSINESS PHONE	<PHONE>	Company Business Phone. Optional.	12	NA	Alpha-Numeric	NA	NA
+MAIL ADDRESS	<MAIL-ADDRESS>	Company Mail Address. Optional.	Tag Only	</MAIL-ADDRESS>	NA	NA	NA
+MAIL STREET 1	<STREET1>	Company Mail Street 1. Optional.	40	NA	Alpha-Numeric	NA	NA
+MAIL STREET 2	<STREET2>	Company Mail Street 2. Optional.	40	NA	Alpha-Numeric	NA	NA
+MAIL CITY	<CITY>	Company Mail City. Optional.	30	NA	Alpha-Numeric	NA	NA
+MAIL STATE	<STATE>	Company Mail State. Optional.	2	NA	Alpha-Numeric	Values from the State and Country Codes file from OADPS.	NA
+MAIL ZIP	<ZIP>	Company Mail Zip. Optional.	10	NA	Alpha-Numeric	NA	NA
+FORMERCOMPANY	<FORMER-COMPANY>	Former company name. Optional and repeatable up to three times.	Tag only	</FORMER-COMPANY>	NA	NA	NA
+FORMER OWNER NAME	<FORMER-NAME>	Former reporting owner name. Optional and repeatable up to three times.	Tag only	</FORMER-NAME>	NA	NA	NA
+FORMER CONFORMED NAME	<FORMER-CONFORMED-NAME>	Former Company name. Required in each former company tag nest.	150	NA	Alpha-Numeric	NA	NA
+DATE OF NAME CHANGE	<DATE-CHANGED>	Date when company name was changed. Required in each former company tag nest.	8	NA	Date	NA	YYYYMMDD
+PUBLIC REFERENCE ACCESSION NUMBER	<PUBLIC-REFERENCE-ACC>	Present only in SEC UPLOADS. Reference to a specific submission (via Accession number). Optional.	20	NA	Alpha-Numeric	NA	(10-CharCIK)+"-"+YY+"-"+(6-Char sequence #)
+SERIES AND CLASSES CONTRACTS DATA	<SERIES-AND-CLASSES-CONTRACTS-DATA>	Initial tag for nested series and classes (contracts) information. Related data will be grouped together. The tag is required per relevant form type and investment company type.	Tag only	</SERIES-AND-CLASSES-CONTRACTS-DATA>	NA	NA	NA
+NEW SERIES AND CLASSES CONTRACTS	<NEW-SERIES-AND-CLASSES-CONTRACTS>	Initial tag for identifying new series and classes (contracts) information.  Related data will be grouped together. The tag is optional per relevant form type.	Tag only	</NEW-SERIES-AND-CLASSES-CONTRACTS>	NA	NA	NA
+EXISTING SERIES AND CLASSES CONTRACTS	<EXISTING-SERIES-AND-CLASSES-CONTRACTS>	Initial tag for identifying existing series and classes (contracts) information.  Related data will be grouped together. The tag is optional per relevant form type.	Tag only	</EXISTING-SERIES-AND-CLASSES-CONTRACTS>	NA	NA	NA
+MERGER SERIES AND CLASSES CONTRACTS	<MERGER-SERIES-AND-CLASSES-CONTRACTS>	Initial tag for identifying merger series and classes (contracts) information.  Related data will be grouped together. The tag is optional per relevant form type.	Tag only	</MERGER-SERIES-AND-CLASSES-CONTRACTS>	NA	NA	NA
+OWNER CIK	<OWNER-CIK>	Series and Classes (Contracts) Owner Central Index Key, which was supplied by the SEC following receipt of the Form ID. Required for identifying new and existing series and classes (contracts).	10	NA	Numeric	0000000001-9999999999	NA
+NEW SERIES	<NEW-SERIES>	Initial tag for identifying new series information. Required and repeatable for New Series and Classes Contracts.	Tag only	</NEW-SERIES>	NA	NA	NA
+SERIES ID	<SERIES-ID>	Series ID number, which was supplied by the SEC following receipt of new series information. Required for all scenarios (new, existing, merger) for series and classes (contracts).	10	NA	AlphaNumeric	S000000001-S999999999	S#########
+SERIES NAME	<SERIES-NAME>	Series name, which was supplied by the filer during receipt new series information. Required for all scenarios (new, existing, merger) for series and classes (contracts).	150	NA	AlphaNumeric	NA	NA
+NEW CLASSES CONTRACTS	<NEW-CLASSES-CONTRACTS>	Initial tag for identifying new classes (contracts) information. Required and repeatable for New Series and Classes Contracts.	Tag only	</NEW-CLASSES-CONTRACTS>	NA	NA	NA
+CLASSCONTRACT	<CLASS-CONTRACT>	Initial tag for identifying new, existing, or merger class (contract) information.  Required and repeatable.	Tag only	</CLASS-CONTRACT>	NA	NA	NA
+CLASS CONTRACT ID	<CLASS-CONTRACT-ID>	Class (contract) ID number, which was supplied by the SEC following receipt of new class (contract) information. Required for all scenarios (new, existing, merger) for series and classes (contracts).	10	NA	AlphaNumeric	C000000001-C999999999	C#########
+CLASS CONTRACT NAME	<CLASS-CONTRACT-NAME>	Class (contract) name, which was supplied by the filer during receipt of new class (contract) information. Required for all scenarios (new, existing, merger) for series and classes (contracts).	150	NA	AlphaNumeric	NA	NA
+SERIES	<SERIES>	Initial tag for identifying existing and merger series information. Required and repeatable for Existing and Merger Series and Classes Contracts.	Tag only	</SERIES>	NA	NA	NA
+CLASS CONTRACT TICKER SYMBOL	<CLASS-CONTRACT-TICKER-SYMBOL>	Class (contract) ticker symbol, which was supplied by the filer during receipt of existing class (contract) information. Optional for all existing and merger scenarios for series and classes (contracts).	10	NA	AlphaNumeric	NA	NA
+MERGER	<MERGER>	Initial tag for identifying merger series and classes (contracts) information.  Required and repeatable for Merger Series and Classes Contracts.	Tag only	</MERGER>	NA	NA	NA
+ACQUIRINGDATA	<ACQUIRING-DATA>	Initial tag for identifying the acquiring series and class (contract) information as part of reporting merger information. Required for Merger Series and ClassesContracts.	Tag only	</ACQUIRING-DATA>	NA	NA	NA
+TARGET DATA	<TARGET-DATA>	Initial tag for identifying the target series and class (contract) information as part of reporting merger information. Required and repeatable for Merger Series and Classes Contracts.	Tag only	</TARGET-DATA>	NA	NA	NA
+MULTI ACCESSION NUMBERS	<MULTI-ACCESSION-NUMBERS>	Tag to hold multiple accession numbers for the form types NPORT-EX and NPORT-EX/A	Tag only	</MULTI-ACCESSION-NUMBERS>	NA	NA	NA
+WITHDRAWN ACCESSION NUMBER	<WITHDRAWN -ACCESSION-NUMBER>	Tag to hold the withdrawn accession number for the form type ATS-N-W	20	NA	Alpha-Numeric	NA	(10-Char CIK)+"-"+YY+"-"+(6-Char sequence #)
+PREVIOUS ACCESSION NUMBER	<PREVIOUS-ACCESSION-NUMBER>	Tag to hold the accession number being amended for the form types ATS-N/MA, 60 ATS-N/UA, ATS-N/CA, and ATS-N/OFA.	20	NA	Alpha-Numeric	NA	(10-Char CIK)+"-"+YY+"-"+(6-Char sequence #)
+FILER WELL-KNOWN SEASONED ISSUER	<IS-FILER-A-WELL-KNOWN-SEASONED-ISSUER>	Identifies if the primary registrant meets the well-known seasoned issuer criteria noted in Rule 405 of Regulation C under the Securities Act of 1933 [17 CFR 230.405]. Optional.	1	NA	Alpha-Numeric	The valid values for this element are “Y” or “N”.	NA
+FILER NEW REGISTRANT	<IS-FILER-A-NEW-REGISTRANT>	Identifies if the primary registrant has been registered or regulated under the Investment Company Act for less than 12 calendar months preceding the filing.  Optional.	1	NA	Alpha-Numeric	The valid values for this element are “Y” or “N”.	NA
+FILER PURSUANT TO GENERAL INSTRUCTIONS	<FILED-PURSUANT-TO-GENERAL-INSTRUCTION-A2>	Identifies if the filing is pursuant to General Instruction A.2. Optional.	1	NA	Alpha-Numeric	The valid values for this element are “Y” or “N”.	NA
+FILER FUND 24F-2 ELIGIBLE	<IS-FUND-24F2-ELIGIBLE>	Identifies if the fund is 24F-2 eligible. Optional.	1	NA	Alpha-Numeric	NA	NA
+BUSINESS STATE	<STATE>	Company Business State. Optional.	2	NA	Alpha-Numeric	Values from the State and Country Codes table held in EDGAR.	NA
+BUSINESS ZIP	<ZIP>	Company Business Zip. Optional.	10	NA	Alpha-Numeric	NA	NA
+BUSINESS PHONE	<PHONE>	Company Business Phone. Optional.	12	NA	Alpha-Numeric	NA	NA
+MAIL ADDRESS	<MAIL-ADDRESS>	Company Mail Address. Optional.	Tag Only	</MAIL-ADDRESS>	NA	NA	NA
+MAIL STREET 1	<STREET1>	Company Mail Street 1. Optional.	40	NA	Alpha-Numeric	NA	NA
+MAIL STREET 2	<STREET2>	Company Mail Street 2. Optional.	40	NA	Alpha-Numeric	NA	NA
+MAIL CITY	<CITY>	Company Mail City. Optional.	30	NA	Alpha-Numeric	NA	NA
+MAIL STATE	<STATE>	Company Mail State. Optional.	2	NA	Alpha-Numeric	Values from the State and Country Codes file from OADPS.	NA
+MAIL ZIP	<ZIP>	Company Mail Zip. Optional.	10	NA	Alpha-Numeric	NA	NA
+FORMERCOMPANY	<FORMER-COMPANY>	Former company name. Optional and repeatable up to three times.	Tag only	</FORMER-COMPANY>	NA	NA	NA
+FORMER OWNER NAME	<FORMER-NAME>	Former reporting owner name. Optional and repeatable up to three times.	Tag only	</FORMER-NAME>	NA	NA	NA
+FORMER CONFORMED NAME	<FORMER-CONFORMED-NAME>	Former Company name. Required in each former company tag nest.	150	NA	Alpha-Numeric	NA	NA
+DATE OF NAME CHANGE	<DATE-CHANGED>	Date when company name was changed. Required in each former company tag nest.	8	NA	Date	NA	YYYYMMDD
+PUBLIC REFERENCE ACCESSION NUMBER	<PUBLIC-REFERENCE-ACC>	Present only in SEC UPLOADS. Reference to a specific submission (via Accession number). Optional.	20	NA	Alpha-Numeric	NA	(10-CharCIK)+"-"+YY+"-"+(6-Char sequence #)
+SERIES AND CLASSES CONTRACTS DATA	<SERIES-AND-CLASSES-CONTRACTS-DATA>	Initial tag for nested series and classes (contracts) information. Related data will be grouped together. The tag is required per relevant form type and investment company type.	Tag only	</SERIES-AND-CLASSES-CONTRACTS-DATA>	NA	NA	NA
+NEW SERIES AND CLASSES CONTRACTS	<NEW-SERIES-AND-CLASSES-CONTRACTS>	Initial tag for identifying new series and classes (contracts) information.  Related data will be grouped together. The tag is optional per relevant form type.	Tag only	</NEW-SERIES-AND-CLASSES-CONTRACTS>	NA	NA	NA
+EXISTING SERIES AND CLASSES CONTRACTS	<EXISTING-SERIES-AND-CLASSES-CONTRACTS>	Initial tag for identifying existing series and classes (contracts) information.  Related data will be grouped together. The tag is optional per relevant form type.	Tag only	</EXISTING-SERIES-AND-CLASSES-CONTRACTS>	NA	NA	NA
+MERGER SERIES AND CLASSES CONTRACTS	<MERGER-SERIES-AND-CLASSES-CONTRACTS>	Initial tag for identifying merger series and classes (contracts) information.  Related data will be grouped together. The tag is optional per relevant form type.	Tag only	</MERGER-SERIES-AND-CLASSES-CONTRACTS>	NA	NA	NA
+OWNER CIK	<OWNER-CIK>	Series and Classes (Contracts) Owner Central Index Key, which was supplied by the SEC following receipt of the Form ID. Required for identifying new and existing series and classes (contracts).	10	NA	Numeric	0000000001-9999999999	NA
+NEW SERIES	<NEW-SERIES>	Initial tag for identifying new series information. Required and repeatable for New Series and Classes Contracts.	Tag only	</NEW-SERIES>	NA	NA	NA
+SERIES ID	<SERIES-ID>	Series ID number, which was supplied by the SEC following receipt of new series information. Required for all scenarios (new, existing, merger) for series and classes (contracts).	10	NA	AlphaNumeric	S000000001-S999999999	S#########
+SERIES NAME	<SERIES-NAME>	Series name, which was supplied by the filer during receipt new series information. Required for all scenarios (new, existing, merger) for series and classes (contracts).	150	NA	AlphaNumeric	NA	NA
+NEW CLASSES CONTRACTS	<NEW-CLASSES-CONTRACTS>	Initial tag for identifying new classes (contracts) information. Required and repeatable for New Series and Classes Contracts.	Tag only	</NEW-CLASSES-CONTRACTS>	NA	NA	NA
+CLASSCONTRACT	<CLASS-CONTRACT>	Initial tag for identifying new, existing, or merger class (contract) information.  Required and repeatable.	Tag only	</CLASS-CONTRACT>	NA	NA	NA
+CLASS CONTRACT ID	<CLASS-CONTRACT-ID>	Class (contract) ID number, which was supplied by the SEC following receipt of new class (contract) information. Required for all scenarios (new, existing, merger) for series and classes (contracts).	10	NA	AlphaNumeric	C000000001-C999999999	C#########
+CLASS CONTRACT NAME	<CLASS-CONTRACT-NAME>	Class (contract) name, which was supplied by the filer during receipt of new class (contract) information. Required for all scenarios (new, existing, merger) for series and classes (contracts).	150	NA	AlphaNumeric	NA	NA
+SERIES	<SERIES>	Initial tag for identifying existing and merger series information. Required and repeatable for Existing and Merger Series and Classes Contracts.	Tag only	</SERIES>	NA	NA	NA
+CLASS CONTRACT TICKER SYMBOL	<CLASS-CONTRACT-TICKER-SYMBOL>	Class (contract) ticker symbol, which was supplied by the filer during receipt of existing class (contract) information. Optional for all existing and merger scenarios for series and classes (contracts).	10	NA	AlphaNumeric	NA	NA
+MERGER	<MERGER>	Initial tag for identifying merger series and classes (contracts) information.  Required and repeatable for Merger Series and Classes Contracts.	Tag only	</MERGER>	NA	NA	NA
+ACQUIRINGDATA	<ACQUIRING-DATA>	Initial tag for identifying the acquiring series and class (contract) information as part of reporting merger information. Required for Merger Series and ClassesContracts.	Tag only	</ACQUIRING-DATA>	NA	NA	NA
+TARGET DATA	<TARGET-DATA>	Initial tag for identifying the target series and class (contract) information as part of reporting merger information. Required and repeatable for Merger Series and Classes Contracts.	Tag only	</TARGET-DATA>	NA	NA	NA
+MULTI ACCESSION NUMBERS	<MULTI-ACCESSION-NUMBERS>	Tag to hold multiple accession numbers for the form types NPORT-EX and NPORT-EX/A	Tag only	</MULTI-ACCESSION-NUMBERS>	NA	NA	NA
+WITHDRAWN ACCESSION NUMBER	<WITHDRAWN -ACCESSION-NUMBER>	Tag to hold the withdrawn accession number for the form type ATS-N-W	20	NA	Alpha-Numeric	NA	(10-Char CIK)+"-"+YY+"-"+(6-Char sequence #)
+PREVIOUS ACCESSION NUMBER	<PREVIOUS-ACCESSION-NUMBER>	Tag to hold the accession number being amended for the form types ATS-N/MA, 60 ATS-N/UA, ATS-N/CA, and ATS-N/OFA.	20	NA	Alpha-Numeric	NA	(10-Char CIK)+"-"+YY+"-"+(6-Char sequence #)
+FILER WELL-KNOWN SEASONED ISSUER	<IS-FILER-A-WELL-KNOWN-SEASONED-ISSUER>	Identifies if the primary registrant meets the well-known seasoned issuer criteria noted in Rule 405 of Regulation C under the Securities Act of 1933 [17 CFR 230.405]. Optional.	1	NA	Alpha-Numeric	The valid values for this element are “Y” or “N”.	NA
+FILER NEW REGISTRANT	<IS-FILER-A-NEW-REGISTRANT>	Identifies if the primary registrant has been registered or regulated under the Investment Company Act for less than 12 calendar months preceding the filing.  Optional.	1	NA	Alpha-Numeric	The valid values for this element are “Y” or “N”.	NA
+FILER PURSUANT TO GENERAL INSTRUCTIONS	<FILED-PURSUANT-TO-GENERAL-INSTRUCTION-A2>	Identifies if the filing is pursuant to General Instruction A.2. Optional.	1	NA	Alpha-Numeric	The valid values for this element are “Y” or “N”.	NA
