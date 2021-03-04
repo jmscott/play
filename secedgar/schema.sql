@@ -229,4 +229,21 @@ COMMENT ON TABLE tsv_SGML_DOCUMENT IS
 
 \COPY tsv_SGML_DOCUMENT FROM 'SGML-DOCUMENT.tsv' DELIMITER E'\t' CSV HEADER
 
+DROP TABLE IF EXISTS nc_tar_file_element;
+CREATE TABLE nc_tar_file_element
+(
+	blob	udig	REFERENCES setcore.service,
+	file_path	text	CHECK (
+				file_path ~ '/^[[:graph:]]{1,255}$'
+			)
+			NOT NULL,
+	file_size	bigint CHECK (
+				file_size > 0
+			) NOT NULL,
+	PRIMARY KEY	(blob, file_path)
+);
+COMMENT ON TABLE nc_tar_file_element IS
+  'Files Elements in SEC EDGAR tar file YYYYMMDD.nc.tar.gz'
+;
+
 COMMIT;
