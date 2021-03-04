@@ -23,11 +23,19 @@ PRODUCT=jmscott-play-secedgar
 LIBs="
 	SGML-DOCUMENT
 	SGML-SUBMISSION
+	SGML-SUBMISSION.tsv
 	jmscott-play-secedgar.dist
+	naics.txt
+	naics2002.txt
+	naics2007.txt
+	naics2012.txt
+	naics2017.txt
 	profile.example
 	psqlrc.example
 	report.sql
 	schema.sql
+	sic86_87.txt
+	sic88_97.txt
 "
 
 #BINs="
