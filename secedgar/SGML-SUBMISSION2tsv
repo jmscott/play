@@ -80,6 +80,9 @@ while (my $line = <STDIN>) {
 	die "unknown field: $fld" unless $COLUMN{$fld};
 
 	if ($COLUMN{$fld} && $COLUMN{$fld} ne '__UNDEFINED__') {
+
+		#  skip syntax errors due to SEC in element
+		#  FILER FUND 24F-2 ELIGIBLE
 		if ($COLUMN{'DATA ELEMENT'} eq 'FILER FUND 24F-2 ELIGIBLE') {
 			next if
 				$fld eq 'DESCRIPTION' &&
