@@ -1,11 +1,9 @@
+*.fault
+*.txn
 attic
 data
-edgar-put-daily.fault
-edgar-put-daily.jjob
-edgar-put-daily.jreq
 etc
 profile
 run
 spool
-spool-nc-zip2attic.fault
 tmp

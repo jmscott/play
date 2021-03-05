@@ -113,8 +113,8 @@ blobio put								\
 	--service $BLOBIO_SERVICE					||
   die "blobio put job json failed: exit status=$?"
 
-DATA="data/$PROG.jjob"
-log "job json data: $DATA"
-echo "$(RFC3339Nano)	$JOB_JSON" >>$DATA				||
-		die "echo job >data failed: exit status=$?"
+TXN="data/$PROG.txn"
+log "job json transaction: $TXN"
+echo "$(RFC3339Nano)	$JOB_JSON" >>$TXN				||
+		die "echo job >txn failed: exit status=$?"
 exit 0
