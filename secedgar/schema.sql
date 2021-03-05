@@ -19,6 +19,8 @@
  *		sic86_87.txt
  *		sic88_97.txt
  *  Note:
+ *	Rename view 'daily_zip' to 'daily_tar_zip'.
+ *
  *	Add source url in comments for SGML files!
  *
  *	Add SQL COMMENTS to all tables, dork!
