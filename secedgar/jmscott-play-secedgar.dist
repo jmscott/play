@@ -48,6 +48,7 @@ SBINs="
 	edgar-pull-daily
 	edgar-pull-index
 	edgar-put-daily
+	nc-tar2file-element
 	nc2element_count
 	spool-nc-zip2attic
 "
