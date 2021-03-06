@@ -176,7 +176,7 @@ CREATE VIEW daily_zip AS
 		? (@ == "edgar-put-daily")
 	')
 ) SELECT
-	(doc->>'zip-blob')::udig AS zip_blob,
+	(doc->>'zip-blob')::udig AS blob,
 	doc->>'zip-path' AS zip_path,
 	(doc->>'now')::timestamptz AS job_time
     FROM

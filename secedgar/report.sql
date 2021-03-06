@@ -28,7 +28,7 @@ WITH put_daily AS (
 	')
 ), recent_zip AS(
   SELECT
-  	(doc->>'zip-blob')::udig AS zip_blob,
+  	(doc->>'zip-blob')::udig AS blob,
   	substring(doc->>'zip-path' FROM '[^/]+$') AS zip_name
     FROM
     	put_daily
@@ -39,19 +39,19 @@ WITH put_daily AS (
 )
 SELECT
 	count(d.doc) || ' Invocations' AS "edgar-put-daily",
-	min((d.doc->'now')::text::timestamp) AS "Earliest Time",
-	max((d.doc->'now')::text::timestamp) AS "Recent Time",
+	min((d.doc->'now')::text::timestamp) AS "Earliest Job Time",
+	max((d.doc->'now')::text::timestamp) AS "Recent Job Time",
 	r.zip_name AS "Recent Zip",
-	r.zip_blob AS "Recent Blob",
+	r.blob AS "Recent Zip Blob",
 	pg_size_pretty(bc.byte_count) AS "Zip Size"
   FROM
  	put_daily d,
 	recent_zip r
 	  JOIN setcore.byte_count bc ON (
-	  	bc.blob = r.zip_blob
+	  	bc.blob = r.blob
 	  )
   GROUP BY
-  	r.zip_blob,
+  	r.blob,
 	r.zip_name,
 	bc.byte_count
   ORDER BY
