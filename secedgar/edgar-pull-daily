@@ -44,7 +44,8 @@ log()
 die()
 {
 	MSG="ERROR: $@"
-	echo "$(now): $MSG" >>run/$(basename $0).fault
+	RUN=$SECEDGAR_ROOT/run
+	test -w "$RUN" && echo "$(now): $MSG" >>$RUN/$(basename $0).fault
 	log "$MSG" >&2
 	exit 1
 }
