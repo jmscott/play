@@ -24,6 +24,7 @@ PRODUCT=secedgar-www.dist
 
 LIBs="
 	apache2-vhost.conf.example
+	local-darwin.mk.example
 	secedgar-www.dist
 "
 

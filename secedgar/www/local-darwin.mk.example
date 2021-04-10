@@ -1,0 +1,8 @@
+#
+#  Synopsis:
+#	Local configuration for Makefile
+#
+JMSCOTT_ROOT=/usr/local/jmscott
+DIST_USER=jmscott
+DIST_GROUP=staff
+DIST_ROOT=/Users/jmscott/opt/secedgar
