@@ -38,6 +38,7 @@ HTDOCs="
 	index.shtml
 	nav.shtml
 	screen.css
+	template.shtml
 "
 ETC=""
 

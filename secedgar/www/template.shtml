@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8" />
+  <title>SECEdgar Dashboard - EDIT ME</title>
+  <link
+    href="/screen.css"
+    rel="stylesheet"
+    type="text/css"
+  />
+ </head>
+
+ <body>
+  <div id="container">
+   <!--#include virtual="/header.shtml" -->
+   <!--#include virtual="/navigation.shtml" -->
+   <div id="content">
+    <h2>Secondary Header - EDIT ME</h2>
+    <p>
+     Content goes here.
+    </p>
+   </div>
+   <!--#include virtual="footer.shtml" -->
+  </div>
+ </body>
+</html>
