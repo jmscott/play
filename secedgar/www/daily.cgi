@@ -16,8 +16,11 @@
    <putter
      name="dl"
      content-type="text/html"
-   >
-   </putter>
+   ></putter>
+   <putter
+     name="text"
+     content-type="text/html"
+   ></putter>
   </out>
  </GET>
 </cgi>

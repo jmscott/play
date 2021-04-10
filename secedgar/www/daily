@@ -38,7 +38,7 @@ $CGI{GET}->{out}->{'query-args'}->{arg}->{class} = {
 #  'out' query argument must match one of the out putter names.
 #
 $CGI{GET}->{out}->{'query-args'}->{arg}->{out} = {
-	perl5_re	=> 	'dl|help',
+	perl5_re	=> 	'dl|text|help',
 	default		=>	'help',
 };
 #
@@ -52,6 +52,19 @@ $CGI{GET}->{out}->{putter}->{'dl'}->{'content-type'} = 'text/html';
 #
 #
 #  END: /cgi/GET/out/putter[@name='dl']
+#
+
+#
+#  BEGIN: /cgi/GET/out/putter[@name='text']
+#
+$CGI{GET}->{out}->{putter}->{'text'}->{name} = 'text';
+$CGI{GET}->{out}->{putter}->{'text'}->{'content-type'} = 'text/html';
+
+#
+#  BEGIN: /cgi/GET/out/putter[@name=text]/query-args
+#
+#
+#  END: /cgi/GET/out/putter[@name='text']
 #
 
 $CGI{GET}->{out}->{putter}->{help}->{name} = 'help';

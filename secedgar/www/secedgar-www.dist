@@ -28,6 +28,7 @@ LIBs="
 	secedgar-www.dist
 	daily.d/help.pl
 	daily.d/dl.pl
+	daily.d/text.pl
 "
 
 CGIBINs="

@@ -16,6 +16,7 @@
    <!--#include virtual="/nav.shtml" -->
    <div id="content">
     <h2>Daily Zip from Securities Exchange Commision</h2>
+    <h3><!--#include virtual="/cgi-bin/daily?out=text&class=query" --></h3>
     <!--#include virtual="/cgi-bin/daily?out=dl&class=query" -->
    </div>
    <!--#include virtual="/footer.shtml" -->
