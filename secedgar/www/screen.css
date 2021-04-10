@@ -5,40 +5,6 @@
  *	john.scott@americanmessaging.net, jmscott@setspace.com
  */
 
-/*
- *  Synopsis:
- *	Generic CSS hover for Microsoft Explorer
- *  Description:
- *	Microsoft Explorers 6->8 only support the :hover attribute for only the
- *	<a> element.  Most other browsers support :hover for html all elements.
- *	The javascript loaded from csshover3.htc will trigger events to 
- *	implement :hover for all elements.
- *
- *	Since csshover3.htc is only needed under IE, we exploit an odd bug in
- *	the MS interpretation of the root 'html' element.  Turns out that
- *	IE matches the css selector
- *
- *		* html body
- *
- *	to the 'body' element, whereas other browsers fail the match. IE
- *	appears to either interpret '*' as matching zero or more elements or 
- *	'html' as being a non root element.  All other browser interpret 'html'
- *	as the root element, so the match always fails.
- *
- *	Also, MS Explorer needs to interpret *.htc files as text/x-component,
- *	which seems to work under Windows 7/Explorer 8.  If the script fails
- *	then adding the following to an Apache server configuation may help:
- *
- *		AddType text/x-component .htc
- *
- *  Note:
- *	Not clear to me (jmscott) how expensive csshover3.htc is with 
- *	regard to swamping the javascript event queue.
- *  See:
- *	http://www.xs4all.nl/~peterned/csshover.html
- *
- */
-
 span.title
 {
 	font-weight:	bold;
@@ -366,4 +332,12 @@ pre.code
 {
 	background-color:	black;
 	color:			lightgreen;
+}
+
+dl.query > dt
+{
+	color:			darkgreen;
+	background-color:	white;
+	font-size:		120%;
+	font-weight:		bold;
 }

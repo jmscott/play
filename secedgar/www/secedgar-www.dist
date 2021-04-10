@@ -26,12 +26,16 @@ LIBs="
 	apache2-vhost.conf.example
 	local-darwin.mk.example
 	secedgar-www.dist
+	daily.d/help.pl
+	daily.d/dl.pl
 "
 
 CGIBINs="
+	daily
 "
 
 HTDOCs="
+	daily-zip.shtml
 	env.shtml
 	footer.shtml
 	header.shtml
@@ -43,6 +47,7 @@ HTDOCs="
 ETC=""
 
 COMPILEs="
+	$CGIBINs
 "
 
 #SRCs="

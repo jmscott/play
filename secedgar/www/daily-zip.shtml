@@ -2,7 +2,7 @@
 <html>
  <head>
   <meta charset="utf-8" />
-  <title>SECEdgar Dashboard - EDIT ME</title>
+  <title>Daily Zip from SEC - SECEdgar Dashboard</title>
   <link
     href="/screen.css"
     rel="stylesheet"
@@ -15,10 +15,8 @@
    <!--#include virtual="/header.shtml" -->
    <!--#include virtual="/nav.shtml" -->
    <div id="content">
-    <h2>Secondary Header - EDIT ME</h2>
-    <p>
-     Content goes here.
-    </p>
+    <h2>Daily Zip from Securities Exchange Commision</h2>
+    <!--#include virtual="/cgi-bin/daily?out=dl&class=query" -->
    </div>
    <!--#include virtual="/footer.shtml" -->
   </div>

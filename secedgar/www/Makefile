@@ -52,7 +52,13 @@ install: all
 		-o $(WWW_USER)						\
 		-m u=xrw,g=x,o=						\
 		-d $(WWW_PREFIX)/cgi-bin
-	ln -s $(JMSCOTT_ROOT)/www/cgi-bin $(WWW_PREFIX)/cgi-bin/jmscott
+
+	test -e $(WWW_PREFIX)/cgi-bin/jmscott ||			\
+		ln -s $(JMSCOTT_ROOT)/www/cgi-bin $(WWW_PREFIX)/cgi-bin/jmscott
+
+	install -g $(DIST_GROUP) -o $(DIST_USER) -C -m ug=rx,o=         \
+                $(CGIBINs)                                              \
+                $(WWW_PREFIX)/cgi-bin
 	install								\
 		-g $(WWW_GROUP)						\
 		-o $(WWW_USER)						\
@@ -68,3 +74,6 @@ install: all
 
 dist: all
 	make-dist $(DIST)
+daily: daily.cgi
+	cgi2perl5 --source-path daily.cgi
+	chmod +x daily
