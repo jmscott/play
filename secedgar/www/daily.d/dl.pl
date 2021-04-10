@@ -18,7 +18,7 @@ my $q = dbi_pg_select(
 SELECT
 	dz.zip_path,
 	dz.blob,
-	to_char(dz.job_time, 'FMDay, FMDD  HH12:MI:SS') AS job_time,
+	to_char(dz.job_time, 'Mon dd, yyyy') AS job_time,
 	pg_size_pretty(bc.byte_count) AS byte_count
   FROM
   	secedgar.daily_zip dz
