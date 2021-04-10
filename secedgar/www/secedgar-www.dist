@@ -1,0 +1,67 @@
+#
+#  Synopsis:
+#	SECEdgar Configuration file read by make-dist to build tar files.
+#  See:
+#	https://github.com/jmscott/play/secedgar
+#  Note:
+#	For a GNU Makefile to extract the shell variables defined in this
+#	dist file, include the following line in Makefile:
+#
+#		DIST=bpole-raspi-www.dist
+#
+#		BINs := $(shell (. ./$(DIST) && echo $$BINs))
+#		SBINs := $(shell (. ./$(DIST) && echo $$SBINs))
+#		LIBs := $(shell (. ./$(DIST) && echo $$LIBs))
+#		HTDOCs := $(shell (. ./$(DIST) && echo $$HTDOCs))
+#		CGIBINs := $(shell (. ./$(DIST) && echo $$CGIBINs))
+#
+
+#  Define PRODUCT to change name of tar file from $(basename $(pwd))
+#  to, say, foobar-YYYYMMDD_hhmmss.tar.bz2
+
+#PRODUCT=foobar
+PRODUCT=secedgar-www.dist
+
+LIBs="
+	secedgar-www.dist
+"
+
+CGIBINs="
+"
+
+HTDOCs="
+	env.shtml
+	footer.shtml
+	header.shtml
+	index.shtml
+	nav.shtml
+	screen.css
+"
+ETC=""
+
+COMPILEs="
+"
+
+#SRCs="
+#"
+
+#  Uncomment to create etc/ directory
+ETC=""
+
+#  Uncomment to create spool/ directory
+#SPOOL=""
+
+#  Uncomment to create data/ directory
+#DATA=""
+
+#  Uncomment to create run/ directory
+#RUN=""
+
+#  Uncomment to create log/ directory
+#LOG=""
+
+#  Uncomment to create cache/ directory
+#CACHE=""
+
+#  Uncomment to create tmp/ directory
+#TMP=""

@@ -1,0 +1,369 @@
+/*
+ *  Synopsis:
+ *	Large, screen oriented style cascading style sheet.
+ *  Blame:
+ *	john.scott@americanmessaging.net, jmscott@setspace.com
+ */
+
+/*
+ *  Synopsis:
+ *	Generic CSS hover for Microsoft Explorer
+ *  Description:
+ *	Microsoft Explorers 6->8 only support the :hover attribute for only the
+ *	<a> element.  Most other browsers support :hover for html all elements.
+ *	The javascript loaded from csshover3.htc will trigger events to 
+ *	implement :hover for all elements.
+ *
+ *	Since csshover3.htc is only needed under IE, we exploit an odd bug in
+ *	the MS interpretation of the root 'html' element.  Turns out that
+ *	IE matches the css selector
+ *
+ *		* html body
+ *
+ *	to the 'body' element, whereas other browsers fail the match. IE
+ *	appears to either interpret '*' as matching zero or more elements or 
+ *	'html' as being a non root element.  All other browser interpret 'html'
+ *	as the root element, so the match always fails.
+ *
+ *	Also, MS Explorer needs to interpret *.htc files as text/x-component,
+ *	which seems to work under Windows 7/Explorer 8.  If the script fails
+ *	then adding the following to an Apache server configuation may help:
+ *
+ *		AddType text/x-component .htc
+ *
+ *  Note:
+ *	Not clear to me (jmscott) how expensive csshover3.htc is with 
+ *	regard to swamping the javascript event queue.
+ *  See:
+ *	http://www.xs4all.nl/~peterned/csshover.html
+ *
+ */
+
+span.title
+{
+	font-weight:	bold;
+	padding-right:	1em;
+}
+
+#container
+{
+	margin: 0 30px;
+	background: #fff;
+}
+
+header
+{
+	background:		#bcbec0;
+	padding:		20px;
+}
+
+header h1
+{
+	margin: 0;
+}
+
+#navigation
+{
+	float:		left;
+	width:		100%;
+	background:	#403f55;
+}
+
+#navigation ul
+{
+	list-style:	none;
+	margin:		0;
+	padding:	0;
+}
+
+#navigation ul li
+{
+	list-style-type: none;
+	display: inline;
+}
+
+#navigation li a
+{
+	display:		block;
+	float:			left;
+	padding:		5px 10px;
+	color:			white;
+	background-color:	#403f55;
+	text-decoration:	none;
+	border-right:		1px solid #fff;
+}
+
+#navigation li a:hover
+{
+	color:		#403f55;
+	background:	#bcbec0;
+}
+
+#content
+{
+	clear:		left;
+	padding:	20px;
+}
+
+h2
+{
+	color:			#403f55;
+	background-color:	white;
+	font-size:		160%;
+	margin:			0 0 .5em;
+	text-align:		center;
+}
+
+h3
+{
+	color:			#403f55;
+	background-color:	white;
+	font-size:		120%;
+	margin:			0 0 .5em;
+	text-align:		center;
+}
+
+footer
+{
+	font-size:	12px;
+	background:	#ccc;
+	text-align:	center;
+	padding:	20px;
+	height:		4%;
+}
+
+table.query caption
+{
+	font-size:		150%;
+	font-weight:		bold;
+	font-variant:		small-caps;
+	border-top:		2px solid #403f55;
+	border-left:		2px solid #403f55;
+	border-right:		2px solid #403f55;
+	padding-bottom:		0.75em;
+}
+
+table.query caption h1
+{
+	font-size:		140%;
+	font-weight:		bold;
+	background-color:	white;
+	color:			#403f55;
+}
+
+table.query caption h2
+{
+	font-size:		80%;
+	background-color:	white;
+	color:			#403f55;
+}
+
+table.query caption h3
+{
+	font-size:		60%;
+	background-color:	white;
+	color:			#403f55;
+}
+
+table.query
+{
+	border-spacing:		0.25em 0.25em;
+	width:			100%;
+	text-align:		left;
+	margin-top:		3em;
+}
+
+table.query th
+{
+	background:		white;
+	color:			#403f55;
+	font-size:		120%;
+	font-variant:		small-caps;
+	font-weight:		bold;
+}
+
+table.query thead th
+{
+	padding-bottom:		1em;
+	text-align:		left;
+}
+
+table.query tfoot th
+{
+	padding-top:		1em;
+	text-align:		center;
+}
+
+dl.raw dt
+{
+	flex-basis:		20%;
+	padding:		2px 4px;
+	background:		#403f55;
+	color:			#0f0;
+	text-align:		right;
+	font-weight:		bold;
+}
+
+dl.raw dd
+{
+	flex-basis:		70%;
+	flex-grow:		1;
+	margin:			0;
+	padding:		2px 4px;
+	border-bottom:		1px solid #403f55;
+}
+
+table.query td.fault, span.fault
+{
+	background-color:       #403f55;
+	color:			white;
+	border:			2px solid red;
+}
+
+table.query td.err, dl.raw dd.err, dl.raw dd.fault
+{
+	background-color:	pink;
+	color:			#403f55;
+}
+
+table.query td.warn, dl.raw dd.warn
+{
+	background-color:	yellow;
+	color:			#403f55;
+}
+
+table.query td.ok, dl.raw dd.ok
+{
+	background-color:	lightgreen;
+	color:			#403f55;
+}
+
+table.query td.action
+{
+	font-size:		75%;
+	background:		#fff;
+}
+
+table.query tr:hover td
+{
+	background:		#bcbec0;
+	color:			#403f55;
+}
+
+table.query tr.footer td
+{
+	text-align:		center;
+	background-color:	white;
+	color:			#403f55;
+	border-bottom:		2px solid #403f55;
+	border-left:		2px solid #403f55;
+	border-right:		2px solid #403f55;
+	padding:		1em;
+}
+
+span.warn
+{
+	background-color:	yellow;
+	color:			black;
+}
+
+span.err
+{
+	background-color:	pink;
+	color:			black;
+}
+
+span.ok
+{
+	background-color:	lightgreen;
+	color:			black;
+}
+
+dl.form dt
+{
+	font-weight:		bold;
+}
+
+dl.raw
+{
+	display:		flex;
+	flex-flow:		row wrap;
+	border:			solid #403f55;
+	border-width:		1px 1px 0 0;
+}
+
+input.submit
+{
+	font-weight:	bold;
+	background-color: darkgreen;
+	color:	white;
+}
+
+pre.dbi-raw span.title
+{
+	margin-right:		0px;
+	padding-right:		0em;
+	color:			white;
+	font-weight:		bold;
+}
+
+pre.chat span.timestamp
+{
+	color:			#090;
+	font-size:		smaller;
+}
+
+td.comments
+{
+	font-size:	75%;
+	font-style:	italic;
+}
+
+tr.umod0
+{
+	color:	#403f55;
+	background-color:	#ccc;
+}
+
+td.last_name
+{
+	font-weight:	bold;
+}
+
+code
+{
+	font:			fixed;
+}
+
+@-webkit-keyframes blinker { from {opacity:1.0;} to {opacity:0.0;} }
+        @keyframes blinker { from {opacity:1.0;} to {opacity:0.0;} }
+
+tr.footer h1
+{
+	font-size:	100%;
+}
+
+img.shirt
+{
+	width:	200px;
+}
+
+table.order td.item
+{
+	white-space:	nowrap;
+}
+table.order td
+{
+	font-size:	x-large;
+}
+
+table.order
+{
+	table-layout:	fixed;
+}
+
+pre.code
+{
+	background-color:	black;
+	color:			lightgreen;
+}

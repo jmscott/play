@@ -1,0 +1,6 @@
+<div id="navigation">
+ <ul>
+  <li><a href="/">Home</a></li>
+  <li><a href="/env.shtml">Apache Process Environment</a></li>
+ </ul>
+</div>

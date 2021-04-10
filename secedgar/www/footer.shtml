@@ -1,0 +1,15 @@
+<footer>
+  This is a private computer facility protected by a security system.
+  Unauthorized access may violate Federal and state laws of the United States
+  of America and may result in criminal or civil liability, or both.
+  Anyone using it is subject to monitoring and recording of all operations.
+  This record may be provided as evidence to law enforcement officials.
+ <span
+   style="
+   	display:	block;
+   	font-weight:	bold;
+   "
+ >
+  Copyright &#169; Global Threads, L.L.C. 2002
+ </span>
+</footer>

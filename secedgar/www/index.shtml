@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8" />
+  <title>SECEdgar @GTHedge</title>
+  <link href="/screen.css" rel="stylesheet" type="text/css" />
+ </head>
+
+ <body>
+  <div id="container">
+   <!--#include virtual="/header.shtml" -->
+   <!--#include virtual="/nav.shtml" -->
+   <div id="content">
+    <h2>SECEdgar Database @ GTHedge</h2>
+   </div>
+   <!--#include virtual="/footer.shtml" -->
+  </div>
+ </body>
+</html>
