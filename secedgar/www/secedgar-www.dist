@@ -23,6 +23,7 @@
 PRODUCT=secedgar-www.dist
 
 LIBs="
+	apache2-vhost.conf.example
 	secedgar-www.dist
 "
 

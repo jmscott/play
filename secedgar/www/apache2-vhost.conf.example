@@ -1,0 +1,64 @@
+#
+#  Synopsis:
+#	Example apache2 config for secedgar
+#  Usage:
+#	SECEDGAR_ROOT=/usr/local/bpole
+#	cd /etc/apache2/sites-enabled
+#	cp $SECEDGAR_ROOT/lib/apache2.conf.example bpole.remrot.conf
+#
+#Define SECEDGAR_ROOT /usr/local/bpole
+Define SECEDGAR_ROOT /Users/jmscott/opt/secedgar
+Define SECEDGAR_VHOST_ROOT /Users/jmscott/opt/secedgar/www
+Define SECEDGAR_APACHE2_SERVER_NAME secedgar.jmscott.tmonk.local
+Define SECEDGAR_JMSCOTT_ROOT /usr/local/jmscott
+
+<VirtualHost *:80>
+
+	SetEnv SECEDGAR_ROOT ${SECEDGAR_ROOT}
+	ServerName ${SECEDGAR_APACHE2_SERVER_NAME}
+	SetEnv SERVER_ROOT ${SECEDGAR_VHOST_ROOT}
+	SetEnv JMSCOTT_ROOT  ${SECEDGAR_JMSCOTT_ROOT}
+	SetEnv PERL5LIB ${SECEDGAR_JMSCOTT_ROOT}/www/lib
+
+	DocumentRoot ${SECEDGAR_VHOST_ROOT}/htdocs
+
+	# Available loglevels: trace8, ..., trace1, debug, info, notice, warn,
+	# error, crit, alert, emerg.
+	# It is also possible to configure the loglevel for particular
+	# modules, e.g.
+	#LogLevel info ssl:warn
+
+	ErrorLog ${APACHE_LOG_DIR}/${SECEDGAR_APACHE2_SERVER_NAME}-error.log
+	CustomLog ${APACHE_LOG_DIR}/${SECEDGAR_APACHE2_SERVER_NAME}-access.log combined
+
+        <Directory />
+            AllowOverride all
+            Require all granted
+        </Directory>
+
+        <Directory "${SECEDGAR_VHOST_ROOT}">
+                Options Indexes FollowSymLinks
+                AllowOverride None
+                Require all granted
+        </Directory>
+
+        DirectoryIndex index.shtml
+
+        <Directory "${SECEDGAR_VHOST_ROOT}/htdocs">
+                Options +ExecCGI +Includes +FollowSymLinks
+
+                AddType text/html .shtml
+                AddOutputFilter INCLUDES .shtml
+
+                #AuthType Basic
+                #AuthName "${SECEDGAR_APACHE2_SERVER_NAME}"
+                #AuthUserFile ${SECEDGAR_VHOST_ROOT}/etc/passwd
+                #Require valid-user
+        </Directory>
+
+        ScriptAlias /cgi-bin/jmscott/ "${SECEDGAR_JMSCOTT_ROOT}/www/cgi-bin/"
+	ScriptAlias /cgi-bin/ "${SECEDGAR_VHOST_ROOT}/cgi-bin/"
+
+</VirtualHost>
+
+# vim: syntax=apache ts=4 sw=4 sts=4 sr noet
