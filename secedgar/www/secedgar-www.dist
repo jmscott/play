@@ -23,6 +23,7 @@
 PRODUCT=secedgar-www.dist
 
 LIBs="
+	apache2-passwd.example
 	apache2-vhost.conf.example
 
 	daily.d/a.pl
