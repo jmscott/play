@@ -21,6 +21,15 @@
      name="text"
      content-type="text/html"
    ></putter>
+   <putter name="mime.zip">
+    <query-args>
+     <arg
+       name="blob"
+       required="yes"
+       perl5_re="[a-z][a-z0-9]{0,7}:[[:graph:]]{32,128}"
+     ></arg>
+    </query-args>
+   </putter>
   </out>
  </GET>
 </cgi>

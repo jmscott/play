@@ -24,11 +24,15 @@ PRODUCT=secedgar-www.dist
 
 LIBs="
 	apache2-vhost.conf.example
+
+	daily.d/a.pl
+	daily.d/dl.pl
+	daily.d/help.pl
+	daily.d/mime.zip.pl
+	daily.d/text.pl
+
 	local-darwin.mk.example
 	secedgar-www.dist
-	daily.d/help.pl
-	daily.d/dl.pl
-	daily.d/text.pl
 "
 
 CGIBINs="

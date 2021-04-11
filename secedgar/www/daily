@@ -38,7 +38,7 @@ $CGI{GET}->{out}->{'query-args'}->{arg}->{class} = {
 #  'out' query argument must match one of the out putter names.
 #
 $CGI{GET}->{out}->{'query-args'}->{arg}->{out} = {
-	perl5_re	=> 	'dl|text|help',
+	perl5_re	=> 	'dl|text|(?:mime[.]zip)|help',
 	default		=>	'help',
 };
 #
@@ -65,6 +65,26 @@ $CGI{GET}->{out}->{putter}->{'text'}->{'content-type'} = 'text/html';
 #
 #
 #  END: /cgi/GET/out/putter[@name='text']
+#
+
+#
+#  BEGIN: /cgi/GET/out/putter[@name='mime.zip']
+#
+$CGI{GET}->{out}->{putter}->{'mime.zip'}->{name} = 'mime.zip';
+
+#
+#  BEGIN: /cgi/GET/out/putter[@name=mime.zip]/query-args
+#
+$CGI{GET}->{out}->{putter}->{'mime.zip'}->{'query-args'}->{arg}->{blob} = {
+	perl5_re	=>	'[a-z][a-z0-9]{0,7}:[[:graph:]]{32,128}',
+	required	=>	'yes',
+};
+#
+#  END: /cgi/GET/out/putter[@name=mime.zip]/query-args
+#
+
+#
+#  END: /cgi/GET/out/putter[@name='mime.zip']
 #
 
 $CGI{GET}->{out}->{putter}->{help}->{name} = 'help';

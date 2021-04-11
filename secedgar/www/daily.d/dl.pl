@@ -31,7 +31,9 @@ SELECT
 
 while (my $row = $q->fetchrow_hashref()) {
 	print <<END;
- <dt>$row->{zip_path}</dt>
+ <dt>
+  <a href="/cgi-bin/daily?out=mime.zip&blob=$row->{blob}">$row->{zip_path}</a>
+ </dt>
  <dd>$row->{byte_count} @ $row->{job_time}</dd>
 END
 }
