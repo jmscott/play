@@ -12,6 +12,14 @@
    <!--#include virtual="/nav.shtml" -->
    <div id="content">
     <h2>SECEdgar Database @ GTHedge</h2>
+    <h3>News</h3>
+    <dl>
+     <dt>Mon Apr 12 17:07:56 CDT 2021</dt>
+     <dd>
+      Added navigation arrows to 
+      <a href="/daily-zip.shtml">search for daily zips</a>
+     </dd>
+    </dl>
    </div>
    <!--#include virtual="/footer.shtml" -->
   </div>

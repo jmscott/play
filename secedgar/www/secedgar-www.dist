@@ -30,6 +30,7 @@ LIBs="
 	daily.d/dl.pl
 	daily.d/help.pl
 	daily.d/mime.zip.pl
+	daily.d/span.nav.pl
 	daily.d/text.pl
 
 	local-darwin.mk.example

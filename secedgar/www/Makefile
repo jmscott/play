@@ -64,7 +64,8 @@ install: all
 		-o $(WWW_USER)						\
 		-m u=rwx,g=rx,o=					\
 		-d $(WWW_PREFIX)/lib
-	ln -s $(JMSCOTT_ROOT)/www/lib $(WWW_PREFIX)/lib/jmscott
+	test -e $(WWW_PREFIX)/lib/jmscott ||				\
+		ln -s $(JMSCOTT_ROOT)/www/lib $(WWW_PREFIX)/lib/jmscott
 	rsync								\
 		--relative						\
 		--no-perms						\

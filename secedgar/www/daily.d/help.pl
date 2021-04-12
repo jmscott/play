@@ -37,6 +37,49 @@ print <<'END';
     <dl>
      <dt>dl</dt>
      <dd>
+<div class="query-args">
+ <h4>Query Args</h4>
+ <dl>
+  <dt>lim</dt>
+  <dd>
+   <ul>
+    <li><code>default:</code> 10</li>
+    <li><code>perl5_re:</code> 10|100</li>
+    <li><code>required:</code> no</li>
+   </ul>
+  </dd>
+  <dt>off</dt>
+  <dd>
+   <ul>
+    <li><code>default:</code> 10</li>
+    <li><code>perl5_re:</code> [0-9]{1,4}</li>
+   </ul>
+  </dd>
+  </dl>
+</div>
+     </dd>
+     <dt>span.nav</dt>
+     <dd>
+<div class="query-args">
+ <h4>Query Args</h4>
+ <dl>
+  <dt>lim</dt>
+  <dd>
+   <ul>
+    <li><code>default:</code> 10</li>
+    <li><code>perl5_re:</code> 10|100</li>
+    <li><code>required:</code> no</li>
+   </ul>
+  </dd>
+  <dt>off</dt>
+  <dd>
+   <ul>
+    <li><code>default:</code> 0</li>
+    <li><code>perl5_re:</code> [0-9]{1,4}</li>
+   </ul>
+  </dd>
+  </dl>
+</div>
      </dd>
      <dt>text</dt>
      <dd>

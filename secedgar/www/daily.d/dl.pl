@@ -1,9 +1,12 @@
 #
 #  Synopsis:
+#	Write an html <dl> of daily zip files
 #
 require 'jmscott/dbi-pg.pl';
 
 our %QUERY_ARG;
+my $lim = $QUERY_ARG{lim};
+my $off = $QUERY_ARG{off};
 
 print <<END;
 <dl$QUERY_ARG{id_att}$QUERY_ARG{class_att}>
@@ -13,12 +16,15 @@ my $db = dbi_pg_connect();
 my $q = dbi_pg_select(
 	tag =>	'select-daily-zip',
 	db =>	$db,
-	argv => [],
+	argv => [
+			$lim,
+			$off
+		],
 	sql =>  q(
 SELECT
 	dz.zip_path,
 	dz.blob,
-	to_char(dz.job_time, 'Mon dd, yyyy') AS job_time,
+	to_char(dz.job_time, 'Dy, Mon dd, yyyy') AS job_time,
 	pg_size_pretty(bc.byte_count) AS byte_count
   FROM
   	secedgar.daily_zip dz
@@ -27,6 +33,10 @@ SELECT
 	  )
   ORDER BY
   	dz.job_time DESC
+  LIMIT
+  	$1
+  OFFSET
+  	$2
 ;));
 
 while (my $row = $q->fetchrow_hashref()) {
