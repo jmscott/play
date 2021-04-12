@@ -1,6 +1,6 @@
 /*
  *  Synopsis:
- *	Summarize json for daily edgar pull from sec database.
+ *	Summarize json for daily edgar pull of nc zip from sec database.
  *  Note:
  *	Query slowed dramatically when adding min/max zip sizes.  why?
  *
@@ -45,7 +45,7 @@ WITH put_daily AS (
   	min(bc.byte_count) AS "min_size",
   	max(bc.byte_count) AS "max_size"
     FROM
-    	daily_zip d
+    	daily_nc_zip d
 	  JOIN setcore.byte_count bc ON (
 	  	bc.blob = bc.blob
 	  )

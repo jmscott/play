@@ -22,7 +22,7 @@ my $zip_count = dbi_pg_select(
 SELECT
 	count(*) AS zip_count
   FROM
-  	secedgar.daily_zip
+  	secedgar.daily_nc_zip
 )
 )->fetchrow_hashref()->{zip_count};
 
@@ -35,7 +35,7 @@ END
 
 if ($zip_count == 0) {
 	print <<END;
-No daily zip files.</span>
+No daily nc zip files.</span>
 END
 	return 1;
 }

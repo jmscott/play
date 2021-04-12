@@ -1,13 +1,8 @@
 #
 #  Synopsis:
-#	Fetch a zip file as blob.
-#  Note:
-#	The pdfbox-full-text-search-click needs to move to a separate
-#	cgi-bin widget callable from web page!  Simply displaying a pdf
-#	blob triggers a json blob for a web search!
-#
-#	WTF?  No validation is done on the blob.  In fact, the blob is
-#	assumed to exist and be correct.  Terrible.
+#	Fetch an SEC EDGAR nc zip file as blob.
+#  Usage:
+#	/sgi-bin/daily?out=mime.zip?blob=bc160:3f1fca04e46c32da3369df8a1 ...
 #
 require 'dbi-pg.pl';
 
@@ -16,7 +11,7 @@ our %QUERY_ARG;
 my $blob = $QUERY_ARG{blob};
 my $q = dbi_pg_select(
 		db =>	dbi_pg_connect(),
-		tag =>	'select-mime-zip',
+		tag =>	'select-mime-nc-zip',
 		argv =>	[
 			$blob
 		],
@@ -26,7 +21,7 @@ SELECT
 	fm.mime_type,
 	bc.byte_count
   FROM
-  	secedgar.daily_zip dz
+  	secedgar.daily_nc_zip dz
 	  JOIN setcore.byte_count bc ON (
 	  	bc.blob = dz.blob
 	  )

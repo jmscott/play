@@ -19,8 +19,6 @@
  *		sic86_87.txt
  *		sic88_97.txt
  *  Note:
- *	Rename view 'daily_zip' to 'daily_tar_zip'.
- *
  *	Add source url in comments for SGML files!
  *
  *	Add SQL COMMENTS to all tables, dork!
@@ -158,8 +156,8 @@ CREATE TABLE sic86_87
 
 \COPY sic86_87 FROM 'sic86_87.txt' DELIMITER E'\t' CSV HEADER
 
-DROP VIEW IF EXISTS daily_zip;
-CREATE VIEW daily_zip AS
+DROP VIEW IF EXISTS daily_nc_zip;
+CREATE VIEW daily_nc_zip AS
   WITH zips AS (
     SELECT
   	doc

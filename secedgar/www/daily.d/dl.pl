@@ -1,6 +1,6 @@
 #
 #  Synopsis:
-#	Write an html <dl> of daily zip files
+#	Write an html <dl> of daily nc zip files
 #
 require 'jmscott/dbi-pg.pl';
 
@@ -14,7 +14,7 @@ END
 
 my $db = dbi_pg_connect();
 my $q = dbi_pg_select(
-	tag =>	'select-daily-zip',
+	tag =>	'select-daily-nc-zip',
 	db =>	$db,
 	argv => [
 			$lim,
@@ -27,7 +27,7 @@ SELECT
 	to_char(dz.job_time, 'Dy, Mon dd, yyyy') AS job_time,
 	pg_size_pretty(bc.byte_count) AS byte_count
   FROM
-  	secedgar.daily_zip dz
+  	secedgar.daily_nc_zip dz
 	  JOIN setcore.byte_count bc ON (
 	  	bc.blob = dz.blob
 	  )
