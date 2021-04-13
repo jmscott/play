@@ -51,7 +51,7 @@ print <<'END';
   <dt>off</dt>
   <dd>
    <ul>
-    <li><code>default:</code> 10</li>
+    <li><code>default:</code> 0</li>
     <li><code>perl5_re:</code> [0-9]{1,4}</li>
    </ul>
   </dd>

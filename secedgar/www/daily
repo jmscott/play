@@ -57,7 +57,6 @@ $CGI{GET}->{out}->{putter}->{'dl'}->{'query-args'}->{arg}->{lim} = {
 };
 $CGI{GET}->{out}->{putter}->{'dl'}->{'query-args'}->{arg}->{off} = {
 	perl5_re	=>	'[0-9]{1,4}',
-	default	=>	'10',
 };
 #
 #  END: /cgi/GET/out/putter[@name=dl]/query-args
