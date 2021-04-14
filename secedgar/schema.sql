@@ -231,7 +231,8 @@ COMMENT ON TABLE tsv_SGML_DOCUMENT IS
 
 /*
  *  Note:
- *	A view into prnding schema gnutar will probably replace this table!
+ *	A view will replace this table, changing to reference table
+ *	gnutar.tar_file_element.
  */
 DROP TABLE IF EXISTS nc_tar_file_element;
 CREATE TABLE nc_tar_file_element
