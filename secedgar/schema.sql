@@ -229,6 +229,10 @@ COMMENT ON TABLE tsv_SGML_DOCUMENT IS
 
 \COPY tsv_SGML_DOCUMENT FROM 'SGML-DOCUMENT.tsv' DELIMITER E'\t' CSV HEADER
 
+/*
+ *  Note:
+ *	A view into prnding schema gnutar will probably replace this table!
+ */
 DROP TABLE IF EXISTS nc_tar_file_element;
 CREATE TABLE nc_tar_file_element
 (
