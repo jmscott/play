@@ -33,8 +33,7 @@ log()
 
 fault()
 {
-	NOW=$(now)
-	MSG="$(now): ERROR: $@"
+	MSG="ERROR: $@"
 	log "$MSG" >&2
 	if [ ! -d "$MSG" ]; then
 		log 'WARN: missing run/ dir, so no fault written' >&2
@@ -42,7 +41,7 @@ fault()
 	fi
 	test -d run/ || return
 	FAULT=run/$PROG.fault
-	echo "$MSG" >>run/$PROG.fault					||
+	echo "$(now): $MSG" >>run/$PROG.fault				||
 		log "ERROR: echo fault failed: exit status=$?" >&2
 }
 
@@ -89,12 +88,12 @@ cat >$TMP_JSON <<END
 {
 	"secedgar.play.jmscott.github.com": {
 		"hostname": "$(hostname -f)",
-		"process_id": "$$",
+		"process_id": $$,
 		"job_start_time": "$JOB_START_TIME",
 		"gnu_tar_version": "$GNUTAR_VERSION",
 		"environment": {
-			"PATH": "echo $PATH | escape-json-string",
-			"LD_LIBRARY_PATH": "echo $LD_LIBRARY_PATH | escape-json-string"
+			"PATH": "$(echo $PATH | escape-json-string)",
+			"LD_LIBRARY_PATH": "$(echo $LD_LIBRARY_PATH | escape-json-string)"
 		},
 		"command-line" : {
 			"command": "$PROG",
