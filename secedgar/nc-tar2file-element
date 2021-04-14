@@ -1,7 +1,10 @@
 #!/bin/bash
 #
 #  Synopsis:
-#	Extract file elements from SEC EDGAR gtar YYYYMMDD.nc.tar.gz into json.
+#	Put JSON of elements from SEC EDGAR gtar YYYYMMDD.nc.tar.gz into json.
+#  Desciption:
+#	Put a JSON blob describing the file elements of an NC tar file from
+#	SEC Edgar database.
 #  Usage:
 #	nc-tar-file2json <tar-blob>
 #  Exit Status:
@@ -12,16 +15,16 @@
 #
 #	Spaces in file paths will break script!
 #
+JOB_START_TIME=$(RFC3339Nano)
+START_EPOCH=$(date +%s)
 
 PROG=$(basename $0)
 TMP_JSON=${TMPDIR:=/tmp}/$PROG.$$
-JOB_TIME=$(RFC3339Nano)
 
 now()
 {
 	date +'%Y/%m/%d %H:%M:%S'
 }
-NOW=$(now)
 
 log()
 {
@@ -42,6 +45,8 @@ fault()
 leave()
 {
 	rm -f $TMP_JSON || fault "rm tmp json failed: exit status=$?" >&2
+	DURATION=$(duration-english $(expr $(date +%s) - $START_EPOCH))
+	log "elapsed duration: $DURATION"
 	log 'good bye, cruel world'
 	exit
 }
@@ -62,17 +67,40 @@ log "BLOBIO_ALGORITHM=$BLOBIO_ALGORITHM"
 log "tar blob: $TAR_BLOB"
 log "tar path: $(which tar)"
 log "temp json job: $TMP_JSON"
+log "PATH: $PATH"
+log "which tar: $(which tar)"
+
+GNUTAR_VERSION=$(tar --version | head -1)
+case "$GNUTAR_VERSION" in
+*GNU*|*gnu*)
+	log "gnu tar version: $GNUTAR_VERSION"
+	;;
+*)
+	die "unexpected output from gnu tar --version: $GNUTAR_VERSION"
+	;;
+esac
+GNUTAR_VERSION=$(echo "$GNUTAR_VERSION" | escape-json-string)
 
 cat >$TMP_JSON <<END
 {
 	"secedgar.play.jmscott.github.com": {
+		"hostname": "$(hostname -f)",
+		"process_id": "$$",
+		"job_start_time": "$JOB_START_TIME",
+		"gnu_tar_version": "$GNUTAR_VERSION",
+		"environment": {
+			"PATH": "echo $PATH | escape-json-string",
+			"LD_LIBRARY_PATH": "echo $LD_LIBRARY_PATH | escape-json-string"
+		},
 		"command-line" : {
 			"command": "$PROG",
-			"zip-tar-blob": "$TAR_BLOB",
-			"now": "$JOB_TIME"
+			"zip-tar-blob": "$TAR_BLOB"
 		},
 		"file-elements": [
 END
+
+log 'starting extract of tar elements into json blob ...'
+#  extract the tar elements and build a json blob
 blobio get --udig $TAR_BLOB --service $BLOBIO_SERVICE			|
 	tar tfvz -							|
 	grep '^-'							|
@@ -106,10 +134,12 @@ test "$STATUS" = '0 0 0 0 0 0 0' 					||
 
 #  close json blob
 cat <<END >>$TMP_JSON || die "cat job json close failed: exit status=$?"
-		]
+		],
+		"job_stop_time": "$(RFC3339Nano)"
 	}
 }
 END
+log '... done extract of tar elements into json blob'
 
 JOB_BLOB=$BLOBIO_ALGORITHM:$(
 	blobio eat --algorithm $BLOBIO_ALGORITHM --input-path $TMP_JSON
@@ -124,6 +154,6 @@ blobio put								\
 
 #  update transaction history
 if [ -d data/ ];  then
-	echo "$JOB_TIME	$JOB_BLOB" >>data/$PROG.txn			||
-		die "echo data/txn failed: exit status=$?"
+	echo "$JOB_START_TIME	$JOB_BLOB" >>data/$PROG.jjob		||
+		die "echo data/jjob failed: exit status=$?"
 fi
