@@ -33,10 +33,14 @@ log()
 
 fault()
 {
-	test -d run/ || return
-	MSG="ERROR: $@"
+	NOW=$(now)
+	MSG="$(now): ERROR: $@"
 	log "$MSG" >&2
-	MSG="$(now): $MSG"
+	if [ ! -d "$MSG" ]; then
+		log 'WARN: missing run/ dir, so no fault written' >&2
+		return
+	fi
+	test -d run/ || return
 	FAULT=run/$PROG.fault
 	echo "$MSG" >>run/$PROG.fault					||
 		log "ERROR: echo fault failed: exit status=$?" >&2
