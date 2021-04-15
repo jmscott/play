@@ -231,6 +231,9 @@ COMMENT ON TABLE tsv_SGML_DOCUMENT IS
 
 /*
  *  Note:
+ *	The eventual gnutar.tar_file_element schema/table needs to extract
+ *	the timestamptz.
+ *
  *	A view will replace this table, changing to reference table
  *	gnutar.tar_file_element.
  */
@@ -239,7 +242,11 @@ CREATE TABLE nc_tar_file_element
 (
 	blob	udig	REFERENCES setcore.service,
 	file_path	text	CHECK (
-				file_path ~ '/^[[:graph:]]{1,255}$'
+				file_path ~ '[[:graph:]]'
+				AND
+				length(file_path) > 0
+				AND
+				length(file_path) < 256
 			)
 			NOT NULL,
 	file_size	bigint CHECK (

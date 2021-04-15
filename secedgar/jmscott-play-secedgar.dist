@@ -26,6 +26,7 @@ LIBs="
 	SGML-SUBMISSION
 	SGML-SUBMISSION.tsv
 	jmscott-play-secedgar.dist
+	merge-nc_tar_file_element.sql
 	naics.txt
 	naics2002.txt
 	naics2007.txt
