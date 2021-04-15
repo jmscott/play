@@ -3,6 +3,7 @@
  *	Extract/merge json blob into materialized table nc_tar_file_element
  */
 
+\set ON_ERROR_STOP on
 \timing
 set search_path to secedgar,public;
 
@@ -12,7 +13,7 @@ set search_path to secedgar,public;
  */
 WITH mergable AS (
   SELECT
-  	blob AS "json_blob"
+  	jt.blob AS "json_blob"
     FROM
   	jsonorg.jsonb_255 jt
     WHERE
@@ -33,8 +34,6 @@ WITH mergable AS (
 				->'command-line'
 				->>'zip-tar-blob')::udig
 	)
-  LIMIT
-  	100
 ), elements AS (
   SELECT
   	(jj.doc->'command-line'->>'zip-tar-blob')::udig AS zip_blob,
