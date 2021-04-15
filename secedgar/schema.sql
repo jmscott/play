@@ -250,7 +250,7 @@ CREATE TABLE nc_tar_file_element
 			)
 			NOT NULL,
 	file_size	bigint CHECK (
-				file_size > 0
+				file_size >= 0
 			) NOT NULL,
 	PRIMARY KEY	(blob, file_path)
 );
