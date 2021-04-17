@@ -49,7 +49,7 @@ and, again, AJX(AJX(B)) yields a 30 bit blob
                     =  9 bits
 ```
 
-and to the third power, (AJX^3)(B) yeilds a 29 bit vector
+and to the third power, (AJX^3)(B) yields a 29 bit vector
 
     (AJX^3)(B)      =  [0^0] [0^0] [0^0] [0^0] [0^0] [0^1] [1^0] [0^0]
                        [0^0] [0^1] [1^1] [1^0] [0^0] [0^0] [0^0] [0^1]
