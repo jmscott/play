@@ -9,7 +9,7 @@ arbitrary blobs of bits.
 
 If we consider `logical XOR` as the "distance" between two bits, then the idea
 is to produce a 64 dimensional vector for an arbitray blob of bits, where each
-attribute, say `I`, is the bit population count of the the `Ith` iteration of
+dimension, say `I`, is the bit population count of the the `Ith` iteration of
 a blob derived by `XORing` adjacents bits.
 
 For example, consider the 32 bit blob, say `B`, where `POP` is the population
