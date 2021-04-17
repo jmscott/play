@@ -35,21 +35,21 @@ Now transform blob B into a 31 bit long blob by `XORing` adjacent bits.
     POP(AJX(B))     =  13 bits
 ```
 
-and the next blob, AJX(POP(AJX(B))) yeilds a 30 bit blob
+and the next blob, AJX(AJX(B)) yeilds a 30 bit blob
 
 ```
-    AJX(POP(AJX(B))) = [1^1] [1^1] [1^1] [1^1] [1^1] [1^1] [1^0] [0^0]
+    AJX(AJX(B)))     = [1^1] [1^1] [1^1] [1^1] [1^1] [1^1] [1^0] [0^0]
                        [0^0] [0^0] [0^1] [1^0] [0^0] [0^0] [0^0] [0^0]
                        [0^1] [1^1] [1^0] [0^1] [1^0] [0^1] [1^0] [0^0]
                        [0^0] [0^0] [0^1] [1^0] [0^0] [0^0]
 
                     => 00000010  00110000  10101010  001100
 
-    POP(AJX(POP(AJX(B))))
+    POP(AJX(AJX(B)))
                     =  9 bits
 ```
 
-Stopping at 3 dimensions for `B`, yields the bit entropy vector
+Stopping at 3 dimensions for `B`, yields the vector
 
 ```
         BE(B)       =  <15 bits, 13 bits, 9 bits>
