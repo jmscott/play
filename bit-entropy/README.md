@@ -12,8 +12,8 @@ is to produce a 64 dimensional vector for an arbitray blob of bits, where each
 dimension, say `I`, is the bit population count of the the `Ith` iteration of
 a blob derived by `XORing` adjacents bits.
 
-For example, consider the 32 bit blob, say `B`, where `POP` is the population
-count and `^` is the `C` language bitwise xor.
+For example, consider a 32 bit blob, say `B`, `POP`, where `POP` is the
+population count and `^` is the `C` language bitwise xor.
 
 ```
 
@@ -59,12 +59,34 @@ and to the third power, (AJX^3)(B) yields a 29 bit vector
 		    => 00000110  01010001  11111110  01010
 
 
-    POP(AJX^3)(B)   =  14
+    POP((AJX^3)(B)) =  14
 
-Stopping at 4 dimensions for `B`, yields the vector
+and to the fourth power, (AJX^4)(B) yields a 28 bit vector
+
+    (AJX^4)(B)      =   [0^0] [0^0] [0^0] [0^0] [0^1] [1^1] [1^0] [0^0]
+                        [0^1] [1^0] [0^1] [1^0] [0^0] [0^0] [0^1] [1^1]
+                        [1^1] [1^1] [1^1] [1^1] [1^1] [1^1] [1^0] [0^0]
+                        [0^1] [1^0] [0^1] [1^0]
+                    
+                    =>  00001010  11110010  00000010  1111
+
+    POP((AJX^4)(B)) =   12
+
+and to the fifth power, (AJX^5)(B) yields a 27 bit vector
+
+    (AJX^5)(B)      =   [0^0] [0^0] [0^0] [0^1] [1^0] [0^1] [1^0] [0^1]
+                        [1^1] [1^1] [1^1] [1^0] [0^0] [0^1] [1^0] [0^0]
+			[0^0] [0^0] [0^0] [0^0] [0^0] [0^1] [1^0] [0^1]
+			[1^1] [1^1] [1^1]
+
+                    =>  00011111  00010110  00000111  000
+
+    POP((AJX^5)(B)) =   11
+
+Stopping at 6 dimensions for `B`, yields the vector
 
 ```
-        BE(B)       =  <15 bits, 13 bits, 9 bits, 14 bits>
+        BEV(B)       =  <15 bits, 13 bits, 9 bits, 14 bits, 12bits, 11bits>
 ```
 
 The written `C` code extends to 64 "dimensions", where `POP(AJX(empty)) = 0`
