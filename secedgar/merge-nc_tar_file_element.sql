@@ -83,6 +83,20 @@ SELECT
 ;
 
 SELECT
+	blob AS zip_blob,
+	pg_size_pretty(sum(file_size)) AS byte_count,
+	count(*) AS zip_file_count
+  FROM
+  	nc_tar_file_element
+  GROUP BY
+  	1
+  ORDER BY
+  	sum(file_size) DESC
+  LIMIT
+  	10
+;
+
+SELECT
 	count(DISTINCT blob) zip_tar_count,
 	count(*) AS total_file_count,
 	pg_size_pretty(sum(file_size)) AS total_byte_count
