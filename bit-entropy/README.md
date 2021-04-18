@@ -102,7 +102,7 @@ and to the fifth power, `(BDV^5)(B)`, yields a 27 bit blob
 Stopping at 5 dimensions for `B`, yields the sequence of bit counts
 
 ```
-        BEV(B)       =  [15 bits, 13 bits, 9 bits, 14 bits, 12bits, 11 bits]
+        BEV(B)       =  [13 bits, 9 bits, 14 bits, 12 bits, 11 bits]
 ```
 
 Eventually the sequence converges to either `0` or `1`.
