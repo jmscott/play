@@ -10,7 +10,8 @@
 
 my $in;
 while (<STDIN>) {
-	s/[^01]*//g;
+	s/^[^\t]*\t.*$//;	#  only first field examined
+	s/[^01]*//g;		#  remove non 0 or 1 chars
 	$in .= $_;
 }
 #print "in	$in\n";
@@ -25,7 +26,7 @@ sub XOR
 
 my $in_length = length($in) - 1;
 for (my $i = 0;  $i < $in_length;  $i++) {
-	print '  ' if ($i > 0 && ($i % 8 == 0));
+	print ' ' if ($i > 0 && ($i % 8 == 0));
 	print XOR(substr($in, $i, 1), substr($in, $i + 1, 1));
 }
 print "\n";
