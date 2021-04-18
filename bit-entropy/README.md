@@ -109,11 +109,6 @@ Eventually the sequence converges to either `0` or `1`.
 
 # Links
 
-- [BiEntropy - The Approximate Entropy of a Finite Binary String]
-	(https://arxiv.org/abs/1305.0954)
-
-- [Hamming Distance]
-	(https://en.wikipedia.org/wiki/Hamming_distance)
-
-- [String Metric]
-	(https://en.wikipedia.org/wiki/String_metric)
+- [BiEntropy - The Approximate Entropy of a Finite Binary String](https://arxiv.org/abs/1305.0954)
+- [Hamming Distance](https://en.wikipedia.org/wiki/Hamming_distance)
+- [String Metric](https://en.wikipedia.org/wiki/String_metric)
