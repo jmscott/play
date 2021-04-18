@@ -25,6 +25,7 @@ PRODUCT=play-bit-entropy
 
 BINs="
 	bit-pop-count
+	bvm.pl
 	shift-xor
 "
 
