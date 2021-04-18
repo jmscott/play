@@ -23,7 +23,6 @@ sub XOR
 	return ($p eq $q) ? '0' : '1';
 }
 
-print 'ajxor	';
 my $in_length = length($in) - 1;
 for (my $i = 0;  $i < $in_length;  $i++) {
 	print '  ' if ($i > 0 && ($i % 8 == 0));
