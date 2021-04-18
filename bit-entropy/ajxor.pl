@@ -1,14 +1,17 @@
 #!/usr/bin/env perl
 #
 #  Synopsis:
-#	Derive a population vector of adjacent xors of a bit sequence.
+#	For N in bits, XOr adjacent bits to produce vector <N-1 bit, hamming>
 #  Usage:
-#	echo '01010101  11110000  00100110  11110000' | ajxor.pl
+#	IN='01010101  11110000  00100110  11110000	15'
+#	echo "$IN" | ajxor.pl | ajxor.pl | ajxor.pl | ajxor.pl
 #  See:
 #	https://github.com/jmscott/play/tree/master/bit-entropy
 #
 
-my $in;
+STDOUT->autoflush(1);
+
+my ($in, $bit_count);
 while (<STDIN>) {
 	s/^([^\t]*)\t.*$/$1/;	#  only first field examined
 	s/[^01]*//g;		#  remove non 0 or 1 chars
