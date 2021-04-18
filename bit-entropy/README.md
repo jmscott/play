@@ -11,7 +11,7 @@ arbitrary blobs of bits.  Two blobs will be similar if their entropy is
 similar and low, possibly also considering other core attributes, such as byte
 count and bit population.
 
-# Derivative of Bit String `B`
+## Derivative of Bit String `B`
 
 If we consider `logical XOR` as the "distance" between two bits, then consider
 the "derivative" of a bit string, N bits long, as the XOR of adjacent bits,
@@ -25,7 +25,7 @@ population count and `^` is the `C` language bitwise `XOR`.
     POP(B)          =  15 bits
 ```
 
-# First Derivative of `B`
+### First Derivative of `B`
 
 Now "differentiate" blob `B` into a 31 bit blob by `XORing` adjacent bits.
 ```
@@ -39,7 +39,7 @@ Now "differentiate" blob `B` into a 31 bit blob by `XORing` adjacent bits.
     POP(BDV(B))     =  13 bits
 ```
 
-# Second Derivative of `B`
+### Second Derivative of `B`
 
 and, again, the second derivative, `BDV(BDV(B))`, yields a 30 bit blob
 
@@ -55,7 +55,7 @@ and, again, the second derivative, `BDV(BDV(B))`, yields a 30 bit blob
                     =  9 bits
 ```
 
-# Third Derivative of `B`
+### Third Derivative of `B`
 
 and to the third power, (BDV^3)(B) yields a 29 bit blob
 ```
@@ -69,7 +69,7 @@ and to the third power, (BDV^3)(B) yields a 29 bit blob
     POP((BDV^3)(B)) =  14
 ```
 
-# Fourth Derivative of `B`
+### Fourth Derivative of `B`
 
 and to the fourth power, (BDV^4)(B), yields a 28 bit blob
 ```
@@ -83,7 +83,7 @@ and to the fourth power, (BDV^4)(B), yields a 28 bit blob
     POP((BDV^4)(B)) =   12
 ```
 
-# Fifth  Derivative of `B`
+### Fifth  Derivative of `B`
 
 and to the fifth power, `(BDV^5)(B)`, yields a 27 bit blob
 ```
@@ -97,7 +97,7 @@ and to the fifth power, `(BDV^5)(B)`, yields a 27 bit blob
     POP((BDV^5)(B)) =   11
 ```
 
-#  Sequence of Bit Population (Hamming Distance)
+##  Sequence of Bit Population (Hamming Distance)
 
 Stopping at 5 dimensions for `B`, yields the sequence of bit counts
 
