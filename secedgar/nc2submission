@@ -1,0 +1,119 @@
+#/bin/bash
+#
+#  Synopsis:
+#	Convert an SEC EDGAR .nc file into jsob blob with elements.
+#  Usage:
+#	nc2submission <path/to/nc>
+#  Exit Status:
+#	0	json blob put
+#	1	failure
+#  Note:
+#	Need a json validator and pretty printer in path $JMSCOTT_ROOT/bin.
+#	Until then, use "python3 -m json.tool".
+#
+
+JOB_START_TIME=$(RFC3339Nano)
+START_EPOCH=$(date +%s)
+PROG=$(basename $0)
+TMP_JSON=${TMPDIR:=/tmp}/$PROG.json.$$
+
+now()
+{
+	date +'%Y/%m/%d %H:%M:%S'
+}
+
+log()
+{
+	echo "$(now): $@"
+}
+
+fault()
+{
+	MSG="ERROR: $@"
+	log "$MSG" >&2
+	if [ ! -d "$MSG" ]; then
+		log 'WARN: missing run/ dir, so no fault written' >&2
+		return
+	fi
+	test -d run/ || return
+	FAULT=run/$PROG.fault
+	echo "$(now): $MSG" >>run/$PROG.fault				||
+		log "ERROR: echo fault failed: exit status=$?" >&2
+}
+
+leave()
+{
+	rm -f $TMP_JSON || fault "rm tmp json failed: exit status=$?" >&2
+	DURATION=$(duration-english $(expr $(date +%s) - $START_EPOCH))
+	log "elapsed duration: $DURATION"
+	log 'good bye, cruel world'
+	exit
+}
+
+die()
+{
+	fault "$@"
+	exit 1
+}
+
+test $# = 2 || die 'wrong number of arguments'
+ZIP_BLOB=$1
+NC_PATH=$2
+
+log 'hello, world'
+trap leave EXIT
+
+log "BLOBIO_SERVICE=$BLOBIO_SERVICE"
+log "BLOBIO_ALGORITHM=$BLOBIO_ALGORITHM"
+
+log "zip blob: $ZIP_BLOB"
+log "nc file path: $NC_PATH"
+test -r "$NC_PATH" || die "can not read nc file: exit status=$?"
+
+log "temp json job: $TMP_JSON"
+
+cat >$TMP_JSON <<END
+{
+	"secedgar.play.jmscott.github.com": {
+		"hostname": "$(hostname -f)",
+		"process_id": $$,
+		"job_start_time": "$JOB_START_TIME",
+		"environment": {
+			"PATH": "$(echo $PATH | escape-json-string)",
+			"LD_LIBRARY_PATH":
+				"$(echo $LD_LIBRARY_PATH | escape-json-string)"
+		},
+		"command_line": {
+			"command": "$PROG",
+			"nc_zip_blob": "$ZIP_BLOB",
+			"nc_file_path": "$(echo $NC_PATH | escape-json-string)"
+		},
+		"submission_header": 
+END
+test $? = 0 || die "cat >json-header failed: exit status=$?" 
+
+nc-submission2json <$NC_PATH						|
+	python3 -m json.tool						|
+	sed 's/^/\t\t/'							\
+	>>$TMP_JSON
+STATUS=${PIPESTATUS[*]}
+test "$STATUS" = '0 0 0' ||
+	die "nc-submission2json | json-pp failed: exit status=$STATUS"
+cat >>$TMP_JSON <<END || die "cat >>json-footer failed: exit status=$?"
+		,"job_stop_time": "$(RFC3339Nano)"
+	}
+}
+END
+
+JSON_BLOB=$BLOBIO_ALGORITHM:$(
+	blobio eat --algorithm $BLOBIO_ALGORITHM --input-path $TMP_JSON
+)
+log "putting json blob: $JSON_BLOB"
+
+blobio put								\
+	--input-path $TMP_JSON						\
+	--udig $JSON_BLOB						\
+	--service $BLOBIO_SERVICE					||
+	die "blobio put json failed: exit status=$?"
+echo "$(RFC3339Nano)	$JSON_BLOB" >>data/$PROG.jjob			||
+		die "echo data/$PROG.jjob failed: exit status=$?"

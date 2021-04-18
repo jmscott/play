@@ -1,0 +1,34 @@
+#!/usr/bin/env perl
+#
+#  Synopsis:
+#	Extract all ^<ELEMENT> fields in non-cooked SEC daily file.
+#  Usage:
+#	nc2element-count <9999999997-21-000077.nc
+#
+
+use JSON::PP q(encode_json);
+
+my @JSON;
+my $ele_re = '[A-Z][A-Z0-9_-]+';
+
+my $line_number = 0;
+while (<>) {
+	$line_number++;
+	last if /^<TEXT>/;
+	next if m/^<\/$ele_re>/;
+	die "line is not element: $_" unless m/^<($ele_re)>(.*)/;
+	my ($ele, $val) = ($1, $2);
+
+	#  panic for <ELEMENTS> with chars other than xml valid
+	die "element contains unknown chars: $_"
+				if $ele =~ m/^<[A-Z].*[^A-Z0-9_-].*>/
+	;
+
+	push @JSON, {
+		"line_number" => $line_number,
+		"element" => $ele,
+		"value" => $val
+	};
+}
+
+print encode_json(\@JSON);
