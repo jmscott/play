@@ -3,7 +3,7 @@
 #  Synopsis:
 #	Convert an SEC EDGAR .nc file into jsob blob with elements.
 #  Usage:
-#	nc2submission <path/to/nc>
+#	nc2submission <nc-zip-blob> <path/to/nc>
 #  Exit Status:
 #	0	json blob put
 #	1	failure
