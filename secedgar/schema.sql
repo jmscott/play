@@ -258,4 +258,24 @@ COMMENT ON TABLE nc_tar_file_element IS
   'Files Elements in SEC EDGAR tar file YYYYMMDD.nc.tar.gz'
 ;
 
+DROP TABLE IF EXISTS nc_submission CASCADE;
+CREATE TABLE nc_submission(
+	nc_zip_blob	udig,
+	nc_file_path	text CHECK (
+				nc_file_path ~ '[[:graph:]]'
+				AND
+				length(nc_file_path) < 256
+			),
+	line_number	bigint CHECK (
+				line_number > 0
+			),
+	element		text CHECK (
+				element ~ '^[A-Z].*[A-Z0-9_-].*$'
+			),
+	value		text CHECK (
+				length(value) < 256
+			),
+	PRIMARY KEY	(nc_zip_blob, nc_file_path, line_number)
+);
+
 COMMIT;
