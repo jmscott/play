@@ -3,4 +3,8 @@ export BLOBIO_ROOT=${BLOBIO_ROOT:=/usr/local/blobio}
 export BLOBIO_SERVICE=${BLOBIO_SERVICE:=bio4:127.0.0.1:1798?tmo=255}
 export BLOBIO_ALGORITHM=${BLOBIO_ALGORITHM:=bc160}
 
-PATH=$SECEDGAR_ROOT/sbin:$PATH:$BLOBIO_ROOT/bin
+PATH=$PATH:$BLOBIO_ROOT/bin
+
+#  need $JMSCOTT_ROOT/bin/{RFC3339Nano, duration-english}
+export JMSCOTT_ROOT=${JMSCOTT_ROOT:=/usr/local/jmscott}
+PATH=$PATH:JMSCOTT_ROOT/bin
