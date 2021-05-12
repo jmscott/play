@@ -29,6 +29,7 @@
 #	Depends on GNU data to calcuate 'yesterday'.
 #
 
+START_EPOCH=$(date +%a)
 FEED_URL=https://www.sec.gov/Archives/edgar/Feed/
 
 now()
@@ -73,10 +74,18 @@ get_quarter()
 	echo $QUARTER
 }
 
+leave()
+{
+	STATUS=$?
+	DURATION=$(duration-english $(expr $(date +%a) - $START_EPOCH))
+	log "good bye, cruel world: $DURATION"
+	exit $STATUS
+}
+
 test $# = 0 || die "wrong count of cli arguments: got $#, expected 0"
 
 log 'hello, world'
-trap 'log good bye, cruel world' EXIT
+trap leave EXIT
 
 test -n "$SECEDGAR_ROOT" || die 'env var not defined: SECEDGAR_ROOT'
 log "SECEDGAR_ROOT=$SECEDGAR_ROOT"
