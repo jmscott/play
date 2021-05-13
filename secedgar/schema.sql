@@ -179,6 +179,8 @@ CREATE VIEW daily_nc_zip AS
 	(doc->>'now')::timestamptz AS job_time
     FROM
     	zips
+    WHERE
+	length(doc->>'now') > 0
 ;
 
 DROP DOMAIN IF EXISTS tsv_text CASCADE;
