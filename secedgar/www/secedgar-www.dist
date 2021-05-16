@@ -33,7 +33,6 @@ LIBs="
 	daily.d/span.nav.pl
 	daily.d/text.pl
 
-	local-darwin.mk.example
 	secedgar-www.dist
 "
 
