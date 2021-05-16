@@ -15,8 +15,14 @@ my $line_number = 0;
 while (<>) {
 	$line_number++;
 	last if /^<TEXT>/;
+	die "line_number > 10240: may be busted file: $line_number"
+		if $line_number > 10240
+	;
 	next if m/^<\/$ele_re>/;
-	die "line is not element: $_" unless m/^<($ele_re)>(.*)/;
+	unless (m/^<($ele_re)>(.*)/) {
+		print STDERR "WARN: line #$line_number: not an element: $_";
+		next;
+	}
 	my ($ele, $val) = ($1, $2);
 
 	#  panic for <ELEMENTS> with chars other than xml valid

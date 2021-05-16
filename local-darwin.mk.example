@@ -5,8 +5,13 @@
 #	cp local-darwin.mk.example local.mk
 #	vi local.mk
 #	make world
+#  Dependencies:
+#	Modern golang distribution.
+#	C compiler.  Both clang and gcc ok.
 #  Note:
-#	Is GODIST relavent for modern golang?
+#	Need to change INSTALL_PREFIX to DIST
+#	Is GODIST relavent for modern golang?  Can we derive all from
+#	output of "$(GODIST)/bin/go enviroment" ?
 #
 
 #  Where to install directory $INSTALL_PREFIX/play/.
@@ -14,14 +19,20 @@
 #
 #  Value may be overriden by -DINSTALL_PREFIX=...
 
-INSTALL_PREFIX?=/usr/local/jmscott
+#  stable jmscott tools, need to build jmscott/play
+JMSCOTT_ROOT?=/usr/local/jmscott
 
-#  Typical location for development
-#INSTALL_PREFIX?=$(HOME)/opt/jmscott
+INSTALL_PREFIX?=$(JMSCOTT_ROOT)/play
+#INSTALL_PREFIX?=$(HOME)/opt/jmscott/play
 
 INSTALL_USER?=$(USER)
 INSTALL_GROUP?=staff
 
+#
 # location of go distribution.
+#
+#  Note:
+#	Need to change to "go enviroment" command?
+#
 
 GODIST=/usr/local/go

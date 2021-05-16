@@ -2,25 +2,36 @@
 #  Synospsis:
 #	Build template for local.mk, required by global Makefile
 #  Usage:
-#	cp local-linux.mk.example local.mk
+#	cp local-local.mk.example local.mk
 #	vi local.mk
 #	make world
+#  Dependencies:
+#	Modern golang distribution.
+#	C compiler.  Both clang and gcc ok.
 #  Note:
-#	Is GODIST relavent for modern golang?
+#	Is GODIST relavent for modern golang?  Can we derive all from
+#	output of "$(GODIST)/bin/go environment" ?
 #
 
-#  Where to install directory play/.  Default is /usr/local/jmscott/play
+#  Where to install directory $INSTALL_PREFIX/play/.
+#  Default is /usr/local/jmscott/play
+#
 #  Value may be overriden by -DINSTALL_PREFIX=...
 
-INSTALL_PREFIX?=/usr/local/jmscott
+#  stable jmscott tools, need to build jmscott/play
+JMSCOTT_ROOT?=/usr/local/jmscott
 
-#  Typical location for development
-
-#INSTALL_PREFIX?=$(HOME)/opt/jmscott
+INSTALL_PREFIX?=$(JMSCOTT_ROOT)/play
+#INSTALL_PREFIX?=$(HOME)/opt/jmscott/play
 
 INSTALL_USER?=$(USER)
 INSTALL_GROUP?=$(USER)
 
+#
 # location of go distribution.
+#
+#  Note:
+#	Need to change to "go enviroment" command?
+#
 
 GODIST=/usr/local/go
