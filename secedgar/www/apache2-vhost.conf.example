@@ -2,11 +2,11 @@
 #  Synopsis:
 #	Example apache2 config for secedgar
 #  Usage:
-#	SECEDGAR_ROOT=/usr/local/bpole
+#	SECEDGAR_ROOT=/usr/local/secedgar
 #	cd /etc/apache2/sites-enabled
-#	cp $SECEDGAR_ROOT/lib/apache2.conf.example bpole.remrot.conf
+#	cp $SECEDGAR_ROOT/lib/apache2.conf.example secedgar.gthedge.com.conf
 #
-#Define SECEDGAR_ROOT /usr/local/bpole
+#Define SECEDGAR_ROOT /usr/local/secedgar
 Define SECEDGAR_ROOT /Users/jmscott/opt/secedgar
 Define SECEDGAR_VHOST_ROOT /Users/jmscott/opt/secedgar/www
 Define SECEDGAR_APACHE2_SERVER_NAME secedgar.jmscott.tmonk.local
