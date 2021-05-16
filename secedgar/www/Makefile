@@ -4,6 +4,8 @@
 #
   
 include ../../local.mk
+include ../../play.mk
+include ../secedgar.mk
 
 ifndef JMSCOTT_ROOT
 $(error env JMSCOTT_ROOT is not set)
@@ -17,7 +19,7 @@ COMPILEs :=	$(shell (. ./$(DIST) && echo $$COMPILEs))
 
 WWW_USER=$(INSTALL_USER)
 WWW_GROUP=$(INSTALL_GROUP)
-WWW_ROOT=$(INSTALL_PREFIX)/www
+WWW_ROOT=$(SECEDGAR_PREFIX)/www
 
 all: $(COMPILEs)
 
@@ -56,8 +58,13 @@ install: all
 		-o $(WWW_USER)						\
 		-m u=xrw,g=x,o=						\
 		-d $(WWW_ROOT)/cgi-bin
+	install								\
+		-g $(WWW_GROUP)						\
+		-o $(WWW_USER)						\
+		-m u=xrw,g=wrx,o=					\
+		-d $(WWW_ROOT)/tmp
 
-	test -e $(WWW_ROOT)/cgi-bin/jmscott ||			\
+	test -e $(WWW_ROOT)/cgi-bin/jmscott ||				\
 		ln -s $(JMSCOTT_ROOT)/www/cgi-bin 			\
 			$(WWW_ROOT)/cgi-bin/jmscott
 

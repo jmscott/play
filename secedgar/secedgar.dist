@@ -18,14 +18,13 @@
 #  to, say, foobar-YYYYMMDD_hhmmss.tar.bz2
 
 #PRODUCT=foobar
-PRODUCT=jmscott-play-secedgar
+PRODUCT=secedgar
 
 LIBs="
 	SGML-DOCUMENT
 	SGML-DOCUMENT.tsv
 	SGML-SUBMISSION
 	SGML-SUBMISSION.tsv
-	jmscott-play-secedgar.dist
 	merge-nc_submission.sql
 	merge-nc_tar_file_element.sql
 	naics.txt
@@ -37,6 +36,7 @@ LIBs="
 	psqlrc.example
 	report.sql
 	schema.sql
+	secedgar.dist
 	sic86_87.txt
 	sic88_97.txt
 "
@@ -67,10 +67,12 @@ SBINs="
 #ETC=""
 
 #  Uncomment to create spool/ directory
-SPOOL=""
+SPOOL="
+"
 
 #  Uncomment to create data/ directory
-DATA=""
+DATA="
+"
 
 #  Uncomment to create run/ directory
 RUN=""
@@ -82,4 +84,8 @@ LOG=""
 #CACHE=""
 
 #  Uncomment to create tmp/ directory
-TMP=""
+TMP="
+"
+
+ATTIC="
+"

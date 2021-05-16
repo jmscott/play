@@ -79,4 +79,5 @@ ETC="
 #CACHE=""
 
 #  Uncomment to create tmp/ directory
-#TMP=""
+TMP="
+"
