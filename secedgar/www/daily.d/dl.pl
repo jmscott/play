@@ -21,10 +21,9 @@ my $q = dbi_pg_select(
 			$off
 		],
 	sql =>  q(
-SELECT
-	dz.zip_path,
+SELECT DISTINCT
+	regexp_replace(dz.zip_path, '^.+[/\\]', '') AS zip_name,
 	dz.blob,
-	to_char(dz.job_time, 'Dy, Mon dd, yyyy') AS job_time,
 	pg_size_pretty(bc.byte_count) AS byte_count
   FROM
   	secedgar.daily_nc_zip dz
@@ -32,7 +31,7 @@ SELECT
 	  	bc.blob = dz.blob
 	  )
   ORDER BY
-  	dz.job_time DESC
+  	zip_name DESC
   LIMIT
   	$1
   OFFSET
@@ -42,9 +41,9 @@ SELECT
 while (my $row = $q->fetchrow_hashref()) {
 	print <<END;
  <dt>
-  <a href="/cgi-bin/daily?out=mime.zip&blob=$row->{blob}">$row->{zip_path}</a>
+  <a href="/cgi-bin/daily?out=mime.zip&blob=$row->{blob}">$row->{zip_name}</a>
  </dt>
- <dd>$row->{byte_count} @ $row->{job_time}</dd>
+ <dd>$row->{byte_count}</dd>
 END
 }
 
