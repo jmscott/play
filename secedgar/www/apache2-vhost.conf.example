@@ -17,6 +17,15 @@ Define SECEDGAR_PGUSER postgres
 Define SECEDGAR_PGDATABASE secedgar
 Define SECEDGAR_BLOBIO_SERVICE bio4:127.0.0.1:1798
 
+Define SECEDGAR_PATH /Users/jmscott/opt/secedgar/sbin:/usr/local/jmscott/bin:/usr/local/pgsql/bin:/usr/bin:/bin
+
+#  Need gnubin in mac ports
+#Define SECEDGAR_PATH /opt/local/libexec/gnubin:/opt/local/bin:/Users/jmscott/opt/secedgar/sbin:/usr/local/jmscott/bin:/usr/local/pgsql/bin:/usr/bin:/bin
+
+<IfDefine !APACHE_LOG_DIR>
+        Define APACHE_LOG_DIR
+</IfDefine>
+
 <VirtualHost *:80>
 
 	SetEnv SECEDGAR_ROOT ${SECEDGAR_ROOT}
@@ -29,8 +38,12 @@ Define SECEDGAR_BLOBIO_SERVICE bio4:127.0.0.1:1798
 	SetEnv PGHOST ${SECEDGAR_PGHOST}
 	SetEnv PGPORT ${SECEDGAR_PGPORT}
 	SetEnv PGUSER ${SECEDGAR_PGUSER}
+	<IfDefine SECEDGAR_PGPASSWORD>
+		Define PGPASSWORD ${SECEDGAR_PGPASSWORD}
+	</IfDefine>
 	SetEnv PGDATABASE ${SECEDGAR_PGDATABASE}
-	#  Note: need to add IfDef PGPASSWORD
+
+	SetEnv PATH ${SECEDGAR_PATH}
 
 	SetEnv BLOBIO_SERVICE ${SECEDGAR_BLOBIO_SERVICE}
 
