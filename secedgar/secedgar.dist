@@ -37,6 +37,7 @@ LIBs="
 	report.sql
 	schema.sql
 	secedgar.dist
+	select-json-job-count.sql
 	sic86_87.txt
 	sic88_97.txt
 "
