@@ -22,7 +22,7 @@ my $q = dbi_pg_select(
 		],
 	sql =>  q(
 SELECT DISTINCT
-	regexp_replace(dz.zip_path, '^.+[/\\]', '') AS zip_name,
+	regexp_replace(dz.zip_path, '^.+[/\\\\]', '') AS zip_name,
 	dz.blob,
 	pg_size_pretty(bc.byte_count) AS byte_count
   FROM
