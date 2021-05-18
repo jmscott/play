@@ -23,7 +23,7 @@ Define SECEDGAR_PATH /Users/jmscott/opt/secedgar/sbin:/usr/local/jmscott/bin:/us
 #Define SECEDGAR_PATH /opt/local/libexec/gnubin:/opt/local/bin:/Users/jmscott/opt/secedgar/sbin:/usr/local/jmscott/bin:/usr/local/pgsql/bin:/usr/bin:/bin
 
 <IfDefine !APACHE_LOG_DIR>
-        Define APACHE_LOG_DIR
+        Define APACHE_LOG_DIR "/opt/local/log"
 </IfDefine>
 
 <VirtualHost *:80>
