@@ -50,7 +50,7 @@ WITH mergable AS (
 		  	j.blob = m.json_blob
 	  ) jj,
 	  LATERAL jsonb_array_elements(
-	  	jj.doc->'file-elements'
+	  	jj.doc->'file_elements'
 	  ) AS ele
 ) INSERT INTO nc_tar_file_element (
 	blob,
