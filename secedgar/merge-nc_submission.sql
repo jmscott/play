@@ -3,8 +3,8 @@
 \set ON_ERROR_STOP on
 
 INSERT INTO nc_submission(
-	nc_zip_blob,
-	nc_file_path,
+	nc_tar_blob,
+	nc_tar_path,
 	line_number,
 	element,
 	value
@@ -12,8 +12,8 @@ INSERT INTO nc_submission(
 	(jj.doc
 		->'secedgar.play.jmscott.github.com'
 		->'command_line'
-		->>'nc_zip_blob')::udig
-		AS nc_zip_blob,
+		->>'nc_tar_blob')::udig
+		AS nc_tar_blob,
 	replace(jj.doc
 		->'secedgar.play.jmscott.github.com'
 		->'command_line'

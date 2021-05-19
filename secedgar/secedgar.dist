@@ -55,7 +55,7 @@ SBINs="
 	nc-tar2file-element
 	nc2element_count
 	nc2submission
-	spool-nc-zip2attic
+	spool-nc-tar2attic
 "
 
 #CGIBINs=""

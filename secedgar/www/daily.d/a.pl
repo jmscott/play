@@ -1,5 +1,5 @@
 #
 #  Synopsis:
-#	Write html <a> to download the zip.
+#	Write html <a> to download the tar.
 #
 

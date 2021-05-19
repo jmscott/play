@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #  Synopsis:
-#	Do blob-put-file of daily nc zip from sec edgar web site.
+#	Do blob-put-file of daily "non-cooked" tape archive from sec edgar.
 #  Usage:
 #	edgar-put-daily spool/20210129.nc.tar.gz
 #  Exit Status:
@@ -57,16 +57,16 @@ test -n "$SECEDGAR_ROOT" || die 'env not defined: SECEDGAR_ROOT'
 test -d $SECEDGAR_ROOT || die "no directory: $SECEDGAR_ROOT"
 
 log "PATH=$PATH"
-log "daily zip size: $(du -h $DAILY | cut -f1)"
+log "daily tar size: $(du -h $DAILY | cut -f1)"
 
 log "bio-put-file daily: ... $DAILY"
 log "tmp put json: $TMP_JSON"
 bio-put-file $DAILY >$TMP_JSON || die "bio-put-file failed: exit status=$?"
 
-ZIP_BLOB=$(grep '^	[@>][a-z]' $TMP_JSON)
-test $? = 0 || die "grep zip blob json failed: exit status=$?"
-ZIP_BLOB=$(echo "$ZIP_BLOB" | cut -c3-)
-log "zip daily blob: $ZIP_BLOB"
+TAR_BLOB=$(grep '^	[@>][a-z]' $TMP_JSON)
+test $? = 0 || die "grep tar blob json failed: exit status=$?"
+TAR_BLOB=$(echo "$TAR_BLOB" | cut -c3-)
+log "tar daily blob: $TAR_BLOB"
 
 PUT_JSON_BLOB=$(grep '^	>>[a-z]' $TMP_JSON)
 test $? = 0 || die "grep json blob failed: exit status=$?"
@@ -92,11 +92,11 @@ esac
 cat >$TMP_JSON <<END
 {
 	"secedgar.play.jmscott.github.com": {
-		"command-line" : {
+		"command_line" : {
 			"command": "$PROG",
-			"zip-path": "$(echo -n $DAILY | escape-json-string)",
-			"json-put-blob": "$PUT_JSON_BLOB",
-			"zip-blob": "$ZIP_BLOB",
+			"tar_path": "$(echo -n $DAILY | escape-json-string)",
+			"json_put_blob": "$PUT_JSON_BLOB",
+			"tar_blob": "$TAR_BLOB",
 			"now": "$(RFC3339Nano)"
 		}
 	}

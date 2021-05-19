@@ -1,7 +1,7 @@
 <div id="navigation">
  <ul>
   <li><a href="/">Home</a></li>
-  <li><a href="/daily-zip.shtml">Daily NC Zips</a></li>
+  <li><a href="/daily-tar.shtml">Daily "Not Cooked" Tape Archives</a></li>
   <li><a href="/env.shtml">Apache Process Environment</a></li>
  </ul>
 </div>

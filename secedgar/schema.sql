@@ -156,29 +156,29 @@ CREATE TABLE sic86_87
 
 \COPY sic86_87 FROM 'sic86_87.txt' DELIMITER E'\t' CSV HEADER
 
-DROP VIEW IF EXISTS daily_nc_zip;
-CREATE VIEW daily_nc_zip AS
-  WITH zips AS (
+DROP VIEW IF EXISTS daily_nc_tar;
+CREATE VIEW daily_nc_tar AS
+  WITH tars AS (
     SELECT
   	doc
 	  ->'secedgar.play.jmscott.github.com'
-	  ->'command-line'
+	  ->'command_line'
 	AS doc
       FROM
     	jsonorg.jsonb_255
       WHERE
   	jsonb_path_exists(doc, '
 		$."secedgar.play.jmscott.github.com"
-			."command-line"
+			."command_line"
 			."command"
 		? (@ == "edgar-put-daily")
 	')
 ) SELECT
-	(doc->>'zip-blob')::udig AS blob,
-	doc->>'zip-path' AS zip_path,
+	(doc->>'tar_blob')::udig AS blob,
+	doc->>'tar_path' AS tar_path,
 	(doc->>'now')::timestamptz AS job_time
     FROM
-    	zips
+    	tars
     WHERE
 	length(doc->>'now') > 0
 ;
@@ -262,7 +262,7 @@ COMMENT ON TABLE nc_tar_file_element IS
 
 DROP TABLE IF EXISTS nc_submission CASCADE;
 CREATE TABLE nc_submission(
-	nc_zip_blob	udig,
+	nc_tar_blob	udig,
 	nc_file_path	text CHECK (
 				nc_file_path ~ '[[:graph:]]'
 				AND
@@ -277,7 +277,7 @@ CREATE TABLE nc_submission(
 	value		text CHECK (
 				length(value) < 256
 			),
-	PRIMARY KEY	(nc_zip_blob, nc_file_path, line_number)
+	PRIMARY KEY	(nc_tar_blob, nc_file_path, line_number)
 );
 
 COMMIT;

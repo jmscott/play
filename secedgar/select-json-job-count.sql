@@ -18,15 +18,8 @@ WITH secedgar AS (
 ), canonical_sec AS (
   SELECT
 	j.doc->'secedgar.play.jmscott.github.com' AS doc,
-	/*
-	 *  Note:
-	 *	Sadly, scripts use both variants for the command line field:
-	 *	'command_line' and ''command-line'
-	 */
-	coalesce(
-		j.doc->'secedgar.play.jmscott.github.com'->'command_line',
-		j.doc->'secedgar.play.jmscott.github.com'->'command-line'
-	) AS command_line
+	j.doc->'secedgar.play.jmscott.github.com'->'command_line'
+		AS command_line
     FROM
     	secedgar rj natural join jsonorg.jsonb_255 j
 ) SELECT

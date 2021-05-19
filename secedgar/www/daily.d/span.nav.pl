@@ -1,6 +1,6 @@
 #
 #  Synopsis:
-#	Write html <span> of for navigating daily zip search results
+#	Write html <span> of for navigating daily tar search results
 #
 use utf8;
 
@@ -14,17 +14,17 @@ our %QUERY_ARG;
 my $off = $QUERY_ARG{off};
 my $lim = $QUERY_ARG{lim};
 
-my $zip_count = dbi_pg_select(
+my $tar_count = dbi_pg_select(
 		db =>	dbi_pg_connect(),
-		tag =>	'select-daily-zip-count',
+		tag =>	'select-daily-tar-count',
 		argv =>	[],
 		sql => q(
 SELECT
-	count(*) AS zip_count
+	count(*) AS tar_count
   FROM
-  	secedgar.daily_nc_zip
+  	secedgar.daily_nc_tar
 )
-)->fetchrow_hashref()->{zip_count};
+)->fetchrow_hashref()->{tar_count};
 
 print <<END;
 <span
@@ -33,19 +33,19 @@ print <<END;
 >
 END
 
-if ($zip_count == 0) {
+if ($tar_count == 0) {
 	print <<END;
-No daily nc zip files.</span>
+No daily nc tar files.</span>
 END
 	return 1;
 }
 
-if ($zip_count <= $lim) {
+if ($tar_count <= $lim) {
 	my $plural = 's';
-	$plural = '' if $zip_count == 1;
+	$plural = '' if $tar_count == 1;
 
 	print <<END;
-$zip_count zip$plural fetched
+$tar_count tar$plural fetched
 END
 	return 1;
 }
@@ -55,32 +55,32 @@ if ($off >= $lim) {
 	$arrow_off = $off - $lim;
 	print <<END;
 <a href=
-"/daily-zip.shtml?off=$arrow_off&amp;lim=$lim">◀</a>
+"/daily-tar.shtml?off=$arrow_off&amp;lim=$lim">◀</a>
 END
 }
 
-my $zip_lower = $off + 1;
-my $zip_up = $zip_lower + $lim - 1;
-$zip_up = $zip_count if $zip_up > $zip_count;
+my $tar_lower = $off + 1;
+my $tar_up = $tar_lower + $lim - 1;
+$tar_up = $tar_count if $tar_up > $tar_count;
 
 #  Note:
 #	Rewrite with commas, english style.
 #	Need a library here.
 #
-1 while $zip_lower =~ s/^(\d+)(\d{3})/$1,$2/;
-1 while $zip_up =~ s/^(\d+)(\d{3})/$1,$2/;
+1 while $tar_lower =~ s/^(\d+)(\d{3})/$1,$2/;
+1 while $tar_up =~ s/^(\d+)(\d{3})/$1,$2/;
 
 print <<END;
-$zip_lower to $zip_up 
+$tar_lower to $tar_up 
 END
 
 $arrow_off = $off + $lim;
-print <<END if $arrow_off < $zip_count;
-<a href="/daily-zip.shtml?off=$arrow_off&amp;lim=$lim">▶</a>
+print <<END if $arrow_off < $tar_count;
+<a href="/daily-tar.shtml?off=$arrow_off&amp;lim=$lim">▶</a>
 END
 
 print <<END;
-of $zip_count zips fetched
+of $tar_count tars fetched
 </span>
 END
 

@@ -19,7 +19,7 @@ WITH mergable AS (
     WHERE
   	jsonb_path_exists(doc, '
                 $."secedgar.play.jmscott.github.com"
-                        ."command-line"
+                        ."command_line"
                         ."command"
                 ? (@ == "nc-tar2file-element")
         ')
@@ -31,12 +31,12 @@ WITH mergable AS (
 	    WHERE
 	    	mat.blob = (jt.doc
 				->'secedgar.play.jmscott.github.com'
-				->'command-line'
-				->>'zip-tar-blob')::udig
+				->'command_line'
+				->>'tar_blob')::udig
 	)
 ), elements AS (
   SELECT
-  	(jj.doc->'command-line'->>'zip-tar-blob')::udig AS zip_blob,
+  	(jj.doc->'command_line'->>'tar_blob')::udig AS tar_blob,
 	ele->>'path' AS file_path,
 	(ele->>'size')::bigint AS file_size
     FROM
@@ -57,7 +57,7 @@ WITH mergable AS (
 	file_path,
 	file_size
   ) SELECT
-  	zip_blob,
+  	tar_blob,
 	file_path,
 	file_size
       FROM
@@ -69,8 +69,8 @@ WITH mergable AS (
 VACUUM ANALYZE nc_tar_file_element;
 
 SELECT
-	blob AS zip_blob,
-	count(*) AS zip_file_count,
+	blob AS tar_blob,
+	count(*) AS tar_file_count,
 	pg_size_pretty(sum(file_size)) AS byte_count
   FROM
   	nc_tar_file_element
@@ -83,9 +83,9 @@ SELECT
 ;
 
 SELECT
-	blob AS zip_blob,
+	blob AS tar_blob,
 	pg_size_pretty(sum(file_size)) AS byte_count,
-	count(*) AS zip_file_count
+	count(*) AS tar_file_count
   FROM
   	nc_tar_file_element
   GROUP BY
@@ -97,7 +97,7 @@ SELECT
 ;
 
 SELECT
-	count(DISTINCT blob) zip_tar_count,
+	count(DISTINCT blob) tar_count,
 	count(*) AS total_file_count,
 	pg_size_pretty(sum(file_size)) AS total_byte_count
   FROM

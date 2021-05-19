@@ -84,7 +84,7 @@ print <<'END';
      <dt>text</dt>
      <dd>
      </dd>
-     <dt>mime.zip</dt>
+     <dt>mime.tar</dt>
      <dd>
 <div class="query-args">
  <h4>Query Args</h4>

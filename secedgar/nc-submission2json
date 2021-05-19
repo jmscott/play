@@ -3,7 +3,7 @@
 #  Synopsis:
 #	Extract all ^<ELEMENT> fields in non-cooked SEC daily file.
 #  Usage:
-#	nc2element-count <9999999997-21-000077.nc
+#	nc-submission2json <9999999997-21-000077.nc
 #
 
 use JSON::PP q(encode_json);

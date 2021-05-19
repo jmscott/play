@@ -1,8 +1,8 @@
 #
 #  Synopsis:
-#	Fetch an SEC EDGAR nc zip file as blob.
+#	Fetch an SEC EDGAR nc tar file as blob.
 #  Usage:
-#	/sgi-bin/daily?out=mime.zip?blob=bc160:3f1fca04e46c32da3369df8a1 ...
+#	/sgi-bin/daily?out=mime.tar?blob=bc160:3f1fca04e46c32da3369df8a1 ...
 #
 require 'dbi-pg.pl';
 
@@ -11,17 +11,17 @@ our %QUERY_ARG;
 my $blob = $QUERY_ARG{blob};
 my $q = dbi_pg_select(
 		db =>	dbi_pg_connect(),
-		tag =>	'select-mime-nc-zip',
+		tag =>	'select-mime-nc-tar',
 		argv =>	[
 			$blob
 		],
 		sql =>	q(
 SELECT
-	dz.zip_path,
+	dz.tar_path,
 	fm.mime_type,
 	bc.byte_count
   FROM
-  	secedgar.daily_nc_zip dz
+  	secedgar.daily_nc_tar dz
 	  JOIN setcore.byte_count bc ON (
 	  	bc.blob = dz.blob
 	  )
@@ -39,19 +39,19 @@ unless ($row) {
 Status: 404
 Content-Type: text/html
 
-ZIP not found: $blob
+TAR not found: $blob
 END
 	return;
 }
 
-my $zip_path = $row->{'zip_path'};
-$zip_path =~ s@.*/([^/]*)$@$1@;
+my $tar__path = $row->{'tar__path'};
+$tar__path =~ s@.*/([^/]*)$@$1@;
 my $content_length = $row->{'byte_count'};
 my $mime_type = $row->{'mime_type'};
 
 print <<END;
 Content-Type: $mime_type
-Content-Disposition: inline;  filename="$zip_path"
+Content-Disposition: inline;  filename="$tar__path"
 Content-Length: $content_length
 
 END
@@ -64,7 +64,7 @@ my $GET_SERVICE = $ENV{BLOBIO_GET_SERVICE} ?
 
 my $status = system("blobio get --service $GET_SERVICE --udig $blob");
 
-print STDERR "mime.zip.d/blob: blobio get $blob failed: exit status=$status\n"
+print STDERR "mime.tar: blobio get $blob failed: exit status=$status\n"
 	unless $status == 0
 ;
 

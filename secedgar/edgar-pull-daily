@@ -124,15 +124,15 @@ log "feed url (see for missing): $FEED_URL"
 URL="$FEED_URL/$YEAR/$QTR/$FILE"
 log "pull url: $URL"
 
-log 'pulling zip from sec edgar ...'
+log 'pulling tar from sec edgar ...'
 wget --report-speed=bits --output-file - "$URL"			||
 		die "wget secedgar failed: exit status=$?"
 test -e $FILE || die "sec file does not exist: $FILE"
 test -s $FILE || die 'sec file is empty'
 
-log "moving zip to dir ../spool/: $FILE"
+log "moving tar to dir ../spool/: $FILE"
 SPOOL=$SECEDGAR_ROOT/spool
-log "mv zip file to spool: $SPOOL"
+log "mv tar file to spool: $SPOOL"
 mv $FILE $SPOOL || die "mv spool failed: exit status=$?"
 log "return to root: $SECEDGAR_ROOT"
 cd $SECEDGAR_ROOT || die "return cd SECEDGAR_ROOT failed: exit status=$?"

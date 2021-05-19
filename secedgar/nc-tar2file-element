@@ -95,11 +95,11 @@ cat >$TMP_JSON <<END
 			"PATH": "$(echo $PATH | escape-json-string)",
 			"LD_LIBRARY_PATH": "$(echo $LD_LIBRARY_PATH | escape-json-string)"
 		},
-		"command-line" : {
+		"command_line" : {
 			"command": "$PROG",
-			"zip-tar-blob": "$TAR_BLOB"
+			"tar_blob": "$TAR_BLOB"
 		},
-		"file-elements": [
+		"file_elements": [
 END
 
 log 'starting extract of tar elements into json blob ...'

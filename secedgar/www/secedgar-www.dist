@@ -29,7 +29,7 @@ LIBs="
 	daily.d/a.pl
 	daily.d/dl.pl
 	daily.d/help.pl
-	daily.d/mime.zip.pl
+	daily.d/mime.tar.pl
 	daily.d/span.nav.pl
 	daily.d/text.pl
 
@@ -41,7 +41,7 @@ CGIBINs="
 "
 
 HTDOCs="
-	daily-zip.shtml
+	daily-tar.shtml
 	env.shtml
 	footer.shtml
 	header.shtml

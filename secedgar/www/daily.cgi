@@ -57,7 +57,7 @@
      content-type="text/html"
    ></putter>
 
-   <putter name="mime.zip">
+   <putter name="mime.tar">
     <query-args>
      <arg
        name="blob"

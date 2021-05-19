@@ -3,7 +3,7 @@
 #  Synopsis:
 #	Convert an SEC EDGAR .nc file into jsob blob with elements.
 #  Usage:
-#	nc2submission <nc-zip-blob> <path/to/nc>
+#	nc2submission <nc-tar-udig> <path/to/nc>
 #  Exit Status:
 #	0	json blob put
 #	1	failure
@@ -57,7 +57,7 @@ die()
 }
 
 test $# = 2 || die 'wrong number of arguments'
-ZIP_BLOB=$1
+TAR_BLOB=$1
 NC_PATH=$2
 
 log 'hello, world'
@@ -66,7 +66,7 @@ trap leave EXIT
 log "BLOBIO_SERVICE=$BLOBIO_SERVICE"
 log "BLOBIO_ALGORITHM=$BLOBIO_ALGORITHM"
 
-log "zip blob: $ZIP_BLOB"
+log "tar blob: $TAR_BLOB"
 log "nc file path: $NC_PATH"
 test -r "$NC_PATH" || die "can not read nc file: exit status=$?"
 
@@ -85,7 +85,7 @@ cat >$TMP_JSON <<END
 		},
 		"command_line": {
 			"command": "$PROG",
-			"nc_zip_blob": "$ZIP_BLOB",
+			"nc_tar_blob": "$TAR_BLOB",
 			"nc_file_path": "$(echo $NC_PATH | escape-json-string)"
 		},
 		"submission_header": 

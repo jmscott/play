@@ -1,8 +1,8 @@
 /*
  *  Synopsis:
- *	Summarize json for daily edgar pull of nc zip from sec database.
+ *	Summarize json for daily edgar pull of nc tar from sec database.
  *  Note:
- *	Query slowed dramatically when adding min/max zip sizes.  why?
+ *	Query slowed dramatically when adding min/max tar sizes.  why?
  *
  *	Do a daily summary of all jobs.
  *
@@ -19,33 +19,33 @@ WITH put_daily AS (
   SELECT
   	doc
 	  ->'secedgar.play.jmscott.github.com'
-	  ->'command-line'
+	  ->'command_line'
 	AS doc
     FROM
     	jsonorg.jsonb_255
     WHERE
   	jsonb_path_exists(doc, '
 		$."secedgar.play.jmscott.github.com"
-			."command-line"
+			."command_line"
 			."command"
 		? (@ == "edgar-put-daily")
 	')
-), recent_zip AS (
+), recent_tar AS (
   SELECT
-  	(doc->>'zip-blob')::udig AS blob,
-  	substring(doc->>'zip-path' FROM '[^/]+$') AS zip_name
+  	(doc->>'tar_blob')::udig AS blob,
+  	substring(doc->>'tar_path' FROM '[^/]+$') AS tar_name
     FROM
     	put_daily
     ORDER BY
     	2 DESC
     LIMIT
     	1
-), zip_sizes AS (
+), tar_sizes AS (
   SELECT
   	min(bc.byte_count) AS "min_size",
   	max(bc.byte_count) AS "max_size"
     FROM
-    	daily_nc_zip d
+    	daily_nc_tar d
 	  JOIN setcore.byte_count bc ON (
 	  	bc.blob = bc.blob
 	  )
@@ -54,21 +54,21 @@ WITH put_daily AS (
 	count(d.doc) || ' Invocations' AS "edgar-put-daily",
 	min((d.doc->'now')::text::timestamp) AS "Earliest Job Time",
 	max((d.doc->'now')::text::timestamp) AS "Recent Job Time",
-	r.zip_name AS "Recent Zip",
-	r.blob AS "Recent Zip Blob",
-	pg_size_pretty(bc.byte_count) AS "Recent Zip Size",
-	pg_size_pretty(sz.min_size) AS "Min Zip Size",
-	pg_size_pretty(sz.max_size) AS "Max Zip Size"
+	r.tar_name AS "Recent TAR",
+	r.blob AS "Recent TAR Blob",
+	pg_size_pretty(bc.byte_count) AS "Recent TAR Size",
+	pg_size_pretty(sz.min_size) AS "Min TAR Size",
+	pg_size_pretty(sz.max_size) AS "Max TAR Size"
   FROM
  	put_daily d,
-	recent_zip r
+	recent_tar r
 	  JOIN setcore.byte_count bc ON (
 	  	bc.blob = r.blob
 	  ),
-	zip_sizes sz
+	tar_sizes sz
   GROUP BY
   	r.blob,
-	r.zip_name,
+	r.tar_name,
 	bc.byte_count,
 	sz.min_size,
 	sz.max_size

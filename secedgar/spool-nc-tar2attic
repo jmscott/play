@@ -3,10 +3,10 @@
 #	Put *.nc.tar.gz files in spool/ and move to dir attic/YYYY/spool.
 #  Usage
 #	export SECEDGAR_ROOT=$HOME/opt/secedgar
-#	spool-nc-zip2attic >>log/spool-nc-zip2attic.log 2>&1
+#	spool-nc-tar2attic >>log/spool-nc-tar2attic.log 2>&1
 #
 #	#  fault errors on dir $SECEDGAR_ROOT/run/
-#	cat $SECEDGAR_ROOT/run/spool-nc-zip2attic.fault
+#	cat $SECEDGAR_ROOT/run/spool-nc-tar2attic.fault
 #
 PSQL='psql --no-psqlrc --quiet'
 
@@ -50,42 +50,42 @@ find spool								\
 	-follow								\
 	-maxdepth 1							\
 	-name '[123][0-9][0-9][0-9][01][0-9][0-3][0-9].nc.tar.gz'	|
-	while read ZP;  do
-		log "zip path: $ZP"
-		log 'does a put zip job exist ... ?'
-		ZP_EXISTS=$(
-  $PSQL --set zp="$ZP" <<END
+	while read TP;  do
+		log "tar path: $TP"
+		log 'does a put tar job exist ... ?'
+		TP_EXISTS=$(
+  $PSQL --set TP="$TP" <<END
 \\set ON_ERROR_STOP 1
 \\pset tuples_only
 \\pset format unaligned
 
 	SELECT EXISTS (
 	  SELECT
-		zip_path
+		tar_path
 	  FROM
-	  	secedgar.daily_nc_zip
+	  	secedgar.daily_nc_tar
 	  WHERE
-	  	zip_path = :'zp'
+	  	tar_path = :'TP'
 	)
 END
 	)
-		test $? = 0 || die "psql zip exists failed: exit status=$?"
-		case "$ZP_EXISTS" in
+		test $? = 0 || die "psql tar exists failed: exit status=$?"
+		case "$TP_EXISTS" in
 		f)
-			log 'zip job does not exist'
+			log 'tar job does not exist'
 			log 'putting edgar-put-daily ...'
-			edgar-put-daily $ZP				||
+			edgar-put-daily $TP				||
 				die "edgar-put-daily failed: exit status=$?"
 			;;
 		t)
-			log 'zip job exists, so put not done'
+			log 'tar job exists, so put not done'
 			;;
 		*)
-			die "psql zip exists: unexpected output: $ZP_EXISTS"
+			die "psql tar exists: unexpected output: $TP_EXISTS"
 			;;
 		esac
 		YEAR=$(
-			echo "$ZP"					|
+			echo "$TP"					|
 			sed 's/spool\///'				|
 			sed 's/....\.nc\.tar\.gz//'
 		)
@@ -93,12 +93,12 @@ END
 		[123][0-9][0-9][0-9])
 			;;
 		*)
-			die "zip path: unknown year: $YEAR"
+			die "tar path: unknown year: $YEAR"
 			;;
 		esac
 		ATTIC=attic/$YEAR
 		log "attic path: $ATTIC"
 		mkdir -p $ATTIC	|| die "mkdir attic failed: exit status=$?"
-		log 'moving zip to attic ...'
-		mv -v $ZP $ATTIC || die "mv attic failed: exit status=$?"
+		log 'moving tar to attic ...'
+		mv -v $TP $ATTIC || die "mv attic failed: exit status=$?"
 	done
