@@ -1,10 +1,10 @@
-\set search_path to 'secedgar,public'
-
 \set ON_ERROR_STOP on
+
+SET search_path TO secedgar,public;
 
 INSERT INTO nc_submission(
 	nc_tar_blob,
-	nc_tar_path,
+	nc_file_path,
 	line_number,
 	element,
 	value
