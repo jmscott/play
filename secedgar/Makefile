@@ -3,6 +3,8 @@
 #	Makefile file for secedgar system.
 #  Usage:
 #	make SECEDGAR_PREFIX=/usr/local/secedgar world
+#	#  option build of $SECEDGAR_PREFIX/www
+#	cd www;  make SECEDGAR_PREFIX=/usr/local/secedgar world
 #  Note:
 #	No dependency on jmscott/play exists, in theory.
 #	However, dependency on jmscott/work exists.
