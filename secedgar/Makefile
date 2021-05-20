@@ -1,9 +1,11 @@
 #
 #  Synopsis:
 #	Makefile file for secedgar system.
+#  Usage:
+#	make SECEDGAR_PREFIX=/usr/local/secedgar world
 #  Note:
 #	No dependency on jmscott/play exists, in theory.
-#	However, dependency on jmscott/work exists. 
+#	However, dependency on jmscott/work exists.
 #
 include ../local.mk
 include ../play.mk
