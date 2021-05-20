@@ -1,6 +1,11 @@
 #
 #  Synopsis:
 #	Makefile for www gui on SECEdgar.
+#  Usage:
+#	make SECEDGAR_PREFIX=/usr/local/secedgar world
+#  Note:
+#	No dependency on jmscott/play exists, in theory.
+#	However, dependency on jmscott/work exists.
 #
   
 include ../../local.mk
