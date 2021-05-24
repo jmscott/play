@@ -96,6 +96,8 @@ log "profile: $PROFILE"
 test -r $PROFILE || die "can not read etc/profile: $PROFILE"
 . $PROFILE
 
+log "PATH=$PATH"
+
 TMPDIR=${TMPDIR:=/tmp}
 log "TMPDIR=$TMPDIR"
 
