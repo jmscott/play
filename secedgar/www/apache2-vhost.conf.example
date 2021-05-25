@@ -9,7 +9,7 @@
 #Define SECEDGAR_ROOT /usr/local/secedgar
 Define SECEDGAR_ROOT /Users/jmscott/opt/secedgar
 Define SECEDGAR_VHOST_ROOT /Users/jmscott/opt/secedgar/www
-Define SECEDGAR_APACHE2_SERVER_NAME secedgar.jmscott.tmonk.local
+Define SECEDGAR_APACHE2_SERVER_NAME secedgar.jmscott
 Define SECEDGAR_JMSCOTT_ROOT /usr/local/jmscott
 Define SECEDGAR_PGHOST 10.187.1.3
 Define SECEDGAR_PGPORT 5432
@@ -26,7 +26,7 @@ Define SECEDGAR_PATH /Users/jmscott/opt/secedgar/sbin:/usr/local/jmscott/bin:/us
         Define APACHE_LOG_DIR "/opt/local/log"
 </IfDefine>
 
-<VirtualHost *:80>
+<VirtualHost ${SECEDGAR_APACHE2_SERVER_NAME}>
 
 	SetEnv SECEDGAR_ROOT ${SECEDGAR_ROOT}
 	ServerName ${SECEDGAR_APACHE2_SERVER_NAME}
