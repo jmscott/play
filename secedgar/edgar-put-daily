@@ -57,7 +57,7 @@ test -n "$SECEDGAR_ROOT" || die 'env not defined: SECEDGAR_ROOT'
 test -d $SECEDGAR_ROOT || die "no directory: $SECEDGAR_ROOT"
 
 log "PATH=$PATH"
-log "daily tar size: $(du -h $DAILY | cut -f1)"
+log "daily tar size: $(du -Lh $DAILY | cut -f1)"
 
 log "bio-put-file daily: ... $DAILY"
 log "tmp put json: $TMP_JSON"
