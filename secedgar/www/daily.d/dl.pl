@@ -38,12 +38,18 @@ SELECT DISTINCT
   	$2
 ;));
 
-while (my $row = $q->fetchrow_hashref()) {
+while (my $r = $q->fetchrow_hashref()) {
 	print <<END;
  <dt>
-  <a href="/cgi-bin/daily?out=mime.tar&blob=$row->{blob}">$row->{tar_name}</a>
+  <a href="/cgi-bin/daily?out=mime.tar&blob=$r->{blob}">$r->{tar_name}</a>
  </dt>
- <dd>$row->{byte_count}</dd>
+ <dd>
+   $r->{byte_count},
+   <a
+     href="/nctar.shtml?blob=$r->{blob}"
+     class="detail"
+   >Detail</a>
+ </dd>
 END
 }
 

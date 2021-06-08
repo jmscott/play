@@ -3,7 +3,6 @@
  <title>/cgi-bin/daily</title>
  <synopsis>HTTP CGI Script /cgi-bin/daily</synopsis>
  <subversion id="$Id$" />
- <blame>jmscott</blame>
  <GET>
   <examples>
    <example

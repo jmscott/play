@@ -26,6 +26,7 @@ LIBs="
 	apache2-passwd.example
 	apache2-vhost.conf.example
 
+	daily.cgi
 	daily.d/a.pl
 	daily.d/dl.pl
 	daily.d/help.pl
@@ -33,11 +34,16 @@ LIBs="
 	daily.d/span.nav.pl
 	daily.d/text.pl
 
+	nctar.cgi
+	nctar.d/dl.pl
+	nctar.d/help.pl
+
 	secedgar-www.dist
 "
 
 CGIBINs="
 	daily
+	nctar
 "
 
 HTDOCs="
@@ -47,6 +53,7 @@ HTDOCs="
 	header.shtml
 	index.shtml
 	nav.shtml
+	nctar.shtml
 	screen.css
 	template.shtml
 "

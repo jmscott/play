@@ -96,3 +96,6 @@ dist: all
 daily: daily.cgi
 	cgi2perl5 --source-path daily.cgi
 	chmod +x daily
+nctar: nctar.cgi
+	cgi2perl5 --source-path nctar.cgi
+	chmod +x nctar

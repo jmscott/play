@@ -1,0 +1,68 @@
+#!/usr/bin/env perl
+#
+#  Synopsis:
+#	Implements argument processing for /cgi-bin/nctar.
+#  Source Path:
+#	nctar.cgi
+#  Source SHA1 Digest:
+#	No SHA1 Calculated
+#  Note:
+#	/cgi-bin/nctar was generated automatically by cgi2perl5.
+#
+#	Do not make changes directly to this script.
+#
+die "SERVER_ROOT environment variable not defined"
+				unless defined $ENV{SERVER_ROOT};
+
+#
+#  Prepend the $SERVER_ROOT/lib directory
+#  to the load path.
+#
+unshift @INC, "$ENV{SERVER_ROOT}/lib";
+
+our (%CGI);
+
+require 'httpd2.d/common.pl';
+$CGI{name} = 'nctar';
+
+#
+#  BEGIN: /cgi/GET/out/query-args
+#
+$CGI{GET}->{out}->{'query-args'}->{arg}->{id} = {
+	perl5_re	=>	'\w[\w-]{0,32}'
+};
+$CGI{GET}->{out}->{'query-args'}->{arg}->{class} = {
+	perl5_re	=>	'\w[\w-]{0,32}'
+};
+#
+#  'out' query argument must match one of the out putter names.
+#
+$CGI{GET}->{out}->{'query-args'}->{arg}->{out} = {
+	perl5_re	=> 	'dl|help',
+	default		=>	'help',
+};
+#
+#  BEGIN: /cgi/GET/out/putter[@name='dl']
+#
+$CGI{GET}->{out}->{putter}->{'dl'}->{name} = 'dl';
+$CGI{GET}->{out}->{putter}->{'dl'}->{'content-type'} = 'text/html';
+
+#
+#  BEGIN: /cgi/GET/out/putter[@name=dl]/query-args
+#
+$CGI{GET}->{out}->{putter}->{'dl'}->{'query-args'}->{arg}->{blob} = {
+	perl5_re	=>	'[a-z][a-z0-9]{0,7}:[[:graph:]]{32,128}',
+	required	=>	'yes',
+};
+#
+#  END: /cgi/GET/out/putter[@name=dl]/query-args
+#
+
+#
+#  END: /cgi/GET/out/putter[@name='dl']
+#
+
+$CGI{GET}->{out}->{putter}->{help}->{name} = 'help';
+$CGI{GET}->{out}->{putter}->{help}->{'content-type'} = 'text/html';
+
+require "httpd2.d/$ENV{REQUEST_METHOD}.pl";

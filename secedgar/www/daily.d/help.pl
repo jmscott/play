@@ -25,8 +25,6 @@ print <<'END';
 <dd>/cgi-bin/daily</dd>
 <dt>Synopsis</dt>
 <dd>HTTP CGI Script /cgi-bin/daily</dd>
-<dt>Blame</dt>
-<dd>jmscott</dd>
   </dl>
  </div>
  <div class="GET">

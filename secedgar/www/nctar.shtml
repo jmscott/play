@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8" />
+  <title>Not Cooked Tar Detail - Dashboard</title>
+  <link
+    href="/screen.css"
+    rel="stylesheet"
+    type="text/css"
+  />
+ </head>
+
+ <body>
+  <div id="container">
+   <!--#include virtual="/header.shtml" -->
+   <!--#include virtual="/nav.shtml" -->
+   <div id="content">
+    <h2>"Not-Cooked" Daily Tape Archive</h2>
+     <!--#include virtual="/cgi-bin/nctar?out=dl&${QUERY_STRING}" -->
+   </div>
+   <!--#include virtual="/footer.shtml" -->
+  </div>
+ </body>
+</html>

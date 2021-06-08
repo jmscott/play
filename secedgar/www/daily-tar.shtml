@@ -2,7 +2,7 @@
 <html>
  <head>
   <meta charset="utf-8" />
-  <title>Daily Tape Archive from SEC - SECEdgar Dashboard</title>
+  <title>Daily Tape Archive from SEC - GT Dashboard</title>
   <link
     href="/screen.css"
     rel="stylesheet"
@@ -15,9 +15,10 @@
    <!--#include virtual="/header.shtml" -->
    <!--#include virtual="/nav.shtml" -->
    <div id="content">
-    <h2>Daily Tape Archive from Securities Exchange Commision</h2>
+    <h2>Daily "Not-Cooked" Tape Archive from Securities Exchange Commision</h2>
     <h3>
      <!--#include virtual="/cgi-bin/daily?out=text&class=query" -->
+     Tar Files Downloaded
     </h3>
     <!--#include
       virtual="/cgi-bin/daily?out=dl&class=query&${QUERY_STRING}"

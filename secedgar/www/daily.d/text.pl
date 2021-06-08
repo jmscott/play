@@ -20,4 +20,4 @@ SELECT
 	  )
 ;));
 
-print $q->fetchrow_hashref()->{tar_count}, " NC TARs Downloaded";
+print $q->fetchrow_hashref()->{tar_count};
