@@ -182,6 +182,20 @@ CREATE VIEW daily_nc_tar AS
     WHERE
 	length(doc->>'now') > 0
 ;
+COMMENT ON VIEW daily_nc_tar IS
+  'Fetched Edgar SEC Daily Tar Files'
+;
+
+DROP INDEX IF EXISTS daily_nc_tar_edgar_put_daily;
+CREATE INDEX daily_nc_tar_edgar_put_daily
+  ON jsonorg.jsonb_255 (
+  	jsonb_path_exists(doc, '
+		$."secedgar.play.jmscott.github.com"
+			."command_line"
+			."command"
+		? (@ == "edgar-put-daily")
+	')
+);
 
 DROP DOMAIN IF EXISTS tsv_text CASCADE;
 CREATE DOMAIN tsv_text AS text
