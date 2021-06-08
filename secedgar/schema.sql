@@ -163,7 +163,8 @@ CREATE VIEW daily_nc_tar AS
   	doc
 	  ->'secedgar.play.jmscott.github.com'
 	  ->'command_line'
-	AS doc
+	AS doc,
+	blob
       FROM
     	jsonorg.jsonb_255
       WHERE
@@ -176,7 +177,8 @@ CREATE VIEW daily_nc_tar AS
 ) SELECT
 	(doc->>'tar_blob')::udig AS blob,
 	doc->>'tar_path' AS tar_path,
-	(doc->>'now')::timestamptz AS job_time
+	(doc->>'now')::timestamptz AS job_time,
+	blob AS doc_blob
     FROM
     	tars
     WHERE
@@ -186,7 +188,11 @@ COMMENT ON VIEW daily_nc_tar IS
   'Fetched Edgar SEC Daily Tar Files'
 ;
 
-DROP INDEX IF EXISTS daily_nc_tar_edgar_put_daily;
+/*
+ *  Note:
+ *	No cross-indexes in PostgreSQL.
+ */
+DROP INDEX IF EXISTS jsonorg.daily_nc_tar_edgar_put_daily;
 CREATE INDEX daily_nc_tar_edgar_put_daily
   ON jsonorg.jsonb_255 (
   	jsonb_path_exists(doc, '
