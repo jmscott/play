@@ -17,7 +17,7 @@ PATH=$PATH:$BLOBIO_ROOT/bin
 
 #  need RFC3339Nano, duration-english in $JMSCOTT_ROOT/bin
 export JMSCOTT_ROOT=/usr/local/jmscott
-PATH=$PATH:JMSCOTT_ROOT/bin
+PATH=$PATH:$JMSCOTT_ROOT/bin
 
 #  PostgreSQL database
 export PGHOME=/usr/local/pgsql
