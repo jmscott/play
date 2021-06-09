@@ -21,21 +21,40 @@ my $q = dbi_pg_select(
 			$off
 		],
 	sql =>  q(
-SELECT DISTINCT
-	regexp_replace(dz.tar_path, '^.+[/\\\\]', '') AS tar_name,
-	dz.blob,
-	pg_size_pretty(bc.byte_count) AS byte_count
+/*
+ *  Find the most recent "not-cooked" tar files per day.
+ * 
+ *  Note:
+ *	Incorrectly assume that the same job can not run at exactly
+ *	the same time!  Man, i love hacking json+pg.
+ */
+WITH recent_tar AS (		--  limited set of most recent jobs
+  SELECT
+  	regexp_replace(tar_path, '^.+[/\\\\]', '') AS tar_name,
+	blob AS blob,
+	max(job_time) as max_job_time
   FROM
-  	secedgar.daily_nc_tar dz
-	  JOIN setcore.byte_count bc ON (
-	  	bc.blob = dz.blob
-	  )
+	secedgar.daily_nc_tar
+  GROUP BY
+  	tar_name,
+	blob
   ORDER BY
   	tar_name DESC
   LIMIT
   	$1
   OFFSET
   	$2
+)
+  SELECT DISTINCT
+	rj.tar_name,
+	pg_size_pretty(bc.byte_count) AS byte_count
+  FROM
+  	recent_tar rj
+	  JOIN setcore.byte_count bc ON (
+	  	bc.blob = rj.blob
+	  )
+  ORDER BY
+  	tar_name DESC
 ;));
 
 while (my $r = $q->fetchrow_hashref()) {
