@@ -23,10 +23,11 @@ my $q = dbi_pg_select(
 #	query not correct
 #
 	sql =>  q(
-SELECT
-	nc.tar_path,
+SELECT DISTINCT
+	regexp_replace(nc.tar_path, '^.+[/\\\\]', '') AS tar_name,
 	bc.byte_count,
 	pg_size_pretty(bc.byte_count) AS byte_count_english
+
   FROM
   	secedgar.daily_nc_tar nc
   	  JOIN setcore.byte_count bc ON (
@@ -47,8 +48,8 @@ END
 }
 
 print <<END;
- <dt>Tar File Path</dt>
- <dd>$r->{tar_path}</dt>
+ <dt>Tar File Name</dt>
+ <dd>$r->{tar_name}</dt>
 
  <dt>Byte Count English</dt>
  <dd>$r->{byte_count_english}</dd>
