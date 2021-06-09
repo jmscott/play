@@ -29,7 +29,7 @@ SELECT DISTINCT
 	pg_size_pretty(bc.byte_count) AS byte_count_english
 
   FROM
-  	secedgar.daily_nc_tar nc
+  	secedgar.edgar_put_daily nc
   	  JOIN setcore.byte_count bc ON (
 	  	bc.blob = nc.blob
 	  )

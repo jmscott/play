@@ -45,7 +45,7 @@ WITH put_daily AS (
   	min(bc.byte_count) AS "min_size",
   	max(bc.byte_count) AS "max_size"
     FROM
-    	daily_nc_tar d
+    	edgar_put_daily d
 	  JOIN setcore.byte_count bc ON (
 	  	bc.blob = bc.blob
 	  )

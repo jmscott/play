@@ -156,8 +156,8 @@ CREATE TABLE sic86_87
 
 \COPY sic86_87 FROM 'sic86_87.txt' DELIMITER E'\t' CSV HEADER
 
-DROP VIEW IF EXISTS daily_nc_tar;
-CREATE VIEW daily_nc_tar AS
+DROP VIEW IF EXISTS edgar_put_daily;
+CREATE VIEW edgar_put_daily AS
   WITH tars AS (
     SELECT
   	doc
@@ -184,7 +184,7 @@ CREATE VIEW daily_nc_tar AS
     WHERE
 	length(doc->>'now') > 0
 ;
-COMMENT ON VIEW daily_nc_tar IS
+COMMENT ON VIEW edgar_put_daily IS
   'Fetched Edgar SEC Daily Tar Files'
 ;
 
@@ -192,8 +192,8 @@ COMMENT ON VIEW daily_nc_tar IS
  *  Note:
  *	No cross-indexes in PostgreSQL.
  */
-DROP INDEX IF EXISTS jsonorg.daily_nc_tar_edgar_put_daily;
-CREATE INDEX daily_nc_tar_edgar_put_daily
+DROP INDEX IF EXISTS jsonorg.idx_edgar_put_daily_path;
+CREATE INDEX idx_edgar_put_daily_path
   ON jsonorg.jsonb_255 (
   	jsonb_path_exists(doc, '
 		$."secedgar.play.jmscott.github.com"

@@ -24,7 +24,7 @@ SELECT
 	jsonb_pretty(j.doc) AS doc,
 	to_char(nc.job_time, 'YYYY/mm/dd HH24:mi:ss') AS job_time
   FROM
-  	secedgar.daily_nc_tar nc,
+  	secedgar.edgar_put_daily nc,
 	jsonorg.jsonb_255 j
   WHERE
   	nc.blob = $1

@@ -63,7 +63,7 @@ find spool								\
 	  SELECT
 		tar_path
 	  FROM
-	  	secedgar.daily_nc_tar
+	  	secedgar.edgar_put_daily
 	  WHERE
 	  	tar_path = :'TP'
 	)

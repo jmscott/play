@@ -22,7 +22,7 @@ my $tar_count = dbi_pg_select(
 SELECT
 	count(*) AS tar_count
   FROM
-  	secedgar.daily_nc_tar
+  	secedgar.edgar_put_daily
 )
 )->fetchrow_hashref()->{tar_count};
 

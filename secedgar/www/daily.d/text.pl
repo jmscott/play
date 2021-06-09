@@ -14,7 +14,7 @@ my $q = dbi_pg_select(
 SELECT
 	count(*) AS tar_count
   FROM
-  	secedgar.daily_nc_tar dz
+  	secedgar.edgar_put_daily dz
 	  JOIN setcore.byte_count bc ON (
 	  	bc.blob = dz.blob
 	  )

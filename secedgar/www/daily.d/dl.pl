@@ -34,7 +34,7 @@ WITH recent_tar AS (		--  limited set of most recent jobs
 	blob AS blob,
 	max(job_time) as max_job_time
   FROM
-	secedgar.daily_nc_tar
+	secedgar.edgar_put_daily
   GROUP BY
   	tar_name,
 	blob
