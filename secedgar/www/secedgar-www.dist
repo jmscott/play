@@ -36,6 +36,7 @@ LIBs="
 
 	nctar.cgi
 	nctar.d/dl.pl
+	nctar.d/dl.edp.pl
 	nctar.d/help.pl
 
 	secedgar-www.dist

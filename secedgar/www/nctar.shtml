@@ -17,6 +17,8 @@
    <div id="content">
     <h2>"Not-Cooked" Daily Tape Archive</h2>
      <!--#include virtual="/cgi-bin/nctar?out=dl&${QUERY_STRING}" -->
+     <h3>JSON Blobs for script <code>edgar-pull-daily</code></h3>
+     <!--#include virtual="/cgi-bin/nctar?out=dl.edp&${QUERY_STRING}" -->
    </div>
    <!--#include virtual="/footer.shtml" -->
   </div>

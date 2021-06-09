@@ -332,7 +332,7 @@ table.order
 	table-layout:	fixed;
 }
 
-pre.code
+pre.code, pre.json
 {
 	background-color:	black;
 	color:			lightgreen;
