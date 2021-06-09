@@ -47,7 +47,8 @@ WITH recent_tar AS (		--  limited set of most recent jobs
 )
   SELECT DISTINCT
 	rj.tar_name,
-	pg_size_pretty(bc.byte_count) AS byte_count
+	pg_size_pretty(bc.byte_count) AS byte_count,
+	rj.blob
   FROM
   	recent_tar rj
 	  JOIN setcore.byte_count bc ON (
