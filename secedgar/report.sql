@@ -30,6 +30,12 @@ WITH put_daily AS (
 			."command"
 		? (@ == "edgar-put-daily")
 	')
+	AND
+	length(doc->
+		'secedgar.play.jmscott.github.com'->
+		'command_line'->>
+		'now'
+	) > 0
 ), recent_tar AS (
   SELECT
   	(doc->>'tar_blob')::udig AS blob,
