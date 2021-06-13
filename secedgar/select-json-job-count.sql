@@ -23,13 +23,16 @@ WITH secedgar AS (
     FROM
     	secedgar rj natural join jsonorg.jsonb_255 j
 ) SELECT
+	doc->>'hostname' AS "Host",
 	command_line->>'command' AS "Job Command",
 	count(*) AS "Run Count"
     FROM
     	canonical_sec
     GROUP BY
-    	1
+    	"Host",
+	"Job Command"
     ORDER BY
+    	"Host" ASC,
     	"Run Count" DESC,
 	"Job Command" ASC
 ;
