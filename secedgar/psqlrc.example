@@ -1,1 +1,1 @@
-set search_path to secedgar,jsonorg,setcore,public;
+set search_path to secedgar,jsonorg,setcore,blobio,public;
