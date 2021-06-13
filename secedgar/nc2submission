@@ -1,7 +1,7 @@
 #/bin/bash
 #
 #  Synopsis:
-#	Convert an SEC EDGAR .nc file into jsob blob with elements.
+#	Convert an extracted SEC EDGAR .nc file into jsob blob with elements.
 #  Usage:
 #	nc2submission <nc-tar-udig> <path/to/nc>
 #  Exit Status:
