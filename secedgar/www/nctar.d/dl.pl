@@ -23,11 +23,11 @@ my $q = dbi_pg_select(
 #	query not correct
 #
 	sql =>  q(
-SELECT DISTINCT
+WITH detail_job AS (
+  SELECT DISTINCT
 	regexp_replace(nc.tar_path, '^.+[/\\\\]', '') AS tar_name,
 	bc.byte_count,
 	pg_size_pretty(bc.byte_count) AS byte_count_english
-
   FROM
   	secedgar.edgar_put_daily nc
   	  JOIN setcore.byte_count bc ON (
@@ -35,6 +35,21 @@ SELECT DISTINCT
 	  )
   WHERE
   	nc.blob = $1
+), detail_tar_element AS (
+  SELECT
+  	count(*) AS element_count
+    FROM
+	secedgar.nc_tar_file_element
+    WHERE
+    	blob = $1
+) SELECT
+	j.tar_name,
+	j.byte_count,
+	j.byte_count_english,
+	te.element_count
+  FROM
+  	detail_job j,
+	detail_tar_element te
 ;));
 
 my $r = $q->fetchrow_hashref();
@@ -59,5 +74,8 @@ print <<END;
 
  <dt>NC Tar Blob UDig</dt>
  <dd>$blob</dd>
+
+ <dt>NC Tar Element Count</dt>
+ <dd>$r->{element_count} Companies</dd>
 </dl>
 END
