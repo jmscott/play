@@ -35,7 +35,7 @@ fault()
 {
 	MSG="ERROR: $@"
 	log "$MSG" >&2
-	if [ ! -d "$MSG" ]; then
+	if [ ! -d run/ ]; then
 		log 'WARN: missing run/ dir, so no fault written' >&2
 		return
 	fi
@@ -138,7 +138,9 @@ test "$STATUS" = '0 0 0 0 0 0 0' 					||
 #  close json blob
 cat <<END >>$TMP_JSON || die "cat job json close failed: exit status=$?"
 		],
-		"job_stop_time": "$(RFC3339Nano)"
+		"job_stop_time": "$(RFC3339Nano)",
+		"job_stop_duration_english":
+		       "$(duration-english $(expr $(date +%s) - $START_EPOCH))"
 	}
 }
 END
