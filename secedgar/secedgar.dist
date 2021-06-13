@@ -35,6 +35,7 @@ LIBs="
 	profile.example
 	psqlrc.example
 	report.sql
+	rummy.sql
 	schema.sql
 	secedgar.dist
 	select-json-job-count.sql
