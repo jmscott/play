@@ -61,9 +61,10 @@ world:
 	$(MAKE) $(MFLAGS) distclean
 	$(MAKE) $(MFLAGS) install
 dev-links:
-	test -e attiattic || ln -s . attic
+	test -e attic || ln -s . attic
 	test -e data || ln -s . data
 	test -e etc || ln -s . etc
+	test -e lib || ln -s . lib
 	test -e run || ln -s . run
 	test -e sbin || ln -s . sbin
 	test -e spool || ln -s . spool
