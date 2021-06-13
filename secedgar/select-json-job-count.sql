@@ -8,6 +8,7 @@
  *	edgar-put-daily
  *	nc2submission
  */
+\pset null Unknown
 WITH secedgar AS (
   SELECT
 	blob
@@ -22,6 +23,8 @@ WITH secedgar AS (
 		AS command_line
     FROM
     	secedgar rj natural join jsonorg.jsonb_255 j
+    WHERE
+    	j.doc->'secedgar.play.jmscott.github.com'->'command_line' IS NOT NULL
 ) SELECT
 	doc->>'hostname' AS "Host",
 	command_line->>'command' AS "Job Command",

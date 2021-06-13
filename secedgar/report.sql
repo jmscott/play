@@ -81,3 +81,6 @@ WITH put_daily AS (
   ORDER BY
   	random()
 ;
+
+\x off
+\i lib/select-json-job-count.sql
