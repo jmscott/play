@@ -17,8 +17,8 @@
 #
 JOB_START_TIME=$(RFC3339Nano)
 START_EPOCH=$(date +%s)
-
 PROG=$(basename $0)
+BLOBIO_GET_SERVICE=${BLOBIO_GET_SERVICE:=$BLOBIO_SERVICE}
 TMP_JSON=${TMPDIR:=/tmp}/$PROG.$$
 
 now()
@@ -66,6 +66,7 @@ trap leave EXIT
 test $# = 1 || die "wrong number of arguments: got $#, expected 1"
 TAR_BLOB=$1
 log "BLOBIO_SERVICE=$BLOBIO_SERVICE"
+log "BLOBIO_GET_SERVICE=$BLOBIO_GET_SERVICE"
 log "BLOBIO_ALGORITHM=$BLOBIO_ALGORITHM"
 log "tar blob: $TAR_BLOB"
 log "tar path: $(which tar)"
@@ -104,7 +105,7 @@ END
 
 log 'starting extract of tar elements into json blob ...'
 #  extract the tar elements and build a json blob
-blobio get --udig $TAR_BLOB --service $BLOBIO_SERVICE			|
+blobio get --udig $TAR_BLOB --service $BLOBIO_GET_SERVICE		|
 	tar tfvz -							|
 	grep '^-'							|
 	tr -s ' '							|
