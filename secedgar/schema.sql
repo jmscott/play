@@ -253,6 +253,9 @@ COMMENT ON TABLE tsv_SGML_DOCUMENT IS
 
 /*
  *  Note:
+ *	Uggh.  Missing the order of the file elements.  The gnutar schema
+ *	must not do this!
+ *
  *	The eventual gnutar.tar_file_element schema/table needs to extract
  *	the timestamptz.
  *
