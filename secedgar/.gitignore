@@ -3,7 +3,9 @@
 attic
 data
 etc
+lib
 profile
 run
+sbin
 spool
 tmp
