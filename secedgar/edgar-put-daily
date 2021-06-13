@@ -92,13 +92,14 @@ esac
 cat >$TMP_JSON <<END
 {
 	"secedgar.play.jmscott.github.com": {
-		"command_line" : {
+		"command_line": {
 			"command": "$PROG",
 			"tar_path": "$(echo -n $DAILY | escape-json-string)",
 			"json_put_blob": "$PUT_JSON_BLOB",
 			"tar_blob": "$TAR_BLOB",
 			"now": "$(RFC3339Nano)"
-		}
+		},
+		"hostname": "$(hostname -f | escape-json-string)"
 	}
 }
 END
