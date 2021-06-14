@@ -42,7 +42,7 @@ while (my $r = $q->fetchrow_hashref()) {
 	my $file_size_english = encode_html_entities($r->{file_size_english});
 
 	print <<END;
- <option value="$file_path">$file_path: $file_size_english</option>
+ <option value="$file_path">$file_path ($file_size_english)</option>
 END
 }
 
