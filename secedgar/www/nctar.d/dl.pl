@@ -57,6 +57,10 @@ print <<END;
  <dd>$r->{byte_count}</dd>
 
  <dt>NC Tar Blob UDig</dt>
- <dd>$blob</dd>
+ <dd>
+  <a
+    title="$r->{tar_name}"
+    href="/cgi-bin/daily?out=mime.tar&blob=$blob"
+  >$blob</a></dd>
 </dl>
 END
