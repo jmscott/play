@@ -39,6 +39,7 @@ LIBs="
 	nctar.d/dl.pl
 	nctar.d/help.pl
 	nctar.d/select.ele.pl
+	nctar.d/text.elec.pl
 
 	secedgar-www.dist
 "

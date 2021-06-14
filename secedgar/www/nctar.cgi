@@ -40,6 +40,19 @@
    </putter>
 
    <putter
+     name="text.elec"
+     content-type="text/html"
+   >
+    <query-args>
+     <arg
+       name="blob"
+       required="yes"
+       perl5_re="[a-z][a-z0-9]{0,7}:[[:graph:]]{32,128}"
+     ></arg>
+    </query-args>
+   </putter>
+
+   <putter
      name="select.ele"
      content-type="text/html"
    >
