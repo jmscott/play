@@ -35,9 +35,10 @@ LIBs="
 	daily.d/text.pl
 
 	nctar.cgi
-	nctar.d/dl.pl
 	nctar.d/dl.edp.pl
+	nctar.d/dl.pl
 	nctar.d/help.pl
+	nctar.d/select.ele.pl
 
 	secedgar-www.dist
 "

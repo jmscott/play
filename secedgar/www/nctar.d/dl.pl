@@ -64,7 +64,7 @@ END
 
 print <<END;
  <dt>Tar File Name</dt>
- <dd>$r->{tar_name}</dt>
+ <dd>$r->{tar_name}</dd>
 
  <dt>Byte Count English</dt>
  <dd>$r->{byte_count_english}</dd>

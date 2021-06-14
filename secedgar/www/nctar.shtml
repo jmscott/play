@@ -8,6 +8,12 @@
     rel="stylesheet"
     type="text/css"
   />
+  <style>
+   #ele
+   {
+   	font-size:	smaller;
+   }
+  </style>
  </head>
 
  <body>
@@ -17,6 +23,10 @@
    <div id="content">
     <h2>"Not-Cooked" Daily Tape Archive</h2>
      <!--#include virtual="/cgi-bin/nctar?out=dl&${QUERY_STRING}" -->
+     <h3>NC Tar File Elements</h3>
+     <!--#include
+       virtual="/cgi-bin/nctar?out=select.ele&id=ele&${QUERY_STRING}"
+     -->
      <h3>JSON Blobs for script <code>edgar-pull-daily</code></h3>
      <!--#include virtual="/cgi-bin/nctar?out=dl.edp&${QUERY_STRING}" -->
    </div>

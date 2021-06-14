@@ -63,6 +63,28 @@ print <<'END';
   </dl>
 </div>
      </dd>
+     <dt>select.ele</dt>
+     <dd>
+<div class="query-args">
+ <h4>Query Args</h4>
+ <dl>
+  <dt>blob</dt>
+  <dd>
+   <ul>
+    <li><code>perl5_re:</code> [a-z][a-z0-9]{0,7}:[[:graph:]]{32,128}</li>
+    <li><code>required:</code> yes</li>
+   </ul>
+  </dd>
+  <dt>size</dt>
+  <dd>
+   <ul>
+    <li><code>default:</code> 20</li>
+    <li><code>perl5_re:</code> [0-9]{1,3}</li>
+   </ul>
+  </dd>
+  </dl>
+</div>
+     </dd>
   </dl>
  </div>
 </div>

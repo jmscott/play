@@ -38,7 +38,7 @@ $CGI{GET}->{out}->{'query-args'}->{arg}->{class} = {
 #  'out' query argument must match one of the out putter names.
 #
 $CGI{GET}->{out}->{'query-args'}->{arg}->{out} = {
-	perl5_re	=> 	'dl|(?:dl[.]edp)|help',
+	perl5_re	=> 	'dl|(?:dl[.]edp)|(?:select[.]ele)|help',
 	default		=>	'help',
 };
 #
@@ -81,6 +81,31 @@ $CGI{GET}->{out}->{putter}->{'dl.edp'}->{'query-args'}->{arg}->{blob} = {
 
 #
 #  END: /cgi/GET/out/putter[@name='dl.edp']
+#
+
+#
+#  BEGIN: /cgi/GET/out/putter[@name='select.ele']
+#
+$CGI{GET}->{out}->{putter}->{'select.ele'}->{name} = 'select.ele';
+$CGI{GET}->{out}->{putter}->{'select.ele'}->{'content-type'} = 'text/html';
+
+#
+#  BEGIN: /cgi/GET/out/putter[@name=select.ele]/query-args
+#
+$CGI{GET}->{out}->{putter}->{'select.ele'}->{'query-args'}->{arg}->{blob} = {
+	perl5_re	=>	'[a-z][a-z0-9]{0,7}:[[:graph:]]{32,128}',
+	required	=>	'yes',
+};
+$CGI{GET}->{out}->{putter}->{'select.ele'}->{'query-args'}->{arg}->{size} = {
+	perl5_re	=>	'[0-9]{1,3}',
+	default	=>	'20',
+};
+#
+#  END: /cgi/GET/out/putter[@name=select.ele]/query-args
+#
+
+#
+#  END: /cgi/GET/out/putter[@name='select.ele']
 #
 
 $CGI{GET}->{out}->{putter}->{help}->{name} = 'help';
