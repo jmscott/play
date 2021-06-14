@@ -1,6 +1,8 @@
 #
 #  Synopsis:
 #	Write an html <dl> of daily nc tar files
+#  Note:
+#	Is each tar file element == comapany?
 #
 require 'jmscott/dbi-pg.pl';
 
@@ -25,10 +27,10 @@ SELECT
 ));
 
 if (my $r = $q->fetchrow_hashref()) {
-	my $plural = 'ies';
+	my $plural = 's';
 
-	$plural = 'y' if $r->{element_count} == 1;
-	print encode_html_entities($r->{element_count}), " Compan$plural";
+	$plural = '' if $r->{element_count} == 1;
+	print encode_html_entities($r->{element_count}), " Submission$plural";
 } else {
 	print 'blob not found';
 }
