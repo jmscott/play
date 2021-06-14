@@ -202,6 +202,20 @@ CREATE INDEX idx_edgar_put_daily_path
 		? (@ == "edgar-put-daily")
 	')
 );
+/*
+ *  Note:
+ *	No cross-indexes in PostgreSQL.
+ */
+DROP INDEX IF EXISTS jsonorg.idx_secedgar_nc_submission;
+CREATE INDEX idx_secedgar_nc_submission
+  ON jsonorg.jsonb_255 (
+  	jsonb_path_exists(doc, '
+		$."secedgar.play.jmscott.github.com"
+			."command_line"
+			."command"
+		? (@ == "nc2submission")
+	')
+);
 
 DROP DOMAIN IF EXISTS tsv_text CASCADE;
 CREATE DOMAIN tsv_text AS text
@@ -302,5 +316,9 @@ CREATE TABLE nc_submission(
 			),
 	PRIMARY KEY	(nc_tar_blob, nc_file_path, line_number)
 );
+
+COMMENT ON TABLE nc_submission IS
+  'The submission section of nc|corr* file in daily nc tar, no <TEXT>'
+;
 
 COMMIT;
