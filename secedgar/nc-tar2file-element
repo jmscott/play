@@ -1,10 +1,10 @@
 #!/bin/bash
 #
 #  Synopsis:
-#	Put JSON of elements from SEC EDGAR gtar YYYYMMDD.nc.tar.gz into json.
+#	Put JSON of tar file elements from SEC EDGAR YYYYMMDD.nc.tar.gz.
 #  Desciption:
-#	Put a JSON blob describing the file elements of an NC tar file from
-#	SEC Edgar database.
+#	Put a JSON blob describing the file elements of an NC tar file 
+#	for a particular day from SEC Edgar data feed.
 #  Usage:
 #	nc-tar-file2json <tar-blob>
 #  Exit Status:
