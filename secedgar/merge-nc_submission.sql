@@ -1,3 +1,7 @@
+/*
+ *  Synopsis:
+ *	Merge into materialized table nc_submission from json jobs blobs.
+ */
 \set ON_ERROR_STOP on
 
 SET search_path TO secedgar,public;
