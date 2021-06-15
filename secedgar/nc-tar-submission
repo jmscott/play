@@ -37,7 +37,7 @@ now()
 
 log()
 {
-	echo "$(now): $@"
+	echo "$(now): $PROG#$$: $@"
 }
 
 fault()
@@ -176,7 +176,7 @@ cat >>JOB_JSON <<END || die "cat nc sub failed: exit status=$?"
 END
 
 #  off to the races, extracting the <SUBMISSION HEADERS>
-ls | egrep '\.(nc|corr[0-9][0-9])' | sort | while read FP;  do
+ls | egrep '\.(nc|corr[0-9][0-9])' | head -10| sort | while read FP;  do
 	log "extract: $(du -h $FP | awk '{print $1}'): $FP"
 	nc2submission $TAR_BLOB $FP 2>NC2SUBMISSION-STDERR
 	STATUS=$?
@@ -226,6 +226,8 @@ END
 		die "nc2submission failed: exit status=$STATUS"
 		;;
 	esac
+	NC_SUB_COUNT=$(expr $NC_SUB_COUNT - 1)
+	log "pending job count: $NC_SUB_COUNT"
 done
 
 #  zap the final comma in json array
