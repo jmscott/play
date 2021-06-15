@@ -8,7 +8,7 @@
 #  Usage:
 #	nc-tar-file2json <tar-blob>
 #  Exit Status:
-#	0	merged
+#	0	ok
 #	1	failed
 #  Note:
 #	A tar with no files is a not handled properly.
