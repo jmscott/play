@@ -57,7 +57,7 @@ fault()
 leave()
 {
 	test -d $SECEDGAR_ROOT && cd $SECEDGAR_ROOT
-	#rm -rf $WORK_DIR || log "WARN: rm -r failed: exit status=$?" >&2
+	rm -rf $WORK_DIR || log "WARN: rm -r failed: exit status=$?" >&2
 	DURATION=$(duration-english $(expr $(date +%s) - $START_EPOCH))
 	log "elapsed duration: $DURATION"
 	log 'good bye, cruel world'
