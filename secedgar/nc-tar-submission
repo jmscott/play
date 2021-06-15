@@ -1,0 +1,267 @@
+#!/bin/bash
+#
+#  Synopsis:
+#	Put JSONs of the <SUBMISSION> header from EDGAR YYYYMMDD.nc.tar.gz
+#  Desciption:
+#	Extract the xml "submission" headers in all of "non-cooked" nc file
+#	element of the daily SEC EDGAR YYYYMMDD.nc.tar.gz file.  This job
+#	ties together all the individual "nc2submission" into single
+#	json blob.
+#  Usage:
+#	nc-tar-submission <tar-blob>
+#  Exit Status:
+#	0	
+#	1	failed
+#  See:
+#	nc2submission		#  extract single submission header
+#  Note:
+#	Need to roll the gnutar version check into single script.
+#	Or, just wait until the gnutar schema is finished.
+#
+#	Consider moving the shell functions now()/log()/fault() and die()
+#	to $SECEDGAR_ROOT/lib/common.sh.
+#
+#	Spaces in file paths will break script!
+#
+JOB_START_TIME=$(RFC3339Nano)
+START_EPOCH=$(date +%s)
+PROG=$(basename $0)
+BLOBIO_GET_SERVICE=${BLOBIO_GET_SERVICE:=$BLOBIO_SERVICE}
+GET_SERVICE="--service $BLOBIO_GET_SERVICE"
+WORK_DIR=${TMPDIR:=/tmp}/$PROG.$$.d
+
+now()
+{
+	date +'%Y/%m/%d %H:%M:%S'
+}
+
+log()
+{
+	echo "$(now): $@"
+}
+
+fault()
+{
+	MSG="ERROR: $@"
+	log "$MSG" >&2
+	if [ ! -d run/ ]; then
+		log 'WARN: missing run/ dir, so no fault written' >&2
+		return
+	fi
+	test -d run/ || return
+	FAULT=run/$PROG.fault
+	echo "$(now): $MSG" >>run/$PROG.fault				||
+		log "ERROR: echo fault failed: exit status=$?" >&2
+}
+
+leave()
+{
+	test -d $SECEDGAR_ROOT && cd $SECEDGAR_ROOT
+	#rm -rf $WORK_DIR || log "WARN: rm -r failed: exit status=$?" >&2
+	DURATION=$(duration-english $(expr $(date +%s) - $START_EPOCH))
+	log "elapsed duration: $DURATION"
+	log 'good bye, cruel world'
+	exit
+}
+
+die()
+{
+	fault "$@"
+	exit 1
+}
+
+log 'hello, world'
+trap leave EXIT
+
+test $# = 1 || die "wrong number of arguments: got $#, expected 1"
+TAR_BLOB=$1
+
+test -n "$SECEDGAR_ROOT" || die 'env not defined: SECEDGAR_ROOT'
+log "pre profile: SECEDGAR_ROOT=$SECEDGAR_ROOT"
+test -d $SECEDGAR_ROOT || die "no dir: $SECEDGAR_ROOT"
+cd $SECEDGAR_ROOT || die "cd SECEDGAR_ROOT failed: exit status=$?"
+test -w data || die "no write dir: $SECEDGAR_ROOT/data"
+test -r etc/profile && . etc/profile
+
+log "SECEDGAR_ROOT=$SECEDGAR_ROOT"
+log "BLOBIO_SERVICE=$BLOBIO_SERVICE"
+log "BLOBIO_GET_SERVICE=$BLOBIO_GET_SERVICE"
+log "BLOBIO_ALGORITHM=$BLOBIO_ALGORITHM"
+log "tar blob: $TAR_BLOB"
+log "PATH: $PATH"
+log "which tar: $(which tar)"
+
+log "work dir: $WORK_DIR"
+mkdir -p $WORK_DIR || die "mkdir work dir failed: exit status=$?"
+cd $WORK_DIR || die "cd work dir failed: exit status=$?"
+
+#
+#  make double sure tar is GNU version and not, say, BSD.
+#
+GNUTAR_PATH=$(which tar)
+log "gnu tar path: $GNUTAR_PATH"
+GNUTAR_VERSION=$(tar --version | head -1)
+case "$GNUTAR_VERSION" in
+*GNU*|*gnu*)
+	log "gnu tar version: $GNUTAR_VERSION"
+	;;
+*)
+	die "unexpected output from gnu tar --version: $GNUTAR_VERSION"
+	;;
+esac
+GNUTAR_VERSION=$(echo -n "$GNUTAR_VERSION" | escape-json-string)
+
+cat >JOB_JSON <<END
+{
+	"secedgar.play.jmscott.github.com": {
+		"hostname": "$(hostname -f | escape-json-string)",
+		"process_id": $$,
+		"job_start_time": "$JOB_START_TIME",
+		"gnu_tar_path": "$(echo -n $GNUTAR_PATH | escape-json-string)",
+		"gnu_tar_version":
+			"$(echo -n $GNUTAR_VERSION | escape-json-string)",
+		"work_dir": "$WORK_DIR",
+		"environment": {
+			"PATH": "$(echo -n $PATH | escape-json-string)",
+			"TMPDIR": "$TMPDIR",
+			"LD_LIBRARY_PATH":
+			    "$(echo -n $LD_LIBRARY_PATH|escape-json-string)",
+			"SECEDGAR_ROOT": "$SECEDGAR_ROOT",
+			"BLOBIO_SERVICE": "$BLOBIO_SERVICE",
+			"BLOBIO_GET_SERVICE": "$BLOBIO_GET_SERVICE",
+			"BLOBIO_ALGORITHM": "$BLOBIO_ALGORITHM",
+			"JMSCOTT_ROOT": "$JMSCOTT_ROOT"
+		},
+		"command_line" : {
+			"command": "$PROG",
+			"tar_blob": "$TAR_BLOB"
+		},
+END
+
+log "fetch tar blob: $TAR_BLOB"
+blobio get --udig $TAR_BLOB --output-path NCTAR $GET_SERVICE
+STATUS=$?
+case $STATUS in
+0)
+	log "nc tar blob size: $(du -sh NCTAR | awk '{print $1}')"
+	;;
+1)
+	die "nc tar blob not found: $TAR_BLOB"
+	;;
+*)
+	die "blobio get nctar failed: exit status=$STATUS"
+	;;
+esac
+
+log 'unpacking tar in work dir ...'
+tar xf NCTAR || die "tar xv NCTAR failed: exit status=$?"
+log '... done unpacking tar'
+
+#  put the total file count for easy debugging
+NC_SUB_COUNT=$(ls | egrep '\.(nc|corr[0-9][0-9])$' | wc -l)
+case "$NC_SUB_COUNT" in
+0)
+	log 'WARN: no nc sub files in tar'
+	;;
+[0-9]*)
+	log "nc submission file count: $NC_CORR_FILE_COUNT"
+	;;
+*)
+	die "unexpected output for ls nc sub count: $NC_SUB_COUNT"
+	;;
+esac
+cat >>JOB_JSON <<END || die "cat nc sub failed: exit status=$?"
+		"nc_submission_file_count": $NC_SUB_COUNT,
+		"nc2submission_jjob": [
+END
+
+#  off to the races, extracting the <SUBMISSION HEADERS>
+ls | egrep '\.(nc|corr[0-9][0-9])' | sort | while read FP;  do
+	log "extract: $(du -h $FP | awk '{print $1}'): $FP"
+	nc2submission $TAR_BLOB $FP 2>NC2SUBMISSION-STDERR
+	STATUS=$?
+	case $STATUS in
+	0)
+		#
+		#  no error, so the json job blob for nc2submission written
+		#  to stderr
+		#
+		NC2SUB_JJOB=$(cat NC2SUBMISSION-STDERR)
+		log "nc2sub jjob: $NC2SUB_JJOB"
+
+		case "$NC2SUB_JJOB" in
+		[a-z]*:*)
+			blobio eat					\
+				--udig "$NC2SUB_JJOB"			\
+				--service $BLOBIO_SERVICE
+			STATUS=$?
+			case $STATUS in
+			0)
+				;;
+			1)
+				die 'nc2submission job blob does not exist'
+				;;
+			*)
+				die 'blobio eat nc2sub jjob failed: '	\
+					"exit status=$STATUS"
+				;;
+			esac
+			;;
+		*)
+			die "malformed nc2sub jjob blob: $NC2SUB_JJOB"
+			;;
+		esac
+
+		#  recode the nc tar file element and json blob
+		#  that is the output of the nc2submission
+		cat >>JOB_JSON <<END
+			[
+				"$(echo -n $FP | escape-json-string)",
+				"$NC2SUB_JJOB"
+			],
+END
+		;;
+	*)
+		test -r && cat NC2SUBMISSION-STDERR
+		die "nc2submission failed: exit status=$STATUS"
+		;;
+	esac
+done
+
+#  zap the final comma in json array
+perl -0777 -p -i -e 's/,(\n*)\Z/\1/m' JOB_JSON			||
+	die "perl job_json comma failed: exit status=$?"
+
+JOB_STOP_TIME=$(RFC3339Nano)
+STOP_EPOCH=$(date +%s)
+DURATION=$(expr $(expr $STOP_EPOCH - $START_EPOCH))
+DURATION_ENGLISH=$(duration-english $DURATION)
+
+log "job duration: $DURATION_ENGLISH sec"
+cat >>JOB_JSON <<END
+		],
+		"job_stop_time": "$JOB_STOP_TIME",
+		"job_duration_sec": $DURATION,
+		"job_duration_english": "$DURATION_ENGLISH"
+	}
+}
+END
+
+JOB_JSON_BLOB=$(blobio eat --input-path JOB_JSON --algorithm $BLOBIO_ALGORITHM)
+STATUS=$?
+test $STATUS = 0 || die "blob eat job_json failed: exit status=$STATUS"
+JOB_JSON_BLOB=$BLOBIO_ALGORITHM:$JOB_JSON_BLOB
+
+log "job jsob udig: $JOB_JSON_BLOB"
+blobio put								\
+	--input-path JOB_JSON						\
+	--udig $JOB_JSON_BLOB						\
+	--service $BLOBIO_SERVICE					||
+  die "blobio put job_json failed: exit status=$?"
+
+#  log the transactions in data/./nc-tar-submission.jjob
+JJOB="$(RFC3339Nano)	$JOB_JSON_BLOB" 
+echo "$JJOB" >>$SECEDGAR_ROOT/data/$PROG.jjob				||
+	die "echo data/jjob failed: exit status=$?"
+
+exit 0

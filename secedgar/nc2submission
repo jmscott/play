@@ -4,6 +4,7 @@
 #	Convert an extracted SEC EDGAR .nc file into jsob blob with elements.
 #  Usage:
 #	nc2submission <nc-tar-udig> <path/to/nc>
+#	JOB_JSON=$(tail -1 $SECEDGAR_ROOT/data/nc2submission.jjob | cut -f2)
 #  Exit Status:
 #	0	json blob put
 #	1	failure
@@ -24,20 +25,22 @@ now()
 
 log()
 {
-	echo "$(now): $@"
+	echo "$(now): $PROG#$$: $@"
+}
+
+WARN()
+{
+	#  Note: do not write to stderr, since job blob written their
+	log "WARN: $@"
 }
 
 fault()
 {
 	MSG="ERROR: $@"
 	log "$MSG" >&2
-	if [ ! -d "$MSG" ]; then
-		log 'WARN: missing run/ dir, so no fault written' >&2
-		return
-	fi
-	test -d run/ || return
-	FAULT=run/$PROG.fault
-	echo "$(now): $MSG" >>run/$PROG.fault				||
+	RUN=$SECEDGAR_ROOT/run
+	test -w $RUN || return
+	echo "$(now): $MSG" >>$RUN/$PROG.fault				||
 		log "ERROR: echo fault failed: exit status=$?" >&2
 }
 
@@ -63,6 +66,7 @@ NC_PATH=$2
 log 'hello, world'
 trap leave EXIT
 
+log "SECEDGAR_ROOT=$SECEDGAR_ROOT"
 log "BLOBIO_SERVICE=$BLOBIO_SERVICE"
 log "BLOBIO_ALGORITHM=$BLOBIO_ALGORITHM"
 
@@ -70,9 +74,14 @@ log "tar blob: $TAR_BLOB"
 log "nc file path: $NC_PATH"
 test -r "$NC_PATH" || die "can not read nc file: exit status=$?"
 
-log "temp json job: $TMP_JSON"
+#  where to record the transaction.
+if [ -w $SECEDGAR_ROOT/data ];  then
+	JJOB_PATH=$SECEDGAR_ROOT/data/$PROG.jjob
+else
+	die "no write jjob data dir: $SECEDGAR_ROOT/data"
+fi
 
-cat >$TMP_JSON <<END
+cat >$TMP_JSON <<END || die "cat >tmp_json failed: exit status=$?"
 {
 	"secedgar.play.jmscott.github.com": {
 		"hostname": "$(hostname -f)",
@@ -80,14 +89,20 @@ cat >$TMP_JSON <<END
 		"job_start_time": "$JOB_START_TIME",
 		"environment": {
 			"PATH": "$(echo $PATH | escape-json-string)",
+			"TMPDIR": "$TMPDIR",
 			"LD_LIBRARY_PATH":
-				"$(echo $LD_LIBRARY_PATH | escape-json-string)"
+				"$(echo $LD_LIBRARY_PATH|escape-json-string)",
+			"SECEDGAR_ROOT": "$SECEDGAR_ROOT",
+			"BLOBIO_SERVICE": "$BLOBIO_SERVICE",
+			"BLOBIO_GET_SERVICE": "$BLOBIO_GET_SERVICE",
+			"BLOBIO_ALGORITHM": "$BLOBIO_ALGORITHM"
 		},
 		"command_line": {
 			"command": "$PROG",
 			"nc_tar_blob": "$TAR_BLOB",
 			"nc_file_path": "$(echo $NC_PATH | escape-json-string)"
 		},
+		"jjob_path": "$JJOB_PATH",
 		"submission_header": 
 END
 test $? = 0 || die "cat >json-header failed: exit status=$?" 
@@ -115,5 +130,13 @@ blobio put								\
 	--udig $JSON_BLOB						\
 	--service $BLOBIO_SERVICE					||
 	die "blobio put json failed: exit status=$?"
-echo "$(RFC3339Nano)	$JSON_BLOB" >>data/$PROG.jjob			||
-		die "echo data/$PROG.jjob failed: exit status=$?"
+#
+#  record the json job blob in dir data/ AND echo blob udig to stderr,
+#  so caller process can record blob in its job blob.
+#
+JJOB="$(RFC3339Nano)    $JSON_BLOB"
+echo "$JJOB" >>$JJOB_PATH || die "echo data/$PROG.jjob failed: exit status=$?"
+
+#  write jjob blob to stderr, for retrience by caller
+echo "$JSON_BLOB" >&2
+exit 0

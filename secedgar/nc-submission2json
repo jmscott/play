@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #
 #  Synopsis:
-#	Extract all ^<ELEMENT> fields in non-cooked SEC daily file.
+#	JSONify all ^<ELEMENT> fields in non-cooked SEC daily file.
 #  Usage:
 #	nc-submission2json <9999999997-21-000077.nc
 #
