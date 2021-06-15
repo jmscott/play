@@ -20,7 +20,7 @@ my $tar_count = dbi_pg_select(
 		argv =>	[],
 		sql => q(
 SELECT
-	count(*) AS tar_count
+	count(distinct blob) AS tar_count
   FROM
   	secedgar.edgar_put_daily
 )
