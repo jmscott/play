@@ -44,7 +44,7 @@ fault()
 {
 	MSG="ERROR: $@"
 	log "$MSG" >&2
-	if [ ! -d run/ ]; then
+	if [ ! -d $SECEDGAR_ROOT/run/ ]; then
 		log 'WARN: missing run/ dir, so no fault written' >&2
 		return
 	fi
@@ -176,7 +176,7 @@ cat >>JOB_JSON <<END || die "cat nc sub failed: exit status=$?"
 END
 
 #  off to the races, extracting the <SUBMISSION HEADERS>
-ls | egrep '\.(nc|corr[0-9][0-9])' | head -10| sort | while read FP;  do
+ls | egrep '\.(nc|corr[0-9][0-9])' | head -10 | sort | while read FP;  do
 	log "extract: $(du -h $FP | awk '{print $1}'): $FP"
 	nc2submission $TAR_BLOB $FP 2>NC2SUBMISSION-STDERR
 	STATUS=$?
@@ -215,10 +215,11 @@ ls | egrep '\.(nc|corr[0-9][0-9])' | head -10| sort | while read FP;  do
 		#  recode the nc tar file element and json blob
 		#  that is the output of the nc2submission
 		cat >>JOB_JSON <<END
-			[
-				"$(echo -n $FP | escape-json-string)",
-				"$NC2SUB_JJOB"
-			],
+			{
+				"nc_sub_file_path":
+					"$(echo -n $FP | escape-json-string)",
+				"nc_sub_jjob_blob": "$NC2SUB_JJOB"
+			},
 END
 		;;
 	*)
