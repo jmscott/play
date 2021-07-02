@@ -127,7 +127,9 @@ URL="$FEED_URL/$YEAR/$QTR/$FILE"
 log "pull url: $URL"
 
 log 'pulling tar from sec edgar ...'
-wget --report-speed=bits --output-file - "$URL"			||
+wget									\
+	--user-agent 'GTHedge.com jmscott@setspace.com'			\
+	--report-speed=bits --output-file - "$URL"			||
 		die "wget secedgar failed: exit status=$?"
 test -e $FILE || die "sec file does not exist: $FILE"
 test -s $FILE || die 'sec file is empty'
