@@ -1,0 +1,9 @@
+#!/usr/bin/env perl
+
+my %PREAMBLE_COUNT;
+
+while (<STDIN>) {
+	$PREAMBLE_COUNT{$1}++ if /^(\w{1,4}) /;
+}
+
+print "$_	$PREAMBLE_COUNT{$_}\n" for sort keys %PREAMBLE_COUNT;
