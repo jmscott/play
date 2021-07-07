@@ -53,6 +53,8 @@ func main() {
 		if !scan.Scan() {
 			break
 		}
-		fmt.Printf("%d	%d	%s\n", pre_offset, line_no, scan.Text())
+		if scan.Text() == `<?xml version="1.0" encoding="UTF-8"?>` {
+			fmt.Printf("%d	%d\n", pre_offset, line_no)
+		}
 	}
 }
