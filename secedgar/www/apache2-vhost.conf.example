@@ -31,6 +31,8 @@ Define SECEDGAR_PATH /Users/jmscott/opt/secedgar/sbin:/usr/local/jmscott/bin:/us
         Define APACHE_LOG_DIR "/opt/local/log"
 </IfDefine>
 
+<!--  OK TO STOP HERE -->
+
 <VirtualHost ${SECEDGAR_APACHE2_SERVER_NAME}>
 
 	SetEnv SECEDGAR_ROOT ${SECEDGAR_ROOT}
