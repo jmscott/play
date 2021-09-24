@@ -11,8 +11,16 @@
    <!--#include virtual="/header.shtml" -->
    <!--#include virtual="/nav.shtml" -->
    <div id="content">
-    <h2>SECEdgar Database @ GTHedge</h2>
-    <h3>News</h3>
+    <h1>SECEdgar Database @ GTHedge</h1>
+    <p>
+      Welcome to the GTHedge project to index ALL of the raw, public data
+      of the USA Securities and Exchange Comission's Edgar Database.  An
+      excellent starting point of the data is
+      <a
+        href="https://www.sec.gov/edgar/searchedgar/accessing-edgar-data.htm
+      >HERE</a>.
+    </p>
+    <h2>News</h2>
     <dl>
      <dt>Mon Apr 12 17:07:56 CDT 2021</dt>
      <dd>
