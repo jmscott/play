@@ -32,6 +32,8 @@ install:
 	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=	\
 		-d $(SECEDGAR_PREFIX)/run
 	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=	\
+		-d $(SECEDGAR_PREFIX)/log
+	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=	\
 		-d $(SECEDGAR_PREFIX)/data
 	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=	\
 		-d $(SECEDGAR_PREFIX)/attic
