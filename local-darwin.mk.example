@@ -20,7 +20,11 @@
 #  Value may be overriden by -DINSTALL_PREFIX=...
 
 #  stable jmscott tools, need to build jmscott/play
-JMSCOTT_ROOT?=/usr/local/jmscott
+JMSCOTT_ROOT=/usr/local/jmscott
+#
+#  Uncomment for development version of compile.
+#
+#JMSCOTT_ROOT=$(HOME)/opt/jmscott
 
 INSTALL_PREFIX?=$(JMSCOTT_ROOT)/play
 #INSTALL_PREFIX?=$(HOME)/opt/jmscott/play
@@ -29,10 +33,6 @@ INSTALL_USER?=$(USER)
 INSTALL_GROUP?=staff
 
 #
-# location of go distribution.
+#   Location of go executable.
 #
-#  Note:
-#	Need to change to "go enviroment" command?
-#
-
-GODIST=/usr/local/go
+GO=/usr/local/go/bin/go
