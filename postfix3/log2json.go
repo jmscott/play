@@ -1,6 +1,7 @@
 package main
 
 import (
+	"time"
 	"bufio"
 	"crypto/sha1"
 	"crypto/sha512"
@@ -9,6 +10,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"strconv"
 )
 
 const time_re = `^((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ` +
@@ -20,12 +22,15 @@ type Run struct {
         ByteCount		int64	`json:"byte_count"`
         KnownLineCount		int64	`json:"known_line_count"`
         UnknownLineCount	int64	`json:"unknown_line_count"`
-	xx512x1			[20]byte
 	InputDigest		string	`json:"input_digest"`
 	InputDigestAlgo		string	`json:"input_digest_algo"`
 	StartTime		string	`json:"start_time"`
 	EndTime			string	`json:"end_time"`
 	TimeLocation		string	`json:"time_location"`
+	Year			uint16	`json:"year"`
+
+	xx512x1			[20]byte
+	time_location		*time.Location
 }
 var run Run
 
@@ -62,14 +67,26 @@ func xx512x1(inner_512 []byte) [20]byte {
 	return sha1.Sum(outer_512[:])
 }
 
-func bust_time(date string) {
+//  convert typical syslog time stamp to RFC3339
+
+func syslog_time(date string) {
+	// "Mon Jan _2 15:04:05 MST 2006"
+	tm, err := time.ParseInLocation(
+			"Jan _2 15:04:05 2006",
+			fmt.Sprintf("%s %d", date, run.Year),
+			run.time_location,
+	)
+	if err != nil {
+		die("time.ParseInLocation", err)
+	}
+	rfc3339 := tm.Format(time.RFC3339)
 	if run.StartTime == "" {
-		run.StartTime = date
 		if run.EndTime != "" {
 			panic("EndTime parsed before StartTime")
 		}
-		run.EndTime = date
+		run.StartTime = rfc3339
 	}
+	run.EndTime = rfc3339
 }
 
 func a2die(option string) {
@@ -83,26 +100,44 @@ func axdie(option string) {
 func main() {
 
 	argc := len(os.Args) - 1
-	if argc != 2 {
+	if argc != 4 {
 		msg := "wrong number of cli args"
-		msg = fmt.Sprintf("%s: got %d, expected 2", argc)
+		msg = fmt.Sprintf("%s: got %d, expected 2 or 4", argc)
 		die(msg, nil)
 	}
 
 	for i := 1;  i <= argc;  i++  {
 		arg := os.Args[i]
-		if arg == "--time-location" {
+		if arg == "--year" {
+			if run.Year > 0 {
+				a2die("year")
+			}
+			i++
+			u, err := strconv.ParseUint(os.Args[i], 10, 12)
+			if err != nil {
+				die("strconv.ParseUint(time)", err)
+			}
+			run.Year = uint16(u)
+		} else if arg == "--time-location" {
 			if run.TimeLocation != "" {
 				a2die("time-location")
 			}
 			i++
 			run.TimeLocation = os.Args[i]
+			loc, err := time.LoadLocation(run.TimeLocation)
+			if err != nil {
+				die("time.LoadLocation()", err)
+			}
+			run.time_location = loc
 		} else {
 			die("unknown cli arg: " + arg, nil)
 		}
 	}
 	if run.TimeLocation == "" {
 		axdie("time-location")
+	}
+	if run.Year == 0 {
+		axdie("year")
 	}
 
 	var line_re = regexp.MustCompile(time_re)
@@ -126,10 +161,10 @@ func main() {
 		midx := line_re.FindAllSubmatchIndex(bytes, -1)
 		//fmt.Println("WTF: midx:", midx)
 
-		loc := midx[0]
-		//fmt.Println("WTF: loc[0]:", loc)
+		offset := midx[0]
+		//fmt.Println("WTF: offset[0]:", offset)
 
-		bust_time(string(bytes[loc[2]:loc[3]]))
+		syslog_time(string(bytes[offset[2]:offset[3]]))
 
 		run.KnownLineCount++
 	}
