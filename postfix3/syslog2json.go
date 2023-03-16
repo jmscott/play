@@ -19,7 +19,8 @@ const time_RE =
 		`^((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ` +
 		`(?:(?: |[1-9])|(?:[123][0-9])) ` +
 		`[0-9]{2}:[0-9]{2}:[0-9]{2}) `
-const host_RE = ` [a-zA-Z0-9_-]{1,64} `
+const host_RE = ` ([a-zA-Z0-9_-]{1,64}) `
+const time_template = `Jan _2 15:04:05 2006`
 
 type Run struct {
         LineCount		int64	`json:"line_count"`
@@ -36,22 +37,22 @@ type Run struct {
 	xx512x1			[20]byte
 	time_location		*time.Location
 }
-var run Run
 
-var line_re, time_re *regexp.Regexp
+var line_re, time_re, host_re *regexp.Regexp
 
 func init() {
 	time_re = regexp.MustCompile(time_RE)
-	line_re = regexp.MustCompile(host_RE)
+	host_re = regexp.MustCompile(host_RE)
 }
 
-func die(msg string, err error) {
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "ERROR: %s failed: %s", msg, err) 
-	} else {
-		fmt.Fprintf(os.Stderr, "ERROR: %s failed", msg)
-	}
-	os.Exit(1)
+func die(format string, args ...interface{}) {
+
+        fmt.Fprintf(os.Stderr, "ERROR: " + format + "\n", args...);
+        leave(1)
+}
+
+func fdie(what string, err error) {
+	die("%s failed: %s", what, err)
 }
 
 func panic(msg string) {
@@ -78,16 +79,34 @@ func xx512x1(inner_512 []byte) [20]byte {
 	return sha1.Sum(outer_512[:])
 }
 
-//  convert typical syslog time stamp to RFC3339
+//  match and extract leading time stamp in log stream: "^Mon DD HH:MM:SS "
 
-func syslog_time(date string) {
+func (run *Run) bust_time(line []byte) int {
+
+	//  match and extract "^Mon DD HH:MM:SS "
+	midx := time_re.FindAllSubmatchIndex(line, -1)
+	if midx == nil {
+		die("line %d does not match time regex", run.LineCount)
+	}
+
+	//  parse the leading log time
+
+	off := midx[0]
+	if len(off) != 4 {
+		die("unexpected length for log time offsets: " +
+		    "got %d, expected 4 entries",
+		    len(off),
+		)
+	}
+	date := string(line[off[2]:off[3]])
+
 	tm, err := time.ParseInLocation(
-			"Jan _2 15:04:05 2006",
+			time_template,
 			fmt.Sprintf("%s %d", date, run.Year),
 			run.time_location,
 	)
 	if err != nil {
-		die("time.ParseInLocation", err)
+		fdie("time.ParseInLocation(log)", err)
 	}
 	rfc3339 := tm.Format(time.RFC3339)
 	if run.StartTime == "" {
@@ -96,7 +115,11 @@ func syslog_time(date string) {
 		}
 		run.StartTime = rfc3339
 	}
+
+	//  Note: incorrectly assume times totally ordered
 	run.EndTime = rfc3339
+
+	return off[3]
 }
 
 func a2die(option string) {
@@ -111,10 +134,10 @@ func main() {
 
 	argc := len(os.Args) - 1
 	if argc != 4 {
-		msg := "wrong number of cli args"
-		msg = fmt.Sprintf("%s: got %d, expected 2 or 4", argc)
-		die(msg, nil)
+		die("wrong number of cli args: got %d, expected 4", argc)
 	}
+
+	run := &Run{}
 
 	for i := 1;  i <= argc;  i++  {
 		arg := os.Args[i]
@@ -125,7 +148,7 @@ func main() {
 			i++
 			u, err := strconv.ParseUint(os.Args[i], 10, 12)
 			if err != nil {
-				die("strconv.ParseUint(time)", err)
+				fdie("strconv.ParseUint(time)", err)
 			}
 			run.Year = uint16(u)
 		} else if arg == "--time-location" {
@@ -136,11 +159,11 @@ func main() {
 			run.TimeLocation = os.Args[i]
 			loc, err := time.LoadLocation(run.TimeLocation)
 			if err != nil {
-				die("time.LoadLocation()", err)
+				fdie("time.LoadLocation(--time-location)", err)
 			}
 			run.time_location = loc
 		} else {
-			die("unknown cli arg: " + arg, nil)
+			die("unknown cli arg: %s", arg)
 		}
 	}
 	if run.TimeLocation == "" {
@@ -159,20 +182,13 @@ func main() {
 			if err == io.EOF {
 				break
 			}
-			die("bufio.ReadBytes(Stdin)", err)
+			fdie("bufio.ReadBytes(Stdin)", err)
 		}
 		run.ByteCount += int64(len(bytes))
+		h512.Write(bytes)			//  digest input
 		run.LineCount++
 
-		h512.Write(bytes)	//  digest of input
-
-		midx := time_re.FindAllSubmatchIndex(bytes, -1)
-		//fmt.Println("WTF: midx:", midx)
-
-		offset := midx[0]
-		//fmt.Println("WTF: offset[0]:", offset)
-
-		syslog_time(string(bytes[offset[2]:offset[3]]))
+		run.bust_time(bytes)
 
 		run.KnownLineCount++
 	}
@@ -183,8 +199,8 @@ func main() {
 	enc.SetIndent("", "	")
 	err := enc.Encode(&run)
 	if err != nil {
-		die("enc.Encode(json)", err) 
+		fdie("enc.Encode(json)", err) 
 	}
 
-	os.Exit(0)
+	leave(0)
 }
