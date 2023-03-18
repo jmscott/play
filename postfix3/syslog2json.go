@@ -19,7 +19,7 @@ const time_RE =
 		`^((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ` +
 		`(?:(?: |[1-9])|(?:[123][0-9])) ` +
 		`[0-9]{2}:[0-9]{2}:[0-9]{2}) `
-const host_RE = ` ([a-zA-Z0-9_-]{1,64}) `
+const host_RE = `^([a-zA-Z0-9_-]{1,64}) `
 const time_template = `Jan _2 15:04:05 2006`
 
 type Run struct {
@@ -33,16 +33,20 @@ type Run struct {
 	EndTime			string	`json:"end_time"`
 	TimeLocation		string	`json:"time_location"`
 	Year			uint16	`json:"year"`
+	Hosts			map[string]uint64
 
 	xx512x1			[20]byte
 	time_location		*time.Location
 }
+var run *Run;
 
 var line_re, time_re, host_re *regexp.Regexp
 
 func init() {
 	time_re = regexp.MustCompile(time_RE)
 	host_re = regexp.MustCompile(host_RE)
+	run = &Run{}
+	run.Hosts = make(map[string]uint64)
 }
 
 func die(format string, args ...interface{}) {
@@ -119,7 +123,32 @@ func (run *Run) bust_time(line []byte) int {
 	//  Note: incorrectly assume times totally ordered
 	run.EndTime = rfc3339
 
-	return off[3]
+	return off[1]
+}
+//  match and extract leading time stamp in log stream: "^Mon DD HH:MM:SS "
+
+func (run *Run) bust_host(line []byte) int {
+
+	//  match and extract "^([a-zA-Z0-9+-]{1,64}) "
+	midx := host_re.FindAllSubmatchIndex(line, -1)
+	if midx == nil {
+		die("line %d does not match host regex", run.LineCount)
+	}
+
+	//  parse the host name after log time
+
+	off := midx[0]
+	if len(off) != 4 {
+		die("unexpected length for host offsets: " +
+		    "got %d, expected 4 entries",
+		    len(off),
+		)
+	}
+	fmt.Fprintln(os.Stderr, "WTF:", off)
+	host := string(line[off[2]:off[3]])
+	run.Hosts[host]++
+
+	return off[1]
 }
 
 func a2die(option string) {
@@ -136,8 +165,6 @@ func main() {
 	if argc != 4 {
 		die("wrong number of cli args: got %d, expected 4", argc)
 	}
-
-	run := &Run{}
 
 	for i := 1;  i <= argc;  i++  {
 		arg := os.Args[i]
@@ -188,7 +215,8 @@ func main() {
 		h512.Write(bytes)			//  digest input
 		run.LineCount++
 
-		run.bust_time(bytes)
+		off := run.bust_time(bytes)
+		run.bust_host(bytes[off:])
 
 		run.KnownLineCount++
 	}
