@@ -1,6 +1,5 @@
 //  convert "traditional" syslog format to json
 //  roughly follows rfc5424
-//  https://docs.ruckuswireless.com/fastiron/08.0.60/fastiron-08060-monitoringguide/GUID-88F338BA-B7BF-485C-B1DE-7418710452A6.html
 package main
 
 import (
@@ -26,17 +25,23 @@ const time_template = `Jan _2 15:04:05 2006`
 
 const process_RE = `^postfix/([a-zA-Z][a-zA-Z0-9_-]{0,31})\[\d{1,20}]: `
 const queue_id_RE = `^([A-Z0-9]{12}): `
+const warning_RE = `^warning: `
+const statistics_RE = `^statistics: `
+const fatal_RE = `^fatal: `
 
-/*
-(?:(warning|statistics|fatal|[A-Z0-9]{12}): )|` +
-                     `(daemon started)|(refreshing) `
-*/
+//  Note: investigate why $ pattern fails in FindSubmatchIndex()
+const refresh_postfix_RE = `^refreshing the Postfix mail system`
+
+const reload_RE = `^reload -- version 3`	//  force postfix3
+const daemon_started_RE = `^daemon started -- version `
+const connect_from_RE = `^connect from `
+const lost_connect_RE = `^lost connection after CONNECT from `
+const disconnect_RE = `^disconnect from `
+const connect_to_RE = `^connect to `
 
 type Run struct {
         LineCount		int64	`json:"line_count"`
         ByteCount		int64	`json:"byte_count"`
-        KnownLineCount		int64	`json:"known_line_count"`
-        UnknownLineCount	int64	`json:"unknown_line_count"`
 	InputDigest		string	`json:"input_digest"`
 	InputDigestAlgo		string	`json:"input_digest_algo"`
 	StartTime		string	`json:"start_time"`
@@ -47,6 +52,19 @@ type Run struct {
 	Process			map[string]uint64	`json:"process"`
 	QueueId			map[string]uint64	`json:"queue_id"`
 
+        KnownLineCount		int64	`json:"known_line_count"`
+        UnknownLineCount	int64	`json:"unknown_line_count"`
+	WarningCount		int64	`json:"warning_count"`
+	StatisticsCount		int64	`json:"statistics_count"`
+	FatalCount		int64	`json:"fatal_count"`
+	DaemonStartedCount	int64	`json:"daemon_started_count"`
+	RefreshPostfixCount	int64	`json:"refresh_postfix_count"`
+	ReloadCount		int64	`json:"reload_count"`
+	ConnectFromCount	int64	`json:"connect_from_count"`
+	LostConnectCount	int64	`json:"lost_connect_count"`
+	DisconnectCount		int64	`json:"disconnect_count"`
+	ConnectToCount		int64	`json:"connect_to_count"`
+
 	xx512x1			[20]byte
 	time_location		*time.Location
 }
@@ -56,6 +74,16 @@ var
 	log_time_re,
 	host_name_re,
 	process_re,
+	warning_re,
+	statistics_re,
+	fatal_re,
+	daemon_started_re,
+	refresh_postfix_re,
+	reload_re,
+	connect_from_re,
+	lost_connect_re,
+	disconnect_re,
+	connect_to_re,
 	queue_id_re	*regexp.Regexp
 
 func init() {
@@ -63,6 +91,17 @@ func init() {
 	host_name_re = regexp.MustCompile(host_name_RE)
 	process_re = regexp.MustCompile(process_RE)
 	queue_id_re = regexp.MustCompile(queue_id_RE)
+	warning_re = regexp.MustCompile(warning_RE)
+	statistics_re = regexp.MustCompile(statistics_RE)
+	fatal_re = regexp.MustCompile(fatal_RE)
+	daemon_started_re = regexp.MustCompile(daemon_started_RE)
+	refresh_postfix_re = regexp.MustCompile(refresh_postfix_RE)
+	reload_re = regexp.MustCompile(reload_RE)
+	connect_from_re = regexp.MustCompile(connect_from_RE)
+	lost_connect_re = regexp.MustCompile(lost_connect_RE)
+	disconnect_re = regexp.MustCompile(disconnect_RE)
+	connect_to_re = regexp.MustCompile(connect_to_RE)
+
 	run = &Run{}
 	run.HostName = make(map[string]uint64)
 	run.Process = make(map[string]uint64)
@@ -225,9 +264,113 @@ func (run *Run) bust_process(line []byte) int {
 	return offset[1]
 }
 
-//  bust exception where a queuid was expected
+func (Run *Run) bust_warning(line []byte, midx []int) int {
+	run.WarningCount++
+	return 0
+}
+
+func (Run *Run) bust_statistics(line []byte, midx []int) int {
+	run.StatisticsCount++
+	return 0
+}
+
+func (Run *Run) bust_fatal(line []byte, midx []int) int {
+	run.FatalCount++
+	return 0
+}
+
+func (Run *Run) bust_daemon_started(line []byte, midx []int) int {
+	run.DaemonStartedCount++
+	return 0
+}
+
+func (Run *Run) bust_refresh_postfix(line []byte, midx []int) int {
+	run.RefreshPostfixCount++
+	return 0
+}
+
+func (Run *Run) bust_reload(line []byte, midx []int) int {
+	run.ReloadCount++
+	return 0
+}
+
+func (Run *Run) bust_connect_from(line []byte, midx []int) int {
+	run.ConnectFromCount++
+	return 0
+}
+
+func (Run *Run) bust_lost_connect(line []byte, midx []int) int {
+	run.LostConnectCount++
+	return 0
+}
+
+func (Run *Run) bust_disconnect(line []byte, midx []int) int {
+	run.DisconnectCount++
+	return 0
+}
+
+func (Run *Run) bust_connect_to(line []byte, midx []int) int {
+	run.ConnectToCount++
+	return 0
+}
+
+//  bust exception parsing queue id
 
 func (run *Run) bust_queue_ex(line []byte) int {
+
+	midx := warning_re.FindSubmatchIndex(line)
+	if midx != nil {
+		return run.bust_warning(line, midx)
+	}
+
+	midx = statistics_re.FindSubmatchIndex(line)
+	if midx != nil {
+		return run.bust_statistics(line, midx)
+	}
+
+	midx = fatal_re.FindSubmatchIndex(line)
+	if midx != nil {
+		return run.bust_fatal(line, midx)
+	}
+
+	midx = daemon_started_re.FindSubmatchIndex(line)
+	if midx != nil {
+		return run.bust_daemon_started(line, midx)
+	}
+
+	midx = refresh_postfix_re.FindSubmatchIndex(line)
+	if midx != nil {
+		return run.bust_refresh_postfix(line, midx)
+	}
+
+	midx = reload_re.FindSubmatchIndex(line)
+	if midx != nil {
+		return run.bust_reload(line, midx)
+	}
+
+	midx = connect_from_re.FindSubmatchIndex(line)
+	if midx != nil {
+		return run.bust_connect_from(line, midx)
+	}
+
+	midx = lost_connect_re.FindSubmatchIndex(line)
+	if midx != nil {
+		return run.bust_lost_connect(line, midx)
+	}
+
+	midx = disconnect_re.FindSubmatchIndex(line)
+	if midx != nil {
+		return run.bust_disconnect(line, midx)
+	}
+
+	midx = connect_to_re.FindSubmatchIndex(line)
+	if midx != nil {
+		return run.bust_connect_to(line, midx)
+	}
+
+	die("bust_queue_ex: can not match line %d", run.LineCount)
+
+	run.UnknownLineCount++
 	return 0
 }
 	
@@ -257,8 +400,11 @@ func (run *Run) bust_queue_id(line []byte) int {
 	if l = len(offset);  l != 4 {
 		_die("unexpected len of match offset: got %d, want 4", l)
 	}
+
+	/*
 	queue_id := string(line[offset[2]:offset[3]])	// matches queueid
 	run.QueueId[queue_id]++
+	*/
 	return offset[1]
 }
 
@@ -322,9 +468,19 @@ func main() {
 			}
 			fdie("bufio.ReadBytes(Stdin)", err)
 		}
-		run.ByteCount += int64(len(bytes))
+		l := len(bytes)
+		if l == 0 {
+			panic("impossible read of empty line")
+		}
+		run.ByteCount += int64(l)
 		h512.Write(bytes)			//  digest input
 		run.LineCount++
+		
+		//  zap terminating newline for $ in regex matches
+		if bytes[l - 1] != '\n' {
+			panic("line not terminated by newline")
+		}
+		bytes[l - 1] = 0
 
 		i := run.bust_log_time(bytes)
 
