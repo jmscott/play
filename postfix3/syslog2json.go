@@ -20,7 +20,7 @@ const log_time_RE =
 		`^((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ` +
 		`(?:(?: [1-9])|(?:[123][0-9])) ` +
 		`[0-9]{2}:[0-9]{2}:[0-9]{2}) `
-const host_name_RE = `^([a-zA-Z0-9_-]{1,64}) `
+const source_host_RE = `^([a-zA-Z0-9_][a-zA-Z0-9_-]{0,63}) `
 const log_time_template = `Jan _2 15:04:05 2006`
 
 const process_RE = `^postfix/([a-zA-Z][a-zA-Z0-9_-]{0,31})\[\d{1,20}]: `
@@ -43,6 +43,7 @@ const connect_to_RE = `^connect to `
 
 type CustomRE struct {
 	Tag		string	`json:"tag"`
+	Field		string	`json:"field"`
 	RegExp		string	`json:"regexp"`
 	MatchCount	int64	`json:"match_count"`
 	regexp		*regexp.Regexp
@@ -57,7 +58,7 @@ type Run struct {
 	MaxTime			time.Time`json:"max_time"`
 	TimeLocation		string	`json:"time_location"`
 	Year			uint16	`json:"year"`
-	HostName		map[string]uint64	`json:"host_name"`
+	SourceHost		map[string]uint64	`json:"source_host"`
 	Process			map[string]uint64	`json:"process"`
 	QueueId			map[string]uint64	`json:"queue_id"`
 
@@ -84,7 +85,7 @@ var run *Run;
 
 var
 	log_time_re,
-	host_name_re,
+	source_host_re,
 	process_re,
 	warning_re,
 	statistics_re,
@@ -102,7 +103,7 @@ var
 
 func init() {
 	log_time_re = regexp.MustCompile(log_time_RE)
-	host_name_re = regexp.MustCompile(host_name_RE)
+	source_host_re = regexp.MustCompile(source_host_RE)
 	process_re = regexp.MustCompile(process_RE)
 	queue_id_re = regexp.MustCompile(queue_id_RE)
 	warning_re = regexp.MustCompile(warning_RE)
@@ -119,7 +120,7 @@ func init() {
 	backwards_compat_re = regexp.MustCompile(backwards_compat_RE)
 
 	run = &Run{}
-	run.HostName = make(map[string]uint64)
+	run.SourceHost = make(map[string]uint64)
 	run.Process = make(map[string]uint64)
 	run.QueueId = make(map[string]uint64)
 
@@ -215,17 +216,17 @@ func (run *Run) bust_log_time(line []byte) int {
 
 //  match and extract host name following leading log timestamp
 
-func (run *Run) bust_host_name(line []byte) int {
+func (run *Run) bust_source_host(line []byte) int {
 
 	_die := func(format string, args ...interface{}) {
 		die("%s", fmt.Sprintf(
-				"bust_host_name: line %d: %s",
+				"bust_source_host: line %d: %s",
 				run.LineCount,
 				fmt.Sprintf(format, args...),
 		))
 	}
 
-	midx := host_name_re.FindAllSubmatchIndex(line, -1)
+	midx := source_host_re.FindAllSubmatchIndex(line, -1)
 	if midx == nil {
 		_die("does not match regex")
 	}
@@ -242,7 +243,7 @@ func (run *Run) bust_host_name(line []byte) int {
 		_die("unexpected length of match offset: got %d, want 4", l)
 	}
 	host := string(line[offset[2]:offset[3]])
-	run.HostName[host]++
+	run.SourceHost[host]++
 
 	return offset[1]
 }
@@ -578,7 +579,7 @@ func main() {
 		i := run.bust_log_time(bytes)
 
 		bytes = bytes[i:]
-		i = run.bust_host_name(bytes)
+		i = run.bust_source_host(bytes)
 
 		bytes = bytes[i:]
 		i = run.bust_process(bytes)
