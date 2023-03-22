@@ -53,8 +53,8 @@ type Run struct {
         ByteCount		int64	`json:"byte_count"`
 	InputDigest		string	`json:"input_digest"`
 	InputDigestAlgo		string	`json:"input_digest_algo"`
-	MinTime			string	`json:"min_time"`
-	MaxTime			string	`json:"max_time"`
+	MinTime			time.Time`json:"min_time"`
+	MaxTime			time.Time`json:"max_time"`
 	TimeLocation		string	`json:"time_location"`
 	Year			uint16	`json:"year"`
 	HostName		map[string]uint64	`json:"host_name"`
@@ -160,7 +160,7 @@ func xx512x1(inner_512 []byte) [20]byte {
 	return sha1.Sum(outer_512[:])
 }
 
-//  match and extract leading time stamp in log stream: "^Mon DD HH:MM:SS "
+//  match, extract and set min/max log time
 
 func (run *Run) bust_log_time(line []byte) int {
 
@@ -200,16 +200,15 @@ func (run *Run) bust_log_time(line []byte) int {
 	if err != nil {
 		_die("time.ParseInLocation(log)", err)
 	}
-	rfc3339 := tm.Format(time.RFC3339)
-	if run.MinTime == "" {
-		if run.MaxTime != "" {
-			panic("MaxTIme parsed before MinTime")
+	if run.MinTime.IsZero() {
+		if !run.MaxTime.IsZero() {
+			panic("MaxTime parsed before MinTime")
 		}
-		run.MinTime = rfc3339
+		run.MinTime = tm
 	}
-
-	//  Note: incorrectly assume times totally ordered
-	run.MinTime = rfc3339
+	if run.MaxTime.Before(tm) {
+		run.MaxTime = tm
+	}
 
 	return offset[1]
 }
