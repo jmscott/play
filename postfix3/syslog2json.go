@@ -36,7 +36,7 @@ const refresh_postfix_RE = `^refreshing the Postfix mail system`
 const reload_RE = `^reload -- version 3`	//  force postfix3
 const daemon_started_RE = `^daemon started -- version `
 const connect_from_RE = `^connect from `
-const lost_connect_RE = `^lost connection after CONNECT from `
+const lost_connect_RE = `^lost connection after `
 const disconnect_from_RE = `^disconnect from `
 const connect_to_RE = `^connect to `
 
