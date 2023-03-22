@@ -1,5 +1,4 @@
-//  convert "traditional" syslog format to json
-//  roughly follows rfc5424
+//  convert "traditional" syslog format to json, roughly following rfc5424
 package main
 
 import (
@@ -45,24 +44,12 @@ type CustomRE struct {
 	Tag		string	`json:"tag"`
 	Field		string	`json:"field"`
 	RegExp		string	`json:"regexp"`
-	MatchCount	int64	`json:"match_count"`
 	regexp		*regexp.Regexp
 }
 
-type Run struct {
-        LineCount		int64	`json:"line_count"`
-        ByteCount		int64	`json:"byte_count"`
-	InputDigest		string	`json:"input_digest"`
-	InputDigestAlgo		string	`json:"input_digest_algo"`
-	MinTime			time.Time`json:"min_time"`
-	MaxTime			time.Time`json:"max_time"`
-	TimeLocation		string	`json:"time_location"`
-	Year			uint16	`json:"year"`
-	SourceHost		map[string]uint64	`json:"source_host"`
-	Process			map[string]uint64	`json:"process"`
-	QueueId			map[string]uint64	`json:"queue_id"`
+type SourceCount struct {
+	ProcessCount		map[string]int64	`json:"process_count"`
 
-        KnownLineCount		int64	`json:"known_line_count"`
         UnknownLineCount	int64	`json:"unknown_line_count"`
 	WarningCount		int64	`json:"warning_count"`
 	StatisticsCount		int64	`json:"statistics_count"`
@@ -75,13 +62,32 @@ type Run struct {
 	DisconnectFromCount	int64	`json:"disconnect_from_count"`
 	ConnectToCount		int64	`json:"connect_to_count"`
 	BackwardsCompatCount	int64	`json:"backwards_compat_count"`
+}
 
-	CustomRE		map[string]*CustomRE	`json:"custom_re"`
+type SourceHost struct {
+	run			*Run
+
+	HostName		string		`json:"host_name"`
+	CountStat		SourceCount	`json:"count_stat"`		
+	CustomRECount		map[string]int64`json:"custom_re_count"`
+}
+
+type Run struct {
+	CLICustomRE		map[string]*CustomRE
+        LineCount		int64	`json:"line_count"`
+        ByteCount		int64	`json:"byte_count"`
+	InputDigest		string	`json:"input_digest"`
+	InputDigestAlgo		string	`json:"input_digest_algo"`
+	MinTime			time.Time`json:"min_time"`
+	MaxTime			time.Time`json:"max_time"`
+	TimeLocation		string	`json:"time_location"`
+	Year			uint16	`json:"year"`
+	SourceHost		map[string]*SourceHost	`json:"source_host"`
+
 
 	xx512x1			[20]byte
 	time_location		*time.Location
 }
-var run *Run;
 
 var
 	log_time_re,
@@ -118,13 +124,6 @@ func init() {
 	connect_to_re = regexp.MustCompile(connect_to_RE)
 	arg_custom_re = regexp.MustCompile(arg_custom_RE)
 	backwards_compat_re = regexp.MustCompile(backwards_compat_RE)
-
-	run = &Run{}
-	run.SourceHost = make(map[string]uint64)
-	run.Process = make(map[string]uint64)
-	run.QueueId = make(map[string]uint64)
-
-	run.CustomRE = make(map[string]*CustomRE)
 }
 
 func die(format string, args ...interface{}) {
@@ -216,7 +215,7 @@ func (run *Run) bust_log_time(line []byte) int {
 
 //  match and extract host name following leading log timestamp
 
-func (run *Run) bust_source_host(line []byte) int {
+func (run *Run) bust_source_host(line []byte) (int, *SourceHost) {
 
 	_die := func(format string, args ...interface{}) {
 		die("%s", fmt.Sprintf(
@@ -243,27 +242,38 @@ func (run *Run) bust_source_host(line []byte) int {
 		_die("unexpected length of match offset: got %d, want 4", l)
 	}
 	host := string(line[offset[2]:offset[3]])
-	run.SourceHost[host]++
 
-	return offset[1]
+	shost := run.SourceHost[host]
+	if shost == nil {
+		shost = &SourceHost{
+			run:		run,
+			HostName: 	host,
+		}
+		shost.CountStat.ProcessCount = make(map[string]int64)
+		shost.CustomRECount = make(map[string]int64)
+		run.SourceHost[host] = shost
+	}
+	return offset[1], run.SourceHost[host]
 }
 
-func (run *Run) bust_custom_re(line []byte) int {
+func (shost *SourceHost) bust_custom_re(line []byte) int {
 
-	for _, cre := range run.CustomRE {
+	run := shost.run
+	for _, cre := range run.CLICustomRE {
 		if cre.regexp.Find(line) != nil {
-			cre.MatchCount++
+			shost.CustomRECount[cre.Tag]++
 			return -1
 		}
 	}
-	die("bust_custom_re: can not match any regexp")
+	die("bust_custom_re: line %d: no match for custom re", run.LineCount)
 	return -2
 }
 
 //  match and extract leading process[pid]
 
-func (run *Run) bust_process(line []byte) int {
+func (shost *SourceHost) bust_process(line []byte) int {
 
+	run := shost.run
 	_die := func(format string, args ...interface{}) {
 		die("%s", fmt.Sprintf(
 				"bust_process: line %d: %s",
@@ -274,8 +284,8 @@ func (run *Run) bust_process(line []byte) int {
 
 	midx := process_re.FindAllSubmatchIndex(line, -1)
 	if midx == nil {
-		if len(run.CustomRE) > 0 {
-			return run.bust_custom_re(line)
+		if len(run.CLICustomRE) > 0 {
+			return shost.bust_custom_re(line)
 		}
 		_die("no match of regexp")
 	}
@@ -292,144 +302,144 @@ func (run *Run) bust_process(line []byte) int {
 		_die("unexpected l of match offset: got %d, want 4", l)
 	}
 	process := string(line[offset[2]:offset[3]])
-	run.Process[process]++
+	shost.CountStat.ProcessCount[process]++
 
 	return offset[1]
 }
 
-func (Run *Run) bust_warning(line []byte, midx []int) int {
-	run.WarningCount++
+func (shost *SourceHost) bust_warning(line []byte, midx []int) int {
+	shost.CountStat.WarningCount++
 	return 0
 }
 
-func (Run *Run) bust_statistics(line []byte, midx []int) int {
-	run.StatisticsCount++
+func (shost *SourceHost) bust_statistics(line []byte, midx []int) int {
+	shost.CountStat.StatisticsCount++
 	return 0
 }
 
-func (Run *Run) bust_fatal(line []byte, midx []int) int {
-	run.FatalCount++
+func (shost *SourceHost) bust_fatal(line []byte, midx []int) int {
+	shost.CountStat.FatalCount++
 	return 0
 }
 
-func (Run *Run) bust_daemon_started(line []byte, midx []int) int {
-	run.DaemonStartedCount++
+func (shost *SourceHost) bust_daemon_started(line []byte, midx []int) int {
+	shost.CountStat.DaemonStartedCount++
 	return 0
 }
 
-func (Run *Run) bust_refresh_postfix(line []byte, midx []int) int {
-	run.RefreshPostfixCount++
+func (shost *SourceHost) bust_refresh_postfix(line []byte, midx []int) int {
+	shost.CountStat.RefreshPostfixCount++
 	return 0
 }
 
-func (Run *Run) bust_reload(line []byte, midx []int) int {
-	run.ReloadCount++
+func (shost *SourceHost) bust_reload(line []byte, midx []int) int {
+	shost.CountStat.ReloadCount++
 	return 0
 }
 
-func (Run *Run) bust_connect_from(line []byte, midx []int) int {
-	run.ConnectFromCount++
+func (shost *SourceHost) bust_connect_from(line []byte, midx []int) int {
+	shost.CountStat.ConnectFromCount++
 	return 0
 }
 
-func (Run *Run) bust_lost_connect(line []byte, midx []int) int {
-	run.LostConnectCount++
+func (shost *SourceHost) bust_lost_connect(line []byte, midx []int) int {
+	shost.CountStat.LostConnectCount++
 	return 0
 }
 
-func (Run *Run) bust_disconnect_from(line []byte, midx []int) int {
-	run.DisconnectFromCount++
+func (shost *SourceHost) bust_disconnect_from(line []byte, midx []int) int {
+	shost.CountStat.DisconnectFromCount++
 	return 0
 }
 
-func (Run *Run) bust_connect_to(line []byte, midx []int) int {
-	run.ConnectToCount++
+func (shost *SourceHost) bust_connect_to(line []byte, midx []int) int {
+	shost.CountStat.ConnectToCount++
 	return 0
 }
 
-func (Run *Run) bust_backwards_compat(line []byte, midx []int) int {
-	run.BackwardsCompatCount++
+func (shost *SourceHost) bust_backwards_compat(line []byte, midx []int) int {
+	shost.CountStat.BackwardsCompatCount++
 	return 0
 }
 
 //  bust exception parsing queue id
 
-func (run *Run) bust_queue_ex(line []byte) int {
+func (shost *SourceHost) bust_queue_ex(line []byte) int {
 
 	midx := warning_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return run.bust_warning(line, midx)
+		return shost.bust_warning(line, midx)
 	}
 
 	midx = statistics_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return run.bust_statistics(line, midx)
+		return shost.bust_statistics(line, midx)
 	}
 
 	midx = fatal_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return run.bust_fatal(line, midx)
+		return shost.bust_fatal(line, midx)
 	}
 
 	midx = daemon_started_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return run.bust_daemon_started(line, midx)
+		return shost.bust_daemon_started(line, midx)
 	}
 
 	midx = refresh_postfix_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return run.bust_refresh_postfix(line, midx)
+		return shost.bust_refresh_postfix(line, midx)
 	}
 
 	midx = reload_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return run.bust_reload(line, midx)
+		return shost.bust_reload(line, midx)
 	}
 
 	midx = connect_from_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return run.bust_connect_from(line, midx)
+		return shost.bust_connect_from(line, midx)
 	}
 
 	midx = lost_connect_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return run.bust_lost_connect(line, midx)
+		return shost.bust_lost_connect(line, midx)
 	}
 
 	midx = disconnect_from_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return run.bust_disconnect_from(line, midx)
+		return shost.bust_disconnect_from(line, midx)
 	}
 
 	midx = connect_to_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return run.bust_connect_to(line, midx)
+		return shost.bust_connect_to(line, midx)
 	}
 
 	midx = backwards_compat_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return run.bust_backwards_compat(line, midx)
+		return shost.bust_backwards_compat(line, midx)
 	}
 
-	die("bust_queue_ex: can not match line %d", run.LineCount)
+	die("bust_queue_ex: can not match line %d", shost.run.LineCount)
 
-	run.UnknownLineCount++
+	shost.CountStat.UnknownLineCount++
 	return 0
 }
-	
-func (run *Run) bust_queue_id(line []byte) int {
+
+func (shost *SourceHost) bust_queue_id(line []byte) int {
 
 	_die := func(format string, args ...interface{}) {
 		die("%s", fmt.Sprintf(
 				"bust_queue_id: line %d: %s",
-				run.LineCount,
+				shost.run.LineCount,
 				fmt.Sprintf(format, args...),
 		))
 	}
 
 	midx := queue_id_re.FindAllSubmatchIndex(line, -1)
 	if midx == nil {
-		return run.bust_queue_ex(line)
+		return shost.bust_queue_ex(line)
 	}
 	var l int
 
@@ -463,7 +473,7 @@ func noarg(opt, what string) {
 	die("option missing arg: --%s: %s", opt, what)
 }
 
-func push_custom_re(tag_re string) {
+func (run *Run) push_custom_re(tag_re string) {
 	_die := func(format string, args ...interface{}) {
 		msg := fmt.Sprintf(format, args...)
 		die(`--custom-re: %s`, msg)
@@ -480,7 +490,7 @@ func push_custom_re(tag_re string) {
 		_die("unexpected length of re offsets: got %d, expected 6", l)
 	}
 	tag := string(bytes[offset[2]:offset[3]])
-	if _, ok := run.CustomRE[tag];  ok == true {
+	if _, ok := run.CLICustomRE[tag];  ok == true {
 		_die("tag already exists: %s", tag)
 	}
 
@@ -489,10 +499,9 @@ func push_custom_re(tag_re string) {
 	if err != nil {
 		_die("can not compile regexp: %s: %s", err, re)
 	}
-	run.CustomRE[tag] = &CustomRE{
+	run.CLICustomRE[tag] = &CustomRE{
 		Tag:		tag,
 		RegExp:		re,
-		MatchCount:	0,
 		regexp:		regexp,
 	}
 }
@@ -507,6 +516,10 @@ func main() {
 		die("--option missing second argument")
 	}
 
+	run := &Run{
+		CLICustomRE: make(map[string]*CustomRE),
+		SourceHost: make(map[string]*SourceHost),
+	}
 	for i := 1;  i <= argc;  i++  {
 		arg := os.Args[i]
 		i++
@@ -539,7 +552,7 @@ func main() {
 			if i > argc {
 				noarg("custom-re", "missing tag:regexg")
 			}
-			push_custom_re(os.Args[i])
+			run.push_custom_re(os.Args[i])
 		} else {
 			die("unknown cli arg: %s", arg)
 		}
@@ -578,16 +591,16 @@ func main() {
 
 		i := run.bust_log_time(bytes)
 
+		var shost *SourceHost
 		bytes = bytes[i:]
-		i = run.bust_source_host(bytes)
+		i, shost = run.bust_source_host(bytes)
 
 		bytes = bytes[i:]
-		i = run.bust_process(bytes)
+		i = shost.bust_process(bytes)
 		if i > -1 {
 			bytes = bytes[i:]
-			run.bust_queue_id(bytes)
+			shost.bust_queue_id(bytes)
 		}
-		run.KnownLineCount++
 	}
 	run.xx512x1 = xx512x1(h512.Sum(nil))
 	run.InputDigest = fmt.Sprintf("%x", run.xx512x1)
