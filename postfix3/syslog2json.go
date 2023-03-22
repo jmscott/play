@@ -29,6 +29,7 @@ const warning_RE = `^warning: `
 const statistics_RE = `^statistics: `
 const fatal_RE = `^fatal: `
 const arg_custom_RE = `^([a-z][a-z0-9_-]{0,16}):(.{1,64})$`
+const backwards_compat_RE = `^using backwards-compatible `
 
 //  Note: investigate why $ pattern fails in FindSubmatchIndex()
 const refresh_postfix_RE = `^refreshing the Postfix mail system`
@@ -72,8 +73,9 @@ type Run struct {
 	LostConnectCount	int64	`json:"lost_connect_count"`
 	DisconnectFromCount	int64	`json:"disconnect_from_count"`
 	ConnectToCount		int64	`json:"connect_to_count"`
+	BackwardsCompatCount	int64	`json:"backwards_compat_count"`
 
-	CustomRE		map[string]CustomRE	`json:"custom_re"`
+	CustomRE		map[string]*CustomRE	`json:"custom_re"`
 
 	xx512x1			[20]byte
 	time_location		*time.Location
@@ -95,6 +97,7 @@ var
 	disconnect_from_re,
 	connect_to_re,
 	arg_custom_re,
+	backwards_compat_re,
 	queue_id_re	*regexp.Regexp
 
 func init() {
@@ -113,13 +116,14 @@ func init() {
 	disconnect_from_re = regexp.MustCompile(disconnect_from_RE)
 	connect_to_re = regexp.MustCompile(connect_to_RE)
 	arg_custom_re = regexp.MustCompile(arg_custom_RE)
+	backwards_compat_re = regexp.MustCompile(backwards_compat_RE)
 
 	run = &Run{}
 	run.HostName = make(map[string]uint64)
 	run.Process = make(map[string]uint64)
 	run.QueueId = make(map[string]uint64)
 
-	run.CustomRE = make(map[string]CustomRE)
+	run.CustomRE = make(map[string]*CustomRE)
 }
 
 func die(format string, args ...interface{}) {
@@ -343,6 +347,11 @@ func (Run *Run) bust_connect_to(line []byte, midx []int) int {
 	return 0
 }
 
+func (Run *Run) bust_backwards_compat(line []byte, midx []int) int {
+	run.BackwardsCompatCount++
+	return 0
+}
+
 //  bust exception parsing queue id
 
 func (run *Run) bust_queue_ex(line []byte) int {
@@ -395,6 +404,11 @@ func (run *Run) bust_queue_ex(line []byte) int {
 	midx = connect_to_re.FindSubmatchIndex(line)
 	if midx != nil {
 		return run.bust_connect_to(line, midx)
+	}
+
+	midx = backwards_compat_re.FindSubmatchIndex(line)
+	if midx != nil {
+		return run.bust_backwards_compat(line, midx)
 	}
 
 	die("bust_queue_ex: can not match line %d", run.LineCount)
@@ -475,7 +489,7 @@ func push_custom_re(tag_re string) {
 	if err != nil {
 		_die("can not compile regexp: %s: %s", err, re)
 	}
-	run.CustomRE[tag] = CustomRE{
+	run.CustomRE[tag] = &CustomRE{
 		Tag:		tag,
 		RegExp:		re,
 		MatchCount:	0,
