@@ -21,13 +21,14 @@ const log_time_RE =
 		`(?:(?: [1-9])|(?:[123][0-9])) ` +
 		`[0-9]{2}:[0-9]{2}:[0-9]{2}) `
 const host_name_RE = `^([a-zA-Z0-9_-]{1,64}) `
-const time_template = `Jan _2 15:04:05 2006`
+const log_time_template = `Jan _2 15:04:05 2006`
 
 const process_RE = `^postfix/([a-zA-Z][a-zA-Z0-9_-]{0,31})\[\d{1,20}]: `
-const queue_id_RE = `^([A-Z0-9]{12}): `
+const queue_id_RE = `^([A-Z0-9]{10,12}): `
 const warning_RE = `^warning: `
 const statistics_RE = `^statistics: `
 const fatal_RE = `^fatal: `
+const arg_custom_RE = `^([a-z][a-z0-9_-]{0,16}):(.{1,64})$`
 
 //  Note: investigate why $ pattern fails in FindSubmatchIndex()
 const refresh_postfix_RE = `^refreshing the Postfix mail system`
@@ -36,16 +37,23 @@ const reload_RE = `^reload -- version 3`	//  force postfix3
 const daemon_started_RE = `^daemon started -- version `
 const connect_from_RE = `^connect from `
 const lost_connect_RE = `^lost connection after CONNECT from `
-const disconnect_RE = `^disconnect from `
+const disconnect_from_RE = `^disconnect from `
 const connect_to_RE = `^connect to `
+
+type CustomRE struct {
+	Tag		string	`json:"tag"`
+	RegExp		string	`json:"regexp"`
+	MatchCount	int64	`json:"match_count"`
+	regexp		*regexp.Regexp
+}
 
 type Run struct {
         LineCount		int64	`json:"line_count"`
         ByteCount		int64	`json:"byte_count"`
 	InputDigest		string	`json:"input_digest"`
 	InputDigestAlgo		string	`json:"input_digest_algo"`
-	StartTime		string	`json:"start_time"`
-	EndTime			string	`json:"end_time"`
+	MinTime			string	`json:"min_time"`
+	MaxTime			string	`json:"max_time"`
 	TimeLocation		string	`json:"time_location"`
 	Year			uint16	`json:"year"`
 	HostName		map[string]uint64	`json:"host_name"`
@@ -62,8 +70,10 @@ type Run struct {
 	ReloadCount		int64	`json:"reload_count"`
 	ConnectFromCount	int64	`json:"connect_from_count"`
 	LostConnectCount	int64	`json:"lost_connect_count"`
-	DisconnectCount		int64	`json:"disconnect_count"`
+	DisconnectFromCount	int64	`json:"disconnect_from_count"`
 	ConnectToCount		int64	`json:"connect_to_count"`
+
+	CustomRE		map[string]CustomRE	`json:"custom_re"`
 
 	xx512x1			[20]byte
 	time_location		*time.Location
@@ -82,8 +92,9 @@ var
 	reload_re,
 	connect_from_re,
 	lost_connect_re,
-	disconnect_re,
+	disconnect_from_re,
 	connect_to_re,
+	arg_custom_re,
 	queue_id_re	*regexp.Regexp
 
 func init() {
@@ -99,13 +110,16 @@ func init() {
 	reload_re = regexp.MustCompile(reload_RE)
 	connect_from_re = regexp.MustCompile(connect_from_RE)
 	lost_connect_re = regexp.MustCompile(lost_connect_RE)
-	disconnect_re = regexp.MustCompile(disconnect_RE)
+	disconnect_from_re = regexp.MustCompile(disconnect_from_RE)
 	connect_to_re = regexp.MustCompile(connect_to_RE)
+	arg_custom_re = regexp.MustCompile(arg_custom_RE)
 
 	run = &Run{}
 	run.HostName = make(map[string]uint64)
 	run.Process = make(map[string]uint64)
 	run.QueueId = make(map[string]uint64)
+
+	run.CustomRE = make(map[string]CustomRE)
 }
 
 func die(format string, args ...interface{}) {
@@ -119,7 +133,7 @@ func fdie(what string, err error) {
 }
 
 func panic(msg string) {
-	die("PANIC: " + msg, nil)
+	die("PANIC: %s", msg)
 }
 
 func leave(exit_status int) {
@@ -175,7 +189,7 @@ func (run *Run) bust_log_time(line []byte) int {
 	date := string(line[offset[2]:offset[3]])
 
 	tm, err := time.ParseInLocation(
-			time_template,
+			log_time_template,
 			fmt.Sprintf("%s %d", date, run.Year),
 			run.time_location,
 	)
@@ -183,15 +197,15 @@ func (run *Run) bust_log_time(line []byte) int {
 		_die("time.ParseInLocation(log)", err)
 	}
 	rfc3339 := tm.Format(time.RFC3339)
-	if run.StartTime == "" {
-		if run.EndTime != "" {
-			panic("EndTime parsed before StartTime")
+	if run.MinTime == "" {
+		if run.MaxTime != "" {
+			panic("MaxTIme parsed before MinTime")
 		}
-		run.StartTime = rfc3339
+		run.MinTime = rfc3339
 	}
 
 	//  Note: incorrectly assume times totally ordered
-	run.EndTime = rfc3339
+	run.MinTime = rfc3339
 
 	return offset[1]
 }
@@ -230,6 +244,18 @@ func (run *Run) bust_host_name(line []byte) int {
 	return offset[1]
 }
 
+func (run *Run) bust_custom_re(line []byte) int {
+
+	for _, cre := range run.CustomRE {
+		if cre.regexp.Find(line) != nil {
+			cre.MatchCount++
+			return -1
+		}
+	}
+	die("bust_custom_re: can not match any regexp")
+	return -2
+}
+
 //  match and extract leading process[pid]
 
 func (run *Run) bust_process(line []byte) int {
@@ -244,7 +270,10 @@ func (run *Run) bust_process(line []byte) int {
 
 	midx := process_re.FindAllSubmatchIndex(line, -1)
 	if midx == nil {
-		_die("does not match regex")
+		if len(run.CustomRE) > 0 {
+			return run.bust_custom_re(line)
+		}
+		_die("no match of regexp")
 	}
 	var l int
 
@@ -304,8 +333,8 @@ func (Run *Run) bust_lost_connect(line []byte, midx []int) int {
 	return 0
 }
 
-func (Run *Run) bust_disconnect(line []byte, midx []int) int {
-	run.DisconnectCount++
+func (Run *Run) bust_disconnect_from(line []byte, midx []int) int {
+	run.DisconnectFromCount++
 	return 0
 }
 
@@ -358,9 +387,9 @@ func (run *Run) bust_queue_ex(line []byte) int {
 		return run.bust_lost_connect(line, midx)
 	}
 
-	midx = disconnect_re.FindSubmatchIndex(line)
+	midx = disconnect_from_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return run.bust_disconnect(line, midx)
+		return run.bust_disconnect_from(line, midx)
 	}
 
 	midx = connect_to_re.FindSubmatchIndex(line)
@@ -394,7 +423,7 @@ func (run *Run) bust_queue_id(line []byte) int {
 		_die("unexpected length of match idx: got %d, want 1", l)
 	}
 
-	//  parse the '[A-Z0-9]{12}: ' after the process[pid]
+	//  parse the '[A-Z0-9]{10,12}: ' after the process[pid]
 
 	offset := midx[0]
 	if l = len(offset);  l != 4 {
@@ -408,44 +437,95 @@ func (run *Run) bust_queue_id(line []byte) int {
 	return offset[1]
 }
 
-func a2die(option string) {
-	die("option given twice: --" + option, nil)
+func a2die(opt string) {
+	die("option given twice: --%s", opt)
 }
 
-func axdie(option string) {
-	die("no required option: --" + option, nil)
+func axdie(opt string) {
+	die("no required option: --%s", opt)
+}
+
+func noarg(opt, what string) {
+	die("option missing arg: --%s: %s", opt, what)
+}
+
+func push_custom_re(tag_re string) {
+	_die := func(format string, args ...interface{}) {
+		msg := fmt.Sprintf(format, args...)
+		die(`--custom-re: %s`, msg)
+	}
+
+	bytes := []byte(tag_re)
+
+	offset := arg_custom_re.FindSubmatchIndex(bytes)
+	if offset == nil {
+		_die("no match tag:regexp: %s", tag_re)
+	}
+	l := len(offset)
+	if l != 6 {
+		_die("unexpected length of re offsets: got %d, expected 6", l)
+	}
+	tag := string(bytes[offset[2]:offset[3]])
+	if _, ok := run.CustomRE[tag];  ok == true {
+		_die("tag already exists: %s", tag)
+	}
+
+	re := string(bytes[offset[4]:offset[5]])
+	regexp, err := regexp.Compile(re)
+	if err != nil {
+		_die("can not compile regexp: %s: %s", err, re)
+	}
+	run.CustomRE[tag] = CustomRE{
+		Tag:		tag,
+		RegExp:		re,
+		MatchCount:	0,
+		regexp:		regexp,
+	}
 }
 
 func main() {
 
 	argc := len(os.Args) - 1
-	if argc != 4 {
-		die("wrong number of cli args: got %d, expected 4", argc)
+	if argc < 4  {
+		die("wrong number of cli args: got %d, expected >= 4", argc)
+	}
+	if argc % 2 == 1 {
+		die("--option missing second argument")
 	}
 
 	for i := 1;  i <= argc;  i++  {
 		arg := os.Args[i]
+		i++
 		if arg == "--year" {
+			if i > argc {
+				noarg("year", "missing year")
+			}
 			if run.Year > 0 {
 				a2die("year")
 			}
-			i++
 			u, err := strconv.ParseUint(os.Args[i], 10, 12)
 			if err != nil {
 				fdie("strconv.ParseUint(time)", err)
 			}
 			run.Year = uint16(u)
 		} else if arg == "--time-location" {
+			if i > argc {
+				noarg("time-location", "missing time zone")
+			}
 			if run.TimeLocation != "" {
 				a2die("time-location")
 			}
-			i++
 			run.TimeLocation = os.Args[i]
 			loc, err := time.LoadLocation(run.TimeLocation)
 			if err != nil {
 				fdie("time.LoadLocation(--time-location)", err)
 			}
 			run.time_location = loc
+		} else if arg == "--custom-re" {
+			if i > argc {
+				noarg("custom-re", "missing tag:regexg")
+			}
+			push_custom_re(os.Args[i])
 		} else {
 			die("unknown cli arg: %s", arg)
 		}
@@ -489,10 +569,10 @@ func main() {
 
 		bytes = bytes[i:]
 		i = run.bust_process(bytes)
-
-		bytes = bytes[i:]
-		run.bust_queue_id(bytes)
-
+		if i > -1 {
+			bytes = bytes[i:]
+			run.bust_queue_id(bytes)
+		}
 		run.KnownLineCount++
 	}
 	run.xx512x1 = xx512x1(h512.Sum(nil))
