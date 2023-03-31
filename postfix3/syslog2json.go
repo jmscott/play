@@ -1,4 +1,5 @@
-//  convert "traditional" syslog format to json, roughly following rfc5424
+//  convert "traditional" syslog format for mail to json,
+//  roughly following rfc3164 and rfc5424
 package main
 
 import (
@@ -39,6 +40,9 @@ const connect_from_RE = `^connect from `
 const lost_connect_RE = `^lost connection after `
 const disconnect_from_RE = `^disconnect from `
 const connect_to_RE = `^connect to `
+const message_repeated_RE = `^message repeated [1-9]{1,20} times: `
+
+const start_postfix_RE = `^starting the Postfix mail system`
 
 type CustomRE struct {
 	Tag		string	`json:"tag"`
@@ -62,6 +66,8 @@ type SourceCount struct {
 	DisconnectFromCount	int64	`json:"disconnect_from_count"`
 	ConnectToCount		int64	`json:"connect_to_count"`
 	BackwardsCompatCount	int64	`json:"backwards_compat_count"`
+	MessageRepeatedCount	int64	`json:"message_repeated_count"`
+	StartPostfixCount	int64	`json:"start_postfix_count"`
 }
 
 type SourceHost struct {
@@ -105,6 +111,8 @@ var
 	connect_to_re,
 	arg_custom_re,
 	backwards_compat_re,
+	message_repeated_re,
+	start_postfix_re,
 	queue_id_re	*regexp.Regexp
 
 func init() {
@@ -124,6 +132,8 @@ func init() {
 	connect_to_re = regexp.MustCompile(connect_to_RE)
 	arg_custom_re = regexp.MustCompile(arg_custom_RE)
 	backwards_compat_re = regexp.MustCompile(backwards_compat_RE)
+	message_repeated_re = regexp.MustCompile(message_repeated_RE)
+	start_postfix_re = regexp.MustCompile(start_postfix_RE)
 }
 
 func die(format string, args ...interface{}) {
@@ -362,6 +372,16 @@ func (shost *SourceHost) bust_backwards_compat(line []byte, midx []int) int {
 	return 0
 }
 
+func (shost *SourceHost) bust_message_repeated(line []byte, midx []int) int {
+	shost.CountStat.MessageRepeatedCount++
+	return 0
+}
+
+func (shost *SourceHost) bust_start_postfix(line []byte, midx []int) int {
+	shost.CountStat.StartPostfixCount++
+	return 0
+}
+
 //  bust exception parsing queue id
 
 func (shost *SourceHost) bust_queue_ex(line []byte) int {
@@ -419,6 +439,16 @@ func (shost *SourceHost) bust_queue_ex(line []byte) int {
 	midx = backwards_compat_re.FindSubmatchIndex(line)
 	if midx != nil {
 		return shost.bust_backwards_compat(line, midx)
+	}
+
+	midx = message_repeated_re.FindSubmatchIndex(line)
+	if midx != nil {
+		return shost.bust_message_repeated(line, midx)
+	}
+
+	midx = start_postfix_re.FindSubmatchIndex(line)
+	if midx != nil {
+		return shost.bust_start_postfix(line, midx)
 	}
 
 	die("bust_queue_ex: can not match line %d", shost.run.LineCount)
