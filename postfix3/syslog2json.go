@@ -41,6 +41,7 @@ const lost_connect_RE = `^lost connection after `
 const disconnect_from_RE = `^disconnect from `
 const connect_to_RE = `^connect to `
 const message_repeated_RE = `^message repeated [1-9]{1,20} times: `
+const status_sent = `^message repeated [1-9]{1,20} times: `
 
 const start_postfix_RE = `^starting the Postfix mail system`
 
@@ -70,12 +71,18 @@ type SourceCount struct {
 	StartPostfixCount	int64	`json:"start_postfix_count"`
 }
 
+type QueueId struct {
+
+	LineCount		int64	`json:"count"`
+}
+
 type SourceHost struct {
 	run			*Run
 
 	HostName		string		`json:"host_name"`
 	CountStat		SourceCount	`json:"count_stat"`		
 	CustomRECount		map[string]int64`json:"custom_re_count"`
+	QueueId			map[string]*QueueId`json:"queue_id"`
 }
 
 type Run struct {
@@ -261,6 +268,7 @@ func (run *Run) bust_source_host(line []byte) (int, *SourceHost) {
 		}
 		shost.CountStat.ProcessCount = make(map[string]int64)
 		shost.CustomRECount = make(map[string]int64)
+		shost.QueueId = make(map[string]*QueueId)
 		run.SourceHost[host] = shost
 	}
 	return offset[1], run.SourceHost[host]
@@ -467,6 +475,8 @@ func (shost *SourceHost) bust_queue_id(line []byte) int {
 		))
 	}
 
+	//  match a queue id: ` DE4B886E5BE0: ` ?
+
 	midx := queue_id_re.FindAllSubmatchIndex(line, -1)
 	if midx == nil {
 		return shost.bust_queue_ex(line)
@@ -484,10 +494,14 @@ func (shost *SourceHost) bust_queue_id(line []byte) int {
 		_die("unexpected len of match offset: got %d, want 4", l)
 	}
 
-	/*
 	queue_id := string(line[offset[2]:offset[3]])	// matches queueid
-	run.QueueId[queue_id]++
-	*/
+	qid := shost.QueueId[queue_id]
+	if qid == nil {
+		shost.QueueId[queue_id] = &QueueId{}
+		qid = shost.QueueId[queue_id]
+	}
+	qid.LineCount++
+
 	return offset[1]
 }
 
