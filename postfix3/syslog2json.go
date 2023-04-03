@@ -217,10 +217,10 @@ func (run *Run) bust_log_time(line []byte) int {
 	if err != nil {
 		_die("time.ParseInLocation(log)", err)
 	}
-	if run.MinTime.IsZero() {
-		if !run.MaxTime.IsZero() {
-			panic("MaxTime parsed before MinTime")
-		}
+	if tm.IsZero() {
+		_die("unexpect zero log time")
+	}
+	if run.MinTime.IsZero() || run.MinTime.After(tm) {
 		run.MinTime = tm
 	}
 	if run.MaxTime.Before(tm) {
