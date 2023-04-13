@@ -86,6 +86,8 @@ type SourceHost struct {
 }
 
 type Run struct {
+	ReportType		string	`json:"report_type"`
+	ExecArgv		[]string`json:"exec_argv"`
 	CLICustomRE		map[string]*CustomRE
         LineCount		int64	`json:"line_count"`
         ByteCount		int64	`json:"byte_count"`
@@ -553,19 +555,25 @@ func (run *Run) push_custom_re(tag_re string) {
 func main() {
 
 	argc := len(os.Args) - 1
-	if argc < 4  {
-		die("wrong number of cli args: got %d, expected >= 4", argc)
+	if argc < 5  {
+		die("wrong number of cli args: got %d, expected >= 5", argc)
 	}
-	if argc % 2 == 1 {
-		die("--option missing second argument")
+	if os.Args[1] != "full" {
+		die("unknown report type: %s", os.Args[1])
 	}
+	argc -= 2
+
+	argv := os.Args[2:]
+	argc = len(argv)
 
 	run := &Run{
+		ReportType:	os.Args[1],
+		ExecArgv:	os.Args,
 		CLICustomRE: make(map[string]*CustomRE),
 		SourceHost: make(map[string]*SourceHost),
 	}
-	for i := 1;  i <= argc;  i++  {
-		arg := os.Args[i]
+	for i := 0;  i < argc;  i++  {
+		arg := argv[i]
 		i++
 		if arg == "--year" {
 			if i > argc {
@@ -574,7 +582,7 @@ func main() {
 			if run.Year > 0 {
 				a2die("year")
 			}
-			u, err := strconv.ParseUint(os.Args[i], 10, 12)
+			u, err := strconv.ParseUint(argv[i], 10, 12)
 			if err != nil {
 				fdie("strconv.ParseUint(time)", err)
 			}
@@ -586,7 +594,7 @@ func main() {
 			if run.TimeLocation != "" {
 				a2die("time-location")
 			}
-			run.TimeLocation = os.Args[i]
+			run.TimeLocation = argv[i]
 			loc, err := time.LoadLocation(run.TimeLocation)
 			if err != nil {
 				fdie("time.LoadLocation(--time-location)", err)
@@ -596,7 +604,7 @@ func main() {
 			if i > argc {
 				noarg("custom-re", "missing tag:regexg")
 			}
-			run.push_custom_re(os.Args[i])
+			run.push_custom_re(argv[i])
 		} else {
 			die("unknown cli arg: %s", arg)
 		}
@@ -607,6 +615,10 @@ func main() {
 	if run.Year == 0 {
 		axdie("year")
 	}
+
+	//  loop over lines of syslg file
+	//
+	//  Note: need to move this code to go thread and add signal handler
 
 	run.InputDigestAlgo = "xx512x1"
 	h512 := sha512.New()
