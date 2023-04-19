@@ -1,5 +1,24 @@
 //  convert "traditional" syslog format for mail to json,
 //  roughly following rfc3164 and rfc5424
+//
+//  Note:
+//	Investigate XDG Base Directory Specification.  In particular, dir
+//	cache/	and how to override.  Doe we simply set a root directory?
+//
+//		https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+//
+//	Consider adding Getwd() to ProcessContext.
+//
+//	Setup signal handler for scan loop in main().  Change exit statuses to:
+//
+//		0	ok, json written
+//		1	process interupted
+//		2	unexpected error
+//
+//	Consider generalizing ALL REGX line matches, replaing hardwired set.
+//
+//	Consider renaming struct "Run" to "Scan"
+//
 package main
 
 import (
@@ -24,7 +43,7 @@ const source_host_RE = `^([a-zA-Z0-9_][a-zA-Z0-9_-]{0,63}) `
 const log_time_template = `Jan _2 15:04:05 2006`
 
 const process_RE = `^postfix/([a-zA-Z][a-zA-Z0-9_-]{0,31})\[\d{1,20}]: `
-const queue_id_RE = `^([A-Z0-9]{10,12}): `
+const queue_id_RE = `^([A-Z0-9]{8,12}): `
 const warning_RE = `^warning: `
 const statistics_RE = `^statistics: `
 const fatal_RE = `^fatal: `
@@ -74,6 +93,15 @@ type SourceCount struct {
 type QueueId struct {
 
 	LineCount		int64	`json:"count"`
+
+	MinLogTime		time.Time	`json:"min_log_time"`
+	MaxLogTime		time.Time	`json:"max_log_time"`
+
+	MinLineNumber		int64	`json:"min_line_number"`
+	MinLineSeekOffset	int64	`json:"min_line_seek_offset"`
+
+	MaxLineNumber		int64	`json:"max_line_number"`
+	MaxLineSeekOffset	int64	`json:"max_line_seek_offset"`
 }
 
 type SourceHost struct {
@@ -83,22 +111,44 @@ type SourceHost struct {
 	CountStat		SourceCount	`json:"count_stat"`		
 	CustomRECount		map[string]int64`json:"custom_re_count"`
 	QueueId			map[string]*QueueId`json:"queue_id"`
+
+	MinLogTime		time.Time	`json:"min_log_time"`
+	MaxLogTime		time.Time	`json:"maxlog_time"`
+
+	MinLineNumber		int64		`json:"min_line_number"`
+	MinLineSeekOffset	int64		`json:"min_line_seek_offset"`
+
+	MaxLineNumber		int64		`json:"max_line_number"`
+	MaxLineSeekOffset	int64		`json:"max_line_seek_offset"`
 }
 
 type Run struct {
 	ReportType		string	`json:"report_type"`
-	ExecArgv		[]string`json:"exec_argv"`
-	CLICustomRE		map[string]*CustomRE
+
+	OsArgs			[]string`json:"os_args"`
+	OsExecutable		string	`json:"os_executable"`
+
+	OsPid			int	`json:"os_pid"`
+	OsPPid			int	`json:"os_ppid"`
+	OsUid			int	`json:"os_uid"`
+	OsEuid			int	`json:"os_euid"`
+	OsGid			int	`json:"os_gid"`
+	OsEgid			int	`json:"os_egid"`
+
+	OsEnviron		[]string`json:"os_environ"`
+
+	CLICustomRE		map[string]*CustomRE `json:"cli_custom_re"`
         LineCount		int64	`json:"line_count"`
         ByteCount		int64	`json:"byte_count"`
 	InputDigest		string	`json:"input_digest"`
 	InputDigestAlgo		string	`json:"input_digest_algo"`
-	MinTime			time.Time`json:"min_time"`
-	MaxTime			time.Time`json:"max_time"`
 	TimeLocation		string	`json:"time_location"`
 	Year			uint16	`json:"year"`
 	SourceHost		map[string]*SourceHost	`json:"source_host"`
 
+	current_log_time		time.Time
+	current_line_number		int64
+	current_line_seek_offset	int64
 
 	xx512x1			[20]byte
 	time_location		*time.Location
@@ -148,7 +198,7 @@ func init() {
 func die(format string, args ...interface{}) {
 
         fmt.Fprintf(os.Stderr, "ERROR: " + format + "\n", args...);
-        leave(1)
+        leave(2)
 }
 
 func fdie(what string, err error) {
@@ -222,12 +272,7 @@ func (run *Run) bust_log_time(line []byte) int {
 	if tm.IsZero() {
 		_die("unexpect zero log time")
 	}
-	if run.MinTime.IsZero() || run.MinTime.After(tm) {
-		run.MinTime = tm
-	}
-	if run.MaxTime.Before(tm) {
-		run.MaxTime = tm
-	}
+	run.current_log_time = tm
 
 	return offset[1]
 }
@@ -267,13 +312,36 @@ func (run *Run) bust_source_host(line []byte) (int, *SourceHost) {
 		shost = &SourceHost{
 			run:		run,
 			HostName: 	host,
+			CustomRECount:	make(map[string]int64),
+			QueueId:	make(map[string]*QueueId),
+
+			MinLineNumber:	run.current_line_number,
+			MinLineSeekOffset:	run.current_line_seek_offset,
+
+			MinLogTime:	run.current_log_time,
+			MaxLogTime:	run.current_log_time,
 		}
 		shost.CountStat.ProcessCount = make(map[string]int64)
-		shost.CustomRECount = make(map[string]int64)
-		shost.QueueId = make(map[string]*QueueId)
 		run.SourceHost[host] = shost
 	}
-	return offset[1], run.SourceHost[host]
+
+	if shost.MaxLineNumber < run.current_line_number {
+		shost.MaxLineNumber = run.current_line_number
+		shost.MaxLineSeekOffset = run.current_line_seek_offset
+	}
+	if shost.MaxLineNumber < shost.MinLineNumber {
+		panic("bust_source_host: impossible max < min line number")
+	}
+
+	//  log times may not be in scan order
+	if shost.MinLogTime.After(run.current_log_time) {
+		shost.MinLogTime = run.current_log_time
+	}
+	if shost.MaxLogTime.Before(run.current_log_time) {
+		shost.MaxLogTime = run.current_log_time
+	}
+
+	return offset[1], shost
 }
 
 func (shost *SourceHost) bust_custom_re(line []byte) int {
@@ -483,6 +551,7 @@ func (shost *SourceHost) bust_queue_id(line []byte) int {
 	if midx == nil {
 		return shost.bust_queue_ex(line)
 	}
+
 	var l int
 
 	if l := len(midx);  l != 1 {
@@ -498,10 +567,31 @@ func (shost *SourceHost) bust_queue_id(line []byte) int {
 
 	queue_id := string(line[offset[2]:offset[3]])	// matches queueid
 	qid := shost.QueueId[queue_id]
+	run := shost.run
 	if qid == nil {
-		shost.QueueId[queue_id] = &QueueId{}
+		shost.QueueId[queue_id] =
+			&QueueId{
+				MinLogTime:	run.current_log_time,
+				MaxLogTime:	run.current_log_time,
+				MinLineNumber:	run.current_line_number,
+				MinLineSeekOffset: run.current_line_seek_offset,
+			}
 		qid = shost.QueueId[queue_id]
 	}
+	if qid.MaxLineNumber < run.current_line_number {
+		qid.MaxLineNumber = run.current_line_number
+		qid.MaxLineSeekOffset = run.current_line_seek_offset
+	}
+
+	//  log times may not be in scan order
+
+	if qid.MinLogTime.After(run.current_log_time) {
+		qid.MinLogTime = run.current_log_time
+	}
+	if qid.MaxLogTime.Before(run.current_log_time) {
+		qid.MaxLogTime = run.current_log_time
+	}
+
 	qid.LineCount++
 
 	return offset[1]
@@ -568,9 +658,25 @@ func main() {
 
 	run := &Run{
 		ReportType:	os.Args[1],
-		ExecArgv:	os.Args,
+		OsArgs:		os.Args,
+		OsEnviron:	os.Environ(),
+
+		OsUid:		os.Getuid(),
+		OsEuid:		os.Geteuid(),
+		OsGid:		os.Getgid(),
+		OsEgid:		os.Getegid(),
+
+		OsPid:		os.Getpid(),
+		OsPPid:		os.Getppid(),
 		CLICustomRE: make(map[string]*CustomRE),
 		SourceHost: make(map[string]*SourceHost),
+	}
+	var err error
+
+	//  set path to executable
+	run.OsExecutable, err = os.Executable()
+	if err != nil {
+		fdie("os.Executable", err)
 	}
 	for i := 0;  i < argc;  i++  {
 		arg := argv[i]
@@ -616,7 +722,7 @@ func main() {
 		axdie("year")
 	}
 
-	//  loop over lines of syslg file
+	//  loop over lines of syslog file
 	//
 	//  Note: need to move this code to go thread and add signal handler
 
@@ -631,6 +737,8 @@ func main() {
 			}
 			fdie("bufio.ReadBytes(Stdin)", err)
 		}
+		run.current_line_seek_offset = run.ByteCount
+		run.current_line_number = run.LineCount + 1
 		l := len(bytes)
 		if l == 0 {
 			panic("impossible read of empty line")
@@ -663,7 +771,7 @@ func main() {
 
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "	")
-	err := enc.Encode(&run)
+	err = enc.Encode(&run)
 	if err != nil {
 		fdie("enc.Encode(json)", err) 
 	}
