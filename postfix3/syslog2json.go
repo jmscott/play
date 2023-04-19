@@ -1,13 +1,16 @@
-//  convert "traditional" syslog format for mail to json,
-//  roughly following rfc3164 and rfc5424
 //
+//  Synopsis:
+//	Convert "traditional" syslog format for mail to json: rfc3164,rfc5424
 //  Note:
+//	Write type specific funcs for die(), etc!
+//
 //	Investigate XDG Base Directory Specification.  In particular, dir
 //	cache/	and how to override.  Doe we simply set a root directory?
 //
-//		https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+//		https://specifications.freedesktop.org/basedir-spec/	\
+//			basedir-spec-latest.html
 //
-//	Consider adding Getwd() to ProcessContext.
+//	Consider adding Getwd() to ProcessContext.  Maybe too expensive.
 //
 //	Setup signal handler for scan loop in main().  Change exit statuses to:
 //
@@ -15,9 +18,9 @@
 //		1	process interupted
 //		2	unexpected error
 //
-//	Consider generalizing ALL REGX line matches, replaing hardwired set.
-//
-//	Consider renaming struct "Run" to "Scan"
+//	Consider generalizing ALL REGX line matches, replacing hardwired set.
+//	Also, should not CLICustomRE just be CLIRegEx?
+//	Consider dumping the static REGEX.
 //
 package main
 
@@ -105,7 +108,7 @@ type QueueId struct {
 }
 
 type SourceHost struct {
-	run			*Run
+	scan			*Scan
 
 	HostName		string		`json:"host_name"`
 	CountStat		SourceCount	`json:"count_stat"`		
@@ -122,8 +125,30 @@ type SourceHost struct {
 	MaxLineSeekOffset	int64		`json:"max_line_seek_offset"`
 }
 
-type Run struct {
+type Scan struct {
 	ReportType		string	`json:"report_type"`
+
+        LineCount		int64	`json:"line_count"`
+        ByteCount		int64	`json:"byte_count"`
+
+	InputDigest		string	`json:"input_digest"`
+	xx512x1			[20]byte
+
+	TimeLocation		string	`json:"time_location"`
+	Year			uint16	`json:"year"`
+
+	SourceHost		map[string]*SourceHost	`json:"source_host"`
+
+	current_log_time		time.Time
+	current_line_number		int64
+	current_line_seek_offset	int64
+
+	CLICustomRE		map[string]*CustomRE `json:"cli_custom_re"`
+}
+
+type Run struct {
+
+	//  at some point Os.* will be generateed by jmscott.Os golang package
 
 	OsArgs			[]string`json:"os_args"`
 	OsExecutable		string	`json:"os_executable"`
@@ -137,20 +162,7 @@ type Run struct {
 
 	OsEnviron		[]string`json:"os_environ"`
 
-	CLICustomRE		map[string]*CustomRE `json:"cli_custom_re"`
-        LineCount		int64	`json:"line_count"`
-        ByteCount		int64	`json:"byte_count"`
-	InputDigest		string	`json:"input_digest"`
-	TimeLocation		string	`json:"time_location"`
-	Year			uint16	`json:"year"`
-	SourceHost		map[string]*SourceHost	`json:"source_host"`
-
-	current_log_time		time.Time
-	current_line_number		int64
-	current_line_seek_offset	int64
-
-	xx512x1			[20]byte
-	time_location		*time.Location
+	Scan			*Scan	`json:"scan"`
 }
 
 var
@@ -230,12 +242,12 @@ func xx512x1(inner_512 []byte) [20]byte {
 
 //  match, extract and set min/max log time
 
-func (run *Run) bust_log_time(line []byte) int {
+func (scan *Scan) log_time(line []byte) int {
 
 	_die := func(format string, args ...interface{}) {
 		die("%s", fmt.Sprintf(
-				"bust_logtime: line %d: %s",
-				run.LineCount,
+				"scan.log_time: line %d: %s",
+				scan.LineCount,
 				fmt.Sprintf(format, args...),
 		))
 	}
@@ -262,8 +274,8 @@ func (run *Run) bust_log_time(line []byte) int {
 
 	tm, err := time.ParseInLocation(
 			log_time_template,
-			fmt.Sprintf("%s %d", date, run.Year),
-			run.time_location,
+			fmt.Sprintf("%s %d", date, scan.Year),
+			scan.time_location,
 	)
 	if err != nil {
 		_die("time.ParseInLocation(log)", err)
@@ -271,19 +283,19 @@ func (run *Run) bust_log_time(line []byte) int {
 	if tm.IsZero() {
 		_die("unexpect zero log time")
 	}
-	run.current_log_time = tm
+	scan.current_log_time = tm
 
 	return offset[1]
 }
 
 //  match and extract host name following leading log timestamp
 
-func (run *Run) bust_source_host(line []byte) (int, *SourceHost) {
+func (scan *Scan) source_host(line []byte) (int, *SourceHost) {
 
 	_die := func(format string, args ...interface{}) {
 		die("%s", fmt.Sprintf(
-				"bust_source_host: line %d: %s",
-				run.LineCount,
+				"scan.source_host: line %d: %s",
+				scan.LineCount,
 				fmt.Sprintf(format, args...),
 		))
 	}
@@ -306,53 +318,54 @@ func (run *Run) bust_source_host(line []byte) (int, *SourceHost) {
 	}
 	host := string(line[offset[2]:offset[3]])
 
-	shost := run.SourceHost[host]
+	shost := scan.SourceHost[host]
 	if shost == nil {
 		shost = &SourceHost{
-			run:		run,
+			scan:		scan,
 			HostName: 	host,
 			CustomRECount:	make(map[string]int64),
 			QueueId:	make(map[string]*QueueId),
 
-			MinLineNumber:	run.current_line_number,
-			MinLineSeekOffset:	run.current_line_seek_offset,
+			MinLineNumber:	scan.current_line_number,
+			MinLineSeekOffset:	scan.current_line_seek_offset,
 
-			MinLogTime:	run.current_log_time,
-			MaxLogTime:	run.current_log_time,
+			MaxLineNumber:	scan.current_line_number,
+			MaxLineSeekOffset:	scan.current_line_seek_offset,
+
+			MinLogTime:	scan.current_log_time,
+			MaxLogTime:	scan.current_log_time,
 		}
 		shost.CountStat.ProcessCount = make(map[string]int64)
-		run.SourceHost[host] = shost
+		scan.SourceHost[host] = shost
 	}
 
-	if shost.MaxLineNumber < run.current_line_number {
-		shost.MaxLineNumber = run.current_line_number
-		shost.MaxLineSeekOffset = run.current_line_seek_offset
-	}
-	if shost.MaxLineNumber < shost.MinLineNumber {
-		panic("bust_source_host: impossible max < min line number")
+	if shost.MaxLineNumber < scan.current_line_number {
+		shost.MaxLineNumber = scan.current_line_number
+		shost.MaxLineSeekOffset = scan.current_line_seek_offset
 	}
 
 	//  log times may not be in scan order
-	if shost.MinLogTime.After(run.current_log_time) {
-		shost.MinLogTime = run.current_log_time
-	}
-	if shost.MaxLogTime.Before(run.current_log_time) {
-		shost.MaxLogTime = run.current_log_time
-	}
 
+	if shost.MinLogTime.After(scan.current_log_time) {
+		shost.MinLogTime = scan.current_log_time
+	}
+	if shost.MaxLogTime.Before(scan.current_log_time) {
+		shost.MaxLogTime = scan.current_log_time
+	}
 	return offset[1], shost
 }
 
-func (shost *SourceHost) bust_custom_re(line []byte) int {
+func (shost *SourceHost) custom_re(line []byte) int {
 
-	run := shost.run
-	for _, cre := range run.CLICustomRE {
+	scan := shost.scan
+	for _, cre := range scan.CLICustomRE {
 		if cre.regexp.Find(line) != nil {
 			shost.CustomRECount[cre.Tag]++
 			return -1
 		}
 	}
-	die("bust_custom_re: line %d: no match for custom re", run.LineCount)
+	die("SourceHost.custome_re: line %d: no match for custom re",
+		scan.LineCount)
 	return -2
 }
 
@@ -641,6 +654,63 @@ func (run *Run) push_custom_re(tag_re string) {
 	}
 }
 
+func (run *Run) scan() {
+
+	scan := &Scan{
+			Run:		run,
+			ReportType:	os.Args[1],
+			TimeLocation:	time_location,
+			Year:		year,
+			SourceHost:	make(map[string]*SourceHost),
+			CLICustomRE:	make(map[string]*CLICustomRE),
+	}
+
+	h512 := sha512.New()
+	in := bufio.NewReader(os.Stdin)
+
+	//  loop over lines of syslog file
+
+	for {
+		bytes, err := in.ReadBytes('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			fdie("bufio.ReadBytes(Stdin)", err)
+		}
+		scan.current_line_number = scan.LineCount + 1
+		scan.current_line_seek_offset = scan.ByteCount
+		l := len(bytes)
+		if l == 0 {
+			panic("impossible read of empty line")
+		}
+		scan.ByteCount += int64(l)
+		h512.Write(bytes)			//  digest input
+		scan.LineCount++
+
+		//  zap terminating newline for $ in regex matches
+		if bytes[l - 1] != '\n' {
+			panic("line not terminated by newline")
+		}
+		bytes[l - 1] = 0
+
+		i := scan.log_time(bytes)
+
+		var shost *SourceHost
+		bytes = bytes[i:]
+		i, shost = scan.source_host(bytes)
+
+		bytes = bytes[i:]
+		i = shost.process(bytes)
+		if i > -1 {
+			bytes = bytes[i:]
+			shost.queue_id(bytes)
+		}
+	}
+	scan.xx512x1 = xx512x1(h512.Sum(nil))
+	scan.InputDigest = fmt.Sprintf("%x", run.xx512x1)
+}
+
 func main() {
 
 	argc := len(os.Args) - 1
@@ -668,7 +738,6 @@ func main() {
 		OsPid:		os.Getpid(),
 		OsPPid:		os.Getppid(),
 		CLICustomRE: make(map[string]*CustomRE),
-		SourceHost: make(map[string]*SourceHost),
 	}
 	var err error
 
@@ -677,6 +746,9 @@ func main() {
 	if err != nil {
 		fdie("os.Executable", err)
 	}
+
+	var time_location *time.Location
+	year := uint(0)
 	for i := 0;  i < argc;  i++  {
 		arg := argv[i]
 		i++
@@ -684,27 +756,26 @@ func main() {
 			if i > argc {
 				noarg("year", "missing year")
 			}
-			if run.Year > 0 {
+			if year > 0 {
 				a2die("year")
 			}
 			u, err := strconv.ParseUint(argv[i], 10, 12)
 			if err != nil {
 				fdie("strconv.ParseUint(time)", err)
 			}
-			run.Year = uint16(u)
+			year = uint(u)
 		} else if arg == "--time-location" {
 			if i > argc {
-				noarg("time-location", "missing time zone")
+				noarg("time-location", "missing time location")
 			}
-			if run.TimeLocation != "" {
+			if time_location != nil {
 				a2die("time-location")
 			}
-			run.TimeLocation = argv[i]
-			loc, err := time.LoadLocation(run.TimeLocation)
+			loc, err := time.LoadLocation(argv[i])
 			if err != nil {
 				fdie("time.LoadLocation(--time-location)", err)
 			}
-			run.time_location = loc
+			time_location = loc
 		} else if arg == "--custom-re" {
 			if i > argc {
 				noarg("custom-re", "missing tag:regexg")
@@ -714,58 +785,16 @@ func main() {
 			die("unknown cli arg: %s", arg)
 		}
 	}
-	if run.TimeLocation == "" {
+	if time_location == nil {
 		axdie("time-location")
 	}
-	if run.Year == 0 {
+	if year < 0 {
 		axdie("year")
 	}
 
-	//  loop over lines of syslog file
-	//
-	//  Note: need to move this code to go thread and add signal handler
+	run.scan(time_location, year)
 
-	h512 := sha512.New()
-	in := bufio.NewReader(os.Stdin)
-	for {
-		bytes, err := in.ReadBytes('\n')
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			fdie("bufio.ReadBytes(Stdin)", err)
-		}
-		run.current_line_seek_offset = run.ByteCount
-		run.current_line_number = run.LineCount + 1
-		l := len(bytes)
-		if l == 0 {
-			panic("impossible read of empty line")
-		}
-		run.ByteCount += int64(l)
-		h512.Write(bytes)			//  digest input
-		run.LineCount++
-		
-		//  zap terminating newline for $ in regex matches
-		if bytes[l - 1] != '\n' {
-			panic("line not terminated by newline")
-		}
-		bytes[l - 1] = 0
-
-		i := run.bust_log_time(bytes)
-
-		var shost *SourceHost
-		bytes = bytes[i:]
-		i, shost = run.bust_source_host(bytes)
-
-		bytes = bytes[i:]
-		i = shost.bust_process(bytes)
-		if i > -1 {
-			bytes = bytes[i:]
-			shost.bust_queue_id(bytes)
-		}
-	}
-	run.xx512x1 = xx512x1(h512.Sum(nil))
-	run.InputDigest = fmt.Sprintf("%x", run.xx512x1)
+	// write json output
 
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "	")
