@@ -141,7 +141,6 @@ type Run struct {
         LineCount		int64	`json:"line_count"`
         ByteCount		int64	`json:"byte_count"`
 	InputDigest		string	`json:"input_digest"`
-	InputDigestAlgo		string	`json:"input_digest_algo"`
 	TimeLocation		string	`json:"time_location"`
 	Year			uint16	`json:"year"`
 	SourceHost		map[string]*SourceHost	`json:"source_host"`
@@ -726,7 +725,6 @@ func main() {
 	//
 	//  Note: need to move this code to go thread and add signal handler
 
-	run.InputDigestAlgo = "xx512x1"
 	h512 := sha512.New()
 	in := bufio.NewReader(os.Stdin)
 	for {
