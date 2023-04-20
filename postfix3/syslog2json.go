@@ -126,15 +126,16 @@ type SourceHost struct {
 }
 
 type Scan struct {
-	ReportType		string	`json:"report_type"`
+	run			*Run
 
+	ReportType		string	`json:"report_type"`
         LineCount		int64	`json:"line_count"`
         ByteCount		int64	`json:"byte_count"`
 
 	InputDigest		string	`json:"input_digest"`
 	xx512x1			[20]byte
 
-	TimeLocation		string	`json:"time_location"`
+	TimeLocation		*time.Location	`json:"time_location"`
 	Year			uint16	`json:"year"`
 
 	SourceHost		map[string]*SourceHost	`json:"source_host"`
@@ -142,8 +143,6 @@ type Scan struct {
 	current_log_time		time.Time
 	current_line_number		int64
 	current_line_seek_offset	int64
-
-	CLICustomRE		map[string]*CustomRE `json:"cli_custom_re"`
 }
 
 type Run struct {
@@ -163,6 +162,7 @@ type Run struct {
 	OsEnviron		[]string`json:"os_environ"`
 
 	Scan			*Scan	`json:"scan"`
+	CLICustomRE		map[string]*CustomRE `json:"cli_custom_re"`
 }
 
 var
@@ -275,7 +275,7 @@ func (scan *Scan) log_time(line []byte) int {
 	tm, err := time.ParseInLocation(
 			log_time_template,
 			fmt.Sprintf("%s %d", date, scan.Year),
-			scan.time_location,
+			scan.TimeLocation,
 	)
 	if err != nil {
 		_die("time.ParseInLocation(log)", err)
@@ -358,34 +358,34 @@ func (scan *Scan) source_host(line []byte) (int, *SourceHost) {
 func (shost *SourceHost) custom_re(line []byte) int {
 
 	scan := shost.scan
-	for _, cre := range scan.CLICustomRE {
+	for _, cre := range scan.run.CLICustomRE {
 		if cre.regexp.Find(line) != nil {
 			shost.CustomRECount[cre.Tag]++
 			return -1
 		}
 	}
 	die("SourceHost.custome_re: line %d: no match for custom re",
-		scan.LineCount)
-	return -2
+							scan.LineCount)
+	return -2	//  keep compiler happy
 }
 
 //  match and extract leading process[pid]
 
-func (shost *SourceHost) bust_process(line []byte) int {
+func (shost *SourceHost) process(line []byte) int {
 
-	run := shost.run
+	scan := shost.scan
 	_die := func(format string, args ...interface{}) {
 		die("%s", fmt.Sprintf(
-				"bust_process: line %d: %s",
-				run.LineCount,
+				"shost: process: line %d: %s",
+				scan.LineCount,
 				fmt.Sprintf(format, args...),
 		))
 	}
 
 	midx := process_re.FindAllSubmatchIndex(line, -1)
 	if midx == nil {
-		if len(run.CLICustomRE) > 0 {
-			return shost.bust_custom_re(line)
+		if len(scan.run.CLICustomRE) > 0 {
+			return shost.custom_re(line)
 		}
 		_die("no match of regexp")
 	}
@@ -407,152 +407,151 @@ func (shost *SourceHost) bust_process(line []byte) int {
 	return offset[1]
 }
 
-func (shost *SourceHost) bust_warning(line []byte, midx []int) int {
+func (shost *SourceHost) warning(line []byte, midx []int) int {
 	shost.CountStat.WarningCount++
 	return 0
 }
 
-func (shost *SourceHost) bust_statistics(line []byte, midx []int) int {
+func (shost *SourceHost) statistics(line []byte, midx []int) int {
 	shost.CountStat.StatisticsCount++
 	return 0
 }
 
-func (shost *SourceHost) bust_fatal(line []byte, midx []int) int {
+func (shost *SourceHost) fatal(line []byte, midx []int) int {
 	shost.CountStat.FatalCount++
 	return 0
 }
 
-func (shost *SourceHost) bust_daemon_started(line []byte, midx []int) int {
+func (shost *SourceHost) daemon_started(line []byte, midx []int) int {
 	shost.CountStat.DaemonStartedCount++
 	return 0
 }
 
-func (shost *SourceHost) bust_refresh_postfix(line []byte, midx []int) int {
+func (shost *SourceHost) refresh_postfix(line []byte, midx []int) int {
 	shost.CountStat.RefreshPostfixCount++
 	return 0
 }
 
-func (shost *SourceHost) bust_reload(line []byte, midx []int) int {
+func (shost *SourceHost) reload(line []byte, midx []int) int {
 	shost.CountStat.ReloadCount++
 	return 0
 }
 
-func (shost *SourceHost) bust_connect_from(line []byte, midx []int) int {
+func (shost *SourceHost) connect_from(line []byte, midx []int) int {
 	shost.CountStat.ConnectFromCount++
 	return 0
 }
 
-func (shost *SourceHost) bust_lost_connect(line []byte, midx []int) int {
+func (shost *SourceHost) lost_connect(line []byte, midx []int) int {
 	shost.CountStat.LostConnectCount++
 	return 0
 }
 
-func (shost *SourceHost) bust_disconnect_from(line []byte, midx []int) int {
+func (shost *SourceHost) disconnect_from(line []byte, midx []int) int {
 	shost.CountStat.DisconnectFromCount++
 	return 0
 }
 
-func (shost *SourceHost) bust_connect_to(line []byte, midx []int) int {
+func (shost *SourceHost) connect_to(line []byte, midx []int) int {
 	shost.CountStat.ConnectToCount++
 	return 0
 }
 
-func (shost *SourceHost) bust_backwards_compat(line []byte, midx []int) int {
+func (shost *SourceHost) backwards_compat(line []byte, midx []int) int {
 	shost.CountStat.BackwardsCompatCount++
 	return 0
 }
 
-func (shost *SourceHost) bust_message_repeated(line []byte, midx []int) int {
+func (shost *SourceHost) message_repeated(line []byte, midx []int) int {
 	shost.CountStat.MessageRepeatedCount++
 	return 0
 }
 
-func (shost *SourceHost) bust_start_postfix(line []byte, midx []int) int {
+func (shost *SourceHost) start_postfix(line []byte, midx []int) int {
 	shost.CountStat.StartPostfixCount++
 	return 0
 }
 
 //  bust exception parsing queue id
 
-func (shost *SourceHost) bust_queue_ex(line []byte) int {
+func (shost *SourceHost) queue_ex(line []byte) int {
 
 	midx := warning_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return shost.bust_warning(line, midx)
+		return shost.warning(line, midx)
 	}
 
 	midx = statistics_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return shost.bust_statistics(line, midx)
+		return shost.statistics(line, midx)
 	}
 
 	midx = fatal_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return shost.bust_fatal(line, midx)
+		return shost.fatal(line, midx)
 	}
 
 	midx = daemon_started_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return shost.bust_daemon_started(line, midx)
+		return shost.daemon_started(line, midx)
 	}
 
 	midx = refresh_postfix_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return shost.bust_refresh_postfix(line, midx)
+		return shost.refresh_postfix(line, midx)
 	}
 
 	midx = reload_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return shost.bust_reload(line, midx)
+		return shost.reload(line, midx)
 	}
 
 	midx = connect_from_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return shost.bust_connect_from(line, midx)
+		return shost.connect_from(line, midx)
 	}
 
 	midx = lost_connect_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return shost.bust_lost_connect(line, midx)
+		return shost.lost_connect(line, midx)
 	}
 
 	midx = disconnect_from_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return shost.bust_disconnect_from(line, midx)
+		return shost.disconnect_from(line, midx)
 	}
 
 	midx = connect_to_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return shost.bust_connect_to(line, midx)
+		return shost.connect_to(line, midx)
 	}
 
 	midx = backwards_compat_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return shost.bust_backwards_compat(line, midx)
+		return shost.backwards_compat(line, midx)
 	}
 
 	midx = message_repeated_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return shost.bust_message_repeated(line, midx)
+		return shost.message_repeated(line, midx)
 	}
 
 	midx = start_postfix_re.FindSubmatchIndex(line)
 	if midx != nil {
-		return shost.bust_start_postfix(line, midx)
+		return shost.start_postfix(line, midx)
 	}
 
-	die("bust_queue_ex: can not match line %d", shost.run.LineCount)
-
-	shost.CountStat.UnknownLineCount++
+	die("bust_queue_ex: can not match line %d", shost.scan.LineCount)
 	return 0
 }
 
-func (shost *SourceHost) bust_queue_id(line []byte) int {
+func (shost *SourceHost) queue_id(line []byte) int {
 
+	scan := shost.scan
 	_die := func(format string, args ...interface{}) {
 		die("%s", fmt.Sprintf(
-				"bust_queue_id: line %d: %s",
-				shost.run.LineCount,
+				"shost: queue_id: line %d: %s",
+				scan.current_line_number,
 				fmt.Sprintf(format, args...),
 		))
 	}
@@ -561,7 +560,7 @@ func (shost *SourceHost) bust_queue_id(line []byte) int {
 
 	midx := queue_id_re.FindAllSubmatchIndex(line, -1)
 	if midx == nil {
-		return shost.bust_queue_ex(line)
+		return shost.queue_ex(line)
 	}
 
 	var l int
@@ -579,29 +578,28 @@ func (shost *SourceHost) bust_queue_id(line []byte) int {
 
 	queue_id := string(line[offset[2]:offset[3]])	// matches queueid
 	qid := shost.QueueId[queue_id]
-	run := shost.run
 	if qid == nil {
-		shost.QueueId[queue_id] =
-			&QueueId{
-				MinLogTime:	run.current_log_time,
-				MaxLogTime:	run.current_log_time,
-				MinLineNumber:	run.current_line_number,
-				MinLineSeekOffset: run.current_line_seek_offset,
+		qid = &QueueId{
+				MinLogTime:	scan.current_log_time,
+				MaxLogTime:	scan.current_log_time,
+				MinLineNumber:	scan.current_line_number,
+				MinLineSeekOffset:
+					scan.current_line_seek_offset,
 			}
-		qid = shost.QueueId[queue_id]
+		shost.QueueId[queue_id] = qid
 	}
-	if qid.MaxLineNumber < run.current_line_number {
-		qid.MaxLineNumber = run.current_line_number
-		qid.MaxLineSeekOffset = run.current_line_seek_offset
+	if qid.MaxLineNumber < scan.current_line_number {
+		qid.MaxLineNumber = scan.current_line_number
+		qid.MaxLineSeekOffset = scan.current_line_seek_offset
 	}
 
 	//  log times may not be in scan order
 
-	if qid.MinLogTime.After(run.current_log_time) {
-		qid.MinLogTime = run.current_log_time
+	if qid.MinLogTime.After(scan.current_log_time) {
+		qid.MinLogTime = scan.current_log_time
 	}
-	if qid.MaxLogTime.Before(run.current_log_time) {
-		qid.MaxLogTime = run.current_log_time
+	if qid.MaxLogTime.Before(scan.current_log_time) {
+		qid.MaxLogTime = scan.current_log_time
 	}
 
 	qid.LineCount++
@@ -624,7 +622,7 @@ func noarg(opt, what string) {
 func (run *Run) push_custom_re(tag_re string) {
 	_die := func(format string, args ...interface{}) {
 		msg := fmt.Sprintf(format, args...)
-		die(`--custom-re: %s`, msg)
+		die("--custom-re: %s", msg)
 	}
 
 	bytes := []byte(tag_re)
@@ -654,16 +652,16 @@ func (run *Run) push_custom_re(tag_re string) {
 	}
 }
 
-func (run *Run) scan() {
+func (run *Run) scan(loc *time.Location, year uint16) {
 
 	scan := &Scan{
-			Run:		run,
+			run:		run,
 			ReportType:	os.Args[1],
-			TimeLocation:	time_location,
+			TimeLocation:	loc,
 			Year:		year,
 			SourceHost:	make(map[string]*SourceHost),
-			CLICustomRE:	make(map[string]*CLICustomRE),
 	}
+	run.Scan = scan
 
 	h512 := sha512.New()
 	in := bufio.NewReader(os.Stdin)
@@ -707,8 +705,7 @@ func (run *Run) scan() {
 			shost.queue_id(bytes)
 		}
 	}
-	scan.xx512x1 = xx512x1(h512.Sum(nil))
-	scan.InputDigest = fmt.Sprintf("%x", run.xx512x1)
+	scan.InputDigest = fmt.Sprintf("%x", xx512x1(h512.Sum(nil)))
 }
 
 func main() {
@@ -726,7 +723,6 @@ func main() {
 	argc = len(argv)
 
 	run := &Run{
-		ReportType:	os.Args[1],
 		OsArgs:		os.Args,
 		OsEnviron:	os.Environ(),
 
@@ -737,7 +733,7 @@ func main() {
 
 		OsPid:		os.Getpid(),
 		OsPPid:		os.Getppid(),
-		CLICustomRE: make(map[string]*CustomRE),
+		CLICustomRE:	make(map[string]*CustomRE),
 	}
 	var err error
 
@@ -748,7 +744,7 @@ func main() {
 	}
 
 	var time_location *time.Location
-	year := uint(0)
+	year := uint16(0)
 	for i := 0;  i < argc;  i++  {
 		arg := argv[i]
 		i++
@@ -763,7 +759,7 @@ func main() {
 			if err != nil {
 				fdie("strconv.ParseUint(time)", err)
 			}
-			year = uint(u)
+			year = uint16(u)
 		} else if arg == "--time-location" {
 			if i > argc {
 				noarg("time-location", "missing time location")
@@ -788,7 +784,7 @@ func main() {
 	if time_location == nil {
 		axdie("time-location")
 	}
-	if year < 0 {
+	if year == 0 {
 		axdie("year")
 	}
 
