@@ -225,7 +225,7 @@ func leave(exit_status int) {
 }
 
 //
-//  To calulate "x2x512x1" hash at command line, do the following:
+//  To calulate "xx512x1" hash at command line, do the following:
 //
 //	openssl dgst -binary -sha512			|
 //		openssl dgst -binary -sha512		|
