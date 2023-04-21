@@ -135,7 +135,15 @@ type Scan struct {
 	InputDigest		string	`json:"input_digest"`
 	xx512x1			[20]byte
 
-	TimeLocation		*time.Location	`json:"time_location"`
+	time_location		*time.Location	`json:"time_location"`
+	/*
+	 *  Note:
+	 *	json encoding does not seem to be invoking
+	 *	time.Location.String().  Instead, we get an empty {} in json
+	 *	output.
+	 */
+	TimeLocationName	string	`json:"time_location_name"`
+
 	Year			uint16	`json:"year"`
 
 	SourceHost		map[string]*SourceHost	`json:"source_host"`
@@ -275,7 +283,7 @@ func (scan *Scan) log_time(line []byte) int {
 	tm, err := time.ParseInLocation(
 			log_time_template,
 			fmt.Sprintf("%s %d", date, scan.Year),
-			scan.TimeLocation,
+			scan.time_location,
 	)
 	if err != nil {
 		_die("time.ParseInLocation(log)", err)
@@ -652,12 +660,13 @@ func (run *Run) push_custom_re(tag_re string) {
 	}
 }
 
-func (run *Run) scan(loc *time.Location, year uint16) {
+func (run *Run) scan(time_location *time.Location, year uint16) {
 
 	scan := &Scan{
 			run:		run,
 			ReportType:	os.Args[1],
-			TimeLocation:	loc,
+			time_location:	time_location,
+			TimeLocationName:	time_location.String(),
 			Year:		year,
 			SourceHost:	make(map[string]*SourceHost),
 	}
