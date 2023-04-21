@@ -19,13 +19,11 @@
 //		2	unexpected error
 //
 //	Consider generalizing ALL REGX line matches, replacing hardwired set.
-//	Also, should not CLICustomRE just be CLIRegEx?
-//	Consider dumping the static REGEX.
+//	Consider dumping the static regexp table in the Run structure.
 //
 package main
 
 import (
-	"time"
 	"bufio"
 	"crypto/sha1"
 	"crypto/sha512"
@@ -35,6 +33,8 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
+	"time"
 )
 
 //  typical syslog timestamp for mail logging
@@ -67,9 +67,9 @@ const status_sent = `^message repeated [1-9]{1,20} times: `
 
 const start_postfix_RE = `^starting the Postfix mail system`
 
-type CustomRE struct {
+type CustomRexExp struct {
 	Tag		string	`json:"tag"`
-	Field		string	`json:"field"`
+	//Field		string	`json:"field"`
 	RegExp		string	`json:"regexp"`
 	regexp		*regexp.Regexp
 }
@@ -112,7 +112,7 @@ type SourceHost struct {
 
 	HostName		string		`json:"host_name"`
 	CountStat		SourceCount	`json:"count_stat"`		
-	CustomRECount		map[string]int64`json:"custom_re_count"`
+	CustomRexExpCount		map[string]int64`json:"custom_re_count"`
 	QueueId			map[string]*QueueId`json:"queue_id"`
 
 	MinLogTime		time.Time	`json:"min_log_time"`
@@ -135,15 +135,7 @@ type Scan struct {
 	InputDigest		string	`json:"input_digest"`
 	xx512x1			[20]byte
 
-	time_location		*time.Location	`json:"time_location"`
-	/*
-	 *  Note:
-	 *	json encoding does not seem to be invoking
-	 *	time.Location.String().  Instead, we get an empty {} in json
-	 *	output.
-	 */
-	TimeLocationName	string	`json:"time_location_name"`
-
+	TimeLocation		*time.Location	`json:"time_location"`
 	Year			uint16	`json:"year"`
 
 	SourceHost		map[string]*SourceHost	`json:"source_host"`
@@ -170,7 +162,7 @@ type Run struct {
 	OsEnviron		[]string`json:"os_environ"`
 
 	Scan			*Scan	`json:"scan"`
-	CLICustomRE		map[string]*CustomRE `json:"cli_custom_re"`
+	CustomRegExp		map[string]*CustomRexExp `json:"custom_regexp"`
 }
 
 var
@@ -283,7 +275,7 @@ func (scan *Scan) log_time(line []byte) int {
 	tm, err := time.ParseInLocation(
 			log_time_template,
 			fmt.Sprintf("%s %d", date, scan.Year),
-			scan.time_location,
+			scan.TimeLocation,
 	)
 	if err != nil {
 		_die("time.ParseInLocation(log)", err)
@@ -331,7 +323,7 @@ func (scan *Scan) source_host(line []byte) (int, *SourceHost) {
 		shost = &SourceHost{
 			scan:		scan,
 			HostName: 	host,
-			CustomRECount:	make(map[string]int64),
+			CustomRexExpCount:	make(map[string]int64),
 			QueueId:	make(map[string]*QueueId),
 
 			MinLineNumber:	scan.current_line_number,
@@ -363,16 +355,16 @@ func (scan *Scan) source_host(line []byte) (int, *SourceHost) {
 	return offset[1], shost
 }
 
-func (shost *SourceHost) custom_re(line []byte) int {
+func (shost *SourceHost) custom_regexp(line []byte) int {
 
 	scan := shost.scan
-	for _, cre := range scan.run.CLICustomRE {
+	for _, cre := range scan.run.CustomRegExp {
 		if cre.regexp.Find(line) != nil {
-			shost.CustomRECount[cre.Tag]++
+			shost.CustomRexExpCount[cre.Tag]++
 			return -1
 		}
 	}
-	die("SourceHost.custome_re: line %d: no match for custom re",
+	die("shost: custom_regexp: line %d: no match for custom re",
 							scan.LineCount)
 	return -2	//  keep compiler happy
 }
@@ -392,8 +384,8 @@ func (shost *SourceHost) process(line []byte) int {
 
 	midx := process_re.FindAllSubmatchIndex(line, -1)
 	if midx == nil {
-		if len(scan.run.CLICustomRE) > 0 {
-			return shost.custom_re(line)
+		if len(scan.run.CustomRegExp) > 0 {
+			return shost.custom_regexp(line)
 		}
 		_die("no match of regexp")
 	}
@@ -627,10 +619,10 @@ func noarg(opt, what string) {
 	die("option missing arg: --%s: %s", opt, what)
 }
 
-func (run *Run) push_custom_re(tag_re string) {
+func (run *Run) push_custom_regexp(tag_re string) {
 	_die := func(format string, args ...interface{}) {
 		msg := fmt.Sprintf(format, args...)
-		die("--custom-re: %s", msg)
+		die("--custom-regexp: %s", msg)
 	}
 
 	bytes := []byte(tag_re)
@@ -644,7 +636,7 @@ func (run *Run) push_custom_re(tag_re string) {
 		_die("unexpected length of re offsets: got %d, expected 6", l)
 	}
 	tag := string(bytes[offset[2]:offset[3]])
-	if _, ok := run.CLICustomRE[tag];  ok == true {
+	if _, ok := run.CustomRegExp[tag];  ok == true {
 		_die("tag already exists: %s", tag)
 	}
 
@@ -653,20 +645,19 @@ func (run *Run) push_custom_re(tag_re string) {
 	if err != nil {
 		_die("can not compile regexp: %s: %s", err, re)
 	}
-	run.CLICustomRE[tag] = &CustomRE{
+	run.CustomRegExp[tag] = &CustomRexExp{
 		Tag:		tag,
 		RegExp:		re,
 		regexp:		regexp,
 	}
 }
 
-func (run *Run) scan(time_location *time.Location, year uint16) {
+func (run *Run) scan(loc *time.Location, year uint16) {
 
 	scan := &Scan{
 			run:		run,
 			ReportType:	os.Args[1],
-			time_location:	time_location,
-			TimeLocationName:	time_location.String(),
+			TimeLocation:	loc,
 			Year:		year,
 			SourceHost:	make(map[string]*SourceHost),
 	}
@@ -742,7 +733,7 @@ func main() {
 
 		OsPid:		os.Getpid(),
 		OsPPid:		os.Getppid(),
-		CLICustomRE:	make(map[string]*CustomRE),
+		CustomRegExp:	make(map[string]*CustomRexExp),
 	}
 	var err error
 
@@ -781,11 +772,13 @@ func main() {
 				fdie("time.LoadLocation(--time-location)", err)
 			}
 			time_location = loc
-		} else if arg == "--custom-re" {
+		} else if arg == "--custom-regexp" {
 			if i > argc {
-				noarg("custom-re", "missing tag:regexg")
+				noarg("custom-regexp", "missing tag:regexg")
 			}
-			run.push_custom_re(argv[i])
+			run.push_custom_regexp(argv[i])
+		} else if strings.HasPrefix("--", arg) {
+			die("unknown option: %s", arg)
 		} else {
 			die("unknown cli arg: %s", arg)
 		}
