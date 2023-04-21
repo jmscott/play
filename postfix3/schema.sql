@@ -70,10 +70,10 @@ COMMENT ON TABLE syslog2json IS
   'json output of command "syslog2json"'
 ;
 COMMENT ON COLUMN syslog2json.json_digest IS
-  'The digest of the json blob produced by syslog2json'
+  'The crypto digest of the json blob produced by syslog2json'
 ;
 COMMENT ON COLUMN syslog2json.log_digest IS
-  'The digest of the syslog file pointed to a particular json blob'
+  'The crypto digest of the syslog file pointed to a particular json blob'
 ;
 
 DROP TABLE IF EXISTS source_host CASCADE;
@@ -109,19 +109,49 @@ CREATE TABLE syslog2json_os_core
 	egid		unix_id
 );
 COMMENT ON TABLE syslog2json_os_core IS
-  'attributes of process execution pulled from golang core package os.*'
+  'attributes of particular process invocation from golang core package os.*'
+;
+COMMENT ON COLUMN syslog2json_os_core.args IS
+  'Command line arguments of process invocation: golang os.Args'
+;
+COMMENT ON COLUMN syslog2json_os_core.executable IS
+  'Full file system path to executable syslog2json'
+;
+COMMENT ON COLUMN syslog2json_os_core.pid IS
+  'Process id of invocation of program syslog2json'
+;
+COMMENT ON COLUMN syslog2json_os_core.ppid IS
+  'Parent process id of invocation of program syslog2json'
+;
+COMMENT ON COLUMN syslog2json_os_core.uid IS
+  'User id of invocation of program syslog2json'
+;
+COMMENT ON COLUMN syslog2json_os_core.euid IS
+  'Effective user id of invocation of program syslog2json'
+;
+COMMENT ON COLUMN syslog2json_os_core.gid IS
+  'Group id of invocation of program syslog2json'
+;
+COMMENT ON COLUMN syslog2json_os_core.gid IS
+  'Effective group id of invocation of program syslog2json'
 ;
 
 DROP TABLE IF EXISTS syslog2json_os_environ CASCADE;
 CREATE TABLE syslog2json_os_environ
 (
 	json_digest	xx512x1 REFERENCES syslog2json PRIMARY KEY,
-	env		text[] CHECK (
-				array_length(env, 1) > 0
+	env_kv	text[] CHECK (
+				array_length(env_kv, 1) > 0
 				AND
-				array_length(env, 1) < 65536
+				array_length(env_kv, 1) < 65536
 			) NOT NULL
 );
+COMMENT ON TABLE syslog2json_os_environ IS
+  'Process enviroment of invocation of program syslog2json'
+;
+COMMENT ON COLUMN syslog2json_os_environ.env_kv IS
+  'Array of "key=value" pairs from golang os.Environ()'
+;
 
 REVOKE UPDATE ON ALL TABLES IN SCHEMA postfix3 FROM PUBLIC;
 
