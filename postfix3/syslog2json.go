@@ -370,9 +370,9 @@ func (shost *SourceHost) custom_regexp(line []byte) int {
 			return -1
 		}
 	}
-	die("shost: custom_regexp: line %d: no match for custom re",
+	die("shost: custom_regexp: line %d: no match for any custom re",
 							scan.LineCount)
-	return -2	//  keep compiler happy
+	return -2	//  compiler is happy
 }
 
 //  match and extract leading process[pid]
