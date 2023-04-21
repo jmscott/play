@@ -135,7 +135,13 @@ type Scan struct {
 	InputDigest		string	`json:"input_digest"`
 	xx512x1			[20]byte
 
-	TimeLocation		*time.Location	`json:"time_location"`
+	time_location		*time.Location
+	/*
+	 *  Note:
+	 *	*time.Location does not reflect attributes, so record
+	 *	the "name" as time.Location.String()
+	 */
+	TimeLocationName	string	`json:"time_location_name"`
 	Year			uint16	`json:"year"`
 
 	SourceHost		map[string]*SourceHost	`json:"source_host"`
@@ -275,7 +281,7 @@ func (scan *Scan) log_time(line []byte) int {
 	tm, err := time.ParseInLocation(
 			log_time_template,
 			fmt.Sprintf("%s %d", date, scan.Year),
-			scan.TimeLocation,
+			scan.time_location,
 	)
 	if err != nil {
 		_die("time.ParseInLocation(log)", err)
@@ -657,7 +663,8 @@ func (run *Run) scan(loc *time.Location, year uint16) {
 	scan := &Scan{
 			run:		run,
 			ReportType:	os.Args[1],
-			TimeLocation:	loc,
+			time_location:	loc,
+			TimeLocationName:loc.String(),
 			Year:		year,
 			SourceHost:	make(map[string]*SourceHost),
 	}
