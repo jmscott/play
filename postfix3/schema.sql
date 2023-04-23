@@ -34,6 +34,26 @@ COMMENT ON DOMAIN xx512x1 IS
   '20 byte hash value sha1(sha512(sha512))'
 ;
 
+DROP DOMAIN IF EXISTS uint63 CASCADE;
+CREATE DOMAIN uint63 AS BIGINT
+  CHECK (
+  	value >= 0
+  )
+;
+COMMENT ON DOMAIN uint63 IS
+  'unsigned int in [0, 2^63]'
+;
+
+DROP DOMAIN IF EXISTS uint15 CASCADE;
+CREATE DOMAIN uint15 AS BIGINT
+  CHECK (
+  	value >= 0
+  )
+;
+COMMENT ON DOMAIN uint15 IS
+  'unsigned int in [0, 2^15]'
+;
+
 DROP DOMAIN IF EXISTS in_time CASCADE;
 CREATE DOMAIN in_time AS timestamptz
   CHECK (
@@ -152,6 +172,42 @@ COMMENT ON TABLE syslog2json_os_environ IS
 COMMENT ON COLUMN syslog2json_os_environ.env_kv IS
   'Array of "key=value" pairs from golang os.Environ()'
 ;
+
+DROP TABLE IF EXISTS syslog2json_custom_regexp CASCADE;
+CREATE TABLE syslog2json_custom_regexp
+(
+	json_digest	xx512x1 REFERENCES syslog2json,
+
+	tag		text CHECK (
+				tag ~ '^[a-z_-]{1,16}$'
+			),
+	regexp		text CHECK (
+				length(regexp) > 0
+				AND
+				length(regexp)  < 256
+			),
+	PRIMARY KEY	(json_digest, tag)
+);
+
+DROP TABLE IF EXISTS syslog2json_scan_core;
+CREATE TABLE syslog2json_scan_core
+(
+	json_digest	xx512x1 REFERENCES syslog2json PRIMARY KEY,
+	report_type	report_type NOT NULL,
+	line_count	uint63 CHECK (
+				line_count > 0
+			) NOT NULL,
+	byte_count	uint63 CHECK (
+				byte_count > 0
+			) NOT NULL,
+	input_digest	xx512x1 NOT NULL,
+	time_location_name	text CHECK (
+				length(time_location_name) > 0
+				AND
+				length(time_location_name) < 128
+			) NOT NULL,
+	year		uint15 NOT NULL
+);
 
 REVOKE UPDATE ON ALL TABLES IN SCHEMA postfix3 FROM PUBLIC;
 
