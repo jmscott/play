@@ -63,7 +63,10 @@ const lost_connect_RE = `^lost connection after `
 const disconnect_from_RE = `^disconnect from `
 const connect_to_RE = `^connect to `
 const message_repeated_RE = `^message repeated [1-9]{1,20} times: `
-const status_sent = `^message repeated [1-9]{1,20} times: `
+const status_sent_RE = `, status=sent `
+const status_deferred_RE = `, status=deferred `
+const status_bounced_RE = `, status=bounced `
+const status_expired_RE = `, status=expired, `
 
 const start_postfix_RE = `^starting the Postfix mail system`
 
@@ -91,6 +94,10 @@ type SourceCount struct {
 	BackwardsCompatCount	int64	`json:"backwards_compat_count"`
 	MessageRepeatedCount	int64	`json:"message_repeated_count"`
 	StartPostfixCount	int64	`json:"start_postfix_count"`
+	StatusSentCount		int64	`json:"status_sent_count"`
+	StatusBouncedCount	int64	`json:"status_bounced_count"`
+	StatusDeferredCount	int64	`json:"status_deferred_count"`
+	StatusExpiredCount	int64	`json:"status_expired_count"`
 }
 
 type QueueId struct {
@@ -105,6 +112,11 @@ type QueueId struct {
 
 	MaxLineNumber		int64	`json:"max_line_number"`
 	MaxLineSeekOffset	int64	`json:"max_line_seek_offset"`
+
+	StatusSentCount		int64	`json:"status_sent_count"`
+	StatusBouncedCount	int64	`json:"status_bounced_count"`
+	StatusDeferredCount	int64	`json:"status_deferred_count"`
+	StatusExpiredCount	int64	`json:"status_expired_count"`
 }
 
 type SourceHost struct {
@@ -189,6 +201,10 @@ var
 	backwards_compat_re,
 	message_repeated_re,
 	start_postfix_re,
+	status_sent_re,
+	status_deferred_re,
+	status_bounced_re,
+	status_expired_re,
 	queue_id_re	*regexp.Regexp
 
 func init() {
@@ -210,6 +226,10 @@ func init() {
 	backwards_compat_re = regexp.MustCompile(backwards_compat_RE)
 	message_repeated_re = regexp.MustCompile(message_repeated_RE)
 	start_postfix_re = regexp.MustCompile(start_postfix_RE)
+	status_sent_re = regexp.MustCompile(status_sent_RE)
+	status_deferred_re = regexp.MustCompile(status_deferred_RE)
+	status_bounced_re = regexp.MustCompile(status_bounced_RE)
+	status_expired_re = regexp.MustCompile(status_expired_RE)
 }
 
 func die(format string, args ...interface{}) {
@@ -606,6 +626,22 @@ func (shost *SourceHost) queue_id(line []byte) int {
 	}
 	if qid.MaxLogTime.Before(scan.current_log_time) {
 		qid.MaxLogTime = scan.current_log_time
+	}
+
+	//  match status={deferred,sent,bounced,expired}
+	switch {
+	case status_sent_re.Match(line):
+		shost.CountStat.StatusSentCount++
+		qid.StatusSentCount++
+	case status_bounced_re.Match(line):
+		shost.CountStat.StatusBouncedCount++
+		qid.StatusBouncedCount++
+	case status_deferred_re.Match(line):
+		shost.CountStat.StatusDeferredCount++
+		qid.StatusDeferredCount++
+	case status_expired_re.Match(line):
+		shost.CountStat.StatusExpiredCount++
+		qid.StatusExpiredCount++
 	}
 
 	qid.LineCount++
