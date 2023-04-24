@@ -64,6 +64,16 @@ COMMENT ON DOMAIN in_time IS
   'Track insert time for immutable tuples'
 ;
 
+DROP DOMAIN IF EXISTS log_time CASCADE;
+CREATE DOMAIN log_time AS timestamptz
+  CHECK (
+  	value >= '1970-01-01'
+  ) NOT NULL
+;
+COMMENT ON DOMAIN log_time IS
+  'Reasonable timestamp for syslog messages'
+;
+
 DROP DOMAIN IF EXISTS unix_id CASCADE;
 CREATE DOMAIN unix_id AS BIGINT
   CHECK (
@@ -189,8 +199,8 @@ CREATE TABLE syslog2json_custom_regexp
 	PRIMARY KEY	(json_digest, tag)
 );
 
-DROP TABLE IF EXISTS syslog2json_scan_core;
-CREATE TABLE syslog2json_scan_core
+DROP TABLE IF EXISTS syslog2json_scan;
+CREATE TABLE syslog2json_scan
 (
 	json_digest	xx512x1 REFERENCES syslog2json PRIMARY KEY,
 	report_type	report_type NOT NULL,
@@ -208,6 +218,39 @@ CREATE TABLE syslog2json_scan_core
 			) NOT NULL,
 	year		uint15 NOT NULL
 );
+
+DROP TABLE IF EXISTS syslog2json_scan_source_host CASCADE;
+CREATE TABLE syslog2json_scan_source_host
+(
+	json_digest     xx512x1 REFERENCES syslog2json_scan PRIMARY KEY,
+
+	host_name	text CHECK (
+				host_name ~ '^[[::graph::]]{1,64}$'
+			),
+	min_log_time	log_time,
+	max_log_time	log_time,
+	
+	min_line_number	uint63,
+	min_line_seek_offset	uint63,
+	
+	max_line_number	uint63,
+	max_line_seek_offset	uint63,
+
+	CONSTRAINT log_time_range CHECK (
+		min_log_time <= max_log_time
+	),
+
+	CONSTRAINT line_number_range CHECK (
+		min_line_number <= max_line_number
+	),
+
+	CONSTRAINT line_seek_offsetrange CHECK (
+		min_line_seek_offset <= max_line_seek_offset
+	)
+);
+COMMENT ON TABLE syslog2json_scan_source_host IS
+  'Hosts seen in a scan of a syslog file'
+;
 
 REVOKE UPDATE ON ALL TABLES IN SCHEMA postfix3 FROM PUBLIC;
 
