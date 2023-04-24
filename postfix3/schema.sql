@@ -44,6 +44,12 @@ COMMENT ON DOMAIN uint63 IS
   'unsigned int in [0, 2^63]'
 ;
 
+DROP DOMAIN IF EXISTS log_count CASCADE;
+CREATE DOMAIN log_count AS uint63 NOT NULL;
+COMMENT ON DOMAIN log_count IS
+  'counts always existing and >= 0 in syslog messages'
+;
+
 DROP DOMAIN IF EXISTS uint15 CASCADE;
 CREATE DOMAIN uint15 AS BIGINT
   CHECK (
@@ -204,12 +210,8 @@ CREATE TABLE syslog2json_scan
 (
 	json_digest	xx512x1 REFERENCES syslog2json PRIMARY KEY,
 	report_type	report_type NOT NULL,
-	line_count	uint63 CHECK (
-				line_count > 0
-			) NOT NULL,
-	byte_count	uint63 CHECK (
-				byte_count > 0
-			) NOT NULL,
+	line_count	log_count,
+	byte_count	log_count,
 	input_digest	xx512x1 NOT NULL,
 	time_location_name	text CHECK (
 				length(time_location_name) > 0
@@ -219,10 +221,10 @@ CREATE TABLE syslog2json_scan
 	year		uint15 NOT NULL
 );
 
-DROP TABLE IF EXISTS syslog2json_scan_source_host CASCADE;
-CREATE TABLE syslog2json_scan_source_host
+DROP TABLE IF EXISTS syslog2json_source_host CASCADE;
+CREATE TABLE syslog2json_source_host
 (
-	json_digest     xx512x1 REFERENCES syslog2json_scan PRIMARY KEY,
+	json_digest     xx512x1 REFERENCES syslog2json_scan,
 
 	host_name	text CHECK (
 				host_name ~ '^[[::graph::]]{1,64}$'
@@ -236,6 +238,8 @@ CREATE TABLE syslog2json_scan_source_host
 	max_line_number	uint63,
 	max_line_seek_offset	uint63,
 
+	PRIMARY KEY	(json_digest, host_name),
+
 	CONSTRAINT log_time_range CHECK (
 		min_log_time <= max_log_time
 	),
@@ -248,9 +252,59 @@ CREATE TABLE syslog2json_scan_source_host
 		min_line_seek_offset <= max_line_seek_offset
 	)
 );
-COMMENT ON TABLE syslog2json_scan_source_host IS
+COMMENT ON TABLE syslog2json_source_host IS
   'Hosts seen in a scan of a syslog file'
 ;
+
+DROP TABLE IF EXISTS syslog2json_source_host_count_stat CASCADE;
+CREATE TABLE syslog2json_source_host_count_stat
+(
+	json_digest     xx512x1,
+
+	host_name	text,
+	PRIMARY KEY	(json_digest, host_name),
+	FOREIGN KEY	(json_digest, host_name)
+				REFERENCES syslog2json_source_host,
+
+	unknown_line_count	log_count,
+	warning_count		log_count,
+	statistics_count	log_count,
+	fatal_count		log_count,
+	daemon_started_count	log_count,
+	refresh_postfix_count	log_count,
+	reload_count		log_count,
+	connect_from_count	log_count,
+	lost_connect_count	log_count,
+	disconnect_from_count	log_count,
+	connect_to_count	log_count,
+	backwards_compat_count	log_count,
+	message_repeated_count	log_count,
+	start_postfix_count	log_count,
+	status_sent_count	log_count,
+	status_bounced_count	log_count,
+	status_deferred_count	log_count,
+	status_expired_count	log_count
+);
+COMMENT ON TABLE syslog2json_source_host_count_stat IS
+  'Count stats associated with a particular source host'
+;
+
+DROP TABLE IF EXISTS syslog2json_source_host_process_count CASCADE;
+CREATE TABLE syslog2json_source_host_process_count
+(
+	json_digest     xx512x1,
+
+	host_name	text,
+	process_name	text CHECK (
+				process_name ~ '^[[::graph::]]{1,63}$'
+			),
+	line_count	log_count,
+
+	PRIMARY KEY (json_digest, host_name, process_name),
+
+	FOREIGN KEY (json_digest, host_name)
+			REFERENCES syslog2json_source_host_count_stat
+);
 
 REVOKE UPDATE ON ALL TABLES IN SCHEMA postfix3 FROM PUBLIC;
 
