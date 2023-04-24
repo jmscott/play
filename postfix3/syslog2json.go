@@ -46,7 +46,6 @@ const source_host_RE = `^([a-zA-Z0-9_][a-zA-Z0-9_-]{0,63}) `
 const log_time_template = `Jan _2 15:04:05 2006`
 
 const process_RE = `^postfix/([a-zA-Z][a-zA-Z0-9_-]{0,31})\[\d{1,20}]: `
-const queue_id_RE = `^([A-Z0-9]{8,12}): `
 const warning_RE = `^warning: `
 const statistics_RE = `^statistics: `
 const fatal_RE = `^fatal: `
@@ -69,6 +68,11 @@ const status_bounced_RE = `, status=bounced `
 const status_expired_RE = `, status=expired, `
 
 const start_postfix_RE = `^starting the Postfix mail system`
+
+//postfix/cleanup[3276895]: 4C286E0066: message-id=<4.0.8.3.1D964AF9E1C96C2.0@cmsnmail04.cernerasp.com>
+//const cleanup_RE = `postfix/cleanup: message-id=<(.*)>`
+const queue_id_RE = `^([A-Z0-9]{8,12}): `
+const message_id_RE = `message-id=<(.*)>`
 
 type CustomRexExp struct {
 	Tag		string	`json:"tag"`
@@ -102,7 +106,7 @@ type SourceCount struct {
 
 type QueueId struct {
 
-	LineCount		int64	`json:"count"`
+	LineCount		int64	`json:"line_count"`
 
 	MinLogTime		time.Time	`json:"min_log_time"`
 	MaxLogTime		time.Time	`json:"max_log_time"`
@@ -117,6 +121,9 @@ type QueueId struct {
 	StatusBouncedCount	int64	`json:"status_bounced_count"`
 	StatusDeferredCount	int64	`json:"status_deferred_count"`
 	StatusExpiredCount	int64	`json:"status_expired_count"`
+
+	MessageIdCount		map[string]int64`json:"message_id_count"`
+	EmptyMessageIdCount	int64	`json:"empty_message_id_count"`
 }
 
 type SourceHost struct {
@@ -205,6 +212,7 @@ var
 	status_deferred_re,
 	status_bounced_re,
 	status_expired_re,
+	message_id_re,
 	queue_id_re	*regexp.Regexp
 
 func init() {
@@ -230,6 +238,7 @@ func init() {
 	status_deferred_re = regexp.MustCompile(status_deferred_RE)
 	status_bounced_re = regexp.MustCompile(status_bounced_RE)
 	status_expired_re = regexp.MustCompile(status_expired_RE)
+	message_id_re = regexp.MustCompile(message_id_RE)
 }
 
 func die(format string, args ...interface{}) {
@@ -240,10 +249,6 @@ func die(format string, args ...interface{}) {
 
 func fdie(what string, err error) {
 	die("%s failed: %s", what, err)
-}
-
-func panic(msg string) {
-	die("PANIC: %s", msg)
 }
 
 func leave(exit_status int) {
@@ -611,6 +616,7 @@ func (shost *SourceHost) queue_id(line []byte) int {
 				MinLineNumber:	scan.current_line_number,
 				MinLineSeekOffset:
 					scan.current_line_seek_offset,
+				MessageIdCount:	make(map[string]int64),
 			}
 		shost.QueueId[queue_id] = qid
 	}
@@ -644,6 +650,21 @@ func (shost *SourceHost) queue_id(line []byte) int {
 		qid.StatusExpiredCount++
 	}
 
+	mb := line[offset[3]+2:]
+	midx = message_id_re.FindAllSubmatchIndex(mb, 1)
+	if midx != nil {
+		offset = midx[0]
+		if len(offset) != 4 {
+			_die("FindSubmatchIndex: message id: offset[] != 4")
+		}
+
+		mid := string(mb[offset[2]:offset[3]])
+		if len(mid) == 0 {
+			qid.EmptyMessageIdCount++
+		} else {
+			qid.MessageIdCount[mid]++
+		}
+	}
 	qid.LineCount++
 
 	return offset[1]
@@ -744,8 +765,7 @@ func (run *Run) scan(loc *time.Location, year uint16) {
 		bytes = bytes[i:]
 		i = shost.process(bytes)
 		if i > -1 {
-			bytes = bytes[i:]
-			shost.queue_id(bytes)
+			shost.queue_id(bytes[i:])
 		}
 	}
 	scan.InputDigest = fmt.Sprintf("%x", xx512x1(h512.Sum(nil)))
