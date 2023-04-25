@@ -135,7 +135,7 @@ type SourceHost struct {
 	QueueId			map[string]*QueueId`json:"queue_id"`
 
 	MinLogTime		time.Time	`json:"min_log_time"`
-	MaxLogTime		time.Time	`json:"maxlog_time"`
+	MaxLogTime		time.Time	`json:"max_log_time"`
 
 	MinLineNumber		int64		`json:"min_line_number"`
 	MinLineSeekOffset	int64		`json:"min_line_seek_offset"`
