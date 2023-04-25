@@ -50,6 +50,26 @@ COMMENT ON DOMAIN log_count IS
   'counts always existing and >= 0 in syslog messages'
 ;
 
+DROP DOMAIN IF EXISTS log_line_number CASCADE;
+CREATE DOMAIN log_line_number AS uint63
+  CHECK (
+  	value > 0
+  ) NOT NULL
+;
+COMMENT ON DOMAIN log_line_number IS
+  'line number in a syslog file'
+;
+
+DROP DOMAIN IF EXISTS log_seek_offset CASCADE;
+CREATE DOMAIN log_seek_offset AS uint63
+  CHECK (
+  	value >= 0
+  ) NOT NULL
+;
+COMMENT ON DOMAIN log_seek_offset IS
+  'seek offset in a syslog file'
+;
+
 DROP DOMAIN IF EXISTS uint15 CASCADE;
 CREATE DOMAIN uint15 AS BIGINT
   CHECK (
@@ -127,7 +147,10 @@ COMMENT ON TABLE source_host IS
 DROP TABLE IF EXISTS syslog2json_os_core CASCADE;
 CREATE TABLE syslog2json_os_core 
 (
-	json_digest	xx512x1 REFERENCES syslog2json PRIMARY KEY,
+	json_digest	xx512x1
+				REFERENCES syslog2json
+				ON DELETE CASCADE
+				PRIMARY KEY,
 
 	args		text[] CHECK (
 				array_length(args, 1) > 0
@@ -175,7 +198,10 @@ COMMENT ON COLUMN syslog2json_os_core.gid IS
 DROP TABLE IF EXISTS syslog2json_os_environ CASCADE;
 CREATE TABLE syslog2json_os_environ
 (
-	json_digest	xx512x1 REFERENCES syslog2json PRIMARY KEY,
+	json_digest	xx512x1
+				REFERENCES syslog2json
+				ON DELETE CASCADE
+				PRIMARY KEY,
 	env_kv	text[] CHECK (
 				array_length(env_kv, 1) > 0
 				AND
@@ -192,7 +218,9 @@ COMMENT ON COLUMN syslog2json_os_environ.env_kv IS
 DROP TABLE IF EXISTS syslog2json_custom_regexp CASCADE;
 CREATE TABLE syslog2json_custom_regexp
 (
-	json_digest	xx512x1 REFERENCES syslog2json,
+	json_digest	xx512x1
+				REFERENCES syslog2json
+				ON DELETE CASCADE,
 
 	tag		text CHECK (
 				tag ~ '^[a-z_-]{1,16}$'
@@ -208,7 +236,10 @@ CREATE TABLE syslog2json_custom_regexp
 DROP TABLE IF EXISTS syslog2json_scan;
 CREATE TABLE syslog2json_scan
 (
-	json_digest	xx512x1 REFERENCES syslog2json PRIMARY KEY,
+	json_digest	xx512x1
+				REFERENCES syslog2json
+				ON DELETE CASCADE
+				PRIMARY KEY,
 	report_type	report_type NOT NULL,
 	line_count	log_count,
 	byte_count	log_count,
@@ -224,7 +255,9 @@ CREATE TABLE syslog2json_scan
 DROP TABLE IF EXISTS syslog2json_source_host CASCADE;
 CREATE TABLE syslog2json_source_host
 (
-	json_digest     xx512x1 REFERENCES syslog2json_scan,
+	json_digest     xx512x1
+			REFERENCES syslog2json_scan
+			ON DELETE CASCADE,
 
 	host_name	text CHECK (
 				host_name ~ '^[[::graph::]]{1,64}$'
@@ -232,11 +265,11 @@ CREATE TABLE syslog2json_source_host
 	min_log_time	log_time,
 	max_log_time	log_time,
 	
-	min_line_number	uint63,
-	min_line_seek_offset	uint63,
+	min_line_number	log_line_number,
+	min_line_seek_offset	log_seek_offset,
 	
-	max_line_number	uint63,
-	max_line_seek_offset	uint63,
+	max_line_number	log_line_number,
+	max_line_seek_offset	log_seek_offset,
 
 	PRIMARY KEY	(json_digest, host_name),
 
@@ -264,7 +297,8 @@ CREATE TABLE syslog2json_source_host_count_stat
 	host_name	text,
 	PRIMARY KEY	(json_digest, host_name),
 	FOREIGN KEY	(json_digest, host_name)
-				REFERENCES syslog2json_source_host,
+				REFERENCES syslog2json_source_host
+				ON DELETE CASCADE,
 
 	unknown_line_count	log_count,
 	warning_count		log_count,
@@ -304,7 +338,79 @@ CREATE TABLE syslog2json_source_host_process_count
 
 	FOREIGN KEY (json_digest, host_name)
 			REFERENCES syslog2json_source_host_count_stat
+			ON DELETE CASCADE
 );
+COMMENT ON TABLE syslog2json_source_host_process_count IS
+  'Counts of the (third) process field in syslog messages'
+;
+
+DROP TABLE IF EXISTS syslog2json_source_host_queue_id CASCADE;
+CREATE TABLE syslog2json_source_host_queue_id
+(
+	json_digest     xx512x1,
+	host_name       text,
+	queue_id	text CHECK(
+				queue_id ~ '^([A-Z0-9]{8,12})$'
+			),
+	PRIMARY KEY	(json_digest, host_name, queue_id),
+
+	FOREIGN KEY	(json_digest, host_name)
+				REFERENCES syslog2json_source_host
+				ON DELETE CASCADE,
+
+	line_count	log_count,
+
+	min_log_time	log_time,
+	max_log_time	log_time,
+
+	min_line_number		log_line_number,
+	min_line_seek_offset	log_seek_offset,
+
+	max_line_number		log_line_number,
+	max_line_seek_offset	log_seek_offset,
+
+	status_sent_count	log_count,
+	status_bounced_count	log_count,
+	status_deferred_count	log_count,
+	status_expired_count	log_count,
+
+	CONSTRAINT log_time_range CHECK (
+		min_log_time <= max_log_time
+	),
+
+	CONSTRAINT line_number_range CHECK (
+		min_line_number <= max_line_number
+	),
+
+	CONSTRAINT line_seek_offset_range CHECK (
+		min_line_seek_offset <= max_line_seek_offset
+	),
+
+	empty_message_id_count	log_count
+);
+COMMENT ON TABLE syslog2json_source_host_queue_id IS
+  'All log lines associated with a particular queue id'
+;
+
+DROP TABLE IF EXISTS syslog2json_source_host_queue_id_message_id CASCADE;
+CREATE TABLE syslog2json_source_host_queue_id_message_id
+(
+	json_digest     xx512x1,
+	host_name       text,
+	queue_id	text,
+	message_id	text CHECK (
+				message_id ~ '^[[::graph::]]{1,255}$'
+			),
+
+	PRIMARY KEY	(json_digest, host_name, queue_id, message_id),
+
+	FOREIGN KEY	(json_digest, host_name, queue_id)
+				REFERENCES syslog2json_source_host_queue_id
+				ON DELETE CASCADE
+);
+COMMENT ON TABLE syslog2json_source_host_queue_id_message_id IS
+  'Mail message ID associated with a queue id for a particular source host'
+;
 
 REVOKE UPDATE ON ALL TABLES IN SCHEMA postfix3 FROM PUBLIC;
 
