@@ -121,8 +121,9 @@ type QueueId struct {
 	StatusBouncedCount	int64	`json:"status_bounced_count"`
 	StatusDeferredCount	int64	`json:"status_deferred_count"`
 	StatusExpiredCount	int64	`json:"status_expired_count"`
+	MessageId		string	`json:"message_id"`
+	SecondayMessageId	map[string]string	`secondary_message_id`
 
-	MessageIdCount		map[string]int64`json:"message_id_count"`
 	EmptyMessageIdCount	int64	`json:"empty_message_id_count"`
 }
 
@@ -616,7 +617,6 @@ func (shost *SourceHost) queue_id(line []byte) int {
 				MinLineNumber:	scan.current_line_number,
 				MinLineSeekOffset:
 					scan.current_line_seek_offset,
-				MessageIdCount:	make(map[string]int64),
 			}
 		shost.QueueId[queue_id] = qid
 	}
@@ -662,7 +662,11 @@ func (shost *SourceHost) queue_id(line []byte) int {
 		if len(mid) == 0 {
 			qid.EmptyMessageIdCount++
 		} else {
-			qid.MessageIdCount[mid]++
+			if qid.MessageId == "" {
+				qid.MessageId = mid
+			} else if qid.MessageId != mid {
+				_die("multiple message id: qid: %s", queue_id)
+			}
 		}
 	}
 	qid.LineCount++
