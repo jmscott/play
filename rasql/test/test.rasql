@@ -1,0 +1,24 @@
+{
+	"synopsis":		"Test Queries",
+	"http_listen":		"localhost:8080",
+
+	"REMOVE-ME-tls_http_listen":	"localhost:443",
+	"REMOVE-ME-tls_cert_path":	"self-signed.cert",
+	"REMOVE-ME-tls_key_path":	"self-signed.key",
+
+	"rest_path_prefix":	"/test",
+
+	"sql_query_set": {
+		"test-type": {
+			"source_path":	"test-type.sql"
+		},
+		"test-2row": {
+			"source_path":	"test-2row.sql"
+		}
+	},
+
+	"http_query_arg_set": {
+	},
+
+	"warn_slow_sql_query_duration": 5
+}

@@ -1,0 +1,58 @@
+{
+	"synopsis":		"PostgreSQL 10 System Catalog Schema",
+	"http_listen":		"localhost:8080",
+
+	"REMOVE-basic_auth_path":	"password-rasql.example",
+
+	"REMOVE-ME-tls_http_listen":	"localhost:443",
+	"REMOVE-ME-tls_cert_path":	"self-signed.cert",
+	"REMOVE-ME-tls_key_path":	"self-signed.key",
+
+	"rest_path_prefix":	"/pg_catalog",
+
+	"sql_query_set": {
+		"pg_class": {
+			"source_path":	"pg_class.sql"
+		},
+		"pg_class-by-nspname":	{
+			"source_path":	"pg_class-by-nspname.sql"
+		},
+		"pg_stat_activity":	{
+			"source_path":	"pg_stat_activity.sql"
+		},
+		"pg_roles":	{
+			"source_path":	"pg_roles.sql"
+		},
+		"pg_stat_activity-slow-count":	{
+			"source_path":	"pg_stat_activity-slow-count.sql"
+		},
+		"pg_stat_activity-count":	{
+			"source_path":	"pg_stat_activity-count.sql"
+		},
+		"pg_stat_activity-state-count":	{
+			"source_path":	"pg_stat_activity-state-count.sql"
+		},
+		"pg_settings": {
+			"source_path":	"pg_settings.sql"
+		},
+		"pg_namespace": {
+			"source_path":	"pg_namespace.sql"
+		}
+	},
+
+	"http_query_arg_set": {
+		"name" : {
+			"matches": "^.{1,63}$",
+			"sql_alias": "nspname"
+		},
+		"dur" : {
+			"matches": "^.{1,63}$",
+			"sql_alias": "duration"
+		},
+		"state" : {
+			"matches": "^[a-z]{1,32}$"
+		}
+	},
+
+	"warn_slow_sql_query_duration": 5
+}
