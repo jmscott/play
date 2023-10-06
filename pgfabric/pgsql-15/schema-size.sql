@@ -23,11 +23,10 @@ WITH schema_size(schema_name, table_total) AS (
 SELECT
 	schema_name AS "Schema",
 	pg_size_pretty(table_total) AS "Total Size",
-	(table_total/ pg_database_size(current_database()) * 100) ::int
-		as "Percentage"
+	(table_total/ pg_database_size(current_database()) * 100)::int || '%'
+		AS "Percentage"
   FROM
   	schema_size
   ORDER BY
-	"Percentage" DESC,
-	"Total Size" DESC
+	table_total DESC
 ;
