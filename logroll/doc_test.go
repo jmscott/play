@@ -1,7 +1,7 @@
 package logroll_test
 
 import (
-	"github.com/jmscott/work/logroll"
+	"github.com/jmscott/play/logroll"
 	"time"
 )
 
