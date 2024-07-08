@@ -1,0 +1,9 @@
+"floq" stands for "Flow Oriented Query".  The program "floq" executes
+queries qualfied on patterns in streams of records from many inputs.
+In some ways, "floq" is like kafka2 with SQL-like qualification on queues.
+
+The history of floq starts with the blobio repo at
+
+	https://github.com/jmscott/blobio
+
+and, in particular, the subdir blobio/flowd, many years ago.
