@@ -1,9 +1,14 @@
-"floq" stands for "Flow Oriented Query".  The program "floq" executes
-queries qualfied on patterns in streams of records from many inputs.
-In some ways, "floq" is like kafka2 with SQL-like qualification on queues.
+"floq" stands for "Flow Query".
 
-The history of floq starts with the blobio repo at
+The program "floq" executes queries written in a pidgin query language, inspired
+by QUEL//SQL.  The "database" is transient in RAM, being built from records seen
+on various sources, such as processes (pipe), files (tail -f) and network
+(udp packets, tcp[46] streams).  Comparisons to kafka2 are reasonable.
+
+The history of floq started with a program named "flowd", many years ago,
+as part of the github.com repo
 
 	https://github.com/jmscott/blobio
 
-and, in particular, the subdir blobio/flowd, many years ago.
+"flowd" efficently coordinated process/pgqueries in order to populate a
+PostgreSQL database.
