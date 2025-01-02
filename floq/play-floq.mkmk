@@ -1,0 +1,113 @@
+#
+#  Synopsis:
+#	Example configuration file read by make-make.
+#  See:
+#	https://github.com/jmscott/work/blob/master/make-make
+#  Note:
+#	Makefile variables can be extracted and defined from the the
+#	<package>.mkmk file with these recipes.  Example make code follows:
+#
+#		MKMK=<package>.mkmk
+#
+#		COMPILEs := $(shell (. ./$(MKMK) && echo $$COMPILEs))
+#		SBINs := $(shell (. ./$(MKMK) && echo $$SBINs))
+#		LIBs := $(shell (. ./$(MKMK) && echo $$LIBs))
+#		SRCs := $(shell (. ./$(MKMK) && echo $$SRCs))
+#		BINs := $(shell (. ./$(MKMK) && echo $$BINs))
+#		HTDOCSs := $(shell (. ./$(MKMK) && echo $$HTDOCSs))
+#		CGIBINs := $(shell (. ./$(MKMK) && echo $$CGIBINs))
+#		LIBEXECs := $(shell (. ./$(MKMK) && echo $$LIBEXECs))
+#
+
+#  Uncomment to override default mappings of VARs to target directory
+#VAR2dir_local=(
+#	[CGIBINs]='cgi-bin/schema'
+#)
+
+#
+#SYMLINKs="
+#	cgi-bin/jmscott->$JMSCOTT_ROOT/www/cgi-bin
+#	lib/jmscott->$JMSCOTT_ROOT/www/lib
+#"
+
+#
+#  Uncomment for compiled programs to be installed in bin/ or sbin/ and
+#  removed in "clean" recipes.
+#
+COMPILEs="
+	floq
+	parser.go
+"
+
+#LIBs="
+#"
+
+#  Uncoment to create bin/ directory
+#BINs="
+#"
+
+#SBINs="
+#"
+
+#  Uncomment to create tmp/ directory
+#TMP="
+#"
+
+#  Uncomment to create cgi-bin/ directory
+#CGIBINs="
+#"
+
+#  Uncomment to create htdocs/ directory
+#HTDOCSs="
+#"
+
+#  Uncomment to create src/ directory
+#SRCs="
+#"
+
+#  Uncomment to create attic/ directory
+#ATTIC="
+#"
+
+#  Uncomment to create archive/ directory
+#ARCHIVE="
+#"
+
+#  Uncomment to create etc/ directory
+#ETC="
+#"
+
+#  Uncomment to create spool/ directory
+#SPOOL="
+#"
+
+#  Uncomment to create data/ directory
+#DATA="
+#"
+
+#  Uncomment to create run/ directory
+#RUN="
+#"
+
+#  Uncomment to create log/ directory
+#LOG="
+#"
+
+#  Uncomment to create cache/ directory
+#CACHE="
+#"
+
+#  Uncomment to create directory libexec/
+#LIBEXECs="
+#"
+
+#  Uncomment to create directory include/
+#INCLUDEs="
+#"
+
+#  Uncomment to create directory sync/
+#SYNC="
+#"
+
+#WWW="
+#"
