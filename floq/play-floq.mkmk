@@ -62,8 +62,11 @@ COMPILEs="
 #"
 
 #  Uncomment to create src/ directory
-#SRCs="
-#"
+SRCs="
+	floq.go
+	parser.go
+	parser.y
+"
 
 #  Uncomment to create attic/ directory
 #ATTIC="

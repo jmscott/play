@@ -7,7 +7,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"io"
+	"strconv"
+	"unicode"
 )
 
 const max_name_rune_count = 127
@@ -35,13 +39,18 @@ type ast struct {
 %union {
 	ast		*ast
 	name		string
+			string
+			uint64
 }
 
 //  lowest numbered yytoken.  must be first in list.
 %token	__MIN_YYTOK
 
+%token	PARSE_ERROR
+%token	EQ  NEQ  MATCH  NO_MATCH
 %token  STRING  yy_STRING
 %token  BOOL  yy_BOOL
+%token	UINT64
 %token	NAME
 %token	SYNC MAP LOAD_OR_STORE SYNC_MAP_REF LOADED
 
@@ -194,6 +203,66 @@ func skip_space(l *yyLexState) (c rune, eof bool, err error) {
 }
 
 /*
+ *  Very simple utf8 string scanning, with no proper escapes for characters.
+ *  Expect this module to be replaced with correct text.Scanner.
+ */
+func (l *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
+	var c rune
+	s := ""
+
+	for c, eof, err = l.get();  !eof && err == nil;  c, eof, err = l.get(){
+		if c == '"' {
+			yylval.string = s
+			return false, nil
+		}
+		switch c {
+		case '\n':
+			return false, l.mkerror("new line in string")
+		case '\r':
+			return false, l.mkerror("carriage return in string")
+		case '\t':
+			return false, l.mkerror("tab in string")
+		case '\\':
+			return false, l.mkerror("backslash in string")
+		}
+		s += string(c)
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+/*
+ *  Scan an almost raw string as defined in golang.
+ *  Carriage return is stripped.
+ */
+func (l *yyLexState) scan_raw_string(yylval *yySymType) (eof bool, err error) {
+	var c rune
+	s := ""
+
+	/*
+	 *  Scan a raw string of unicode letters, accepting all but `
+	 */
+	for c, eof, err = l.get();  !eof && err == nil;  c, eof, err = l.get() {
+		
+		switch c {
+		case '\r':
+			//  why does go skip carriage return?  raw is not so raw
+			continue
+		case '`':
+			yylval.string = s
+			return false, nil
+		}
+		s += string(c)
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+/*
  *  Scan a word consisting of a sequence of unicode Letters, Numbers and '_'
  *  characters.
  */
@@ -215,9 +284,9 @@ func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 			break
 		}
 		count++
-		if count > max_command_name {
+		if count > max_name_rune_count {
 			return 0, l.mkerror("word: too many chars: max=%d",
-						max_command_name)
+						max_name_rune_count)
 		}
 		w += string(c)		//  Note: replace with string builder?
 	}
@@ -234,6 +303,37 @@ func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 
 	yylval.string = w
 	return NAME, nil
+}
+
+func (l *yyLexState) scan_uint64(yylval *yySymType, c rune) (err error) {
+	var eof bool
+
+	ui64 := string(c)
+	count := 1
+
+	/*
+	 *  Scan a string of unicode numbers/digits and let Scanf parse the
+	 *  actual digit string.
+	 */
+	for c, eof, err = l.get();  !eof && err == nil;  c, eof, err = l.get() {
+		count++
+		if count > 20 {
+			return l.mkerror("uint64 > 20 digits")
+		}
+		if c > 127 || !unicode.IsNumber(c) {
+			break
+		}
+		ui64 += string(c)
+	}
+	if err != nil {
+		return
+	}
+	if !eof {
+		l.pushback(c)		//  first character after ui64
+	}
+
+	yylval.uint64, err = strconv.ParseUint(ui64, 10, 64)
+	return
 }
 
 func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
@@ -365,4 +465,14 @@ func (l *yyLexState) Error(msg string) {
 	if l.err == nil {			//  only report first error
 		l.err = l.mkerror("%s", msg)
 	}
+}
+
+func parse(in io.RuneReader) (*ast, error) {
+
+	lex := &yyLexState{
+		in:		in,
+		line_no:	1,
+	}
+	yyParse(lex)
+	return lex.ast_root, lex.err
 }
