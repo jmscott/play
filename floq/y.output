@@ -1,0 +1,122 @@
+
+state 0
+	$accept: .flow $end 
+	flow: .    (1)
+
+	SYNC  shift 5
+	.  reduce 1 (src line 61)
+
+	flow  goto 1
+	stmt_list  goto 2
+	declare_sync_map  goto 4
+	stmt  goto 3
+
+state 1
+	$accept:  flow.$end 
+
+	$end  accept
+	.  error
+
+
+state 2
+	flow:  stmt_list.    (2)
+	stmt_list:  stmt_list.stmt 
+
+	SYNC  shift 5
+	.  reduce 2 (src line 63)
+
+	declare_sync_map  goto 4
+	stmt  goto 6
+
+state 3
+	stmt_list:  stmt.';' 
+
+	';'  shift 7
+	.  error
+
+
+state 4
+	stmt:  declare_sync_map.    (4)
+
+	.  reduce 4 (src line 70)
+
+
+state 5
+	declare_sync_map:  SYNC.MAP NAME '[' yy_STRING ']' yy_BOOL ';' 
+
+	MAP  shift 8
+	.  error
+
+
+state 6
+	stmt_list:  stmt_list stmt.    (6)
+
+	.  reduce 6 (src line 76)
+
+
+state 7
+	stmt_list:  stmt ';'.    (5)
+
+	.  reduce 5 (src line 74)
+
+
+state 8
+	declare_sync_map:  SYNC MAP.NAME '[' yy_STRING ']' yy_BOOL ';' 
+
+	NAME  shift 9
+	.  error
+
+
+state 9
+	declare_sync_map:  SYNC MAP NAME.'[' yy_STRING ']' yy_BOOL ';' 
+
+	'['  shift 10
+	.  error
+
+
+state 10
+	declare_sync_map:  SYNC MAP NAME '['.yy_STRING ']' yy_BOOL ';' 
+
+	yy_STRING  shift 11
+	.  error
+
+
+state 11
+	declare_sync_map:  SYNC MAP NAME '[' yy_STRING.']' yy_BOOL ';' 
+
+	']'  shift 12
+	.  error
+
+
+state 12
+	declare_sync_map:  SYNC MAP NAME '[' yy_STRING ']'.yy_BOOL ';' 
+
+	yy_BOOL  shift 13
+	.  error
+
+
+state 13
+	declare_sync_map:  SYNC MAP NAME '[' yy_STRING ']' yy_BOOL.';' 
+
+	';'  shift 14
+	.  error
+
+
+state 14
+	declare_sync_map:  SYNC MAP NAME '[' yy_STRING ']' yy_BOOL ';'.    (3)
+
+	.  reduce 3 (src line 67)
+
+
+23 terminals, 5 nonterminals
+7 grammar rules, 15/16000 states
+0 shift/reduce, 0 reduce/reduce conflicts reported
+54 working sets used
+memory: parser 5/240000
+0 extra closures
+10 shift entries, 1 exceptions
+5 goto entries
+1 entries saved by goto default
+Optimizer space used: output 14/240000
+14 table entries, 0 zero
+maximum spread: 23, maximum offset: 23

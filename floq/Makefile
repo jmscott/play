@@ -55,7 +55,7 @@ GOYACC=$(shell $(GO) env GOPATH)/bin/goyacc
 #GCFLAGS=-gcflags "-N -l"
 #GCFLAGS=-gcflags "-l"
 
-all: flowd flowd-execv
+all: floq
 
 clean:
 	rm -f $(COMPILEs) y.output
@@ -66,9 +66,11 @@ distclean:
 parser.go: parser.y
 	$(GOYACC) -o parser.go parser.y || (rm -f parser.go; exit 1)
 	$(GOEXE) fmt parser.go
-	rm -f y.output
 floq: parser.go floq.go
 	$(GOEXE) build floq.go parser.go
 
 goenv:
 	$(GOEXE) env
+world:
+	$(MAKE) $(MFLAGS) clean
+	$(MAKE) $(MFLAGS) all
