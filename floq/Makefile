@@ -1,6 +1,8 @@
 #
 #  Synopsis:
-#  	Development make rules
+#  	Makefile for building "floq" command
+#  Usage:
+#	make world
 #  Yacc:
 #	Compiled with yacc at
 #
@@ -21,7 +23,6 @@
 #
 include ../local.mk
 include ../play.mk
-include local.mk
 
 _MAKE=$(MAKE) $(MFLAGS)
 
@@ -34,11 +35,7 @@ LIBs := $(shell  (. ./$(MKMK) && echo $$LIBs))
 COMPILEs := $(shell  (. ./$(MKMK) && echo $$COMPILEs))
 GOSRCs := $(shell  (. ./$(MKMK) && echo $$GOSRCs))
 
-export PATH := $(GODIST)/bin:$(PATH)
-
 export GO111MODULE := off
-
-GOYACC=$(shell $(GO) env GOPATH)/bin/goyacc
 
 #
 #  To enable race detection, uncomment GO_BUILD_RACE
@@ -55,7 +52,7 @@ GOYACC=$(shell $(GO) env GOPATH)/bin/goyacc
 #GCFLAGS=-gcflags "-N -l"
 #GCFLAGS=-gcflags "-l"
 
-all: floq
+all: floq floq-execv
 
 clean:
 	rm -f $(COMPILEs) y.output
@@ -66,11 +63,20 @@ distclean:
 parser.go: parser.y
 	$(GOYACC) -o parser.go parser.y || (rm -f parser.go; exit 1)
 	$(GOEXE) fmt parser.go
+
 floq: parser.go floq.go
 	$(GOEXE) build floq.go parser.go
 
-goenv:
-	$(GOEXE) env
+floq-execv: floq-execv.c
+	cc $(CFLAGS)							\
+		-I$(JMSCOTT_ROOT)/include				\
+		floq-execv.c						\
+		-o floq-execv						\
+		-L $(JMSCOTT_ROOT)/lib					\
+		-ljmscott
+
+tar:
+	make-make tar $(MKMK)
 world:
 	$(MAKE) $(MFLAGS) clean
 	$(MAKE) $(MFLAGS) all

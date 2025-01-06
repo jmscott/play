@@ -36,6 +36,7 @@
 #
 COMPILEs="
 	floq
+	floq-execv
 	parser.go
 	y.output
 "
@@ -68,6 +69,7 @@ SRCs="
 	parser.go
 	parser.y
 	y.output
+	floq-execv.c
 "
 
 #  Uncomment to create attic/ directory

@@ -4,7 +4,7 @@ state 0
 	flow: .    (1)
 
 	SYNC  shift 5
-	.  reduce 1 (src line 61)
+	.  reduce 1 (src line 62)
 
 	flow  goto 1
 	stmt_list  goto 2
@@ -20,10 +20,10 @@ state 1
 
 state 2
 	flow:  stmt_list.    (2)
-	stmt_list:  stmt_list.stmt 
+	stmt_list:  stmt_list.stmt ';' 
 
 	SYNC  shift 5
-	.  reduce 2 (src line 63)
+	.  reduce 2 (src line 64)
 
 	declare_sync_map  goto 4
 	stmt  goto 6
@@ -38,74 +38,74 @@ state 3
 state 4
 	stmt:  declare_sync_map.    (4)
 
-	.  reduce 4 (src line 70)
+	.  reduce 4 (src line 71)
 
 
 state 5
-	declare_sync_map:  SYNC.MAP NAME '[' yy_STRING ']' yy_BOOL ';' 
+	declare_sync_map:  SYNC.MAP NAME '[' yy_STRING ']' yy_BOOL 
 
 	MAP  shift 8
 	.  error
 
 
 state 6
-	stmt_list:  stmt_list stmt.    (6)
+	stmt_list:  stmt_list stmt.';' 
 
-	.  reduce 6 (src line 76)
+	';'  shift 9
+	.  error
 
 
 state 7
 	stmt_list:  stmt ';'.    (5)
 
-	.  reduce 5 (src line 74)
+	.  reduce 5 (src line 75)
 
 
 state 8
-	declare_sync_map:  SYNC MAP.NAME '[' yy_STRING ']' yy_BOOL ';' 
+	declare_sync_map:  SYNC MAP.NAME '[' yy_STRING ']' yy_BOOL 
 
-	NAME  shift 9
+	NAME  shift 10
 	.  error
 
 
 state 9
-	declare_sync_map:  SYNC MAP NAME.'[' yy_STRING ']' yy_BOOL ';' 
+	stmt_list:  stmt_list stmt ';'.    (6)
 
-	'['  shift 10
-	.  error
+	.  reduce 6 (src line 77)
 
 
 state 10
-	declare_sync_map:  SYNC MAP NAME '['.yy_STRING ']' yy_BOOL ';' 
+	declare_sync_map:  SYNC MAP NAME.'[' yy_STRING ']' yy_BOOL 
 
-	yy_STRING  shift 11
+	'['  shift 11
 	.  error
 
 
 state 11
-	declare_sync_map:  SYNC MAP NAME '[' yy_STRING.']' yy_BOOL ';' 
+	declare_sync_map:  SYNC MAP NAME '['.yy_STRING ']' yy_BOOL 
 
-	']'  shift 12
+	yy_STRING  shift 12
 	.  error
 
 
 state 12
-	declare_sync_map:  SYNC MAP NAME '[' yy_STRING ']'.yy_BOOL ';' 
+	declare_sync_map:  SYNC MAP NAME '[' yy_STRING.']' yy_BOOL 
 
-	yy_BOOL  shift 13
+	']'  shift 13
 	.  error
 
 
 state 13
-	declare_sync_map:  SYNC MAP NAME '[' yy_STRING ']' yy_BOOL.';' 
+	declare_sync_map:  SYNC MAP NAME '[' yy_STRING ']'.yy_BOOL 
 
-	';'  shift 14
+	yy_BOOL  shift 14
 	.  error
 
 
 state 14
-	declare_sync_map:  SYNC MAP NAME '[' yy_STRING ']' yy_BOOL ';'.    (3)
+	declare_sync_map:  SYNC MAP NAME '[' yy_STRING ']' yy_BOOL.    (3)
 
-	.  reduce 3 (src line 67)
+	.  reduce 3 (src line 68)
 
 
 23 terminals, 5 nonterminals

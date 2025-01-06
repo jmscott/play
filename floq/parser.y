@@ -22,7 +22,8 @@ func init() {
 	}
 }
 
-//  abstract syntax tree that represents the config file
+//  abstract syntax tree that represents the flow
+
 type ast struct {
 
 	yy_tok	int
@@ -65,7 +66,7 @@ flow:
 	;
 
 declare_sync_map:
-	  SYNC  MAP  NAME  '['  yy_STRING  ']'  yy_BOOL  ';'
+	  SYNC  MAP  NAME  '['  yy_STRING  ']'  yy_BOOL
 	;
 stmt:
 	  declare_sync_map
@@ -74,7 +75,7 @@ stmt:
 stmt_list:
 	  stmt  ';'
 	|
-	  stmt_list  stmt
+	  stmt_list  stmt  ';'
 	;
 %%
 

@@ -23,7 +23,8 @@ func init() {
 	}
 }
 
-// abstract syntax tree that represents the config file
+//  abstract syntax tree that represents the flow
+
 type ast struct {
 	yy_tok int
 
@@ -35,7 +36,7 @@ type ast struct {
 	next *ast
 }
 
-//line parser.y:39
+//line parser.y:40
 type yySymType struct {
 	yys  int
 	ast  *ast
@@ -94,7 +95,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:79
+//line parser.y:80
 
 var keyword = map[string]int{
 	"bool":   yy_BOOL,
@@ -506,13 +507,13 @@ const yyPrivate = 57344
 const yyLast = 14
 
 var yyAct = [...]int8{
-	14, 7, 12, 10, 8, 5, 9, 13, 11, 3,
+	9, 7, 13, 11, 8, 5, 10, 14, 12, 3,
 	4, 2, 6, 1,
 }
 
 var yyPact = [...]int16{
-	-11, -1000, -11, -22, -1000, -13, -1000, -1000, -9, -18,
-	-3, -20, -6, -23, -1000,
+	-11, -1000, -11, -22, -1000, -13, -23, -1000, -9, -1000,
+	-18, -3, -20, -6, -1000,
 }
 
 var yyPgo = [...]int8{
@@ -524,16 +525,16 @@ var yyR1 = [...]int8{
 }
 
 var yyR2 = [...]int8{
-	0, 0, 1, 8, 1, 2, 2,
+	0, 0, 1, 7, 1, 2, 3,
 }
 
 var yyChk = [...]int16{
-	-1000, -1, -2, -4, -3, 16, -4, 23, 17, 15,
-	21, 11, 22, 13, 23,
+	-1000, -1, -2, -4, -3, 16, -4, 23, 17, 23,
+	15, 21, 11, 22, 13,
 }
 
 var yyDef = [...]int8{
-	1, -2, 2, 0, 4, 0, 6, 5, 0, 0,
+	1, -2, 2, 0, 4, 0, 0, 5, 0, 6,
 	0, 0, 0, 0, 3,
 }
 
