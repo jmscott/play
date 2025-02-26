@@ -19,7 +19,7 @@ func croak(format string, args ...interface{}) {
 	os.Exit(16)
 }
 
-// flowd [server|parse|ast] <schema.flow>
+// flowd [parse|ast] <schema.flow>
 func main() {
 
 	argv := os.Args[1:]
