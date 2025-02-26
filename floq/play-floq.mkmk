@@ -38,11 +38,11 @@ COMPILEs="
 	floq
 	floq-execv
 	parser.go
-	y.output
 "
 
-#LIBs="
-#"
+LIBs="
+	example.floq
+"
 
 #  Uncoment to create bin/ directory
 #BINs="
@@ -64,11 +64,16 @@ COMPILEs="
 #"
 
 #  Uncomment to create src/ directory
-SRCs="
+GOSRCs="
 	floq.go
+
+	ast.go
 	parser.go
+	scanner.go
+"
+SRCs="
+	$GOSRCs
 	parser.y
-	y.output
 	floq-execv.c
 "
 

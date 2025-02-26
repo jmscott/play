@@ -55,17 +55,14 @@ export GO111MODULE := off
 all: floq floq-execv
 
 clean:
-	rm -f $(COMPILEs) y.output
-
-distclean:
-	rm -rf $(DIST_ROOT)/src/floq
+	rm --force $(COMPILEs) y.output
 
 parser.go: parser.y
 	$(GOYACC) -o parser.go parser.y || (rm -f parser.go; exit 1)
 	$(GOEXE) fmt parser.go
 
-floq: parser.go floq.go
-	$(GOEXE) build floq.go parser.go
+floq: $(GOSRCs)
+	$(GOEXE) build $(GOSRCs)
 
 floq-execv: floq-execv.c
 	cc $(CFLAGS)							\

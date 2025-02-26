@@ -15,7 +15,7 @@ var (
 func croak(format string, args ...interface{}) {
 
 	fmt.Fprintf(stderr, "floq: ERROR: %s\n", fmt.Sprintf(format, args...))
-	fmt.Fprintf(stderr, "usage: floq [server|parse|ast] server.floq\n")
+	fmt.Fprintf(stderr, "usage: floq [parse|ast] server.floq\n")
 	os.Exit(16)
 }
 
@@ -30,10 +30,8 @@ func main() {
 	action := argv[0]
 
 	switch action {
-		case "server":
-		case "ast":
-		case "depend":
 		case "parse": 
+		case "ast": 
 		default:
 			croak("unknown action: %s", action)
 	}
@@ -48,15 +46,15 @@ func main() {
 	}
 	defer floq.Close()
 
-	_, err = parse(bufio.NewReader(floq))
+	root, err := parse(bufio.NewReader(floq))
 	if err != nil {
 		croak("parse() failed: %s", err)
 	}
 
 	switch action {
 	case "parse":
-	case "server":
 	case "ast":
+		root.walk_print(0)
 	default:
 		croak("unknown action: %s", action)
 	}

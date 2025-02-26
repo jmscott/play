@@ -7,6 +7,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -17,137 +18,230 @@ import (
 const max_name_rune_count = 127
 
 func init() {
+
 	if yyToknames[3] != "__MIN_YYTOK" {
-		panic("yyToknames[3] != __MIN_YYTOK: yacc may have changed")
+		panic("yyToknames[3] != __MIN_YYTOK: correct yacc command?")
 	}
-}
-
-//  abstract syntax tree that represents the flow
-
-type ast struct {
-
-	yy_tok	int
-
-	//  children
-	left	*ast
-	right	*ast
-
-	//  siblings
-	next	*ast
 }
 %}
 
 %union {
 	ast		*ast
-	name		string
-			string
-			uint64
+	string		string
+	uint64		uint64
 }
 
 //  lowest numbered yytoken.  must be first in list.
 %token	__MIN_YYTOK
 
 %token	PARSE_ERROR
-%token	EQ  NEQ  MATCH  NO_MATCH
-%token  STRING  yy_STRING
-%token  BOOL  yy_BOOL
-%token	UINT64
-%token	NAME
-%token	SYNC MAP LOAD_OR_STORE SYNC_MAP_REF LOADED
+%token	CREATE
+%token	SCANNER  SCANNER_REF
+%token	OF  LINES
+%token	NAME  UINT64  STRING
+%token	FLOW  STATEMENT
 
-%type	<string>	NAME
-%type	<string>	STRING
+%type	<string>	new_name
+%type	<ast>		flow
+%type	<ast>		stmt  stmt_list
+%type	<ast>		create  scanner
 
 %%
+
 flow:
-	  /*  empty */
-	|
 	  stmt_list
+	  {
+		lex := yylex.(*yyLexState)
+
+		$1.parent = lex.ast_root
+		lex.ast_root.left = $1
+	  }
 	;
 
-declare_sync_map:
-	  SYNC  MAP  NAME  '['  yy_STRING  ']'  yy_BOOL
+create:
+	  CREATE
+	  {
+		lex := yylex.(*yyLexState)
+	  	$$ = &ast{
+			yy_tok:		CREATE,
+			line_no:        lex.line_no,
+		}
+	  }
+	;
+
+scanner:
+	  SCANNER  OF  LINES
+	  {
+		lex := yylex.(*yyLexState)
+	  	$$ = &ast{
+			yy_tok:		SCANNER_REF,
+			line_no:        lex.line_no,
+			scanner_ref:	&scanner {
+						split:	bufio.ScanLines,
+					},
+		}
+	  }
+	;
+new_name:
+	  NAME
+	  {
+	  	lex := yylex.(*yyLexState)
+
+	  	$$ = lex.name 
+	  }
+	|
+	  SCANNER_REF
+	  {
+	  	lex := yylex.(*yyLexState)
+
+		e := fmt.Sprintf("name %s conflicts scanner name", lex.name)
+		lex.Error(e)
+		return 0
+	  }
 	;
 stmt:
-	  declare_sync_map
-	;
+	  create  scanner  new_name
+	  {
+	  	lex := yylex.(*yyLexState)
 
+	  	$2.scanner_ref.name = $3
+	  	$2.parent = $1
+		$1.left = $2
+		lex.put_name($3, $2)
+
+		lex.name_is_name = false
+
+		$$ = $1
+	  }
+	;	
+	
 stmt_list:
+	  /*  empty */
+	  {
+	  	$$ = nil
+	  }
+	|
 	  stmt  ';'
+	  {
+	  	lex := yylex.(*yyLexState)
+
+		a := &ast{
+			yy_tok:		STATEMENT,
+			line_no:	$1.line_no,
+			left:		$1,	
+			parent:		lex.ast_root,
+		}
+		$1.parent = a
+
+		$$ = a
+	  }
 	|
 	  stmt_list  stmt  ';'
+	  {
+	  	lex := yylex.(*yyLexState)
+
+		a := &ast{
+			yy_tok:		STATEMENT,
+			line_no:	$2.line_no,
+			left:		$2,	
+			parent:         lex.ast_root,
+		}
+		$2.parent = a
+
+		//  find end statement
+		sl := $1
+		for ;  sl.next != nil;  sl = sl.next {}
+		sl.next = a
+		$$ = $1
+	  }
 	;
 %%
 
 var keyword = map[string]int{
-	"bool":			yy_BOOL,
-	"string":		yy_STRING,
-	"sync":			SYNC,
-	"map":			MAP,
+	"create":		CREATE,
+	"lines":		LINES,
+	"of":			OF,
+	"scanner":		SCANNER,
 }
 
 type yyLexState struct {
-	in				io.RuneReader	//  config source stream
-	line_no				uint64	   //  lexical line number
-	eof				bool       //  seen eof in token stream
-	peek				rune       //  lookahead in lexer
-	err				error
+	in			io.RuneReader	//  source stream
+	line_no			int	   	//  lexical line number
+	eof			bool       	//  seen eof in token stream
+	peek			rune       	//  lookahead in lexer
+	err			error
 
-	ast_root			*ast
+	ast_root		*ast
+	name			string
 
+	name2ast		map[string]*ast
+	name_is_name		bool
 }
 
-func (l *yyLexState) pushback(c rune) {
 
-	if l.peek != 0 {
+func (lex *yyLexState) put_name(name string, a *ast) {
+
+	//  cheap sanity test
+	if lex.name2ast[name] != nil {
+		panic(fmt.Sprintf("put_name: overriding name2ast: %s", name))
+	}
+	if a.line_no == 0 {
+		a.line_no = lex.line_no
+	}
+	lex.name2ast[name] = a
+}
+
+func (lex *yyLexState) pushback(c rune) {
+
+	if lex.peek != 0 {
 		panic("pushback(): push before peek")	/* impossible */
 	}
-	l.peek = c
+	lex.peek = c
 	if c == '\n' {
-		l.line_no--
+		lex.line_no--
 	}
 }
 
 /*
  *  Read next UTF8 rune.
  */
-func (l *yyLexState) get() (c rune, eof bool, err error) {
+func (lex *yyLexState) get() (c rune, eof bool, err error) {
 
-	if l.eof {
+	if lex.eof {
 		return 0, true, nil
 	}
-	if l.peek != 0 {		/* returned stashed char */
-		c = l.peek
+	if lex.peek != 0 {		/* returned stashed char */
+		c = lex.peek
 		/*
 		 *  Only pushback 1 char.
 		 */
-		l.peek = 0
+		lex.peek = 0
 		if c == '\n' {
-			l.line_no++
+			lex.line_no++
 		}
 		return c, false, nil
 	}
-	c, _, err = l.in.ReadRune()
+	c, _, err = lex.in.ReadRune()
 	if err != nil {
 		if err == io.EOF {
-			l.eof = true
+			lex.eof = true
 			return 0, true, nil
 		}
 		return 0, false, err
 	}
 
 	if c == unicode.ReplacementChar {
-		return 0, false, l.mkerror("get: invalid unicode sequence")
+		return 0, false, lex.mkerror("get: invalid unicode sequence")
 	}
 	if c == '\n' {
-		l.line_no++
+		lex.line_no++
 	}
 	return c, false, nil
 }
 
-func lookahead(l *yyLexState, peek rune, ifyes int, ifno int) (int, error) {
+func lookahead(lex *yyLexState, peek rune, ifyes int, ifno int) (int, error) {
 	
-	next, eof, err := l.get()
+	next, eof, err := lex.get()
 	if err != nil {
 		return 0, err
 	}
@@ -155,7 +249,7 @@ func lookahead(l *yyLexState, peek rune, ifyes int, ifno int) (int, error) {
 		return ifyes, err
 	}
 	if !eof {
-		l.pushback(next)
+		lex.pushback(next)
 	}
 	return ifno, nil
 }
@@ -164,14 +258,14 @@ func lookahead(l *yyLexState, peek rune, ifyes int, ifno int) (int, error) {
  *  Skip '#' comment.
  *  The scan stops on the terminating newline or error
  */
-func skip_comment(l *yyLexState) (err error) {
+func skip_comment(lex *yyLexState) (err error) {
 	var c rune
 	var eof bool
 
 	/*
 	 *  Scan for newline, end of file, or error.
 	 */
-	for c, eof, err = l.get();  !eof && err == nil;  c, eof, err = l.get() {
+	for c, eof, err = lex.get();  !eof && err == nil;  c, eof, err = lex.get() {
 		if c == '\n' {
 			return
 		}
@@ -182,9 +276,9 @@ func skip_comment(l *yyLexState) (err error) {
 
 // skip over whitespace in code, complicated by # coments.
 
-func skip_space(l *yyLexState) (c rune, eof bool, err error) {
+func skip_space(lex *yyLexState) (c rune, eof bool, err error) {
 
-	for c, eof, err = l.get();  !eof && err == nil;  c, eof, err = l.get() {
+	for c, eof, err = lex.get();  !eof && err == nil;  c, eof, err = lex.get() {
 		if unicode.IsSpace(c) {
 			continue
 		}
@@ -195,7 +289,7 @@ func skip_space(l *yyLexState) (c rune, eof bool, err error) {
 		/*
 		 *  Skipping over # comment terminated by newline or EOF
 		 */
-		err = skip_comment(l)
+		err = skip_comment(lex)
 		if err != nil {
 			return 0, false, err
 		}
@@ -207,24 +301,24 @@ func skip_space(l *yyLexState) (c rune, eof bool, err error) {
  *  Very simple utf8 string scanning, with no proper escapes for characters.
  *  Expect this module to be replaced with correct text.Scanner.
  */
-func (l *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
+func (lex *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
 	var c rune
 	s := ""
 
-	for c, eof, err = l.get();  !eof && err == nil;  c, eof, err = l.get(){
+	for c, eof, err = lex.get();  !eof && err == nil;  c, eof, err = lex.get(){
 		if c == '"' {
 			yylval.string = s
 			return false, nil
 		}
 		switch c {
 		case '\n':
-			return false, l.mkerror("new line in string")
+			return false, lex.mkerror("new line in string")
 		case '\r':
-			return false, l.mkerror("carriage return in string")
+			return false, lex.mkerror("carriage return in string")
 		case '\t':
-			return false, l.mkerror("tab in string")
+			return false, lex.mkerror("tab in string")
 		case '\\':
-			return false, l.mkerror("backslash in string")
+			return false, lex.mkerror("backslash in string")
 		}
 		s += string(c)
 	}
@@ -235,17 +329,17 @@ func (l *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
 }
 
 /*
- *  Scan an almost raw string as defined in golang.
+ *  Scan an almost raw `...`  string as defined in golang.
  *  Carriage return is stripped.
  */
-func (l *yyLexState) scan_raw_string(yylval *yySymType) (eof bool, err error) {
+func (lex *yyLexState) scan_raw_string(yylval *yySymType) (eof bool, err error) {
 	var c rune
 	s := ""
 
 	/*
 	 *  Scan a raw string of unicode letters, accepting all but `
 	 */
-	for c, eof, err = l.get();  !eof && err == nil;  c, eof, err = l.get() {
+	for c, eof, err = lex.get();  !eof && err == nil;  c, eof, err = lex.get() {
 		
 		switch c {
 		case '\r':
@@ -267,7 +361,7 @@ func (l *yyLexState) scan_raw_string(yylval *yySymType) (eof bool, err error) {
  *  Scan a word consisting of a sequence of unicode Letters, Numbers and '_'
  *  characters.
  */
-func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
+func (lex *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 	var eof bool
 
 	w := string(c)		//  panic() if cast fails?
@@ -277,7 +371,7 @@ func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 	 *  Scan a string of unicode (?) letters, numbers/digits and '_' 
 	 *  characters.
 	 */
-	for c, eof, err = l.get();  !eof && err == nil;  c, eof, err = l.get() {
+	for c, eof, err = lex.get();  !eof && err == nil;  c, eof, err = lex.get() {
 		if c > 127 ||
 		   (c != '_' &&
 		   !unicode.IsLetter(c) &&
@@ -286,7 +380,7 @@ func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 		}
 		count++
 		if count > max_name_rune_count {
-			return 0, l.mkerror("word: too many chars: max=%d",
+			return 0, lex.mkerror("word: too many chars: max=%d",
 						max_name_rune_count)
 		}
 		w += string(c)		//  Note: replace with string builder?
@@ -295,18 +389,21 @@ func (l *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
 		return 0, err
 	}
 	if !eof {
-		l.pushback(c)		/* first character after word */
+		lex.pushback(c)		/* first character after word */
 	}
 
 	if keyword[w] > 0 {		/* got a keyword */
 		return keyword[w], nil	/* return yacc generated token */
 	}
 
-	yylval.string = w
+	lex.name = w
+	if lex.name_is_name == false && lex.name2ast[w] != nil {
+		return lex.name2ast[w].yy_tok, nil
+	}
 	return NAME, nil
 }
 
-func (l *yyLexState) scan_uint64(yylval *yySymType, c rune) (err error) {
+func (lex *yyLexState) scan_uint64(yylval *yySymType, c rune) (err error) {
 	var eof bool
 
 	ui64 := string(c)
@@ -316,10 +413,10 @@ func (l *yyLexState) scan_uint64(yylval *yySymType, c rune) (err error) {
 	 *  Scan a string of unicode numbers/digits and let Scanf parse the
 	 *  actual digit string.
 	 */
-	for c, eof, err = l.get();  !eof && err == nil;  c, eof, err = l.get() {
+	for c, eof, err = lex.get();  !eof && err == nil;  c, eof, err = lex.get() {
 		count++
 		if count > 20 {
-			return l.mkerror("uint64 > 20 digits")
+			return lex.mkerror("uint64 > 20 digits")
 		}
 		if c > 127 || !unicode.IsNumber(c) {
 			break
@@ -330,22 +427,24 @@ func (l *yyLexState) scan_uint64(yylval *yySymType, c rune) (err error) {
 		return
 	}
 	if !eof {
-		l.pushback(c)		//  first character after ui64
+		lex.pushback(c)		//  first character after ui64
 	}
 
 	yylval.uint64, err = strconv.ParseUint(ui64, 10, 64)
 	return
 }
 
-func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
+//  lexical scan of a token
 
-	if l.err != nil {
+func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
+
+	if lex.err != nil {
 		return PARSE_ERROR
 	}
-	if l.eof {
+	if lex.eof {
 		return 0
 	}
-	c, eof, err := skip_space(l)
+	c, eof, err := skip_space(lex)
 	if err != nil {
 		goto PARSE_ERROR
 	}
@@ -360,111 +459,71 @@ func (l *yyLexState) Lex(yylval *yySymType) (tok int) {
 		goto PARSE_ERROR
 
 	case unicode.IsLetter(c) || c == '_':
-		tok, err = l.scan_word(yylval, c)
+		tok, err = lex.scan_word(yylval, c)
 		if err != nil {
 			goto PARSE_ERROR
 		}
 		return tok
 
 	case unicode.IsNumber(c):
-		err = l.scan_uint64(yylval, c)
+		err = lex.scan_uint64(yylval, c)
 		if err != nil {
 			goto PARSE_ERROR
 		}
 		return UINT64
 
 	case c == '"':
-		lno := l.line_no	// reset line number on error
+		lno := lex.line_no	// reset line number on error
 
-		eof, err = l.scan_string(yylval)
+		eof, err = lex.scan_string(yylval)
 		if err != nil {
 			goto PARSE_ERROR
 		}
 		if eof {
-			l.line_no = lno
-			err = l.mkerror("unexpected end of file in string")
+			lex.line_no = lno
+			err = lex.mkerror("unexpected end of file in string")
 			goto PARSE_ERROR
 		}
 		return STRING
 
 	case c == '`':
-		lno := l.line_no	// reset line number on error
+		lno := lex.line_no	// reset line number on error
 
-		eof, err = l.scan_raw_string(yylval)
+		eof, err = lex.scan_raw_string(yylval)
 		if err != nil {
 			goto PARSE_ERROR
 		}
 		if eof {
-			l.line_no = lno
-			err = l.mkerror("unexpected end of file in raw string")
+			lex.line_no = lno
+			err = lex.mkerror("unexpected end of file in raw string")
 			goto PARSE_ERROR
 		}
 		return STRING
-
-	case c == '=':
-
-		//  string equality: ==
-
-		tok, err = lookahead(l, '=', EQ, 0)
-		if err != nil {
-			goto PARSE_ERROR
-		}
-		if tok == EQ {
-			return tok
-		}
-
-		//  match regular expression: =~
-
-		tok, err = lookahead(l, '~', MATCH, '=')
-		if err != nil {
-			goto PARSE_ERROR
-		}
-		return tok
-
-	case c == '!':
-
-		//  string inequality: !=
-
-		tok, err = lookahead(l, '=', NEQ, 0)
-		if err != nil {
-			goto PARSE_ERROR
-		}
-		if tok == NEQ {
-			return tok
-		}
-
-		//  regular expression not matches: !~
-
-		tok, err = lookahead(l, '~', NO_MATCH, '=')
-		if err != nil {
-			goto PARSE_ERROR
-		}
-		return tok
 	}
 	return int(c)
 
 PARSE_ERROR:
-	l.err = err
+	lex.err = err
 	return PARSE_ERROR
 }
 
-func (l *yyLexState) mkerror(format string, args...interface{}) error {
+func (lex *yyLexState) mkerror(format string, args...interface{}) error {
 
 	return errors.New(fmt.Sprintf("%s, near line %d",
 		fmt.Sprintf(format, args...),
-		l.line_no,
+		lex.line_no,
 	))
 }
 
-func (l *yyLexState) error(format string, args...interface{}) {
+func (lex *yyLexState) error(format string, args...interface{}) {
 
-	l.Error(fmt.Sprintf(format, args...))
+	lex.Error(fmt.Sprintf(format, args...))
 }
 
-func (l *yyLexState) Error(msg string) {
+func (lex *yyLexState) Error(msg string) {
 
-	if l.err == nil {			//  only report first error
-		l.err = l.mkerror("%s", msg)
+	if lex.err == nil {			//  only report first error
+		lex.err = lex.mkerror("%s", msg)
 	}
 }
 
@@ -473,6 +532,11 @@ func parse(in io.RuneReader) (*ast, error) {
 	lex := &yyLexState{
 		in:		in,
 		line_no:	1,
+		name2ast:	make(map[string]*ast),
+		ast_root:	&ast{
+					yy_tok:		FLOW,
+					line_no:	1,
+				},
 	}
 	yyParse(lex)
 	return lex.ast_root, lex.err
