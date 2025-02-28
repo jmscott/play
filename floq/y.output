@@ -1,11 +1,11 @@
 
-0: shift/reduce conflict (shift 5(0), red'n 7(0)) on CREATE
+0: shift/reduce conflict (shift 5(0), red'n 10(0)) on CREATE
 state 0
 	$accept: .flow $end 
-	stmt_list: .    (7)
+	stmt_list: .    (10)
 
 	CREATE  shift 5
-	.  reduce 7 (src line 118)
+	.  reduce 10 (src line 153)
 
 	flow  goto 1
 	stmt  goto 3
@@ -24,7 +24,7 @@ state 2
 	stmt_list:  stmt_list.stmt ';' 
 
 	CREATE  shift 5
-	.  reduce 1 (src line 51)
+	.  reduce 1 (src line 52)
 
 	stmt  goto 6
 	create  goto 4
@@ -38,93 +38,125 @@ state 3
 
 state 4
 	stmt:  create.scanner new_name 
+	stmt:  create.command new_name 
 
-	SCANNER  shift 9
+	SCANNER  shift 10
+	COMMAND  shift 11
 	.  error
 
 	scanner  goto 8
+	command  goto 9
 
 state 5
 	create:  CREATE.    (2)
 
-	.  reduce 2 (src line 61)
+	.  reduce 2 (src line 62)
 
 
 state 6
 	stmt_list:  stmt_list stmt.';' 
 
-	';'  shift 10
+	';'  shift 12
 	.  error
 
 
 state 7
-	stmt_list:  stmt ';'.    (8)
+	stmt_list:  stmt ';'.    (11)
 
-	.  reduce 8 (src line 123)
+	.  reduce 11 (src line 158)
 
 
 state 8
 	stmt:  create scanner.new_name 
 
-	SCANNER_REF  shift 13
-	NAME  shift 12
+	SCANNER_REF  shift 15
+	CMD_REF  shift 16
+	NAME  shift 14
 	.  error
 
-	new_name  goto 11
+	new_name  goto 13
 
 state 9
-	scanner:  SCANNER.OF LINES 
+	stmt:  create command.new_name 
 
-	OF  shift 14
+	SCANNER_REF  shift 15
+	CMD_REF  shift 16
+	NAME  shift 14
 	.  error
 
+	new_name  goto 17
 
 state 10
-	stmt_list:  stmt_list stmt ';'.    (9)
+	scanner:  SCANNER.OF LINES 
 
-	.  reduce 9 (src line 138)
+	OF  shift 18
+	.  error
 
 
 state 11
-	stmt:  create scanner new_name.    (6)
+	command:  COMMAND.    (4)
 
-	.  reduce 6 (src line 102)
+	.  reduce 4 (src line 87)
 
 
 state 12
-	new_name:  NAME.    (4)
+	stmt_list:  stmt_list stmt ';'.    (12)
 
-	.  reduce 4 (src line 85)
+	.  reduce 12 (src line 173)
 
 
 state 13
-	new_name:  SCANNER_REF.    (5)
+	stmt:  create scanner new_name.    (8)
 
-	.  reduce 5 (src line 92)
+	.  reduce 8 (src line 123)
 
 
 state 14
-	scanner:  SCANNER OF.LINES 
+	new_name:  NAME.    (5)
 
-	LINES  shift 15
-	.  error
+	.  reduce 5 (src line 97)
 
 
 state 15
+	new_name:  SCANNER_REF.    (6)
+
+	.  reduce 6 (src line 104)
+
+
+state 16
+	new_name:  CMD_REF.    (7)
+
+	.  reduce 7 (src line 113)
+
+
+state 17
+	stmt:  create command new_name.    (9)
+
+	.  reduce 9 (src line 137)
+
+
+state 18
+	scanner:  SCANNER OF.LINES 
+
+	LINES  shift 19
+	.  error
+
+
+state 19
 	scanner:  SCANNER OF LINES.    (3)
 
-	.  reduce 3 (src line 72)
+	.  reduce 3 (src line 73)
 
 
-16 terminals, 7 nonterminals
-10 grammar rules, 16/16000 states
+18 terminals, 8 nonterminals
+13 grammar rules, 20/16000 states
 1 shift/reduce, 0 reduce/reduce conflicts reported
-56 working sets used
-memory: parser 7/240000
+57 working sets used
+memory: parser 9/240000
 0 extra closures
-9 shift entries, 1 exceptions
-7 goto entries
+14 shift entries, 1 exceptions
+9 goto entries
 1 entries saved by goto default
-Optimizer space used: output 15/240000
-15 table entries, 0 zero
-maximum spread: 16, maximum offset: 16
+Optimizer space used: output 19/240000
+19 table entries, 0 zero
+maximum spread: 18, maximum offset: 18

@@ -63,11 +63,11 @@ LIBs="
 #HTDOCSs="
 #"
 
-#  Uncomment to create src/ directory
 GOSRCs="
 	floq.go
 
 	ast.go
+	command.go
 	parser.go
 	scanner.go
 "

@@ -38,13 +38,15 @@ const PARSE_ERROR = 57347
 const CREATE = 57348
 const SCANNER = 57349
 const SCANNER_REF = 57350
-const OF = 57351
-const LINES = 57352
-const NAME = 57353
-const UINT64 = 57354
-const STRING = 57355
-const FLOW = 57356
-const STATEMENT = 57357
+const COMMAND = 57351
+const CMD_REF = 57352
+const OF = 57353
+const LINES = 57354
+const NAME = 57355
+const UINT64 = 57356
+const STRING = 57357
+const FLOW = 57358
+const STATEMENT = 57359
 
 var yyToknames = [...]string{
 	"$end",
@@ -55,6 +57,8 @@ var yyToknames = [...]string{
 	"CREATE",
 	"SCANNER",
 	"SCANNER_REF",
+	"COMMAND",
+	"CMD_REF",
 	"OF",
 	"LINES",
 	"NAME",
@@ -71,13 +75,14 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:158
+//line parser.y:193
 
 var keyword = map[string]int{
 	"create":  CREATE,
 	"lines":   LINES,
 	"of":      OF,
 	"scanner": SCANNER,
+	"command": COMMAND,
 }
 
 type yyLexState struct {
@@ -466,38 +471,40 @@ var yyExca = [...]int8{
 
 const yyPrivate = 57344
 
-const yyLast = 15
+const yyLast = 19
 
 var yyAct = [...]int8{
-	10, 7, 13, 15, 14, 12, 9, 5, 3, 8,
-	4, 6, 2, 1, 11,
+	12, 7, 15, 19, 16, 13, 18, 14, 10, 5,
+	11, 3, 9, 8, 6, 17, 4, 2, 1,
 }
 
 var yyPact = [...]int16{
-	1, -1000, 1, -15, -1, -1000, -16, -1000, -6, -5,
-	-1000, -1000, -1000, -1000, -7, -1000,
+	3, -1000, 3, -17, 1, -1000, -18, -1000, -6, -6,
+	-5, -1000, -1000, -1000, -1000, -1000, -1000, -1000, -9, -1000,
 }
 
 var yyPgo = [...]int8{
-	0, 14, 13, 8, 12, 10, 9,
+	0, 5, 18, 11, 17, 16, 13, 12,
 }
 
 var yyR1 = [...]int8{
-	0, 2, 5, 6, 1, 1, 3, 4, 4, 4,
+	0, 2, 5, 6, 7, 1, 1, 1, 3, 3,
+	4, 4, 4,
 }
 
 var yyR2 = [...]int8{
-	0, 1, 1, 3, 1, 1, 3, 0, 2, 3,
+	0, 1, 1, 3, 1, 1, 1, 1, 3, 3,
+	0, 2, 3,
 }
 
 var yyChk = [...]int16{
-	-1000, -2, -4, -3, -5, 6, -3, 16, -6, 7,
-	16, -1, 11, 8, 9, 10,
+	-1000, -2, -4, -3, -5, 6, -3, 18, -6, -7,
+	7, 9, 18, -1, 13, 8, 10, -1, 11, 12,
 }
 
 var yyDef = [...]int8{
-	7, -2, 1, 0, 0, 2, 0, 8, 0, 0,
-	9, 6, 4, 5, 0, 3,
+	10, -2, 1, 0, 0, 2, 0, 11, 0, 0,
+	0, 4, 12, 8, 5, 6, 7, 9, 0, 3,
 }
 
 var yyTok1 = [...]int8{
@@ -506,12 +513,12 @@ var yyTok1 = [...]int8{
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 3, 16,
+	3, 3, 3, 3, 3, 3, 3, 3, 3, 18,
 }
 
 var yyTok2 = [...]int8{
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-	12, 13, 14, 15,
+	12, 13, 14, 15, 16, 17,
 }
 
 var yyTok3 = [...]int8{
@@ -857,7 +864,7 @@ yydefault:
 
 	case 1:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:53
+//line parser.y:54
 		{
 			lex := yylex.(*yyLexState)
 
@@ -866,7 +873,7 @@ yydefault:
 		}
 	case 2:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:63
+//line parser.y:64
 		{
 			lex := yylex.(*yyLexState)
 			yyVAL.ast = &ast{
@@ -876,7 +883,7 @@ yydefault:
 		}
 	case 3:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:74
+//line parser.y:75
 		{
 			lex := yylex.(*yyLexState)
 			yyVAL.ast = &ast{
@@ -889,25 +896,46 @@ yydefault:
 		}
 	case 4:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:87
+//line parser.y:89
+		{
+			lex := yylex.(*yyLexState)
+			yyVAL.ast = &ast{
+				yy_tok:  CMD_REF,
+				line_no: lex.line_no,
+				cmd_ref: &command{},
+			}
+		}
+	case 5:
+		yyDollar = yyS[yypt-1 : yypt+1]
+//line parser.y:99
 		{
 			lex := yylex.(*yyLexState)
 
 			yyVAL.string = lex.name
 		}
-	case 5:
+	case 6:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:94
+//line parser.y:106
 		{
 			lex := yylex.(*yyLexState)
 
-			e := fmt.Sprintf("name %s conflicts scanner name", lex.name)
+			e := fmt.Sprintf("name already exists as scanner %s", lex.name)
 			lex.Error(e)
 			return 0
 		}
-	case 6:
+	case 7:
+		yyDollar = yyS[yypt-1 : yypt+1]
+//line parser.y:115
+		{
+			lex := yylex.(*yyLexState)
+
+			e := fmt.Sprintf("name already exists as command %s", lex.name)
+			lex.Error(e)
+			return 0
+		}
+	case 8:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:104
+//line parser.y:125
 		{
 			lex := yylex.(*yyLexState)
 
@@ -920,15 +948,30 @@ yydefault:
 
 			yyVAL.ast = yyDollar[1].ast
 		}
-	case 7:
+	case 9:
+		yyDollar = yyS[yypt-3 : yypt+1]
+//line parser.y:139
+		{
+			lex := yylex.(*yyLexState)
+
+			yyDollar[2].ast.cmd_ref.name = yyDollar[3].string
+			yyDollar[2].ast.parent = yyDollar[1].ast
+			yyDollar[1].ast.left = yyDollar[2].ast
+			lex.put_name(yyDollar[3].string, yyDollar[2].ast)
+
+			lex.name_is_name = false
+
+			yyVAL.ast = yyDollar[1].ast
+		}
+	case 10:
 		yyDollar = yyS[yypt-0 : yypt+1]
-//line parser.y:120
+//line parser.y:155
 		{
 			yyVAL.ast = nil
 		}
-	case 8:
+	case 11:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line parser.y:125
+//line parser.y:160
 		{
 			lex := yylex.(*yyLexState)
 
@@ -942,9 +985,9 @@ yydefault:
 
 			yyVAL.ast = a
 		}
-	case 9:
+	case 12:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:140
+//line parser.y:175
 		{
 			lex := yylex.(*yyLexState)
 

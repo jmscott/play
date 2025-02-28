@@ -37,6 +37,7 @@ func init() {
 %token	PARSE_ERROR
 %token	CREATE
 %token	SCANNER  SCANNER_REF
+%token	COMMAND  CMD_REF
 %token	OF  LINES
 %token	NAME  UINT64  STRING
 %token	FLOW  STATEMENT
@@ -44,7 +45,7 @@ func init() {
 %type	<string>	new_name
 %type	<ast>		flow
 %type	<ast>		stmt  stmt_list
-%type	<ast>		create  scanner
+%type	<ast>		create  scanner  command
 
 %%
 
@@ -82,6 +83,17 @@ scanner:
 		}
 	  }
 	;
+
+command:
+  	  COMMAND
+	  {
+	  	lex := yylex.(*yyLexState)
+		$$ = &ast{
+			yy_tok:		CMD_REF,
+			line_no:        lex.line_no,
+			cmd_ref:	&command {},
+		}
+	  }
 new_name:
 	  NAME
 	  {
@@ -94,7 +106,16 @@ new_name:
 	  {
 	  	lex := yylex.(*yyLexState)
 
-		e := fmt.Sprintf("name %s conflicts scanner name", lex.name)
+		e := fmt.Sprintf("name already exists as scanner %s", lex.name)
+		lex.Error(e)
+		return 0
+	  }
+	|
+	  CMD_REF
+	  {
+	  	lex := yylex.(*yyLexState)
+
+		e := fmt.Sprintf("name already exists as command %s", lex.name)
 		lex.Error(e)
 		return 0
 	  }
@@ -105,6 +126,20 @@ stmt:
 	  	lex := yylex.(*yyLexState)
 
 	  	$2.scanner_ref.name = $3
+	  	$2.parent = $1
+		$1.left = $2
+		lex.put_name($3, $2)
+
+		lex.name_is_name = false
+
+		$$ = $1
+	  }
+	|
+	  create command new_name
+	  {
+	  	lex := yylex.(*yyLexState)
+
+	  	$2.cmd_ref.name = $3
 	  	$2.parent = $1
 		$1.left = $2
 		lex.put_name($3, $2)
@@ -162,6 +197,7 @@ var keyword = map[string]int{
 	"lines":		LINES,
 	"of":			OF,
 	"scanner":		SCANNER,
+	"command":		COMMAND,
 }
 
 type yyLexState struct {

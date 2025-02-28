@@ -21,6 +21,7 @@ type ast struct {
 	parent		*ast
 
 	scanner_ref	*scanner
+	cmd_ref		*command
 }
 
 func (a *ast) String() string {
@@ -32,6 +33,8 @@ func (a *ast) String() string {
 		what = fmt.Sprintf("STATEMENT#%d", a.line_no)
 	case SCANNER_REF:
 		what = fmt.Sprintf("SCANNER_REF(%s)", a.scanner_ref.name)
+	case CMD_REF:
+		what = fmt.Sprintf("CMD_REF(%s)", a.cmd_ref.name)
 	default:
 		//  print token name or int value of yy token
 		offset := a.yy_tok - __MIN_YYTOK + 3
