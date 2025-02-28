@@ -5,8 +5,9 @@
 #	Convert to make-make
 #	rasqld <schema>.rasql >rasqld-<schema>.log 2>&1 &
 #
-GO:=/usr/local/go/bin/go
-export GOPATH := /usr/local
+
+include ../local.mk
+include ../play.mk
 
 RASQLD_SRC=rasqld.go							\
 	config.go							\
@@ -24,14 +25,14 @@ clean:
 	rm -f rasqld
 
 rasqld: $(RASQLD_SRC)
-	$(GO) build $(RASQLD_SRC)
+	$(GOEXE) build $(RASQLD_SRC)
 fmt:
-	$(GO) fmt $(RASQLD_SRC)
+	$(GOEXE) fmt $(RASQLD_SRC)
 vet:
 	#  vet wants formating functions to end in 'f'.  jmscott doesn't want.
 	#  -printf=0 eliminates "possible formatting directive in log call"
 	#  gripes
-	$(GO) tool vet -printf=0 $(RASQLD_SRC)
+	$(GOEXE) tool vet -printf=0 $(RASQLD_SRC)
 pem:
 	#
 	#  Generate test pem files for public certificate and private keys.
