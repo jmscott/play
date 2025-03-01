@@ -84,7 +84,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:291
+//line parser.y:333
 
 var keyword = map[string]int{
 	"command": COMMAND,
@@ -928,19 +928,34 @@ yydefault:
 			}
 
 			a.right = yyDollar[3].ast
+			if a.right.yy_tok == STRING {
+				c := len(a.right.string)
+				format := a.left.string + ": string attribute: %s"
+				if c == 0 {
+					lex.error(format, "is empty")
+					return 0
+				}
+				if c > 127 {
+					lex.error(format, fmt.Sprintf("%d > 127", c))
+					return 0
+				}
+			}
 			yyDollar[3].ast.parent = a
 
 			yyVAL.ast = a
 		}
 	case 5:
 		yyDollar = yyS[yypt-0 : yypt+1]
-//line parser.y:110
+//line parser.y:122
 		{
-			yyVAL.ast = nil
+			yyVAL.ast = &ast{
+				yy_tok:  ATTRIBUTE_LIST,
+				line_no: yylex.(*yyLexState).line_no,
+			}
 		}
 	case 6:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:115
+//line parser.y:130
 		{
 			lex := yylex.(*yyLexState)
 
@@ -955,7 +970,7 @@ yydefault:
 		}
 	case 7:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:129
+//line parser.y:144
 		{
 			al := yyDollar[1].ast
 			a := yyDollar[3].ast
@@ -971,7 +986,7 @@ yydefault:
 		}
 	case 8:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:146
+//line parser.y:161
 		{
 			lex := yylex.(*yyLexState)
 			yyVAL.ast = &ast{
@@ -981,7 +996,7 @@ yydefault:
 		}
 	case 9:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:157
+//line parser.y:172
 		{
 			lex := yylex.(*yyLexState)
 			yyVAL.ast = &ast{
@@ -994,7 +1009,7 @@ yydefault:
 		}
 	case 10:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:171
+//line parser.y:186
 		{
 			lex := yylex.(*yyLexState)
 			yyVAL.ast = &ast{
@@ -1005,7 +1020,7 @@ yydefault:
 		}
 	case 11:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:181
+//line parser.y:196
 		{
 			lex := yylex.(*yyLexState)
 
@@ -1013,7 +1028,7 @@ yydefault:
 		}
 	case 12:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:188
+//line parser.y:203
 		{
 			lex := yylex.(*yyLexState)
 
@@ -1023,7 +1038,7 @@ yydefault:
 		}
 	case 13:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:197
+//line parser.y:212
 		{
 			lex := yylex.(*yyLexState)
 
@@ -1033,7 +1048,7 @@ yydefault:
 		}
 	case 14:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:207
+//line parser.y:222
 		{
 			lex := yylex.(*yyLexState)
 
@@ -1048,14 +1063,14 @@ yydefault:
 		}
 	case 15:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line parser.y:221
+//line parser.y:236
 		{
 			yylex.(*yyLexState).name_is_name = true
 
 		}
 	case 16:
 		yyDollar = yyS[yypt-7 : yypt+1]
-//line parser.y:225
+//line parser.y:240
 		{
 			lex := yylex.(*yyLexState)
 
@@ -1064,10 +1079,6 @@ yydefault:
 
 			al := yyDollar[6].ast
 			acmd := yyDollar[2].ast
-			if emsg := acmd.cmd_ref.yy_frisk(al); emsg != "" {
-				lex.Error(emsg)
-				return 0
-			}
 			al.parent = yyDollar[2].ast
 			acmd.left = al
 
@@ -1076,17 +1087,48 @@ yydefault:
 
 			yyDollar[1].ast.left = yyDollar[2].ast
 
+			//  frisk the attibutes of command
+
+			e := func(fmt string, args ...interface{}) {
+				fmt = "command: " + acmd.cmd_ref.name + ": " + fmt
+				lex.error(fmt, args...)
+			}
+
+			if al.left == nil {
+				e("missing path attribute")
+				return 0
+			}
+			if al.left.next != nil {
+				e("too many attributes")
+				return 0
+			}
+			ap := al.left.left
+			if ap.string != "path" {
+				e("unknown attribute: %s", ap.string)
+			}
+			av := al.left.right
+			if av.yy_tok != STRING {
+				e("path value not string")
+			}
+
+			if len(al.left.right.string) == 0 {
+				e("empty path value")
+			}
+
 			yyVAL.ast = yyDollar[1].ast
 		}
 	case 17:
 		yyDollar = yyS[yypt-0 : yypt+1]
-//line parser.y:251
+//line parser.y:290
 		{
-			yyVAL.ast = nil
+			yyVAL.ast = &ast{
+				yy_tok:  STATEMENT,
+				line_no: yylex.(*yyLexState).line_no,
+			}
 		}
 	case 18:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line parser.y:256
+//line parser.y:298
 		{
 			lex := yylex.(*yyLexState)
 
@@ -1102,7 +1144,7 @@ yydefault:
 		}
 	case 19:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:271
+//line parser.y:313
 		{
 			lex := yylex.(*yyLexState)
 

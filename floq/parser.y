@@ -99,6 +99,18 @@ attribute:
 		}
 
 		a.right = $3
+		if a.right.yy_tok == STRING {
+			c := len(a.right.string)
+			format := a.left.string + ": string attribute: %s"
+			if c == 0 {
+				lex.error(format, "is empty")
+				return 0
+			}
+			if c > 127 {
+				lex.error(format, fmt.Sprintf("%d > 127", c))
+				return 0
+			}
+		}
 		$3.parent = a
 
 		$$ = a
@@ -108,7 +120,10 @@ attribute:
 attribute_list:
 	  /*  empty  */
 	  {
-	  	$$ = nil;
+	  	$$ = &ast{
+			yy_tok:         ATTRIBUTE_LIST,
+			line_no:        yylex.(*yyLexState).line_no,
+		}
 	  }
 	|
 	  attribute
@@ -230,10 +245,6 @@ stmt:
 
 		al := $6
 		acmd := $2
-		if emsg := acmd.cmd_ref.yy_frisk(al);  emsg != "" {
-			lex.Error(emsg)
-			return 0
-		}
 		al.parent = $2
 		acmd.left = al
 
@@ -242,6 +253,34 @@ stmt:
 
 		$1.left = $2
 
+		//  frisk the attibutes of command
+
+		e := func(fmt string, args ...interface{}) {
+			fmt = "command: " + acmd.cmd_ref.name + ": " + fmt
+			lex.error(fmt, args...)
+		}
+
+		if al.left == nil {
+			e("missing path attribute")
+			return 0
+		}
+		if al.left.next != nil {
+			e("too many attributes")
+			return 0
+		}
+		ap := al.left.left
+		if ap.string != "path" {
+			e("unknown attribute: %s", ap.string)
+		}
+		av := al.left.right
+		if av.yy_tok != STRING {
+			e("path value not string")
+		}
+
+		if len(al.left.right.string) == 0 {
+			e("empty path value")
+		}
+
 		$$ = $1
 	  }
 	;	
@@ -249,7 +288,10 @@ stmt:
 stmt_list:
 	  /*  empty */
 	  {
-	  	$$ = nil
+	  	$$ = &ast{
+			yy_tok:         STATEMENT,
+			line_no:        yylex.(*yyLexState).line_no,
+		}
 	  }
 	|
 	  stmt  ';'

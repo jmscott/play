@@ -5,7 +5,7 @@ state 0
 	stmt_list: .    (17)
 
 	CREATE  shift 5
-	.  reduce 17 (src line 249)
+	.  reduce 17 (src line 288)
 
 	flow  goto 1
 	stmt  goto 3
@@ -50,7 +50,7 @@ state 4
 state 5
 	create:  CREATE.    (8)
 
-	.  reduce 8 (src line 144)
+	.  reduce 8 (src line 159)
 
 
 state 6
@@ -63,7 +63,7 @@ state 6
 state 7
 	stmt_list:  stmt ';'.    (18)
 
-	.  reduce 18 (src line 254)
+	.  reduce 18 (src line 296)
 
 
 state 8
@@ -96,37 +96,37 @@ state 10
 state 11
 	command:  COMMAND.    (10)
 
-	.  reduce 10 (src line 169)
+	.  reduce 10 (src line 184)
 
 
 state 12
 	stmt_list:  stmt_list stmt ';'.    (19)
 
-	.  reduce 19 (src line 269)
+	.  reduce 19 (src line 311)
 
 
 state 13
 	stmt:  create scanner new_name.    (14)
 
-	.  reduce 14 (src line 205)
+	.  reduce 14 (src line 220)
 
 
 state 14
 	new_name:  NAME.    (11)
 
-	.  reduce 11 (src line 179)
+	.  reduce 11 (src line 194)
 
 
 state 15
 	new_name:  SCANNER_REF.    (12)
 
-	.  reduce 12 (src line 186)
+	.  reduce 12 (src line 201)
 
 
 state 16
 	new_name:  CMD_REF.    (13)
 
-	.  reduce 13 (src line 195)
+	.  reduce 13 (src line 210)
 
 
 state 17
@@ -147,14 +147,14 @@ state 19
 	stmt:  create command new_name '('.$$15 attribute_list ')' 
 	$$15: .    (15)
 
-	.  reduce 15 (src line 219)
+	.  reduce 15 (src line 234)
 
 	$$15  goto 21
 
 state 20
 	scanner:  SCANNER OF LINES.    (9)
 
-	.  reduce 9 (src line 155)
+	.  reduce 9 (src line 170)
 
 
 state 21
@@ -164,7 +164,7 @@ state 21
 	SCANNER_REF  shift 15
 	CMD_REF  shift 16
 	NAME  shift 14
-	.  reduce 5 (src line 108)
+	.  reduce 5 (src line 120)
 
 	new_name  goto 24
 	attribute  goto 23
@@ -182,7 +182,7 @@ state 22
 state 23
 	attribute_list:  attribute.    (6)
 
-	.  reduce 6 (src line 113)
+	.  reduce 6 (src line 128)
 
 
 state 24
@@ -206,7 +206,7 @@ state 25
 state 26
 	stmt:  create command new_name '(' $$15 attribute_list ')'.    (16)
 
-	.  reduce 16 (src line 224)
+	.  reduce 16 (src line 239)
 
 
 state 27
@@ -221,7 +221,7 @@ state 27
 state 28
 	attribute_list:  attribute_list ',' attribute.    (7)
 
-	.  reduce 7 (src line 127)
+	.  reduce 7 (src line 142)
 
 
 state 29
