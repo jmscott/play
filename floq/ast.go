@@ -22,6 +22,8 @@ type ast struct {
 
 	scanner_ref	*scanner
 	cmd_ref		*command
+	uint64
+	string
 }
 
 func (a *ast) String() string {
@@ -34,7 +36,13 @@ func (a *ast) String() string {
 	case SCANNER_REF:
 		what = fmt.Sprintf("SCANNER_REF(%s)", a.scanner_ref.name)
 	case CMD_REF:
-		what = fmt.Sprintf("CMD_REF(%s)", a.cmd_ref.name)
+		what = fmt.Sprintf( "CMD_REF(%s)", a.cmd_ref.name)
+	case STRING:
+		what = fmt.Sprintf("STRING(%s)", a.string)
+	case NAME:
+		what = fmt.Sprintf("NAME(%s)", a.string)
+	case UINT64:
+		what = fmt.Sprintf("UINT64(%d)", a.uint64)
 	default:
 		//  print token name or int value of yy token
 		offset := a.yy_tok - __MIN_YYTOK + 3
@@ -56,7 +64,7 @@ func (a *ast) walk_print(indent int) {
 		fmt.Println("")
 	} else {
 		if a.parent == nil {
-			panic("ast: parent is not nil")
+			panic("ast: parent is nil")
 		}
 		for i := 0;  i < indent;  i++ {
 			fmt.Print("  ")

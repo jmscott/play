@@ -22,6 +22,7 @@ func init() {
 	if yyToknames[3] != "__MIN_YYTOK" {
 		panic("yyToknames[3] != __MIN_YYTOK: correct yacc command?")
 	}
+	//yyDebug = 4
 }
 %}
 
@@ -40,10 +41,13 @@ func init() {
 %token	COMMAND  CMD_REF
 %token	OF  LINES
 %token	NAME  UINT64  STRING
-%token	FLOW  STATEMENT
+%token	FLOW  STATEMENT  ATTRIBUTE  ATTRIBUTE_LIST
 
-%type	<string>	new_name
+%type	<uint64>	UINT64		
+%type	<string>	STRING  new_name
+%type	<ast>		constant
 %type	<ast>		flow
+%type	<ast>		attribute  attribute_list
 %type	<ast>		stmt  stmt_list
 %type	<ast>		create  scanner  command
 
@@ -56,6 +60,84 @@ flow:
 
 		$1.parent = lex.ast_root
 		lex.ast_root.left = $1
+	  }
+	;
+
+constant:
+	  UINT64
+	  {
+	  	$$ = &ast{
+			yy_tok:		UINT64,
+			uint64:		$1,
+			line_no:	yylex.(*yyLexState).line_no,
+		}
+	  }
+	|
+	  STRING
+	  {
+	  	$$ = &ast{
+			yy_tok:		STRING,
+			string:		$1,
+			line_no:        yylex.(*yyLexState).line_no,
+		}
+	  }
+	;
+
+attribute:
+	  new_name  ':'  constant
+	  {
+	  	lex := yylex.(*yyLexState)
+
+	  	a := &ast{
+			yy_tok:		ATTRIBUTE,
+			line_no:	lex.line_no,
+		}
+		a.left = &ast{
+				parent:		a,
+				yy_tok:		NAME,
+				string:		$1,
+		}
+
+		a.right = $3
+		$3.parent = a
+
+		$$ = a
+	  }
+	;
+
+attribute_list:
+	  /*  empty  */
+	  {
+	  	$$ = nil;
+	  }
+	|
+	  attribute
+	  {
+		lex := yylex.(*yyLexState)
+
+	  	al := &ast{
+			yy_tok:		ATTRIBUTE_LIST,
+			line_no:	lex.line_no,
+		}
+		al.left = $1
+		$1.parent = al
+
+		$$ = al
+	  }
+	|
+	  attribute_list ','  attribute
+	  {
+		al := $1
+	  	a := $3
+		a.parent = al
+
+
+		var an *ast
+		for an = al.left;  an.next != nil;  an = an.next {}
+		an.next = a
+		a.previous = a
+
+		$$ = $1
 	  }
 	;
 
@@ -135,16 +217,30 @@ stmt:
 		$$ = $1
 	  }
 	|
-	  create command new_name
+	  create  command  new_name  '('
+	  {
+		yylex.(*yyLexState).name_is_name = true
+
+	  } attribute_list  ')'
 	  {
 	  	lex := yylex.(*yyLexState)
 
-	  	$2.cmd_ref.name = $3
-	  	$2.parent = $1
-		$1.left = $2
+		lex.name_is_name = false
 		lex.put_name($3, $2)
 
-		lex.name_is_name = false
+		al := $6
+		acmd := $2
+		if emsg := acmd.cmd_ref.yy_frisk(al);  emsg != "" {
+			lex.Error(emsg)
+			return 0
+		}
+		al.parent = $2
+		acmd.left = al
+
+	  	acmd.cmd_ref.name = $3
+	  	acmd.parent = $1
+
+		$1.left = $2
 
 		$$ = $1
 	  }
@@ -175,29 +271,31 @@ stmt_list:
 	  {
 	  	lex := yylex.(*yyLexState)
 
-		a := &ast{
+		s := &ast{
 			yy_tok:		STATEMENT,
 			line_no:	$2.line_no,
 			left:		$2,	
 			parent:         lex.ast_root,
 		}
-		$2.parent = a
+		$2.parent = s
 
 		//  find end statement
 		sl := $1
 		for ;  sl.next != nil;  sl = sl.next {}
-		sl.next = a
+		sl.next = s
+		s.previous = sl
+
 		$$ = $1
 	  }
 	;
 %%
 
 var keyword = map[string]int{
+	"command":		COMMAND,
 	"create":		CREATE,
 	"lines":		LINES,
 	"of":			OF,
 	"scanner":		SCANNER,
-	"command":		COMMAND,
 }
 
 type yyLexState struct {
@@ -209,6 +307,8 @@ type yyLexState struct {
 
 	ast_root		*ast
 	name			string
+	string
+	uint64
 
 	name2ast		map[string]*ast
 	name_is_name		bool
@@ -314,7 +414,9 @@ func skip_comment(lex *yyLexState) (err error) {
 
 func skip_space(lex *yyLexState) (c rune, eof bool, err error) {
 
-	for c, eof, err = lex.get();  !eof && err == nil;  c, eof, err = lex.get() {
+	for c, eof, err = lex.get();
+	    !eof && err == nil;
+	    c, eof, err = lex.get() {
 		if unicode.IsSpace(c) {
 			continue
 		}
@@ -341,7 +443,9 @@ func (lex *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
 	var c rune
 	s := ""
 
-	for c, eof, err = lex.get();  !eof && err == nil;  c, eof, err = lex.get(){
+	for c, eof, err = lex.get();
+	    !eof && err == nil;
+	    c, eof, err = lex.get() {
 		if c == '"' {
 			yylval.string = s
 			return false, nil
@@ -375,7 +479,9 @@ func (lex *yyLexState) scan_raw_string(yylval *yySymType) (eof bool, err error) 
 	/*
 	 *  Scan a raw string of unicode letters, accepting all but `
 	 */
-	for c, eof, err = lex.get();  !eof && err == nil;  c, eof, err = lex.get() {
+	for c, eof, err = lex.get();
+	    !eof && err == nil;
+	    c, eof, err = lex.get() {
 		
 		switch c {
 		case '\r':
@@ -407,7 +513,9 @@ func (lex *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error)
 	 *  Scan a string of unicode (?) letters, numbers/digits and '_' 
 	 *  characters.
 	 */
-	for c, eof, err = lex.get();  !eof && err == nil;  c, eof, err = lex.get() {
+	for c, eof, err = lex.get();
+	    !eof && err == nil;
+	    c, eof, err = lex.get() {
 		if c > 127 ||
 		   (c != '_' &&
 		   !unicode.IsLetter(c) &&
@@ -449,7 +557,9 @@ func (lex *yyLexState) scan_uint64(yylval *yySymType, c rune) (err error) {
 	 *  Scan a string of unicode numbers/digits and let Scanf parse the
 	 *  actual digit string.
 	 */
-	for c, eof, err = lex.get();  !eof && err == nil;  c, eof, err = lex.get() {
+	for c, eof, err = lex.get();
+	    !eof && err == nil;
+	    c, eof, err = lex.get() {
 		count++
 		if count > 20 {
 			return lex.mkerror("uint64 > 20 digits")
