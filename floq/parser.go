@@ -88,7 +88,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:362
+//line parser.y:371
 
 var keyword = map[string]int{
 	"command": COMMAND,
@@ -486,31 +486,31 @@ var yyExca = [...]int8{
 
 const yyPrivate = 57344
 
-const yyLast = 38
+const yyLast = 40
 
 var yyAct = [...]int8{
-	25, 12, 7, 23, 27, 26, 19, 36, 38, 37,
-	32, 33, 35, 20, 15, 18, 16, 24, 31, 14,
-	10, 5, 11, 21, 9, 3, 13, 17, 6, 28,
-	8, 4, 34, 2, 29, 22, 1, 30,
+	30, 25, 12, 7, 23, 27, 26, 19, 36, 18,
+	37, 32, 33, 32, 33, 15, 20, 16, 24, 31,
+	14, 10, 5, 11, 21, 9, 3, 13, 17, 6,
+	28, 8, 35, 4, 2, 34, 29, 38, 22, 1,
 }
 
 var yyPact = [...]int16{
-	15, -1000, 15, -25, 13, -1000, -26, -1000, 6, 6,
-	4, -1000, -1000, -1000, -1000, -1000, -1000, -19, 1, -1000,
-	-1000, 6, -21, -1000, -20, 6, -1000, -4, -1000, -1000,
-	-1000, -3, -1000, -1000, -14, -1000, -7, -1000, -1000,
+	16, -1000, 16, -24, 14, -1000, -25, -1000, 7, 7,
+	-2, -1000, -1000, -1000, -1000, -1000, -1000, -18, 4, -1000,
+	-1000, 7, -20, -1000, -19, 7, -1000, -3, -1000, -1000,
+	-1000, -1, -1000, -1000, -13, -1000, -1, -1000, -1000,
 }
 
 var yyPgo = [...]int8{
-	0, 17, 37, 36, 3, 35, 34, 25, 33, 32,
-	31, 30, 24, 23,
+	0, 18, 39, 4, 38, 36, 0, 35, 26, 34,
+	33, 31, 25, 24,
 }
 
 var yyR1 = [...]int8{
-	0, 3, 2, 2, 9, 9, 9, 6, 6, 4,
-	5, 5, 5, 10, 11, 12, 1, 1, 1, 7,
-	13, 7, 8, 8, 8,
+	0, 2, 6, 6, 7, 7, 7, 5, 5, 3,
+	4, 4, 4, 10, 11, 12, 1, 1, 1, 8,
+	13, 8, 9, 9, 9,
 }
 
 var yyR2 = [...]int8{
@@ -520,10 +520,10 @@ var yyR2 = [...]int8{
 }
 
 var yyChk = [...]int16{
-	-1000, -3, -8, -7, -10, 6, -7, 27, -11, -12,
+	-1000, -2, -9, -8, -10, 6, -8, 27, -11, -12,
 	7, 9, 27, -1, 13, 8, 10, -1, 11, 25,
-	12, -13, -5, -4, -1, 21, 26, 24, -4, -6,
-	-2, 22, 14, 15, -9, 15, 21, 23, 15,
+	12, -13, -4, -3, -1, 21, 26, 24, -3, -5,
+	-6, 22, 14, 15, -7, -6, 21, 23, -6,
 }
 
 var yyDef = [...]int8{
@@ -894,7 +894,7 @@ yydefault:
 
 	case 1:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:61
+//line parser.y:59
 		{
 			lex := yylex.(*yyLexState)
 
@@ -903,7 +903,7 @@ yydefault:
 		}
 	case 2:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:71
+//line parser.y:69
 		{
 			yyVAL.ast = &ast{
 				yy_tok:  UINT64,
@@ -913,7 +913,7 @@ yydefault:
 		}
 	case 3:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:80
+//line parser.y:78
 		{
 			yyVAL.ast = &ast{
 				yy_tok:  STRING,
@@ -923,7 +923,7 @@ yydefault:
 		}
 	case 4:
 		yyDollar = yyS[yypt-0 : yypt+1]
-//line parser.y:91
+//line parser.y:89
 		{
 			yyVAL.ast = &ast{
 				yy_tok:    ATT_ARRAY,
@@ -933,24 +933,35 @@ yydefault:
 		}
 	case 5:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:100
+//line parser.y:98
 		{
+			lex := yylex.(*yyLexState)
+
+			if yyDollar[1].ast.yy_tok != STRING {
+				lex.error("attribute array element not string")
+				return 0
+			}
 			ar := make([]string, 1)
-			ar[0] = yyDollar[1].string
+			ar[0] = yyDollar[1].ast.string
 			yyVAL.ast = &ast{
 				yy_tok:    ATT_ARRAY,
-				line_no:   yylex.(*yyLexState).line_no,
+				line_no:   lex.line_no,
 				array_ref: ar,
 			}
 		}
 	case 6:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:111
+//line parser.y:115
 		{
 			lex := yylex.(*yyLexState)
 
+			if yyDollar[3].ast.yy_tok != STRING {
+				lex.error("attribute array element not string")
+				return 0
+			}
+
 			ar := yyDollar[1].ast.array_ref
-			ar = append(ar, yyDollar[3].string)
+			ar = append(ar, yyDollar[3].ast.string)
 			yyDollar[1].ast.array_ref = ar
 			if len(ar) > 127 {
 				lex.error("attribute array > 127 elements")
@@ -960,13 +971,13 @@ yydefault:
 		}
 	case 8:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:129
+//line parser.y:138
 		{
 			yyVAL.ast = yyDollar[2].ast
 		}
 	case 9:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:136
+//line parser.y:145
 		{
 			lex := yylex.(*yyLexState)
 
@@ -999,7 +1010,7 @@ yydefault:
 		}
 	case 10:
 		yyDollar = yyS[yypt-0 : yypt+1]
-//line parser.y:170
+//line parser.y:179
 		{
 			yyVAL.ast = &ast{
 				yy_tok:  ATT_LIST,
@@ -1008,7 +1019,7 @@ yydefault:
 		}
 	case 11:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:178
+//line parser.y:187
 		{
 			lex := yylex.(*yyLexState)
 
@@ -1023,7 +1034,7 @@ yydefault:
 		}
 	case 12:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:192
+//line parser.y:201
 		{
 			al := yyDollar[1].ast
 			a := yyDollar[3].ast
@@ -1039,7 +1050,7 @@ yydefault:
 		}
 	case 13:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:209
+//line parser.y:218
 		{
 			lex := yylex.(*yyLexState)
 			yyVAL.ast = &ast{
@@ -1049,7 +1060,7 @@ yydefault:
 		}
 	case 14:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:220
+//line parser.y:229
 		{
 			lex := yylex.(*yyLexState)
 			yyVAL.ast = &ast{
@@ -1062,7 +1073,7 @@ yydefault:
 		}
 	case 15:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:234
+//line parser.y:243
 		{
 			lex := yylex.(*yyLexState)
 			yyVAL.ast = &ast{
@@ -1073,7 +1084,7 @@ yydefault:
 		}
 	case 16:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:244
+//line parser.y:253
 		{
 			lex := yylex.(*yyLexState)
 
@@ -1081,7 +1092,7 @@ yydefault:
 		}
 	case 17:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:251
+//line parser.y:260
 		{
 			lex := yylex.(*yyLexState)
 
@@ -1091,7 +1102,7 @@ yydefault:
 		}
 	case 18:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:260
+//line parser.y:269
 		{
 			lex := yylex.(*yyLexState)
 
@@ -1101,7 +1112,7 @@ yydefault:
 		}
 	case 19:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:270
+//line parser.y:279
 		{
 			lex := yylex.(*yyLexState)
 
@@ -1116,14 +1127,14 @@ yydefault:
 		}
 	case 20:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line parser.y:284
+//line parser.y:293
 		{
 			yylex.(*yyLexState).name_is_name = true
 
 		}
 	case 21:
 		yyDollar = yyS[yypt-7 : yypt+1]
-//line parser.y:288
+//line parser.y:297
 		{
 			lex := yylex.(*yyLexState)
 
@@ -1153,7 +1164,7 @@ yydefault:
 		}
 	case 22:
 		yyDollar = yyS[yypt-0 : yypt+1]
-//line parser.y:319
+//line parser.y:328
 		{
 			yyVAL.ast = &ast{
 				yy_tok:  STATEMENT,
@@ -1162,7 +1173,7 @@ yydefault:
 		}
 	case 23:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line parser.y:327
+//line parser.y:336
 		{
 			lex := yylex.(*yyLexState)
 
@@ -1178,7 +1189,7 @@ yydefault:
 		}
 	case 24:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:342
+//line parser.y:351
 		{
 			lex := yylex.(*yyLexState)
 

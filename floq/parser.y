@@ -47,11 +47,9 @@ func init() {
 
 %type	<uint64>	UINT64		
 %type	<string>	STRING  new_name
-%type	<ast>		constant
 %type	<ast>		flow
-%type	<ast>		att  att_list  att_value
+%type	<ast>		att  att_list  att_value  att_expr att_array
 %type	<ast>		stmt  stmt_list
-%type	<ast>		att_array 
 %type	<ast>		create  scanner  command
 
 %%
@@ -66,7 +64,7 @@ flow:
 	  }
 	;
 
-constant:
+att_expr:
 	  UINT64
 	  {
 	  	$$ = &ast{
@@ -96,23 +94,34 @@ att_array:
 		}
 	  }
 	|
-	  STRING
+	  att_expr
 	  {
+	  	lex := yylex.(*yyLexState)
+
+	  	if $1.yy_tok != STRING {
+			lex.error("attribute array element not string")
+			return 0
+		}
 	  	ar := make([]string, 1)
-		ar[0] = $1 
+		ar[0] = $1.string 
 	  	$$ = &ast{
 			yy_tok:		ATT_ARRAY,
-			line_no:        yylex.(*yyLexState).line_no,
+			line_no:        lex.line_no,
 			array_ref:	ar,
 		}
 	  }
 	|
-	  att_array  ','  STRING
+	  att_array  ','  att_expr
 	  {
 	  	lex := yylex.(*yyLexState)
 
+	  	if $3.yy_tok != STRING {
+			lex.error("attribute array element not string")
+			return 0
+		}
+
 		ar := $1.array_ref
-		ar = append(ar, $3)
+		ar = append(ar, $3.string)
 		$1.array_ref = ar
 		if len(ar) > 127 {
 			lex.error("attribute array > 127 elements")
@@ -123,7 +132,7 @@ att_array:
 	;
 
 att_value:
-	  constant
+	  att_expr
 	|
 	  '['  att_array  ']'
 	  {
