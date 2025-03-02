@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"unicode"
 )
@@ -44,6 +45,7 @@ func init() {
 %token	FLOW  STATEMENT
 %token	ATT  ATT_LIST
 %token	ATT_ARRAY
+%token	EXPAND_ENV
 
 %type	<uint64>	UINT64		
 %type	<string>	STRING  new_name
@@ -79,6 +81,15 @@ att_expr:
 	  	$$ = &ast{
 			yy_tok:		STRING,
 			string:		$1,
+			line_no:        yylex.(*yyLexState).line_no,
+		}
+	  }
+	|
+	  EXPAND_ENV   STRING
+	  {
+	  	$$ = &ast{
+			yy_tok:		STRING,
+			string:		os.ExpandEnv($2),
 			line_no:        yylex.(*yyLexState).line_no,
 		}
 	  }
@@ -371,6 +382,7 @@ stmt_list:
 %%
 
 var keyword = map[string]int{
+	"ExpandEnv":		EXPAND_ENV,
 	"command":		COMMAND,
 	"create":		CREATE,
 	"lines":		LINES,
