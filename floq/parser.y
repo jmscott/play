@@ -41,14 +41,17 @@ func init() {
 %token	COMMAND  CMD_REF
 %token	OF  LINES
 %token	NAME  UINT64  STRING
-%token	FLOW  STATEMENT  ATTRIBUTE  ATTRIBUTE_LIST
+%token	FLOW  STATEMENT
+%token	ATT  ATT_LIST
+%token	ATT_ARRAY
 
 %type	<uint64>	UINT64		
 %type	<string>	STRING  new_name
 %type	<ast>		constant
 %type	<ast>		flow
-%type	<ast>		attribute  attribute_list
+%type	<ast>		att  att_list  att_value
 %type	<ast>		stmt  stmt_list
+%type	<ast>		att_array 
 %type	<ast>		create  scanner  command
 
 %%
@@ -83,13 +86,58 @@ constant:
 	  }
 	;
 
-attribute:
-	  new_name  ':'  constant
+att_array:
+	  /*  empty  */
+	  {
+	  	$$ = &ast{
+			yy_tok:		ATT_ARRAY,
+			line_no:        yylex.(*yyLexState).line_no,
+			array_ref:	make([]string, 0),
+		}
+	  }
+	|
+	  STRING
+	  {
+	  	ar := make([]string, 1)
+		ar[0] = $1 
+	  	$$ = &ast{
+			yy_tok:		ATT_ARRAY,
+			line_no:        yylex.(*yyLexState).line_no,
+			array_ref:	ar,
+		}
+	  }
+	|
+	  att_array  ','  STRING
+	  {
+	  	lex := yylex.(*yyLexState)
+
+		ar := $1.array_ref
+		ar = append(ar, $3)
+		$1.array_ref = ar
+		if len(ar) > 127 {
+			lex.error("attribute array > 127 elements")
+			return 0
+		}
+		$$ = $1
+	  }
+	;
+
+att_value:
+	  constant
+	|
+	  '['  att_array  ']'
+	  {
+	  	$$ = $2
+	  }
+	;
+
+att:
+	  new_name  ':'  att_value
 	  {
 	  	lex := yylex.(*yyLexState)
 
 	  	a := &ast{
-			yy_tok:		ATTRIBUTE,
+			yy_tok:		ATT,
 			line_no:	lex.line_no,
 		}
 		a.left = &ast{
@@ -117,21 +165,21 @@ attribute:
 	  }
 	;
 
-attribute_list:
+att_list:
 	  /*  empty  */
 	  {
 	  	$$ = &ast{
-			yy_tok:         ATTRIBUTE_LIST,
+			yy_tok:         ATT_LIST,
 			line_no:        yylex.(*yyLexState).line_no,
 		}
 	  }
 	|
-	  attribute
+	  att
 	  {
 		lex := yylex.(*yyLexState)
 
 	  	al := &ast{
-			yy_tok:		ATTRIBUTE_LIST,
+			yy_tok:		ATT_LIST,
 			line_no:	lex.line_no,
 		}
 		al.left = $1
@@ -140,7 +188,7 @@ attribute_list:
 		$$ = al
 	  }
 	|
-	  attribute_list ','  attribute
+	  att_list ','  att
 	  {
 		al := $1
 	  	a := $3
@@ -236,7 +284,7 @@ stmt:
 	  {
 		yylex.(*yyLexState).name_is_name = true
 
-	  } attribute_list  ')'
+	  } att_list  ')'
 	  {
 	  	lex := yylex.(*yyLexState)
 
@@ -255,30 +303,11 @@ stmt:
 
 		//  frisk the attibutes of command
 
-		e := func(fmt string, args ...interface{}) {
-			fmt = "command: " + acmd.cmd_ref.name + ": " + fmt
-			lex.error(fmt, args...)
-		}
-
-		if al.left == nil {
-			e("missing path attribute")
+		cmd := acmd.cmd_ref
+		e := cmd.frisk_att(al) 
+		if e != "" {
+			lex.error("command: %s: %s", cmd.name, e)
 			return 0
-		}
-		if al.left.next != nil {
-			e("too many attributes")
-			return 0
-		}
-		ap := al.left.left
-		if ap.string != "path" {
-			e("unknown attribute: %s", ap.string)
-		}
-		av := al.left.right
-		if av.yy_tok != STRING {
-			e("path value not string")
-		}
-
-		if len(al.left.right.string) == 0 {
-			e("empty path value")
 		}
 
 		$$ = $1

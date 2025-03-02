@@ -1,11 +1,11 @@
 
-0: shift/reduce conflict (shift 5(0), red'n 17(0)) on CREATE
+0: shift/reduce conflict (shift 5(0), red'n 22(0)) on CREATE
 state 0
 	$accept: .flow $end 
-	stmt_list: .    (17)
+	stmt_list: .    (22)
 
 	CREATE  shift 5
-	.  reduce 17 (src line 288)
+	.  reduce 22 (src line 317)
 
 	flow  goto 1
 	stmt  goto 3
@@ -24,7 +24,7 @@ state 2
 	stmt_list:  stmt_list.stmt ';' 
 
 	CREATE  shift 5
-	.  reduce 1 (src line 56)
+	.  reduce 1 (src line 59)
 
 	stmt  goto 6
 	create  goto 4
@@ -38,7 +38,7 @@ state 3
 
 state 4
 	stmt:  create.scanner new_name 
-	stmt:  create.command new_name '(' $$15 attribute_list ')' 
+	stmt:  create.command new_name '(' $$20 att_list ')' 
 
 	SCANNER  shift 10
 	COMMAND  shift 11
@@ -48,9 +48,9 @@ state 4
 	command  goto 9
 
 state 5
-	create:  CREATE.    (8)
+	create:  CREATE.    (13)
 
-	.  reduce 8 (src line 159)
+	.  reduce 13 (src line 207)
 
 
 state 6
@@ -61,9 +61,9 @@ state 6
 
 
 state 7
-	stmt_list:  stmt ';'.    (18)
+	stmt_list:  stmt ';'.    (23)
 
-	.  reduce 18 (src line 296)
+	.  reduce 23 (src line 325)
 
 
 state 8
@@ -77,7 +77,7 @@ state 8
 	new_name  goto 13
 
 state 9
-	stmt:  create command.new_name '(' $$15 attribute_list ')' 
+	stmt:  create command.new_name '(' $$20 att_list ')' 
 
 	SCANNER_REF  shift 15
 	CMD_REF  shift 16
@@ -94,43 +94,43 @@ state 10
 
 
 state 11
-	command:  COMMAND.    (10)
+	command:  COMMAND.    (15)
 
-	.  reduce 10 (src line 184)
+	.  reduce 15 (src line 232)
 
 
 state 12
-	stmt_list:  stmt_list stmt ';'.    (19)
+	stmt_list:  stmt_list stmt ';'.    (24)
 
-	.  reduce 19 (src line 311)
+	.  reduce 24 (src line 340)
 
 
 state 13
-	stmt:  create scanner new_name.    (14)
+	stmt:  create scanner new_name.    (19)
 
-	.  reduce 14 (src line 220)
+	.  reduce 19 (src line 268)
 
 
 state 14
-	new_name:  NAME.    (11)
+	new_name:  NAME.    (16)
 
-	.  reduce 11 (src line 194)
+	.  reduce 16 (src line 242)
 
 
 state 15
-	new_name:  SCANNER_REF.    (12)
+	new_name:  SCANNER_REF.    (17)
 
-	.  reduce 12 (src line 201)
+	.  reduce 17 (src line 249)
 
 
 state 16
-	new_name:  CMD_REF.    (13)
+	new_name:  CMD_REF.    (18)
 
-	.  reduce 13 (src line 210)
+	.  reduce 18 (src line 258)
 
 
 state 17
-	stmt:  create command new_name.'(' $$15 attribute_list ')' 
+	stmt:  create command new_name.'(' $$20 att_list ')' 
 
 	'('  shift 19
 	.  error
@@ -144,35 +144,35 @@ state 18
 
 
 state 19
-	stmt:  create command new_name '('.$$15 attribute_list ')' 
-	$$15: .    (15)
+	stmt:  create command new_name '('.$$20 att_list ')' 
+	$$20: .    (20)
 
-	.  reduce 15 (src line 234)
+	.  reduce 20 (src line 282)
 
-	$$15  goto 21
+	$$20  goto 21
 
 state 20
-	scanner:  SCANNER OF LINES.    (9)
+	scanner:  SCANNER OF LINES.    (14)
 
-	.  reduce 9 (src line 170)
+	.  reduce 14 (src line 218)
 
 
 state 21
-	stmt:  create command new_name '(' $$15.attribute_list ')' 
-	attribute_list: .    (5)
+	stmt:  create command new_name '(' $$20.att_list ')' 
+	att_list: .    (10)
 
 	SCANNER_REF  shift 15
 	CMD_REF  shift 16
 	NAME  shift 14
-	.  reduce 5 (src line 120)
+	.  reduce 10 (src line 168)
 
 	new_name  goto 24
-	attribute  goto 23
-	attribute_list  goto 22
+	att  goto 23
+	att_list  goto 22
 
 state 22
-	attribute_list:  attribute_list.',' attribute 
-	stmt:  create command new_name '(' $$15 attribute_list.')' 
+	att_list:  att_list.',' att 
+	stmt:  create command new_name '(' $$20 att_list.')' 
 
 	','  shift 25
 	')'  shift 26
@@ -180,20 +180,20 @@ state 22
 
 
 state 23
-	attribute_list:  attribute.    (6)
+	att_list:  att.    (11)
 
-	.  reduce 6 (src line 128)
+	.  reduce 11 (src line 176)
 
 
 state 24
-	attribute:  new_name.':' constant 
+	att:  new_name.':' att_value 
 
 	':'  shift 27
 	.  error
 
 
 state 25
-	attribute_list:  attribute_list ','.attribute 
+	att_list:  att_list ','.att 
 
 	SCANNER_REF  shift 15
 	CMD_REF  shift 16
@@ -201,56 +201,107 @@ state 25
 	.  error
 
 	new_name  goto 24
-	attribute  goto 28
+	att  goto 28
 
 state 26
-	stmt:  create command new_name '(' $$15 attribute_list ')'.    (16)
+	stmt:  create command new_name '(' $$20 att_list ')'.    (21)
 
-	.  reduce 16 (src line 239)
+	.  reduce 21 (src line 287)
 
 
 state 27
-	attribute:  new_name ':'.constant 
+	att:  new_name ':'.att_value 
 
-	UINT64  shift 30
-	STRING  shift 31
+	UINT64  shift 32
+	STRING  shift 33
+	'['  shift 31
 	.  error
 
-	constant  goto 29
+	constant  goto 30
+	att_value  goto 29
 
 state 28
-	attribute_list:  attribute_list ',' attribute.    (7)
+	att_list:  att_list ',' att.    (12)
 
-	.  reduce 7 (src line 142)
+	.  reduce 12 (src line 190)
 
 
 state 29
-	attribute:  new_name ':' constant.    (4)
+	att:  new_name ':' att_value.    (9)
 
-	.  reduce 4 (src line 86)
+	.  reduce 9 (src line 134)
 
 
 state 30
-	constant:  UINT64.    (2)
+	att_value:  constant.    (7)
 
-	.  reduce 2 (src line 66)
+	.  reduce 7 (src line 125)
 
 
 state 31
+	att_value:  '['.att_array ']' 
+	att_array: .    (4)
+
+	STRING  shift 35
+	.  reduce 4 (src line 89)
+
+	att_array  goto 34
+
+state 32
+	constant:  UINT64.    (2)
+
+	.  reduce 2 (src line 69)
+
+
+state 33
 	constant:  STRING.    (3)
 
-	.  reduce 3 (src line 75)
+	.  reduce 3 (src line 78)
 
 
-24 terminals, 12 nonterminals
-20 grammar rules, 32/16000 states
+state 34
+	att_array:  att_array.',' STRING 
+	att_value:  '[' att_array.']' 
+
+	','  shift 36
+	']'  shift 37
+	.  error
+
+
+state 35
+	att_array:  STRING.    (5)
+
+	.  reduce 5 (src line 98)
+
+
+state 36
+	att_array:  att_array ','.STRING 
+
+	STRING  shift 38
+	.  error
+
+
+state 37
+	att_value:  '[' att_array ']'.    (8)
+
+	.  reduce 8 (src line 127)
+
+
+state 38
+	att_array:  att_array ',' STRING.    (6)
+
+	.  reduce 6 (src line 109)
+
+
+27 terminals, 14 nonterminals
+25 grammar rules, 39/16000 states
 1 shift/reduce, 0 reduce/reduce conflicts reported
-61 working sets used
-memory: parser 16/240000
+63 working sets used
+memory: parser 21/240000
 3 extra closures
-26 shift entries, 1 exceptions
-15 goto entries
+31 shift entries, 1 exceptions
+17 goto entries
 2 entries saved by goto default
-Optimizer space used: output 31/240000
-31 table entries, 0 zero
-maximum spread: 24, maximum offset: 25
+Optimizer space used: output 38/240000
+38 table entries, 0 zero
+maximum spread: 27, maximum offset: 27

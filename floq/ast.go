@@ -24,6 +24,7 @@ type ast struct {
 	cmd_ref		*command
 	uint64
 	string
+	array_ref	[]string
 }
 
 func (a *ast) String() string {
@@ -43,6 +44,9 @@ func (a *ast) String() string {
 		what = fmt.Sprintf("NAME(%s)", a.string)
 	case UINT64:
 		what = fmt.Sprintf("UINT64(%d)", a.uint64)
+	case ATT_ARRAY:
+		ar := a.array_ref
+		what = fmt.Sprintf("ATT_ARRAY(l=%d,c=%d)", len(ar), cap(ar))
 	default:
 		//  print token name or int value of yy token
 		offset := a.yy_tok - __MIN_YYTOK + 3
