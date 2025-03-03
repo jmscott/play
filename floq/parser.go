@@ -95,11 +95,11 @@ const yyInitialStackSize = 16
 
 var keyword = map[string]int{
 	"ExpandEnv": EXPAND_ENV,
-	"command":   COMMAND,
+	"Command":   COMMAND,
 	"create":    CREATE,
 	"lines":     LINES,
 	"of":        OF,
-	"scanner":   SCANNER,
+	"Scanner":   SCANNER,
 }
 
 type yyLexState struct {
