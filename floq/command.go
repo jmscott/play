@@ -15,19 +15,19 @@ type command struct {
 
 func (cmd *command) frisk_att(al *ast) string {
 
-	for an := al.left;  an.next != nil;  an = an.next {
+	for an := al.left;  an != nil;  an = an.next {
 		switch an.left.string {
-		case "path":
+		case "Path":
 			if cmd.path != "" {
 				return "attribute more than once: path"
 			}
 			cmd.path = an.right.string
-		case "args":
+		case "Args":
 			if cmd.args != nil {
 				return "attribute more than once: args"
 			}
 			cmd.args = an.right.array_ref
-		case "env":
+		case "Env":
 			if cmd.env != nil {
 				return "attribute more than once: env"
 			}
