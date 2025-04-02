@@ -39,7 +39,7 @@ func init() {
 %token	PARSE_ERROR
 %token	CREATE
 %token	SCANNER  SCANNER_REF
-%token	COMMAND  CMD_REF
+%token	COMMAND  COMMAND_REF
 %token	OF  LINES
 %token	NAME  UINT64  STRING
 %token	FLOW  STATEMENT
@@ -254,9 +254,9 @@ command:
 	  {
 	  	lex := yylex.(*yyLexState)
 		$$ = &ast{
-			yy_tok:		CMD_REF,
+			yy_tok:		COMMAND_REF,
 			line_no:        lex.line_no,
-			cmd_ref:	&command {},
+			command_ref:	&command {},
 		}
 	  }
 new_name:
@@ -271,31 +271,50 @@ new_name:
 	  {
 	  	lex := yylex.(*yyLexState)
 
-		e := fmt.Sprintf("name already exists as scanner %s", lex.name)
+		e := fmt.Sprintf("scanner: name already exists: %s", lex.name)
 		lex.Error(e)
 		return 0
 	  }
 	|
-	  CMD_REF
+	  COMMAND_REF
 	  {
 	  	lex := yylex.(*yyLexState)
 
-		e := fmt.Sprintf("name already exists as command %s", lex.name)
+		e := fmt.Sprintf("command: name already exists: %s", lex.name)
 		lex.Error(e)
 		return 0
 	  }
 	;
 stmt:
-	  create  scanner  new_name
+	  create  scanner  new_name '('
+	  {
+	  	yylex.(*yyLexState).name_is_name = true
+
+	  } att_list  ')'
 	  {
 	  	lex := yylex.(*yyLexState)
 
-	  	$2.scanner_ref.name = $3
-	  	$2.parent = $1
-		$1.left = $2
+		lex.name_is_name = false
 		lex.put_name($3, $2)
 
-		lex.name_is_name = false
+		al := $6
+		ascan := $2
+		al.parent = $2
+		ascan.left = al
+
+	  	ascan.scanner_ref.name = $3
+	  	ascan.parent = $1
+
+		$1.left = $2
+
+		//  frisk the attibutes of command
+
+		scan := ascan.scanner_ref
+		e := scan.frisk_att(al) 
+		if e != "" {
+			lex.error("scanner: %s: %s", scan.name, e)
+			return 0
+		}
 
 		$$ = $1
 	  }
@@ -316,14 +335,14 @@ stmt:
 		al.parent = $2
 		acmd.left = al
 
-	  	acmd.cmd_ref.name = $3
+	  	acmd.command_ref.name = $3
 	  	acmd.parent = $1
 
 		$1.left = $2
 
 		//  frisk the attibutes of command
 
-		cmd := acmd.cmd_ref
+		cmd := acmd.command_ref
 		e := cmd.frisk_att(al) 
 		if e != "" {
 			lex.error("command: %s: %s", cmd.name, e)
@@ -531,7 +550,7 @@ func skip_space(lex *yyLexState) (c rune, eof bool, err error) {
  *  Very simple utf8 string scanning, with no proper escapes for characters.
  *  Expect this module to be replaced with correct text.Scanner.
  */
-func (lex *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
+func (lex *yyLexState) scanner_string(yylval *yySymType) (eof bool, err error) {
 	var c rune
 	s := ""
 
@@ -564,7 +583,7 @@ func (lex *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
  *  Scan an almost raw `...`  string as defined in golang.
  *  Carriage return is stripped.
  */
-func (lex *yyLexState) scan_raw_string(yylval *yySymType) (eof bool, err error) {
+func (lex *yyLexState) scanner_raw_string(yylval *yySymType) (eof bool, err error) {
 	var c rune
 	s := ""
 
@@ -595,7 +614,7 @@ func (lex *yyLexState) scan_raw_string(yylval *yySymType) (eof bool, err error) 
  *  Scan a word consisting of a sequence of unicode Letters, Numbers and '_'
  *  characters.
  */
-func (lex *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
+func (lex *yyLexState) scanner_word(yylval *yySymType, c rune) (tok int, err error) {
 	var eof bool
 
 	w := string(c)		//  panic() if cast fails?
@@ -639,7 +658,7 @@ func (lex *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error)
 	return NAME, nil
 }
 
-func (lex *yyLexState) scan_uint64(yylval *yySymType, c rune) (err error) {
+func (lex *yyLexState) scanner_uint64(yylval *yySymType, c rune) (err error) {
 	var eof bool
 
 	ui64 := string(c)
@@ -697,14 +716,14 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 		goto PARSE_ERROR
 
 	case unicode.IsLetter(c) || c == '_':
-		tok, err = lex.scan_word(yylval, c)
+		tok, err = lex.scanner_word(yylval, c)
 		if err != nil {
 			goto PARSE_ERROR
 		}
 		return tok
 
 	case unicode.IsNumber(c):
-		err = lex.scan_uint64(yylval, c)
+		err = lex.scanner_uint64(yylval, c)
 		if err != nil {
 			goto PARSE_ERROR
 		}
@@ -713,7 +732,7 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 	case c == '"':
 		lno := lex.line_no	// reset line number on error
 
-		eof, err = lex.scan_string(yylval)
+		eof, err = lex.scanner_string(yylval)
 		if err != nil {
 			goto PARSE_ERROR
 		}
@@ -727,7 +746,7 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 	case c == '`':
 		lno := lex.line_no	// reset line number on error
 
-		eof, err = lex.scan_raw_string(yylval)
+		eof, err = lex.scanner_raw_string(yylval)
 		if err != nil {
 			goto PARSE_ERROR
 		}

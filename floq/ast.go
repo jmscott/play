@@ -21,7 +21,7 @@ type ast struct {
 	parent		*ast
 
 	scanner_ref	*scanner
-	cmd_ref		*command
+	command_ref	*command
 	uint64
 	string
 	array_ref	[]string
@@ -36,8 +36,8 @@ func (a *ast) String() string {
 		what = fmt.Sprintf("STATEMENT#%d", a.line_no)
 	case SCANNER_REF:
 		what = fmt.Sprintf("SCANNER_REF(%s)", a.scanner_ref.name)
-	case CMD_REF:
-		what = fmt.Sprintf( "CMD_REF(%s)", a.cmd_ref.name)
+	case COMMAND_REF:
+		what = fmt.Sprintf( "COMMAND_REF(%s)", a.command_ref.name)
 	case STRING:
 		what = fmt.Sprintf("STRING(%s)", a.string)
 	case NAME:

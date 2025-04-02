@@ -41,7 +41,7 @@ const CREATE = 57348
 const SCANNER = 57349
 const SCANNER_REF = 57350
 const COMMAND = 57351
-const CMD_REF = 57352
+const COMMAND_REF = 57352
 const OF = 57353
 const LINES = 57354
 const NAME = 57355
@@ -64,7 +64,7 @@ var yyToknames = [...]string{
 	"SCANNER",
 	"SCANNER_REF",
 	"COMMAND",
-	"CMD_REF",
+	"COMMAND_REF",
 	"OF",
 	"LINES",
 	"NAME",
@@ -91,7 +91,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:382
+//line parser.y:401
 
 var keyword = map[string]int{
 	"ExpandEnv": EXPAND_ENV,
@@ -240,7 +240,7 @@ func skip_space(lex *yyLexState) (c rune, eof bool, err error) {
  *  Very simple utf8 string scanning, with no proper escapes for characters.
  *  Expect this module to be replaced with correct text.Scanner.
  */
-func (lex *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
+func (lex *yyLexState) scanner_string(yylval *yySymType) (eof bool, err error) {
 	var c rune
 	s := ""
 
@@ -271,7 +271,7 @@ func (lex *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
  *  Scan an almost raw `...`  string as defined in golang.
  *  Carriage return is stripped.
  */
-func (lex *yyLexState) scan_raw_string(yylval *yySymType) (eof bool, err error) {
+func (lex *yyLexState) scanner_raw_string(yylval *yySymType) (eof bool, err error) {
 	var c rune
 	s := ""
 
@@ -300,7 +300,7 @@ func (lex *yyLexState) scan_raw_string(yylval *yySymType) (eof bool, err error) 
  *  Scan a word consisting of a sequence of unicode Letters, Numbers and '_'
  *  characters.
  */
-func (lex *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error) {
+func (lex *yyLexState) scanner_word(yylval *yySymType, c rune) (tok int, err error) {
 	var eof bool
 
 	w := string(c) //  panic() if cast fails?
@@ -342,7 +342,7 @@ func (lex *yyLexState) scan_word(yylval *yySymType, c rune) (tok int, err error)
 	return NAME, nil
 }
 
-func (lex *yyLexState) scan_uint64(yylval *yySymType, c rune) (err error) {
+func (lex *yyLexState) scanner_uint64(yylval *yySymType, c rune) (err error) {
 	var eof bool
 
 	ui64 := string(c)
@@ -398,14 +398,14 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 		goto PARSE_ERROR
 
 	case unicode.IsLetter(c) || c == '_':
-		tok, err = lex.scan_word(yylval, c)
+		tok, err = lex.scanner_word(yylval, c)
 		if err != nil {
 			goto PARSE_ERROR
 		}
 		return tok
 
 	case unicode.IsNumber(c):
-		err = lex.scan_uint64(yylval, c)
+		err = lex.scanner_uint64(yylval, c)
 		if err != nil {
 			goto PARSE_ERROR
 		}
@@ -414,7 +414,7 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 	case c == '"':
 		lno := lex.line_no // reset line number on error
 
-		eof, err = lex.scan_string(yylval)
+		eof, err = lex.scanner_string(yylval)
 		if err != nil {
 			goto PARSE_ERROR
 		}
@@ -428,7 +428,7 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 	case c == '`':
 		lno := lex.line_no // reset line number on error
 
-		eof, err = lex.scan_raw_string(yylval)
+		eof, err = lex.scanner_raw_string(yylval)
 		if err != nil {
 			goto PARSE_ERROR
 		}
@@ -490,55 +490,55 @@ var yyExca = [...]int8{
 
 const yyPrivate = 57344
 
-const yyLast = 43
+const yyLast = 48
 
 var yyAct = [...]int8{
-	30, 25, 12, 7, 32, 33, 26, 19, 23, 27,
-	38, 34, 39, 31, 32, 33, 37, 15, 20, 16,
-	24, 34, 14, 18, 10, 5, 11, 21, 3, 13,
-	17, 6, 36, 9, 28, 8, 4, 2, 35, 40,
-	29, 22, 1,
+	34, 25, 28, 28, 12, 7, 21, 31, 29, 36,
+	37, 20, 19, 42, 30, 43, 38, 24, 35, 36,
+	37, 41, 15, 18, 16, 26, 38, 14, 23, 10,
+	32, 11, 5, 22, 13, 17, 40, 3, 9, 8,
+	6, 27, 4, 44, 2, 39, 33, 1,
 }
 
 var yyPact = [...]int16{
-	19, -1000, 19, -25, 17, -1000, -26, -1000, 9, 9,
-	12, -1000, -1000, -1000, -1000, -1000, -1000, -19, 6, -1000,
-	-1000, 9, -21, -1000, -16, 9, -1000, -10, -1000, -1000,
-	-1000, 0, -1000, -1000, 1, -12, -1000, -1000, 0, -1000,
-	-1000,
+	26, -1000, 26, -23, 22, -1000, -24, -1000, 14, 14,
+	12, -1000, -1000, -14, -1000, -1000, -1000, -15, -6, -1000,
+	-1000, -1000, 14, 14, -19, -1000, -11, -20, 14, -1000,
+	-5, -1000, -1000, -1000, -1000, 5, -1000, -1000, 6, -9,
+	-1000, -1000, 5, -1000, -1000,
 }
 
 var yyPgo = [...]int8{
-	0, 20, 42, 8, 41, 40, 0, 38, 28, 37,
-	36, 35, 33, 27,
+	0, 25, 47, 1, 17, 46, 0, 45, 37, 44,
+	42, 39, 38, 33, 28,
 }
 
 var yyR1 = [...]int8{
 	0, 2, 6, 6, 6, 7, 7, 7, 5, 5,
 	3, 4, 4, 4, 10, 11, 12, 1, 1, 1,
-	8, 13, 8, 9, 9, 9,
+	13, 8, 14, 8, 9, 9, 9,
 }
 
 var yyR2 = [...]int8{
 	0, 1, 1, 1, 2, 0, 1, 3, 1, 3,
 	3, 0, 1, 3, 1, 3, 1, 1, 1, 1,
-	3, 0, 7, 0, 2, 3,
+	0, 7, 0, 7, 0, 2, 3,
 }
 
 var yyChk = [...]int16{
 	-1000, -2, -9, -8, -10, 6, -8, 28, -11, -12,
 	7, 9, 28, -1, 13, 8, 10, -1, 11, 26,
-	12, -13, -4, -3, -1, 22, 27, 25, -3, -5,
-	-6, 23, 14, 15, 21, -7, -6, 15, 22, 24,
-	-6,
+	26, 12, -13, -14, -4, -3, -1, -4, 22, 27,
+	25, 27, -3, -5, -6, 23, 14, 15, 21, -7,
+	-6, 15, 22, 24, -6,
 }
 
 var yyDef = [...]int8{
-	23, -2, 1, 0, 0, 14, 0, 24, 0, 0,
-	0, 16, 25, 20, 17, 18, 19, 0, 0, 21,
-	15, 11, 0, 12, 0, 0, 22, 0, 13, 10,
-	8, 5, 2, 3, 0, 0, 6, 4, 0, 9,
-	7,
+	24, -2, 1, 0, 0, 14, 0, 25, 0, 0,
+	0, 16, 26, 0, 17, 18, 19, 0, 0, 20,
+	22, 15, 11, 11, 0, 12, 0, 0, 0, 21,
+	0, 23, 13, 10, 8, 5, 2, 3, 0, 0,
+	6, 4, 0, 9, 7,
 }
 
 var yyTok1 = [...]int8{
@@ -1095,9 +1095,9 @@ yydefault:
 		{
 			lex := yylex.(*yyLexState)
 			yyVAL.ast = &ast{
-				yy_tok:  CMD_REF,
-				line_no: lex.line_no,
-				cmd_ref: &command{},
+				yy_tok:      COMMAND_REF,
+				line_no:     lex.line_no,
+				command_ref: &command{},
 			}
 		}
 	case 17:
@@ -1114,7 +1114,7 @@ yydefault:
 		{
 			lex := yylex.(*yyLexState)
 
-			e := fmt.Sprintf("name already exists as scanner %s", lex.name)
+			e := fmt.Sprintf("scanner: name already exists: %s", lex.name)
 			lex.Error(e)
 			return 0
 		}
@@ -1124,35 +1124,57 @@ yydefault:
 		{
 			lex := yylex.(*yyLexState)
 
-			e := fmt.Sprintf("name already exists as command %s", lex.name)
+			e := fmt.Sprintf("command: name already exists: %s", lex.name)
 			lex.Error(e)
 			return 0
 		}
 	case 20:
-		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:290
-		{
-			lex := yylex.(*yyLexState)
-
-			yyDollar[2].ast.scanner_ref.name = yyDollar[3].string
-			yyDollar[2].ast.parent = yyDollar[1].ast
-			yyDollar[1].ast.left = yyDollar[2].ast
-			lex.put_name(yyDollar[3].string, yyDollar[2].ast)
-
-			lex.name_is_name = false
-
-			yyVAL.ast = yyDollar[1].ast
-		}
-	case 21:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line parser.y:304
+//line parser.y:290
 		{
 			yylex.(*yyLexState).name_is_name = true
 
 		}
-	case 22:
+	case 21:
 		yyDollar = yyS[yypt-7 : yypt+1]
-//line parser.y:308
+//line parser.y:294
+		{
+			lex := yylex.(*yyLexState)
+
+			lex.name_is_name = false
+			lex.put_name(yyDollar[3].string, yyDollar[2].ast)
+
+			al := yyDollar[6].ast
+			ascan := yyDollar[2].ast
+			al.parent = yyDollar[2].ast
+			ascan.left = al
+
+			ascan.scanner_ref.name = yyDollar[3].string
+			ascan.parent = yyDollar[1].ast
+
+			yyDollar[1].ast.left = yyDollar[2].ast
+
+			//  frisk the attibutes of command
+
+			scan := ascan.scanner_ref
+			e := scan.frisk_att(al)
+			if e != "" {
+				lex.error("scanner: %s: %s", scan.name, e)
+				return 0
+			}
+
+			yyVAL.ast = yyDollar[1].ast
+		}
+	case 22:
+		yyDollar = yyS[yypt-4 : yypt+1]
+//line parser.y:323
+		{
+			yylex.(*yyLexState).name_is_name = true
+
+		}
+	case 23:
+		yyDollar = yyS[yypt-7 : yypt+1]
+//line parser.y:327
 		{
 			lex := yylex.(*yyLexState)
 
@@ -1164,14 +1186,14 @@ yydefault:
 			al.parent = yyDollar[2].ast
 			acmd.left = al
 
-			acmd.cmd_ref.name = yyDollar[3].string
+			acmd.command_ref.name = yyDollar[3].string
 			acmd.parent = yyDollar[1].ast
 
 			yyDollar[1].ast.left = yyDollar[2].ast
 
 			//  frisk the attibutes of command
 
-			cmd := acmd.cmd_ref
+			cmd := acmd.command_ref
 			e := cmd.frisk_att(al)
 			if e != "" {
 				lex.error("command: %s: %s", cmd.name, e)
@@ -1180,18 +1202,18 @@ yydefault:
 
 			yyVAL.ast = yyDollar[1].ast
 		}
-	case 23:
+	case 24:
 		yyDollar = yyS[yypt-0 : yypt+1]
-//line parser.y:339
+//line parser.y:358
 		{
 			yyVAL.ast = &ast{
 				yy_tok:  STATEMENT,
 				line_no: yylex.(*yyLexState).line_no,
 			}
 		}
-	case 24:
+	case 25:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line parser.y:347
+//line parser.y:366
 		{
 			lex := yylex.(*yyLexState)
 
@@ -1205,9 +1227,9 @@ yydefault:
 
 			yyVAL.ast = a
 		}
-	case 25:
+	case 26:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:362
+//line parser.y:381
 		{
 			lex := yylex.(*yyLexState)
 
