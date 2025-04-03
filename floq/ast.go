@@ -38,7 +38,9 @@ func (a *ast) String() string {
 	case SCANNER_REF:
 		what = fmt.Sprintf("SCANNER_REF(%s)", a.scanner_ref.name)
 	case COMMAND_REF:
-		what = fmt.Sprintf( "COMMAND_REF(%s)", a.command_ref.name)
+		what = fmt.Sprintf("COMMAND_REF(%s)", a.command_ref.name)
+	case TRACER_REF:
+		what = fmt.Sprintf("TRACER_REF(%s)", a.tracer_ref.name)
 	case STRING:
 		what = fmt.Sprintf("STRING(%s)", a.string)
 	case NAME:

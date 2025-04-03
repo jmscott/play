@@ -1,15 +1,19 @@
-create scanner of lines s1;
-create scanner of lines s2;
-create command eat_blob(
-	path:	"blobio",
-	args:	[
+create Scanner of lines stdin (
+	Path:	"/dev/stdin"
+);
+
+create Tracer tty;
+
+create Command eat_blob (
+	Path:	"blobio",
+	Env:	[
+			ExpandEnv "BLOBIO_ROOT=$BLOBIO_ROOT",
+			ExpandEnv "BLOBIO_SERVICE=$BLOBIO_SERVICE"
+		],
+	Args:	[
 			"eat",
 			"--service",
 			ExpandEnv "fs:$BLOBIO_ROOT",
 			"--udig"
-		],
-	env:	[
-			ExpandEnv "BLOBIO_ROOT=$BLOBIO_ROOT",
-			ExpandEnv "BLOBIO_SERVICE=$BLOBIO_SERVICE"
 		]
 );

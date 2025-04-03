@@ -54,7 +54,7 @@ func init() {
 
 %type	<ast>		att  atts  att_list  att_value  att_expr att_array
 %type	<ast>		stmt  stmt_list
-%type	<ast>		create  scanner  command
+%type	<ast>		create  scanner  command  tracer
 
 %%
 
@@ -188,6 +188,14 @@ att:
 	;
 
 atts:
+	  /*  empty */
+	  {
+	  	$$ = &ast{
+			yy_tok:         ATT_LIST,
+			line_no:        yylex.(*yyLexState).line_no,
+		}
+	  }
+	|
 	  att
 	  {
 		lex := yylex.(*yyLexState)
@@ -265,9 +273,21 @@ command:
 		$$ = &ast{
 			yy_tok:		COMMAND_REF,
 			line_no:        lex.line_no,
-			command_ref:	&command {},
+			command_ref:	&command{},
 		}
 	  }
+	;
+tracer:
+  	  TRACER
+	  {
+	  	lex := yylex.(*yyLexState)
+		$$ = &ast{
+			yy_tok:		TRACER_REF,
+			line_no:        lex.line_no,
+			tracer_ref:	&tracer{},
+		}
+	  }
+	;
 new_name:
 	  NAME
 	  {
@@ -295,6 +315,40 @@ new_name:
 	  }
 	;
 stmt:
+	  create  tracer  new_name
+	  {
+		//  Note:  could production "new_name" set "name_is_name"?
+	  	yylex.(*yyLexState).name_is_name = true
+
+	  } att_list {
+	  	
+	  	lex := yylex.(*yyLexState)
+
+		lex.name_is_name = false
+		lex.put_name($3, $2)
+
+		al := $5
+		atra := $2
+		al.parent = $2
+		atra.left = al
+
+	  	atra.tracer_ref.name = $3
+	  	atra.parent = $1
+
+		$1.left = $2
+
+		//  frisk the attibutes of command
+
+		tra := atra.tracer_ref
+		e := tra.frisk_att(al) 
+		if e != "" {
+			lex.error("tracer: %s: %s", tra.name, e)
+			return 0
+		}
+
+		$$ = $1
+	  }
+	|
 	  create  scanner  new_name
 	  {
 		//  Note:  could production "new_name" set "name_is_name"?
