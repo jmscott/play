@@ -20,6 +20,7 @@ type ast struct {
 
 	parent		*ast
 
+	tracer_ref	*tracer
 	scanner_ref	*scanner
 	command_ref	*command
 	uint64

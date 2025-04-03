@@ -36,21 +36,23 @@ func init() {
 //  lowest numbered yytoken.  must be first in list.
 %token	__MIN_YYTOK
 
-%token	PARSE_ERROR
-%token	CREATE
-%token	SCANNER  SCANNER_REF
-%token	COMMAND  COMMAND_REF
-%token	OF  LINES
-%token	NAME  UINT64  STRING
-%token	FLOW  STATEMENT
 %token	ATT  ATT_LIST
 %token	ATT_ARRAY
+%token	COMMAND  COMMAND_REF
+%token	CREATE
 %token	EXPAND_ENV
+%token	FLOW  STATEMENT
+%token	NAME  UINT64  STRING
+%token	OF  LINES
+%token	PARSE_ERROR
+%token	SCANNER  SCANNER_REF
+%token	TRACER  TRACER_REF
 
 %type	<uint64>	UINT64		
 %type	<string>	STRING  new_name
 %type	<ast>		flow
-%type	<ast>		att  att_list  att_value  att_expr att_array
+
+%type	<ast>		att  atts  att_list  att_value  att_expr att_array
 %type	<ast>		stmt  stmt_list
 %type	<ast>		create  scanner  command
 
@@ -185,15 +187,7 @@ att:
 	  }
 	;
 
-att_list:
-	  /*  empty  */
-	  {
-	  	$$ = &ast{
-			yy_tok:         ATT_LIST,
-			line_no:        yylex.(*yyLexState).line_no,
-		}
-	  }
-	|
+atts:
 	  att
 	  {
 		lex := yylex.(*yyLexState)
@@ -208,7 +202,7 @@ att_list:
 		$$ = al
 	  }
 	|
-	  att_list ','  att
+	  atts ','  att
 	  {
 		al := $1
 	  	a := $3
@@ -221,6 +215,21 @@ att_list:
 		a.previous = a
 
 		$$ = $1
+	  }
+	;
+
+att_list:
+	  /*  empty  */
+	  {
+	  	$$ = &ast{
+			yy_tok: ATT_LIST,
+			line_no:        yylex.(*yyLexState).line_no,
+		}
+	  }
+	|
+	  '('  atts  ')'
+	  {
+	  	$$ = $2;
 	  }
 	;
 
@@ -286,18 +295,19 @@ new_name:
 	  }
 	;
 stmt:
-	  create  scanner  new_name '('
+	  create  scanner  new_name
 	  {
+		//  Note:  could production "new_name" set "name_is_name"?
 	  	yylex.(*yyLexState).name_is_name = true
 
-	  } att_list  ')'
-	  {
+	  } att_list {
+	  	
 	  	lex := yylex.(*yyLexState)
 
 		lex.name_is_name = false
 		lex.put_name($3, $2)
 
-		al := $6
+		al := $5
 		ascan := $2
 		al.parent = $2
 		ascan.left = al
@@ -319,18 +329,17 @@ stmt:
 		$$ = $1
 	  }
 	|
-	  create  command  new_name  '('
+	  create  command  new_name
 	  {
 		yylex.(*yyLexState).name_is_name = true
 
-	  } att_list  ')'
-	  {
+	  } att_list {
 	  	lex := yylex.(*yyLexState)
 
 		lex.name_is_name = false
 		lex.put_name($3, $2)
 
-		al := $6
+		al := $5
 		acmd := $2
 		al.parent = $2
 		acmd.left = al
@@ -407,6 +416,7 @@ var keyword = map[string]int{
 	"lines":		LINES,
 	"of":			OF,
 	"Scanner":		SCANNER,
+	"Tracer":		TRACER,
 }
 
 type yyLexState struct {

@@ -70,6 +70,7 @@ GOSRCs="
 	command.go
 	parser.go
 	scanner.go
+	tracer.go
 "
 SRCs="
 	$GOSRCs
