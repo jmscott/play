@@ -74,6 +74,10 @@ floq-execv: floq-execv.c
 
 tar:
 	make-make tar $(MKMK)
+frisk:
+	make-make tar $(MKMK)
+	@rm --force --verbose play-floq-20*.tar.bz2
+	@echo;  echo;  echo OK frisk passed
 world:
 	$(MAKE) $(MFLAGS) clean
 	$(MAKE) $(MFLAGS) all
