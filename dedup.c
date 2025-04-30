@@ -7,7 +7,9 @@
  *	0	ok
  *	1	unexpected error
  *  Note:
- *	Orders of Magnitude quicker than "sort -u"
+ *	About 10 times quicker than "sort -u".  However, RAM is probably
+ *	better managedby "sort -u".  The clang version is about %30 faster
+ *	than the golang version.
  */
 
 #include <sys/errno.h>
