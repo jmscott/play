@@ -13,7 +13,7 @@ func main() {
 
 	in := bufio.NewScanner(os.Stdin)
 	in.Buffer(buf[:], len(buf))
-	seen = make(map[string]bool)
+	seen = make(map[string]bool, 4096 * 4096)
 	for in.Scan() {
 		txt := in.Text()
 		if !seen[txt] {
@@ -23,5 +23,7 @@ func main() {
 	}
 	if err := in.Err(); err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
+		os.Exit(1)
 	}
+	os.Exit(0)
 }
