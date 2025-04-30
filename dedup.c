@@ -1,7 +1,15 @@
 /*
  *  Synopsis:
- *	Deduplicate lines of text read from stdin
+ *	Deduplicate lines from stdin to stdout, in scan order
+ *  Usage:
+ *	dedup <inet-addr.txt | wc -l
+ *  Exit Status:
+ *	0	ok
+ *	1	unexpected error
+ *  Note:
+ *	Orders of Magnitude quicker than "sort -u"
  */
+
 #include <sys/errno.h>
 #include <unistd.h>
 #include <string.h>
@@ -10,10 +18,8 @@
 
 extern int errno;
 
-/*
- *  Size of hash table.  Really ought to grow dynamically.
- */
-#define HASH_TABLE_SIZE		4393139
+//  the 560000th prime number ~ 63megs of memory
+#define HASH_TABLE_SIZE		8322241
 
 static void
 die(char *msg)
@@ -100,8 +106,7 @@ blob_set_put(void *set, unsigned char *element, int size)
 {
 	unsigned int hash;
 	struct hash_set *s;
-	struct hash_set_element *e, *e_new;
-	static char nm[] = "blob_set_put";
+	struct hash_set_element *e;
 
 	s = (struct hash_set *)set;
 	if (blob_set_exists(set, element, size))
@@ -110,17 +115,16 @@ blob_set_put(void *set, unsigned char *element, int size)
 	/*
 	 *  Allocate new hash entry.
 	 */
-	e_new = malloc(sizeof *e);
-	if (e_new == NULL)
-		die("malloc(entry) failed");
-	e_new->value = malloc(size);
-	if (e_new->value == NULL)
-		die("malloc(value) failed");
-	memcpy(e_new->value, element, size);
-	e_new->size = size;
+	e = malloc(sizeof *e + size);
+	if (e == NULL)
+		die("malloc(entry+value) failed");
+	e->value = (unsigned char *)e + sizeof *e;
+	memcpy(e->value, element, size);
+	e->size = size;
 	hash = djb(element, size) % s->size;
-	e_new->next = s->table[hash];
-	s->table[hash] = e_new;
+	e->next = s->table[hash];
+	s->table[hash] = e;
+
 	return 0;
 }
 
