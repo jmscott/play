@@ -1,15 +1,31 @@
 /*
  *  Synopsis:
  *	Deduplicate lines from stdin to stdout, in scan order
+ *  Description:
+ *	This code is an attempt at the fastest possible deduplicator of lines
+ *	read from standard input.  Performance compared to ubiquitous "sort -u"
+ *	is roughly 8 to one.  The test data is a list of crypto hashes,
+ *	roughly 4 to 1 in duplicity.
+ *
+ *	No optimizations are done in this version.  malloc()'ing in chunks and
+ *	eliminating fgets() would be obvious optimizations, as well hashing.
+ *
+ *	Review of hash algorithms is here:
+ *
+ *		https://medium.com/asecuritysite-when-bob-met-alice/
+ *		for-hashing-the-fastest-of-the-fastest-meet-t1ha-bbff79ed11d0
+ *
+ *	The golang version (dedup.go) is about %30 slower than clang version.
+ *	Most of the optimzations of clang version ought to work in golang.
+ *
  *  Usage:
  *	dedup <inet-addr.txt | wc -l
+ *
  *  Exit Status:
  *	0	ok
  *	1	unexpected error
+ *
  *  Note:
- *	About 10 times quicker than "sort -u".  However, RAM is probably
- *	better managedby "sort -u".  The clang version is about %30 faster
- *	than the golang version.
  */
 
 #include <sys/errno.h>
