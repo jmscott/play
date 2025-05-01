@@ -10,13 +10,18 @@
  *	No optimizations are done in this version.  malloc()'ing in chunks and
  *	eliminating fgets() would be obvious optimizations, as well hashing.
  *
- *	Review of hash algorithms is here:
+ *	Various hash algorithms here:
  *
  *		https://medium.com/asecuritysite-when-bob-met-alice/
  *		for-hashing-the-fastest-of-the-fastest-meet-t1ha-bbff79ed11d0
+ *		https://www.crockford.com/fash/fash64.html
+ *		https://en.wikipedia.org/wiki/
+ *			Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
  *
  *	The golang version (dedup.go) is about %30 slower than clang version.
- *	Most of the optimzations of clang version ought to work in golang.
+ *	Fortunatly, most of the optimzations of clang version ought to work in
+ *	golang. Also, in PostgreSQL select count(distint line) was about same
+ *	as "sort -u", but required a btree index.
  *
  *  Usage:
  *	dedup <inet-addr.txt | wc -l
