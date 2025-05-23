@@ -1,10 +1,10 @@
-create Scanner of lines stdin (
+create Scanner of lines stdin {
 	Path:	"/dev/stdin"
-);
+};
 
 create Tracer tty;
 
-create Command eat_blob (
+create Command eat_blob {
 	Path:	"blobio",
 	Env:	[
 			ExpandEnv "BLOBIO_ROOT=$BLOBIO_ROOT",
@@ -16,4 +16,4 @@ create Command eat_blob (
 			ExpandEnv "fs:$BLOBIO_ROOT",
 			"--udig"
 		]
-);
+};

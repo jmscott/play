@@ -177,7 +177,7 @@ state 22
 	stmt:  create tracer new_name $$23.att_list 
 	att_list: .    (14)
 
-	'('  shift 27
+	'{'  shift 27
 	.  reduce 14 (src line 229)
 
 	att_list  goto 26
@@ -186,7 +186,7 @@ state 23
 	stmt:  create scanner new_name $$25.att_list 
 	att_list: .    (14)
 
-	'('  shift 27
+	'{'  shift 27
 	.  reduce 14 (src line 229)
 
 	att_list  goto 28
@@ -195,7 +195,7 @@ state 24
 	stmt:  create command new_name $$27.att_list 
 	att_list: .    (14)
 
-	'('  shift 27
+	'{'  shift 27
 	.  reduce 14 (src line 229)
 
 	att_list  goto 29
@@ -213,7 +213,7 @@ state 26
 
 
 state 27
-	att_list:  '('.atts ')' 
+	att_list:  '{'.atts '}' 
 	atts: .    (11)
 
 	COMMAND_REF  shift 18
@@ -239,10 +239,10 @@ state 29
 
 state 30
 	atts:  atts.',' att 
-	att_list:  '(' atts.')' 
+	att_list:  '{' atts.'}' 
 
 	','  shift 33
-	')'  shift 34
+	'}'  shift 34
 	.  error
 
 
@@ -271,7 +271,7 @@ state 33
 	att  goto 36
 
 state 34
-	att_list:  '(' atts ')'.    (15)
+	att_list:  '{' atts '}'.    (15)
 
 	.  reduce 15 (src line 237)
 
