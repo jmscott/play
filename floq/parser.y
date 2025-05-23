@@ -36,7 +36,7 @@ func init() {
 //  lowest numbered yytoken.  must be first in list.
 %token	__MIN_YYTOK
 
-%token	ATT  ATT_LIST
+%token	ATT  ATT_TUPLE
 %token	ATT_ARRAY
 %token	COMMAND  COMMAND_REF
 %token	CREATE
@@ -52,8 +52,9 @@ func init() {
 %type	<string>	STRING  new_name
 %type	<ast>		flow
 
-%type	<ast>		att  atts  att_list  att_value  att_expr att_array
-%type	<ast>		stmt  stmt_list
+%type	<ast>		att  atts  att_tuple  att_value  att_expr att_array
+%type	<ast>		create_tuple
+%type	<ast>		create_stmt stmt  stmt_list
 %type	<ast>		create  scanner  command  tracer
 
 %%
@@ -191,7 +192,7 @@ atts:
 	  /*  empty */
 	  {
 	  	$$ = &ast{
-			yy_tok:         ATT_LIST,
+			yy_tok:         ATT_TUPLE,
 			line_no:        yylex.(*yyLexState).line_no,
 		}
 	  }
@@ -201,7 +202,7 @@ atts:
 		lex := yylex.(*yyLexState)
 
 	  	al := &ast{
-			yy_tok:		ATT_LIST,
+			yy_tok:		ATT_TUPLE,
 			line_no:	lex.line_no,
 		}
 		al.left = $1
@@ -226,15 +227,7 @@ atts:
 	  }
 	;
 
-att_list:
-	  /*  empty  */
-	  {
-	  	$$ = &ast{
-			yy_tok: ATT_LIST,
-			line_no:        yylex.(*yyLexState).line_no,
-		}
-	  }
-	|
+att_tuple:
 	  '{'  atts  '}'
 	  {
 	  	$$ = $2;
@@ -314,13 +307,25 @@ new_name:
 		return 0
 	  }
 	;
-stmt:
+create_tuple:
+	  /*  empty */
+	  {
+	  	$$ = &ast{
+			yy_tok: ATT_TUPLE,
+			line_no:        yylex.(*yyLexState).line_no,
+		}
+	  }
+	|
+	  att_tuple
+	;
+
+create_stmt:
 	  create  tracer  new_name
 	  {
 		//  Note:  could production "new_name" set "name_is_name"?
 	  	yylex.(*yyLexState).name_is_name = true
 
-	  } att_list {
+	  } create_tuple {
 	  	
 	  	lex := yylex.(*yyLexState)
 
@@ -354,7 +359,7 @@ stmt:
 		//  Note:  could production "new_name" set "name_is_name"?
 	  	yylex.(*yyLexState).name_is_name = true
 
-	  } att_list {
+	  } create_tuple {
 	  	
 	  	lex := yylex.(*yyLexState)
 
@@ -387,7 +392,7 @@ stmt:
 	  {
 		yylex.(*yyLexState).name_is_name = true
 
-	  } att_list {
+	  } create_tuple {
 	  	lex := yylex.(*yyLexState)
 
 		lex.name_is_name = false
@@ -415,6 +420,10 @@ stmt:
 		$$ = $1
 	  }
 	;	
+
+stmt:
+	  create_stmt
+	;
 	
 stmt_list:
 	  /*  empty */

@@ -34,7 +34,7 @@ func (a *ast) String() string {
 
 	switch a.yy_tok {
 	case STATEMENT:
-		what = fmt.Sprintf("STATEMENT#%d", a.line_no)
+		what = fmt.Sprintf("STATEMENT@#%d", a.line_no)
 	case SCANNER_REF:
 		what = fmt.Sprintf("SCANNER_REF(%s)", a.scanner_ref.name)
 	case COMMAND_REF:
