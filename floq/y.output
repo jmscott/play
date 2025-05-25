@@ -1,17 +1,17 @@
 
-0: shift/reduce conflict (shift 6(0), red'n 31(0)) on CREATE
+0: shift/reduce conflict (shift 6(0), red'n 32(0)) on CREATE
 state 0
 	$accept: .flow $end 
-	stmt_list: .    (31)
+	stmt_list: .    (32)
 
 	CREATE  shift 6
-	.  reduce 31 (src line 428)
+	.  reduce 32 (src line 439)
 
 	flow  goto 1
+	create  goto 5
 	create_stmt  goto 4
 	stmt  goto 3
 	stmt_list  goto 2
-	create  goto 5
 
 state 1
 	$accept:  flow.$end 
@@ -25,11 +25,11 @@ state 2
 	stmt_list:  stmt_list.stmt ';' 
 
 	CREATE  shift 6
-	.  reduce 1 (src line 62)
+	.  reduce 1 (src line 69)
 
+	create  goto 5
 	create_stmt  goto 4
 	stmt  goto 7
-	create  goto 5
 
 state 3
 	stmt_list:  stmt.';' 
@@ -39,15 +39,15 @@ state 3
 
 
 state 4
-	stmt:  create_stmt.    (30)
+	stmt:  create_stmt.    (31)
 
-	.  reduce 30 (src line 424)
+	.  reduce 31 (src line 434)
 
 
 state 5
-	create_stmt:  create.tracer new_name $$24 create_tuple 
-	create_stmt:  create.scanner new_name $$26 create_tuple 
-	create_stmt:  create.command new_name $$28 create_tuple 
+	create_stmt:  create.tracer new_name $$25 create_tuple 
+	create_stmt:  create.scanner new_name $$27 create_tuple 
+	create_stmt:  create.command new_name $$29 create_tuple 
 
 	COMMAND  shift 14
 	SCANNER  shift 13
@@ -59,9 +59,9 @@ state 5
 	tracer  goto 9
 
 state 6
-	create:  CREATE.    (15)
+	create:  CREATE.    (16)
 
-	.  reduce 15 (src line 237)
+	.  reduce 16 (src line 248)
 
 
 state 7
@@ -72,13 +72,13 @@ state 7
 
 
 state 8
-	stmt_list:  stmt ';'.    (32)
+	stmt_list:  stmt ';'.    (33)
 
-	.  reduce 32 (src line 436)
+	.  reduce 33 (src line 447)
 
 
 state 9
-	create_stmt:  create tracer.new_name $$24 create_tuple 
+	create_stmt:  create tracer.new_name $$25 create_tuple 
 
 	COMMAND_REF  shift 19
 	NAME  shift 17
@@ -88,7 +88,7 @@ state 9
 	new_name  goto 16
 
 state 10
-	create_stmt:  create scanner.new_name $$26 create_tuple 
+	create_stmt:  create scanner.new_name $$27 create_tuple 
 
 	COMMAND_REF  shift 19
 	NAME  shift 17
@@ -98,7 +98,7 @@ state 10
 	new_name  goto 20
 
 state 11
-	create_stmt:  create command.new_name $$28 create_tuple 
+	create_stmt:  create command.new_name $$29 create_tuple 
 
 	COMMAND_REF  shift 19
 	NAME  shift 17
@@ -108,9 +108,9 @@ state 11
 	new_name  goto 21
 
 state 12
-	tracer:  TRACER.    (18)
+	tracer:  TRACER.    (19)
 
-	.  reduce 18 (src line 273)
+	.  reduce 19 (src line 284)
 
 
 state 13
@@ -121,58 +121,58 @@ state 13
 
 
 state 14
-	command:  COMMAND.    (17)
+	command:  COMMAND.    (18)
 
-	.  reduce 17 (src line 262)
+	.  reduce 18 (src line 273)
 
 
 state 15
-	stmt_list:  stmt_list stmt ';'.    (33)
+	stmt_list:  stmt_list stmt ';'.    (34)
 
-	.  reduce 33 (src line 451)
+	.  reduce 34 (src line 462)
 
 
 state 16
-	create_stmt:  create tracer new_name.$$24 create_tuple 
-	$$24: .    (24)
+	create_stmt:  create tracer new_name.$$25 create_tuple 
+	$$25: .    (25)
 
-	.  reduce 24 (src line 322)
+	.  reduce 25 (src line 332)
 
-	$$24  goto 23
+	$$25  goto 23
 
 state 17
-	new_name:  NAME.    (19)
+	new_name:  NAME.    (20)
 
-	.  reduce 19 (src line 284)
+	.  reduce 20 (src line 295)
 
 
 state 18
-	new_name:  SCANNER_REF.    (20)
+	new_name:  SCANNER_REF.    (21)
 
-	.  reduce 20 (src line 291)
+	.  reduce 21 (src line 302)
 
 
 state 19
-	new_name:  COMMAND_REF.    (21)
+	new_name:  COMMAND_REF.    (22)
 
-	.  reduce 21 (src line 300)
+	.  reduce 22 (src line 310)
 
 
 state 20
-	create_stmt:  create scanner new_name.$$26 create_tuple 
-	$$26: .    (26)
+	create_stmt:  create scanner new_name.$$27 create_tuple 
+	$$27: .    (27)
 
-	.  reduce 26 (src line 356)
+	.  reduce 27 (src line 366)
 
-	$$26  goto 24
+	$$27  goto 24
 
 state 21
-	create_stmt:  create command new_name.$$28 create_tuple 
-	$$28: .    (28)
+	create_stmt:  create command new_name.$$29 create_tuple 
+	$$29: .    (29)
 
-	.  reduce 28 (src line 390)
+	.  reduce 29 (src line 400)
 
-	$$28  goto 25
+	$$29  goto 25
 
 state 22
 	scanner:  SCANNER OF.LINES 
@@ -182,76 +182,76 @@ state 22
 
 
 state 23
-	create_stmt:  create tracer new_name $$24.create_tuple 
-	create_tuple: .    (22)
+	create_stmt:  create tracer new_name $$25.create_tuple 
+	create_tuple: .    (23)
 
 	'{'  shift 29
-	.  reduce 22 (src line 310)
+	.  reduce 23 (src line 320)
 
 	att_tuple  goto 28
 	create_tuple  goto 27
 
 state 24
-	create_stmt:  create scanner new_name $$26.create_tuple 
-	create_tuple: .    (22)
+	create_stmt:  create scanner new_name $$27.create_tuple 
+	create_tuple: .    (23)
 
 	'{'  shift 29
-	.  reduce 22 (src line 310)
+	.  reduce 23 (src line 320)
 
 	att_tuple  goto 28
 	create_tuple  goto 30
 
 state 25
-	create_stmt:  create command new_name $$28.create_tuple 
-	create_tuple: .    (22)
+	create_stmt:  create command new_name $$29.create_tuple 
+	create_tuple: .    (23)
 
 	'{'  shift 29
-	.  reduce 22 (src line 310)
+	.  reduce 23 (src line 320)
 
 	att_tuple  goto 28
 	create_tuple  goto 31
 
 state 26
-	scanner:  SCANNER OF LINES.    (16)
+	scanner:  SCANNER OF LINES.    (17)
 
-	.  reduce 16 (src line 248)
+	.  reduce 17 (src line 259)
 
 
 state 27
-	create_stmt:  create tracer new_name $$24 create_tuple.    (25)
+	create_stmt:  create tracer new_name $$25 create_tuple.    (26)
 
-	.  reduce 25 (src line 328)
+	.  reduce 26 (src line 338)
 
 
 state 28
-	create_tuple:  att_tuple.    (23)
+	create_tuple:  att_tuple.    (24)
 
-	.  reduce 23 (src line 318)
+	.  reduce 24 (src line 328)
 
 
 state 29
 	att_tuple:  '{'.atts '}' 
-	atts: .    (11)
+	atts: .    (12)
 
 	COMMAND_REF  shift 19
 	NAME  shift 17
 	SCANNER_REF  shift 18
-	.  reduce 11 (src line 191)
+	.  reduce 12 (src line 202)
 
 	new_name  goto 34
 	att  goto 33
 	atts  goto 32
 
 state 30
-	create_stmt:  create scanner new_name $$26 create_tuple.    (27)
+	create_stmt:  create scanner new_name $$27 create_tuple.    (28)
 
-	.  reduce 27 (src line 362)
+	.  reduce 28 (src line 372)
 
 
 state 31
-	create_stmt:  create command new_name $$28 create_tuple.    (29)
+	create_stmt:  create command new_name $$29 create_tuple.    (30)
 
-	.  reduce 29 (src line 395)
+	.  reduce 30 (src line 405)
 
 
 state 32
@@ -264,9 +264,9 @@ state 32
 
 
 state 33
-	atts:  att.    (12)
+	atts:  att.    (13)
 
-	.  reduce 12 (src line 199)
+	.  reduce 13 (src line 210)
 
 
 state 34
@@ -288,124 +288,133 @@ state 35
 	att  goto 38
 
 state 36
-	att_tuple:  '{' atts '}'.    (14)
+	att_tuple:  '{' atts '}'.    (15)
 
-	.  reduce 14 (src line 230)
+	.  reduce 15 (src line 241)
 
 
 state 37
 	att:  new_name ':'.att_value 
 
-	EXPAND_ENV  shift 44
-	UINT64  shift 42
-	STRING  shift 43
+	EXPAND_ENV  shift 45
+	UINT64  shift 43
+	STRING  shift 44
 	'['  shift 41
 	.  error
 
+	const_expr  goto 42
 	att_value  goto 39
 	att_expr  goto 40
 
 state 38
-	atts:  atts ',' att.    (13)
+	atts:  atts ',' att.    (14)
 
-	.  reduce 13 (src line 213)
+	.  reduce 14 (src line 224)
 
 
 state 39
-	att:  new_name ':' att_value.    (10)
+	att:  new_name ':' att_value.    (11)
 
-	.  reduce 10 (src line 157)
+	.  reduce 11 (src line 168)
 
 
 state 40
-	att_value:  att_expr.    (8)
+	att_value:  att_expr.    (9)
 
-	.  reduce 8 (src line 148)
+	.  reduce 9 (src line 159)
 
 
 state 41
 	att_value:  '['.att_array ']' 
-	att_array: .    (5)
+	att_array: .    (6)
 
-	EXPAND_ENV  shift 44
-	UINT64  shift 42
-	STRING  shift 43
-	.  reduce 5 (src line 101)
+	EXPAND_ENV  shift 45
+	UINT64  shift 43
+	STRING  shift 44
+	.  reduce 6 (src line 112)
 
-	att_expr  goto 46
-	att_array  goto 45
+	const_expr  goto 42
+	att_expr  goto 47
+	att_array  goto 46
 
 state 42
-	att_expr:  UINT64.    (2)
+	att_expr:  const_expr.    (5)
 
-	.  reduce 2 (src line 72)
+	.  reduce 5 (src line 108)
 
 
 state 43
-	att_expr:  STRING.    (3)
+	const_expr:  UINT64.    (2)
 
-	.  reduce 3 (src line 81)
+	.  reduce 2 (src line 79)
 
 
 state 44
-	att_expr:  EXPAND_ENV.STRING 
+	const_expr:  STRING.    (3)
 
-	STRING  shift 47
-	.  error
+	.  reduce 3 (src line 88)
 
 
 state 45
-	att_array:  att_array.',' att_expr 
-	att_value:  '[' att_array.']' 
+	const_expr:  EXPAND_ENV.STRING 
 
-	','  shift 48
-	']'  shift 49
+	STRING  shift 48
 	.  error
 
 
 state 46
-	att_array:  att_expr.    (6)
+	att_array:  att_array.',' att_expr 
+	att_value:  '[' att_array.']' 
 
-	.  reduce 6 (src line 110)
+	','  shift 49
+	']'  shift 50
+	.  error
 
 
 state 47
-	att_expr:  EXPAND_ENV STRING.    (4)
+	att_array:  att_expr.    (7)
 
-	.  reduce 4 (src line 90)
+	.  reduce 7 (src line 121)
 
 
 state 48
-	att_array:  att_array ','.att_expr 
+	const_expr:  EXPAND_ENV STRING.    (4)
 
-	EXPAND_ENV  shift 44
-	UINT64  shift 42
-	STRING  shift 43
-	.  error
+	.  reduce 4 (src line 97)
 
-	att_expr  goto 50
 
 state 49
-	att_value:  '[' att_array ']'.    (9)
+	att_array:  att_array ','.att_expr 
 
-	.  reduce 9 (src line 150)
+	EXPAND_ENV  shift 45
+	UINT64  shift 43
+	STRING  shift 44
+	.  error
 
+	const_expr  goto 42
+	att_expr  goto 51
 
 state 50
-	att_array:  att_array ',' att_expr.    (7)
+	att_value:  '[' att_array ']'.    (10)
 
-	.  reduce 7 (src line 127)
+	.  reduce 10 (src line 161)
 
 
-30 terminals, 20 nonterminals
-34 grammar rules, 51/16000 states
+state 51
+	att_array:  att_array ',' att_expr.    (8)
+
+	.  reduce 8 (src line 138)
+
+
+32 terminals, 21 nonterminals
+35 grammar rules, 52/16000 states
 1 shift/reduce, 0 reduce/reduce conflicts reported
-69 working sets used
-memory: parser 34/240000
+70 working sets used
+memory: parser 38/240000
 3 extra closures
 43 shift entries, 1 exceptions
-28 goto entries
-5 entries saved by goto default
-Optimizer space used: output 53/240000
-53 table entries, 0 zero
-maximum spread: 30, maximum offset: 48
+29 goto entries
+7 entries saved by goto default
+Optimizer space used: output 54/240000
+54 table entries, 0 zero
+maximum spread: 32, maximum offset: 49

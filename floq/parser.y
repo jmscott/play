@@ -1,6 +1,11 @@
 /*
  *  Synopsis:
  *	Build an abstract syntax tree for Yacc grammar of "floq" language.
+ *  Note:
+ *	Not clear if att names, like "Args" should be upper case.
+ *	The idea of upper case is to adopt the golang scoping, should
+ *	reflection every be implemeneted.  floq scoping still very much in the
+ *	air.
  */
 
 %{
@@ -36,15 +41,16 @@ func init() {
 //  lowest numbered yytoken.  must be first in list.
 %token	__MIN_YYTOK
 
+%token	PARSE_ERROR
 %token	ATT  ATT_TUPLE
 %token	ATT_ARRAY
+%token	RUN  RUN_REF
 %token	COMMAND  COMMAND_REF
 %token	CREATE
 %token	EXPAND_ENV
 %token	FLOW  STATEMENT
 %token	NAME  UINT64  STRING
 %token	OF  LINES
-%token	PARSE_ERROR
 %token	SCANNER  SCANNER_REF
 %token	TRACER  TRACER_REF
 
@@ -52,10 +58,11 @@ func init() {
 %type	<string>	STRING  new_name
 %type	<ast>		flow
 
+%type	<ast>		const_expr
 %type	<ast>		att  atts  att_tuple  att_value  att_expr att_array
-%type	<ast>		create_tuple
-%type	<ast>		create_stmt stmt  stmt_list
-%type	<ast>		create  scanner  command  tracer
+%type	<ast>		create  create_tuple  create_stmt
+%type	<ast>		stmt  stmt_list
+%type	<ast>		scanner  command  tracer
 
 %%
 
@@ -69,7 +76,7 @@ flow:
 	  }
 	;
 
-att_expr:
+const_expr:
 	  UINT64
 	  {
 	  	$$ = &ast{
@@ -96,6 +103,10 @@ att_expr:
 			line_no:        yylex.(*yyLexState).line_no,
 		}
 	  }
+	;
+
+att_expr:
+	  const_expr
 	;
 
 att_array:
@@ -293,8 +304,7 @@ new_name:
 	  {
 	  	lex := yylex.(*yyLexState)
 
-		e := fmt.Sprintf("scanner: name already exists: %s", lex.name)
-		lex.Error(e)
+		lex.Error(fmt.Sprintf("name exists as scanner: %s", lex.name))
 		return 0
 	  }
 	|
@@ -302,11 +312,11 @@ new_name:
 	  {
 	  	lex := yylex.(*yyLexState)
 
-		e := fmt.Sprintf("command: name already exists: %s", lex.name)
-		lex.Error(e)
+		lex.Error(fmt.Sprintf("name exists as command: %s", lex.name))
 		return 0
 	  }
 	;
+
 create_tuple:
 	  /*  empty */
 	  {
@@ -423,6 +433,7 @@ create_stmt:
 
 stmt:
 	  create_stmt
+	 
 	;
 	
 stmt_list:
@@ -473,9 +484,10 @@ stmt_list:
 %%
 
 var keyword = map[string]int{
-	"ExpandEnv":		EXPAND_ENV,
+	"run":			RUN,
 	"Command":		COMMAND,
 	"create":		CREATE,
+	"ExpandEnv":		EXPAND_ENV,
 	"lines":		LINES,
 	"of":			OF,
 	"Scanner":		SCANNER,
@@ -776,7 +788,7 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 	}
 	c, eof, err := skip_space(lex)
 	if err != nil {
-		goto PARSE_ERROR
+		goto LEX_ERROR
 	}
 	if eof {
 		return 0
@@ -786,19 +798,19 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 
 	//  ascii outside of strings, for time being (why?)
 	case c > 127:
-		goto PARSE_ERROR
+		goto LEX_ERROR
 
 	case unicode.IsLetter(c) || c == '_':
 		tok, err = lex.scanner_word(yylval, c)
 		if err != nil {
-			goto PARSE_ERROR
+			goto LEX_ERROR
 		}
 		return tok
 
 	case unicode.IsNumber(c):
 		err = lex.scanner_uint64(yylval, c)
 		if err != nil {
-			goto PARSE_ERROR
+			goto LEX_ERROR
 		}
 		return UINT64
 
@@ -807,12 +819,12 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 
 		eof, err = lex.scanner_string(yylval)
 		if err != nil {
-			goto PARSE_ERROR
+			goto LEX_ERROR
 		}
 		if eof {
 			lex.line_no = lno
 			err = lex.mkerror("unexpected end of file in string")
-			goto PARSE_ERROR
+			goto LEX_ERROR
 		}
 		return STRING
 
@@ -821,18 +833,18 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 
 		eof, err = lex.scanner_raw_string(yylval)
 		if err != nil {
-			goto PARSE_ERROR
+			goto LEX_ERROR
 		}
 		if eof {
 			lex.line_no = lno
 			err = lex.mkerror("unexpected end of file in raw string")
-			goto PARSE_ERROR
+			goto LEX_ERROR
 		}
 		return STRING
 	}
 	return int(c)
 
-PARSE_ERROR:
+LEX_ERROR:
 	lex.err = err
 	return PARSE_ERROR
 }
