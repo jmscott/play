@@ -34,6 +34,7 @@ func init() {
 
 %union {
 	ast		*ast
+	name		string
 	string		string
 	uint64		uint64
 }
@@ -42,6 +43,7 @@ func init() {
 %token	__MIN_YYTOK
 
 %token	PARSE_ERROR
+%token	ARG  ARG_LIST
 %token	ATT  ATT_TUPLE
 %token	ATT_ARRAY
 %token	RUN  RUN_REF
@@ -60,6 +62,7 @@ func init() {
 
 %type	<ast>		const_expr
 %type	<ast>		att  atts  att_tuple  att_value  att_expr att_array
+%type	<ast>		arg  arg_list
 %type	<ast>		create  create_tuple  create_stmt
 %type	<ast>		stmt  stmt_list
 %type	<ast>		scanner  command  tracer
@@ -433,7 +436,22 @@ create_stmt:
 
 stmt:
 	  create_stmt
-	 
+	|
+	  RUN  COMMAND_REF {
+	  	lex := yylex.(*yyLexState)
+	  	$$ = &ast{
+			yy_tok:		RUN,
+			line_no:        yylex.(*yyLexState).line_no,
+			command_ref:	lex.name2ast[lex.name].command_ref,
+		}
+	  }  '('  arg_list ')'
+	  {
+	  	ar := $<ast>3
+		ar.left = $5
+		ar.left.parent = ar
+
+		$$ = ar
+	  }
 	;
 	
 stmt_list:
@@ -477,6 +495,48 @@ stmt_list:
 		for ;  sl.next != nil;  sl = sl.next {}
 		sl.next = s
 		s.previous = sl
+
+		$$ = $1
+	  }
+	;
+
+arg:
+	  const_expr
+	;
+
+arg_list:
+	  /*  empty */
+	  {
+	  	$$ = &ast{
+			yy_tok:         ARG_LIST,
+			line_no:        yylex.(*yyLexState).line_no,
+		}
+	  }
+	|
+	  arg
+	  {
+		lex := yylex.(*yyLexState)
+
+	  	al := &ast{
+			yy_tok:		ARG_LIST,
+			line_no:	lex.line_no,
+		}
+		al.left = $1
+		$1.parent = al
+
+		$$ = al
+	  }
+	|
+	  arg_list  ','  arg
+	  {
+		al := $1
+	  	a := $3
+		a.parent = al
+
+		var an *ast
+		for an = al.left;  an.next != nil;  an = an.next {}
+		an.next = a
+		a.previous = a
 
 		$$ = $1
 	  }
@@ -699,7 +759,10 @@ func (lex *yyLexState) scanner_raw_string(yylval *yySymType) (eof bool, err erro
  *  Scan a word consisting of a sequence of unicode Letters, Numbers and '_'
  *  characters.
  */
-func (lex *yyLexState) scanner_word(yylval *yySymType, c rune) (tok int, err error) {
+func (lex *yyLexState) scanner_word(
+	yylval *yySymType,
+	c rune,
+) (tok int, err error) {
 	var eof bool
 
 	w := string(c)		//  panic() if cast fails?
@@ -738,6 +801,7 @@ func (lex *yyLexState) scanner_word(yylval *yySymType, c rune) (tok int, err err
 
 	lex.name = w
 	if lex.name_is_name == false && lex.name2ast[w] != nil {
+		yylval.name = w
 		return lex.name2ast[w].yy_tok, nil
 	}
 	return NAME, nil
@@ -837,7 +901,7 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 		}
 		if eof {
 			lex.line_no = lno
-			err = lex.mkerror("unexpected end of file in raw string")
+			err = lex.mkerror("end of file in raw string")
 			goto LEX_ERROR
 		}
 		return STRING
