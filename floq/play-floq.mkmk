@@ -67,6 +67,7 @@ GOSRCs="
 	floq.go
 
 	ast.go
+	bool.go
 	command.go
 	flow.go
 	parser.go
