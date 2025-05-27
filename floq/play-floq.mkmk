@@ -68,9 +68,12 @@ GOSRCs="
 
 	ast.go
 	command.go
+	flow.go
 	parser.go
 	scanner.go
 	tracer.go
+	tsort.go
+	value.go
 "
 SRCs="
 	$GOSRCs
