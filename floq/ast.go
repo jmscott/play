@@ -33,8 +33,8 @@ func (a *ast) String() string {
 	var what string
 
 	switch a.yy_tok {
-	case STATEMENT:
-		what = fmt.Sprintf("STATEMENT@#%d", a.line_no)
+	case STMT:
+		what = fmt.Sprintf("STMT@#%d", a.line_no)
 	case SCANNER_REF:
 		what = fmt.Sprintf("SCANNER_REF(%s)", a.scanner_ref.name)
 	case COMMAND_REF:
@@ -71,7 +71,7 @@ func (a *ast) walk_print(indent int) {
 		fmt.Println("")
 	} else {
 		if a.parent == nil {
-			panic("ast: parent is nil")
+			panic(fmt.Sprintf("ast: %s: parent is nil", a))
 		}
 		for i := 0;  i < indent;  i++ {
 			fmt.Print("  ")

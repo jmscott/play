@@ -50,11 +50,13 @@ func init() {
 %token	COMMAND  COMMAND_REF
 %token	CREATE
 %token	EXPAND_ENV
-%token	FLOW  STATEMENT
+%token	FLOW  STMT
 %token	NAME  UINT64  STRING
 %token	OF  LINES
 %token	SCANNER  SCANNER_REF
 %token	TRACER  TRACER_REF
+%token	yyTRUE  yyFALSE
+%token	WHEN
 
 %type	<uint64>	UINT64		
 %type	<string>	STRING  new_name
@@ -62,8 +64,9 @@ func init() {
 
 %type	<ast>		const_expr
 %type	<ast>		att  atts  att_tuple  att_value  att_expr att_array
-%type	<ast>		arg  arg_list
+%type	<ast>		expr  arg_list
 %type	<ast>		create  create_tuple  create_stmt
+%type	<ast>		flow_stmt  when
 %type	<ast>		stmt  stmt_list
 %type	<ast>		scanner  command  tracer
 
@@ -103,6 +106,22 @@ const_expr:
 	  	$$ = &ast{
 			yy_tok:		STRING,
 			string:		os.ExpandEnv($2),
+			line_no:        yylex.(*yyLexState).line_no,
+		}
+	  }
+	|
+	  yyTRUE
+	  {
+	  	$$ = &ast{
+			yy_tok:		yyTRUE,
+			line_no:        yylex.(*yyLexState).line_no,
+		}
+	  }
+	|
+	  yyFALSE
+	  {
+	  	$$ = &ast{
+			yy_tok:		yyFALSE,
 			line_no:        yylex.(*yyLexState).line_no,
 		}
 	  }
@@ -343,7 +362,7 @@ create_stmt:
 	  	lex := yylex.(*yyLexState)
 
 		lex.name_is_name = false
-		lex.put_name($3, $2)
+		lex.name2ast[$3] = $2
 
 		al := $5
 		atra := $2
@@ -377,7 +396,7 @@ create_stmt:
 	  	lex := yylex.(*yyLexState)
 
 		lex.name_is_name = false
-		lex.put_name($3, $2)
+		lex.name2ast[$3] = $2
 
 		al := $5
 		ascan := $2
@@ -409,7 +428,7 @@ create_stmt:
 	  	lex := yylex.(*yyLexState)
 
 		lex.name_is_name = false
-		lex.put_name($3, $2)
+		lex.name2ast[$3] = $2
 
 		al := $5
 		acmd := $2
@@ -429,14 +448,37 @@ create_stmt:
 			lex.error("command: %s: %s", cmd.name, e)
 			return 0
 		}
-
 		$$ = $1
 	  }
 	;	
 
-stmt:
-	  create_stmt
+when:
+	  /*  empty  */
+	  {
+		lno := yylex.(*yyLexState).line_no
+	  	$$ = &ast{
+			yy_tok:		WHEN,
+			left:		&ast{
+						yy_tok:		yyTRUE,
+						line_no:	lno,
+					},
+			line_no:	lno,
+		}
+		$$.left.parent = $$
+	  }
 	|
+	  WHEN  expr
+	  {
+	  	$$ = &ast{
+			yy_tok:		WHEN,
+			left:		$2,
+			line_no:        yylex.(*yyLexState).line_no,
+		}
+		$2.parent = $$
+	  }
+	;
+
+flow_stmt:
 	  RUN  COMMAND_REF {
 	  	lex := yylex.(*yyLexState)
 	  	$$ = &ast{
@@ -453,12 +495,22 @@ stmt:
 		$$ = ar
 	  }
 	;
-	
+
+stmt:
+	  create_stmt
+	|
+	  flow_stmt  when
+	  {
+		$1.right = $2
+		$2.parent = $1
+	  }
+	;
+
 stmt_list:
 	  /*  empty */
 	  {
 	  	$$ = &ast{
-			yy_tok:         STATEMENT,
+			yy_tok:         STMT,
 			line_no:        yylex.(*yyLexState).line_no,
 		}
 	  }
@@ -468,7 +520,7 @@ stmt_list:
 	  	lex := yylex.(*yyLexState)
 
 		a := &ast{
-			yy_tok:		STATEMENT,
+			yy_tok:		STMT,
 			line_no:	$1.line_no,
 			left:		$1,	
 			parent:		lex.ast_root,
@@ -483,7 +535,7 @@ stmt_list:
 	  	lex := yylex.(*yyLexState)
 
 		s := &ast{
-			yy_tok:		STATEMENT,
+			yy_tok:		STMT,
 			line_no:	$2.line_no,
 			left:		$2,	
 			parent:         lex.ast_root,
@@ -500,8 +552,13 @@ stmt_list:
 	  }
 	;
 
-arg:
+expr:
 	  const_expr
+	|
+	  '('  expr  ')'
+	  {
+	  	$$ = $2
+	  }
 	;
 
 arg_list:
@@ -513,7 +570,7 @@ arg_list:
 		}
 	  }
 	|
-	  arg
+	  expr
 	  {
 		lex := yylex.(*yyLexState)
 
@@ -527,16 +584,17 @@ arg_list:
 		$$ = al
 	  }
 	|
-	  arg_list  ','  arg
+	  arg_list  ','  expr
 	  {
 		al := $1
-	  	a := $3
-		a.parent = al
+	  	e := $3
+		e.parent = al
 
+		//  find the tail of arg list
 		var an *ast
 		for an = al.left;  an.next != nil;  an = an.next {}
-		an.next = a
-		a.previous = a
+		an.next = e
+		e.previous = an
 
 		$$ = $1
 	  }
@@ -544,14 +602,17 @@ arg_list:
 %%
 
 var keyword = map[string]int{
-	"run":			RUN,
 	"Command":		COMMAND,
 	"create":		CREATE,
 	"ExpandEnv":		EXPAND_ENV,
+	"false":		yyFALSE,
 	"lines":		LINES,
 	"of":			OF,
+	"run":			RUN,
 	"Scanner":		SCANNER,
 	"Tracer":		TRACER,
+	"true":			yyTRUE,
+	"when":			WHEN,
 }
 
 type yyLexState struct {
@@ -568,19 +629,6 @@ type yyLexState struct {
 
 	name2ast		map[string]*ast
 	name_is_name		bool
-}
-
-
-func (lex *yyLexState) put_name(name string, a *ast) {
-
-	//  cheap sanity test
-	if lex.name2ast[name] != nil {
-		panic(fmt.Sprintf("put_name: overriding name2ast: %s", name))
-	}
-	if a.line_no == 0 {
-		a.line_no = lex.line_no
-	}
-	lex.name2ast[name] = a
 }
 
 func (lex *yyLexState) pushback(c rune) {
