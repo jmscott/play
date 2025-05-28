@@ -1,13 +1,13 @@
 
-0: shift/reduce conflict (shift 7(0), red'n 39(0)) on RUN
-0: shift/reduce conflict (shift 8(0), red'n 39(0)) on CREATE
+0: shift/reduce conflict (shift 7(0), red'n 38(0)) on RUN
+0: shift/reduce conflict (shift 8(0), red'n 38(0)) on CREATE
 state 0
 	$accept: .flow $end 
-	stmt_list: .    (39)
+	stmt_list: .    (38)
 
 	RUN  shift 7
 	CREATE  shift 8
-	.  reduce 39 (src line 520)
+	.  reduce 38 (src line 504)
 
 	flow  goto 1
 	create  goto 6
@@ -29,7 +29,7 @@ state 2
 
 	RUN  shift 7
 	CREATE  shift 8
-	.  reduce 1 (src line 75)
+	.  reduce 1 (src line 83)
 
 	create  goto 6
 	create_stmt  goto 4
@@ -44,81 +44,75 @@ state 3
 
 
 state 4
-	stmt:  create_stmt.    (37)
+	stmt:  create_stmt.    (35)
 
-	.  reduce 37 (src line 510)
+	.  reduce 35 (src line 492)
 
 
 state 5
-	stmt:  flow_stmt.when 
-	when: .    (33)
+	stmt:  flow_stmt.    (36)
+	stmt:  flow_stmt.WHEN qualify 
 
-	WHEN  shift 12
-	.  reduce 33 (src line 455)
+	WHEN  shift 11
+	.  reduce 36 (src line 494)
 
-	when  goto 11
 
 state 6
 	create_stmt:  create.tracer new_name $$27 create_tuple 
 	create_stmt:  create.scanner new_name $$29 create_tuple 
 	create_stmt:  create.command new_name $$31 create_tuple 
 
-	COMMAND  shift 18
-	SCANNER  shift 17
-	TRACER  shift 16
+	COMMAND  shift 17
+	SCANNER  shift 16
+	TRACER  shift 15
 	.  error
 
-	scanner  goto 14
-	command  goto 15
-	tracer  goto 13
+	scanner  goto 13
+	command  goto 14
+	tracer  goto 12
 
 state 7
-	flow_stmt:  RUN.COMMAND_REF $$35 '(' arg_list ')' 
+	flow_stmt:  RUN.COMMAND_REF $$33 '(' arg_list ')' 
 
-	COMMAND_REF  shift 19
+	COMMAND_REF  shift 18
 	.  error
 
 
 state 8
 	create:  CREATE.    (18)
 
-	.  reduce 18 (src line 270)
+	.  reduce 18 (src line 278)
 
 
 state 9
 	stmt_list:  stmt_list stmt.';' 
 
-	';'  shift 20
+	';'  shift 19
 	.  error
 
 
 state 10
-	stmt_list:  stmt ';'.    (40)
+	stmt_list:  stmt ';'.    (39)
 
-	.  reduce 40 (src line 528)
+	.  reduce 39 (src line 512)
 
 
 state 11
-	stmt:  flow_stmt when.    (38)
-
-	.  reduce 38 (src line 512)
-
-
-state 12
-	when:  WHEN.expr 
+	stmt:  flow_stmt WHEN.qualify 
 
 	EXPAND_ENV  shift 26
 	UINT64  shift 24
 	STRING  shift 25
-	yyTRUE  shift 27
-	yyFALSE  shift 28
+	yy_TRUE  shift 27
+	yy_FALSE  shift 28
+	NOT  shift 22
 	'('  shift 23
 	.  error
 
-	const_expr  goto 22
-	expr  goto 21
+	const_expr  goto 21
+	qualify  goto 20
 
-state 13
+state 12
 	create_stmt:  create tracer.new_name $$27 create_tuple 
 
 	COMMAND_REF  shift 32
@@ -128,7 +122,7 @@ state 13
 
 	new_name  goto 29
 
-state 14
+state 13
 	create_stmt:  create scanner.new_name $$29 create_tuple 
 
 	COMMAND_REF  shift 32
@@ -138,7 +132,7 @@ state 14
 
 	new_name  goto 33
 
-state 15
+state 14
 	create_stmt:  create command.new_name $$31 create_tuple 
 
 	COMMAND_REF  shift 32
@@ -148,318 +142,579 @@ state 15
 
 	new_name  goto 34
 
-state 16
+state 15
 	tracer:  TRACER.    (21)
 
-	.  reduce 21 (src line 306)
+	.  reduce 21 (src line 314)
 
 
-state 17
+state 16
 	scanner:  SCANNER.OF LINES 
 
 	OF  shift 35
 	.  error
 
 
-state 18
+state 17
 	command:  COMMAND.    (20)
 
-	.  reduce 20 (src line 295)
+	.  reduce 20 (src line 303)
 
+
+state 18
+	flow_stmt:  RUN COMMAND_REF.$$33 '(' arg_list ')' 
+	$$33: .    (33)
+
+	.  reduce 33 (src line 463)
+
+	$$33  goto 36
 
 state 19
-	flow_stmt:  RUN COMMAND_REF.$$35 '(' arg_list ')' 
-	$$35: .    (35)
+	stmt_list:  stmt_list stmt ';'.    (40)
 
-	.  reduce 35 (src line 481)
+	.  reduce 40 (src line 527)
 
-	$$35  goto 36
 
 state 20
-	stmt_list:  stmt_list stmt ';'.    (41)
+	stmt:  flow_stmt WHEN qualify.    (37)
+	qualify:  qualify.yy_AND $$52 qualify 
+	qualify:  qualify.yy_OR $$54 qualify 
+	qualify:  qualify.bool_rel $$56 qualify 
 
-	.  reduce 41 (src line 543)
+	yy_AND  shift 37
+	yy_OR  shift 38
+	EQ  shift 40
+	NEQ  shift 41
+	GT  shift 42
+	GTE  shift 43
+	LT  shift 44
+	LTE  shift 45
+	MATCH  shift 46
+	NO_MATCH  shift 47
+	.  reduce 37 (src line 496)
 
+	bool_rel  goto 39
 
 state 21
-	when:  WHEN expr.    (34)
+	qualify:  const_expr.    (49)
 
-	.  reduce 34 (src line 469)
+	.  reduce 49 (src line 592)
 
 
 state 22
-	expr:  const_expr.    (42)
-
-	.  reduce 42 (src line 566)
-
-
-state 23
-	expr:  '('.expr ')' 
+	qualify:  NOT.qualify 
 
 	EXPAND_ENV  shift 26
 	UINT64  shift 24
 	STRING  shift 25
-	yyTRUE  shift 27
-	yyFALSE  shift 28
+	yy_TRUE  shift 27
+	yy_FALSE  shift 28
+	NOT  shift 22
 	'('  shift 23
 	.  error
 
-	const_expr  goto 22
-	expr  goto 37
+	const_expr  goto 21
+	qualify  goto 48
+
+state 23
+	qualify:  '('.qualify ')' 
+
+	EXPAND_ENV  shift 26
+	UINT64  shift 24
+	STRING  shift 25
+	yy_TRUE  shift 27
+	yy_FALSE  shift 28
+	NOT  shift 22
+	'('  shift 23
+	.  error
+
+	const_expr  goto 21
+	qualify  goto 49
 
 state 24
 	const_expr:  UINT64.    (2)
 
-	.  reduce 2 (src line 85)
+	.  reduce 2 (src line 93)
 
 
 state 25
 	const_expr:  STRING.    (3)
 
-	.  reduce 3 (src line 94)
+	.  reduce 3 (src line 102)
 
 
 state 26
 	const_expr:  EXPAND_ENV.STRING 
 
-	STRING  shift 38
+	STRING  shift 50
 	.  error
 
 
 state 27
-	const_expr:  yyTRUE.    (5)
+	const_expr:  yy_TRUE.    (5)
 
-	.  reduce 5 (src line 112)
+	.  reduce 5 (src line 120)
 
 
 state 28
-	const_expr:  yyFALSE.    (6)
+	const_expr:  yy_FALSE.    (6)
 
-	.  reduce 6 (src line 120)
+	.  reduce 6 (src line 128)
 
 
 state 29
 	create_stmt:  create tracer new_name.$$27 create_tuple 
 	$$27: .    (27)
 
-	.  reduce 27 (src line 354)
+	.  reduce 27 (src line 362)
 
-	$$27  goto 39
+	$$27  goto 51
 
 state 30
 	new_name:  NAME.    (22)
 
-	.  reduce 22 (src line 317)
+	.  reduce 22 (src line 325)
 
 
 state 31
 	new_name:  SCANNER_REF.    (23)
 
-	.  reduce 23 (src line 324)
+	.  reduce 23 (src line 332)
 
 
 state 32
 	new_name:  COMMAND_REF.    (24)
 
-	.  reduce 24 (src line 332)
+	.  reduce 24 (src line 340)
 
 
 state 33
 	create_stmt:  create scanner new_name.$$29 create_tuple 
 	$$29: .    (29)
 
-	.  reduce 29 (src line 388)
+	.  reduce 29 (src line 396)
 
-	$$29  goto 40
+	$$29  goto 52
 
 state 34
 	create_stmt:  create command new_name.$$31 create_tuple 
 	$$31: .    (31)
 
-	.  reduce 31 (src line 422)
+	.  reduce 31 (src line 430)
 
-	$$31  goto 41
+	$$31  goto 53
 
 state 35
 	scanner:  SCANNER OF.LINES 
 
-	LINES  shift 42
+	LINES  shift 54
 	.  error
 
 
 state 36
-	flow_stmt:  RUN COMMAND_REF $$35.'(' arg_list ')' 
+	flow_stmt:  RUN COMMAND_REF $$33.'(' arg_list ')' 
 
-	'('  shift 43
+	'('  shift 55
 	.  error
 
 
 state 37
-	expr:  '(' expr.')' 
+	qualify:  qualify yy_AND.$$52 qualify 
+	$$52: .    (52)
 
-	')'  shift 44
-	.  error
+	.  reduce 52 (src line 609)
 
+	$$52  goto 56
 
 state 38
-	const_expr:  EXPAND_ENV STRING.    (4)
+	qualify:  qualify yy_OR.$$54 qualify 
+	$$54: .    (54)
 
-	.  reduce 4 (src line 103)
+	.  reduce 54 (src line 625)
 
+	$$54  goto 57
 
 state 39
-	create_stmt:  create tracer new_name $$27.create_tuple 
-	create_tuple: .    (25)
+	qualify:  qualify bool_rel.$$56 qualify 
+	$$56: .    (56)
 
-	'{'  shift 47
-	.  reduce 25 (src line 342)
+	.  reduce 56 (src line 641)
 
-	att_tuple  goto 46
-	create_tuple  goto 45
+	$$56  goto 58
 
 state 40
-	create_stmt:  create scanner new_name $$29.create_tuple 
-	create_tuple: .    (25)
+	bool_rel:  EQ.    (41)
 
-	'{'  shift 47
-	.  reduce 25 (src line 342)
+	.  reduce 41 (src line 550)
 
-	att_tuple  goto 46
-	create_tuple  goto 48
 
 state 41
-	create_stmt:  create command new_name $$31.create_tuple 
-	create_tuple: .    (25)
+	bool_rel:  NEQ.    (42)
 
-	'{'  shift 47
-	.  reduce 25 (src line 342)
+	.  reduce 42 (src line 555)
 
-	att_tuple  goto 46
-	create_tuple  goto 49
 
 state 42
-	scanner:  SCANNER OF LINES.    (19)
+	bool_rel:  GT.    (43)
 
-	.  reduce 19 (src line 281)
+	.  reduce 43 (src line 560)
 
 
 state 43
-	flow_stmt:  RUN COMMAND_REF $$35 '('.arg_list ')' 
-	arg_list: .    (44)
+	bool_rel:  GTE.    (44)
+
+	.  reduce 44 (src line 565)
+
+
+state 44
+	bool_rel:  LT.    (45)
+
+	.  reduce 45 (src line 570)
+
+
+state 45
+	bool_rel:  LTE.    (46)
+
+	.  reduce 46 (src line 575)
+
+
+state 46
+	bool_rel:  MATCH.    (47)
+
+	.  reduce 47 (src line 580)
+
+
+state 47
+	bool_rel:  NO_MATCH.    (48)
+
+	.  reduce 48 (src line 585)
+
+
+state 48
+	qualify:  NOT qualify.    (50)
+	qualify:  qualify.yy_AND $$52 qualify 
+	qualify:  qualify.yy_OR $$54 qualify 
+	qualify:  qualify.bool_rel $$56 qualify 
+
+	.  reduce 50 (src line 594)
+
+	bool_rel  goto 39
+
+state 49
+	qualify:  '(' qualify.')' 
+	qualify:  qualify.yy_AND $$52 qualify 
+	qualify:  qualify.yy_OR $$54 qualify 
+	qualify:  qualify.bool_rel $$56 qualify 
+
+	yy_AND  shift 37
+	yy_OR  shift 38
+	EQ  shift 40
+	NEQ  shift 41
+	GT  shift 42
+	GTE  shift 43
+	LT  shift 44
+	LTE  shift 45
+	MATCH  shift 46
+	NO_MATCH  shift 47
+	')'  shift 59
+	.  error
+
+	bool_rel  goto 39
+
+state 50
+	const_expr:  EXPAND_ENV STRING.    (4)
+
+	.  reduce 4 (src line 111)
+
+
+state 51
+	create_stmt:  create tracer new_name $$27.create_tuple 
+	create_tuple: .    (25)
+
+	'{'  shift 62
+	.  reduce 25 (src line 350)
+
+	att_tuple  goto 61
+	create_tuple  goto 60
+
+state 52
+	create_stmt:  create scanner new_name $$29.create_tuple 
+	create_tuple: .    (25)
+
+	'{'  shift 62
+	.  reduce 25 (src line 350)
+
+	att_tuple  goto 61
+	create_tuple  goto 63
+
+state 53
+	create_stmt:  create command new_name $$31.create_tuple 
+	create_tuple: .    (25)
+
+	'{'  shift 62
+	.  reduce 25 (src line 350)
+
+	att_tuple  goto 61
+	create_tuple  goto 64
+
+state 54
+	scanner:  SCANNER OF LINES.    (19)
+
+	.  reduce 19 (src line 289)
+
+
+state 55
+	flow_stmt:  RUN COMMAND_REF $$33 '('.arg_list ')' 
+	arg_list: .    (59)
 
 	EXPAND_ENV  shift 26
 	UINT64  shift 24
 	STRING  shift 25
-	yyTRUE  shift 27
-	yyFALSE  shift 28
+	yy_TRUE  shift 27
+	yy_FALSE  shift 28
+	NOT  shift 22
 	'('  shift 23
-	.  reduce 44 (src line 575)
+	.  reduce 59 (src line 665)
 
-	const_expr  goto 22
-	expr  goto 51
-	arg_list  goto 50
+	const_expr  goto 21
+	qualify  goto 67
+	arg  goto 66
+	arg_list  goto 65
 
-state 44
-	expr:  '(' expr ')'.    (43)
+state 56
+	qualify:  qualify yy_AND $$52.qualify 
 
-	.  reduce 43 (src line 568)
+	EXPAND_ENV  shift 26
+	UINT64  shift 24
+	STRING  shift 25
+	yy_TRUE  shift 27
+	yy_FALSE  shift 28
+	NOT  shift 22
+	'('  shift 23
+	.  error
+
+	const_expr  goto 21
+	qualify  goto 68
+
+state 57
+	qualify:  qualify yy_OR $$54.qualify 
+
+	EXPAND_ENV  shift 26
+	UINT64  shift 24
+	STRING  shift 25
+	yy_TRUE  shift 27
+	yy_FALSE  shift 28
+	NOT  shift 22
+	'('  shift 23
+	.  error
+
+	const_expr  goto 21
+	qualify  goto 69
+
+state 58
+	qualify:  qualify bool_rel $$56.qualify 
+
+	EXPAND_ENV  shift 26
+	UINT64  shift 24
+	STRING  shift 25
+	yy_TRUE  shift 27
+	yy_FALSE  shift 28
+	NOT  shift 22
+	'('  shift 23
+	.  error
+
+	const_expr  goto 21
+	qualify  goto 70
+
+state 59
+	qualify:  '(' qualify ')'.    (51)
+
+	.  reduce 51 (src line 604)
 
 
-state 45
+state 60
 	create_stmt:  create tracer new_name $$27 create_tuple.    (28)
 
-	.  reduce 28 (src line 360)
+	.  reduce 28 (src line 368)
 
 
-state 46
+state 61
 	create_tuple:  att_tuple.    (26)
 
-	.  reduce 26 (src line 350)
+	.  reduce 26 (src line 358)
 
 
-state 47
+state 62
 	att_tuple:  '{'.atts '}' 
 	atts: .    (14)
 
 	COMMAND_REF  shift 32
 	NAME  shift 30
 	SCANNER_REF  shift 31
-	.  reduce 14 (src line 224)
+	.  reduce 14 (src line 232)
 
-	new_name  goto 54
-	att  goto 53
-	atts  goto 52
+	new_name  goto 73
+	att  goto 72
+	atts  goto 71
 
-state 48
+state 63
 	create_stmt:  create scanner new_name $$29 create_tuple.    (30)
 
-	.  reduce 30 (src line 394)
+	.  reduce 30 (src line 402)
 
 
-state 49
+state 64
 	create_stmt:  create command new_name $$31 create_tuple.    (32)
 
-	.  reduce 32 (src line 427)
+	.  reduce 32 (src line 435)
 
 
-state 50
-	flow_stmt:  RUN COMMAND_REF $$35 '(' arg_list.')' 
-	arg_list:  arg_list.',' expr 
+state 65
+	flow_stmt:  RUN COMMAND_REF $$33 '(' arg_list.')' 
+	arg_list:  arg_list.',' arg 
 
-	','  shift 56
-	')'  shift 55
+	','  shift 75
+	')'  shift 74
 	.  error
 
 
-state 51
-	arg_list:  expr.    (45)
+state 66
+	arg_list:  arg.    (60)
 
-	.  reduce 45 (src line 583)
+	.  reduce 60 (src line 673)
 
 
-state 52
+state 67
+	qualify:  qualify.yy_AND $$52 qualify 
+	qualify:  qualify.yy_OR $$54 qualify 
+	qualify:  qualify.bool_rel $$56 qualify 
+	arg:  qualify.    (58)
+
+	yy_AND  shift 37
+	yy_OR  shift 38
+	EQ  shift 40
+	NEQ  shift 41
+	GT  shift 42
+	GTE  shift 43
+	LT  shift 44
+	LTE  shift 45
+	MATCH  shift 46
+	NO_MATCH  shift 47
+	.  reduce 58 (src line 661)
+
+	bool_rel  goto 39
+
+state 68
+	qualify:  qualify.yy_AND $$52 qualify 
+	qualify:  qualify yy_AND $$52 qualify.    (53)
+	qualify:  qualify.yy_OR $$54 qualify 
+	qualify:  qualify.bool_rel $$56 qualify 
+
+	EQ  shift 40
+	NEQ  shift 41
+	GT  shift 42
+	GTE  shift 43
+	LT  shift 44
+	LTE  shift 45
+	MATCH  shift 46
+	NO_MATCH  shift 47
+	.  reduce 53 (src line 615)
+
+	bool_rel  goto 39
+
+state 69
+	qualify:  qualify.yy_AND $$52 qualify 
+	qualify:  qualify.yy_OR $$54 qualify 
+	qualify:  qualify yy_OR $$54 qualify.    (55)
+	qualify:  qualify.bool_rel $$56 qualify 
+
+	EQ  shift 40
+	NEQ  shift 41
+	GT  shift 42
+	GTE  shift 43
+	LT  shift 44
+	LTE  shift 45
+	MATCH  shift 46
+	NO_MATCH  shift 47
+	.  reduce 55 (src line 631)
+
+	bool_rel  goto 39
+
+70: shift/reduce conflict (shift 37(1), red'n 57(0)) on yy_AND
+70: shift/reduce conflict (shift 38(1), red'n 57(0)) on yy_OR
+70: shift/reduce conflict (shift 40(2), red'n 57(0)) on EQ
+70: shift/reduce conflict (shift 41(2), red'n 57(0)) on NEQ
+70: shift/reduce conflict (shift 42(2), red'n 57(0)) on GT
+70: shift/reduce conflict (shift 43(2), red'n 57(0)) on GTE
+70: shift/reduce conflict (shift 44(2), red'n 57(0)) on LT
+70: shift/reduce conflict (shift 45(2), red'n 57(0)) on LTE
+70: shift/reduce conflict (shift 46(2), red'n 57(0)) on MATCH
+70: shift/reduce conflict (shift 47(2), red'n 57(0)) on NO_MATCH
+state 70
+	qualify:  qualify.yy_AND $$52 qualify 
+	qualify:  qualify.yy_OR $$54 qualify 
+	qualify:  qualify.bool_rel $$56 qualify 
+	qualify:  qualify bool_rel $$56 qualify.    (57)
+
+	yy_AND  shift 37
+	yy_OR  shift 38
+	EQ  shift 40
+	NEQ  shift 41
+	GT  shift 42
+	GTE  shift 43
+	LT  shift 44
+	LTE  shift 45
+	MATCH  shift 46
+	NO_MATCH  shift 47
+	.  reduce 57 (src line 647)
+
+	bool_rel  goto 39
+
+state 71
 	atts:  atts.',' att 
 	att_tuple:  '{' atts.'}' 
 
-	','  shift 57
-	'}'  shift 58
+	','  shift 76
+	'}'  shift 77
 	.  error
 
 
-state 53
+state 72
 	atts:  att.    (15)
 
-	.  reduce 15 (src line 232)
+	.  reduce 15 (src line 240)
 
 
-state 54
+state 73
 	att:  new_name.':' att_value 
 
-	':'  shift 59
+	':'  shift 78
 	.  error
 
 
-state 55
-	flow_stmt:  RUN COMMAND_REF $$35 '(' arg_list ')'.    (36)
+state 74
+	flow_stmt:  RUN COMMAND_REF $$33 '(' arg_list ')'.    (34)
 
-	.  reduce 36 (src line 497)
+	.  reduce 34 (src line 479)
 
 
-state 56
-	arg_list:  arg_list ','.expr 
+state 75
+	arg_list:  arg_list ','.arg 
 
 	EXPAND_ENV  shift 26
 	UINT64  shift 24
 	STRING  shift 25
-	yyTRUE  shift 27
-	yyFALSE  shift 28
+	yy_TRUE  shift 27
+	yy_FALSE  shift 28
+	NOT  shift 22
 	'('  shift 23
 	.  error
 
-	const_expr  goto 22
-	expr  goto 60
+	const_expr  goto 21
+	qualify  goto 67
+	arg  goto 79
 
-state 57
+state 76
 	atts:  atts ','.att 
 
 	COMMAND_REF  shift 32
@@ -467,124 +722,124 @@ state 57
 	SCANNER_REF  shift 31
 	.  error
 
-	new_name  goto 54
-	att  goto 61
+	new_name  goto 73
+	att  goto 80
 
-state 58
+state 77
 	att_tuple:  '{' atts '}'.    (17)
 
-	.  reduce 17 (src line 263)
+	.  reduce 17 (src line 271)
 
 
-state 59
+state 78
 	att:  new_name ':'.att_value 
 
 	EXPAND_ENV  shift 26
 	UINT64  shift 24
 	STRING  shift 25
-	yyTRUE  shift 27
-	yyFALSE  shift 28
-	'['  shift 64
+	yy_TRUE  shift 27
+	yy_FALSE  shift 28
+	'['  shift 83
 	.  error
 
-	const_expr  goto 65
-	att_value  goto 62
-	att_expr  goto 63
+	const_expr  goto 84
+	att_value  goto 81
+	att_expr  goto 82
 
-state 60
-	arg_list:  arg_list ',' expr.    (46)
+state 79
+	arg_list:  arg_list ',' arg.    (61)
 
-	.  reduce 46 (src line 597)
+	.  reduce 61 (src line 687)
 
 
-state 61
+state 80
 	atts:  atts ',' att.    (16)
 
-	.  reduce 16 (src line 246)
+	.  reduce 16 (src line 254)
 
 
-state 62
+state 81
 	att:  new_name ':' att_value.    (13)
 
-	.  reduce 13 (src line 190)
+	.  reduce 13 (src line 198)
 
 
-state 63
+state 82
 	att_value:  att_expr.    (11)
 
-	.  reduce 11 (src line 181)
+	.  reduce 11 (src line 189)
 
 
-state 64
+state 83
 	att_value:  '['.att_array ']' 
 	att_array: .    (8)
 
 	EXPAND_ENV  shift 26
 	UINT64  shift 24
 	STRING  shift 25
-	yyTRUE  shift 27
-	yyFALSE  shift 28
-	.  reduce 8 (src line 134)
+	yy_TRUE  shift 27
+	yy_FALSE  shift 28
+	.  reduce 8 (src line 142)
 
-	const_expr  goto 65
-	att_expr  goto 67
-	att_array  goto 66
+	const_expr  goto 84
+	att_expr  goto 86
+	att_array  goto 85
 
-state 65
+state 84
 	att_expr:  const_expr.    (7)
 
-	.  reduce 7 (src line 130)
+	.  reduce 7 (src line 138)
 
 
-state 66
+state 85
 	att_array:  att_array.',' att_expr 
 	att_value:  '[' att_array.']' 
 
-	','  shift 68
-	']'  shift 69
+	','  shift 87
+	']'  shift 88
 	.  error
 
 
-state 67
+state 86
 	att_array:  att_expr.    (9)
 
-	.  reduce 9 (src line 143)
+	.  reduce 9 (src line 151)
 
 
-state 68
+state 87
 	att_array:  att_array ','.att_expr 
 
 	EXPAND_ENV  shift 26
 	UINT64  shift 24
 	STRING  shift 25
-	yyTRUE  shift 27
-	yyFALSE  shift 28
+	yy_TRUE  shift 27
+	yy_FALSE  shift 28
 	.  error
 
-	const_expr  goto 65
-	att_expr  goto 70
+	const_expr  goto 84
+	att_expr  goto 89
 
-state 69
+state 88
 	att_value:  '[' att_array ']'.    (12)
 
-	.  reduce 12 (src line 183)
+	.  reduce 12 (src line 191)
 
 
-state 70
+state 89
 	att_array:  att_array ',' att_expr.    (10)
 
-	.  reduce 10 (src line 160)
+	.  reduce 10 (src line 168)
 
 
-38 terminals, 26 nonterminals
-47 grammar rules, 71/16000 states
-2 shift/reduce, 0 reduce/reduce conflicts reported
-75 working sets used
-memory: parser 51/240000
-13 extra closures
-81 shift entries, 1 exceptions
-40 goto entries
-9 entries saved by goto default
-Optimizer space used: output 82/240000
-82 table entries, 0 zero
-maximum spread: 38, maximum offset: 68
+49 terminals, 30 nonterminals
+62 grammar rules, 90/16000 states
+12 shift/reduce, 0 reduce/reduce conflicts reported
+79 working sets used
+memory: parser 67/240000
+24 extra closures
+169 shift entries, 1 exceptions
+48 goto entries
+20 entries saved by goto default
+Optimizer space used: output 119/240000
+119 table entries, 0 zero
+maximum spread: 49, maximum offset: 87

@@ -20,6 +20,8 @@ type ast struct {
 
 	parent		*ast
 
+	//  golang needs unions!
+
 	tracer_ref	*tracer
 	scanner_ref	*scanner
 	command_ref	*command
@@ -101,19 +103,6 @@ func (a *ast) walk_print(indent int) {
 			as.walk_print(indent)
 		}
 	}
-}
-
-func (a *ast) is_bool() bool {
-	switch a.yy_tok {
-	case yy_AND, yy_OR,
-	     yy_TRUE, yy_FALSE,
-	     EQ, NEQ,
-	     GT, GTE,
-	     LT, LTE,
-	     MATCH, NO_MATCH:
-		return true
-	}
-	return false
 }
 
 func (a *ast) print() {

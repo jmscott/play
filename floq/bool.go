@@ -275,6 +275,52 @@ func (flo *flow) bool2(
 		}
 	}()
 
-	return out
+	return
+}
 
+func (flo *flow) true() (out bool_chan) {
+
+	out = make(bool_chan)
+
+	go func() {
+		for {
+			flo = flo.get()
+			out <- &bool_value{
+				bool:	true,
+				flow:	flo,
+			}
+		}
+	}()
+
+	return
+}
+
+func (flo *flow) false() (out bool_chan) {
+
+	out = make(bool_chan)
+
+	go func() {
+		for {
+			flo = flo.get()
+			out <- &bool_value{
+				bool:	false,
+				flow:	flo,
+			}
+		}
+	}()
+
+	return
+}
+
+func (a *ast) is_bool() bool {
+	switch a.yy_tok {
+	case yy_AND, yy_OR,
+	     yy_TRUE, yy_FALSE,
+	     EQ, NEQ,
+	     GT, GTE,
+	     LT, LTE,
+	     MATCH, NO_MATCH:
+		return true
+	}
+	return false
 }

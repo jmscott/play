@@ -37,6 +37,7 @@ func init() {
 	name		string
 	string		string
 	uint64		uint64
+	int
 }
 
 //  lowest numbered yytoken.  must be first in list.
@@ -55,20 +56,27 @@ func init() {
 %token	OF  LINES
 %token	SCANNER  SCANNER_REF
 %token	TRACER  TRACER_REF
-%token	yyTRUE  yyFALSE
+%token	yy_TRUE  yy_FALSE  yy_AND  yy_OR  NOT
+%token	EQ  NEQ  GT  GTE  LT  LTE  MATCH  NO_MATCH
 %token	WHEN
 
 %type	<uint64>	UINT64		
 %type	<string>	STRING  new_name
 %type	<ast>		flow
 
+%type	<int>		bool_rel
 %type	<ast>		const_expr
+%type	<ast>		qualify
 %type	<ast>		att  atts  att_tuple  att_value  att_expr att_array
-%type	<ast>		expr  arg_list
+%type	<ast>		arg  arg_list
 %type	<ast>		create  create_tuple  create_stmt
-%type	<ast>		flow_stmt  when
+%type	<ast>		flow_stmt
 %type	<ast>		stmt  stmt_list
 %type	<ast>		scanner  command  tracer
+
+%left			yy_AND  yy_OR
+%left			EQ  NEQ  GT  GTE  LT  LTE  MATCH  NO_MATCH
+%nonassoc		NOT
 
 %%
 
@@ -110,18 +118,18 @@ const_expr:
 		}
 	  }
 	|
-	  yyTRUE
+	  yy_TRUE
 	  {
 	  	$$ = &ast{
-			yy_tok:		yyTRUE,
+			yy_tok:		yy_TRUE,
 			line_no:        yylex.(*yyLexState).line_no,
 		}
 	  }
 	|
-	  yyFALSE
+	  yy_FALSE
 	  {
 	  	$$ = &ast{
-			yy_tok:		yyFALSE,
+			yy_tok:		yy_FALSE,
 			line_no:        yylex.(*yyLexState).line_no,
 		}
 	  }
@@ -452,32 +460,6 @@ create_stmt:
 	  }
 	;	
 
-when:
-	  /*  empty  */
-	  {
-		lno := yylex.(*yyLexState).line_no
-	  	$$ = &ast{
-			yy_tok:		WHEN,
-			left:		&ast{
-						yy_tok:		yyTRUE,
-						line_no:	lno,
-					},
-			line_no:	lno,
-		}
-		$$.left.parent = $$
-	  }
-	|
-	  WHEN  expr
-	  {
-	  	$$ = &ast{
-			yy_tok:		WHEN,
-			left:		$2,
-			line_no:        yylex.(*yyLexState).line_no,
-		}
-		$2.parent = $$
-	  }
-	;
-
 flow_stmt:
 	  RUN  COMMAND_REF {
 	  	lex := yylex.(*yyLexState)
@@ -510,10 +492,12 @@ flow_stmt:
 stmt:
 	  create_stmt
 	|
-	  flow_stmt  when
+	  flow_stmt
+	|
+	  flow_stmt  WHEN  qualify
 	  {
-		$1.right = $2
-		$2.parent = $1
+		$1.right = $3
+		$3.parent = $1
 	  }
 	;
 
@@ -563,13 +547,119 @@ stmt_list:
 	  }
 	;
 
-expr:
+bool_rel:
+	  EQ
+	  {
+	  	$$ = EQ
+	  }
+	|
+	  NEQ
+	  {
+	  	$$ = NEQ
+	  }
+	|
+	  GT
+	  {
+	  	$$ = GT
+	  }
+	|
+	  GTE
+	  {
+	  	$$ = GTE
+	  }
+	|
+	  LT
+	  {
+	  	$$ = LT
+	  }
+	|
+	  LTE
+	  {
+	  	$$ = LTE
+	  }
+	|
+	  MATCH
+	  {
+	  	$$ = MATCH
+	  }
+	|
+	  NO_MATCH
+	  {
+	  	$$ = NO_MATCH
+	  }
+	;
+
+qualify:
 	  const_expr
 	|
-	  '('  expr  ')'
+	  NOT  qualify  %prec NOT
+	  {
+	  	$$ = &ast{
+			yy_tok:	NOT,
+			left:	$2,
+			line_no: yylex.(*yyLexState).line_no,
+		}
+		$2.parent = $$
+	  }
+	|
+	  '('  qualify  ')'
 	  {
 	  	$$ = $2
 	  }
+	|
+	  qualify  yy_AND {
+	  	$$ = &ast{
+			yy_tok: yy_AND,
+			line_no: yylex.(*yyLexState).line_no,
+		}
+	  }  qualify {
+	  	qa := $<ast>3
+		qa.left = $1
+		qa.right = $4
+
+	  	qa.left.parent = qa
+	  	qa.right.parent = qa
+
+		$$ = qa
+	  }
+	|
+	  qualify  yy_OR {
+	  	$$ = &ast{
+			yy_tok: yy_OR,
+			line_no: yylex.(*yyLexState).line_no,
+		}
+	  }  qualify {
+	  	qo := $<ast>3
+		qo.left = $1
+		qo.right = $4
+
+	  	qo.left.parent = qo
+	  	qo.right.parent = qo
+
+		$$ = qo
+	  }
+	|
+	  qualify  bool_rel {
+	  	$<ast>$ = &ast{
+			yy_tok:	$2,
+			line_no: yylex.(*yyLexState).line_no,
+		}
+	  } qualify {
+
+	  	bop := $<ast>3
+
+	  	bop.left = $1
+		bop.left.parent = bop
+
+	  	bop.right = $4
+		bop.right.parent = bop
+
+		$$ = bop
+	  }
+	;
+
+arg:
+	  qualify
 	;
 
 arg_list:
@@ -581,7 +671,7 @@ arg_list:
 		}
 	  }
 	|
-	  expr
+	  arg
 	  {
 		lex := yylex.(*yyLexState)
 
@@ -595,7 +685,7 @@ arg_list:
 		$$ = al
 	  }
 	|
-	  arg_list  ','  expr
+	  arg_list  ','  arg
 	  {
 		al := $1
 	  	e := $3
@@ -613,16 +703,19 @@ arg_list:
 %%
 
 var keyword = map[string]int{
+	"and":			yy_AND,
 	"Command":		COMMAND,
 	"create":		CREATE,
 	"ExpandEnv":		EXPAND_ENV,
-	"false":		yyFALSE,
+	"false":		yy_FALSE,
 	"lines":		LINES,
+	"not":			NOT,
 	"of":			OF,
+	"or":			yy_OR,
 	"run":			RUN,
 	"Scanner":		SCANNER,
 	"Tracer":		TRACER,
-	"true":			yyTRUE,
+	"true":			yy_TRUE,
 	"when":			WHEN,
 }
 
@@ -691,7 +784,7 @@ func (lex *yyLexState) get() (c rune, eof bool, err error) {
 	return c, false, nil
 }
 
-func lookahead(lex *yyLexState, peek rune, ifyes int, ifno int) (int, error) {
+func (lex *yyLexState) lookahead(peek rune, ifyes int, ifno int) (int, error) {
 	
 	next, eof, err := lex.get()
 	if err != nil {
@@ -922,7 +1015,68 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 
 	//  ascii outside of strings, for time being (why?)
 	case c > 127:
+		err = lex.mkerror("char not ascii: 0x%x", c)
 		goto LEX_ERROR
+
+	case c == '=':
+		var tok int
+
+		//  clang "==" equality
+
+		tok, err = lex.lookahead('=', EQ, 0)
+		if err != nil {
+			goto LEX_ERROR
+		}
+		if tok != 0 {
+			return tok
+		}
+
+		//  expr regexp operator "=~"
+
+		tok, err = lex.lookahead('~', MATCH, 0)
+		if err != nil {
+			goto LEX_ERROR
+		}
+		return tok
+
+	case c == '!':
+		var tok int
+
+		//  clang inequality "!="
+
+		tok, err = lex.lookahead('=', NEQ, 0)
+		if err != nil {
+			goto LEX_ERROR
+		}
+		if tok != 0 {
+			return tok
+		}
+
+		//  expr negate match regexp operator "!~"
+
+		tok, err = lex.lookahead('~', NO_MATCH, 0)
+		if err != nil {
+			goto LEX_ERROR
+		}
+		return tok
+
+	case c == '>':
+		var tok int
+
+		tok, err = lex.lookahead('=', GTE, GT)
+		if err != nil {
+			goto LEX_ERROR
+		}
+		return tok
+
+	case c == '<':
+		var tok int
+
+		tok, err = lex.lookahead('=', LTE, LT)
+		if err != nil {
+			goto LEX_ERROR
+		}
+		return tok
 
 	case unicode.IsLetter(c) || c == '_':
 		tok, err = lex.scanner_word(yylval, c)
@@ -966,6 +1120,7 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 		}
 		return STRING
 	}
+
 	return int(c)
 
 LEX_ERROR:
