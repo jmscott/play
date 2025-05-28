@@ -7,7 +7,7 @@ state 0
 
 	RUN  shift 7
 	CREATE  shift 8
-	.  reduce 39 (src line 509)
+	.  reduce 39 (src line 520)
 
 	flow  goto 1
 	create  goto 6
@@ -46,7 +46,7 @@ state 3
 state 4
 	stmt:  create_stmt.    (37)
 
-	.  reduce 37 (src line 499)
+	.  reduce 37 (src line 510)
 
 
 state 5
@@ -95,13 +95,13 @@ state 9
 state 10
 	stmt_list:  stmt ';'.    (40)
 
-	.  reduce 40 (src line 517)
+	.  reduce 40 (src line 528)
 
 
 state 11
 	stmt:  flow_stmt when.    (38)
 
-	.  reduce 38 (src line 501)
+	.  reduce 38 (src line 512)
 
 
 state 12
@@ -178,7 +178,7 @@ state 19
 state 20
 	stmt_list:  stmt_list stmt ';'.    (41)
 
-	.  reduce 41 (src line 532)
+	.  reduce 41 (src line 543)
 
 
 state 21
@@ -190,7 +190,7 @@ state 21
 state 22
 	expr:  const_expr.    (42)
 
-	.  reduce 42 (src line 555)
+	.  reduce 42 (src line 566)
 
 
 state 23
@@ -353,7 +353,7 @@ state 43
 	yyTRUE  shift 27
 	yyFALSE  shift 28
 	'('  shift 23
-	.  reduce 44 (src line 564)
+	.  reduce 44 (src line 575)
 
 	const_expr  goto 22
 	expr  goto 51
@@ -362,7 +362,7 @@ state 43
 state 44
 	expr:  '(' expr ')'.    (43)
 
-	.  reduce 43 (src line 557)
+	.  reduce 43 (src line 568)
 
 
 state 45
@@ -414,7 +414,7 @@ state 50
 state 51
 	arg_list:  expr.    (45)
 
-	.  reduce 45 (src line 572)
+	.  reduce 45 (src line 583)
 
 
 state 52
@@ -442,7 +442,7 @@ state 54
 state 55
 	flow_stmt:  RUN COMMAND_REF $$35 '(' arg_list ')'.    (36)
 
-	.  reduce 36 (src line 489)
+	.  reduce 36 (src line 497)
 
 
 state 56
@@ -494,7 +494,7 @@ state 59
 state 60
 	arg_list:  arg_list ',' expr.    (46)
 
-	.  reduce 46 (src line 586)
+	.  reduce 46 (src line 597)
 
 
 state 61
@@ -576,7 +576,7 @@ state 70
 	.  reduce 10 (src line 160)
 
 
-39 terminals, 26 nonterminals
+38 terminals, 26 nonterminals
 47 grammar rules, 71/16000 states
 2 shift/reduce, 0 reduce/reduce conflicts reported
 75 working sets used
@@ -587,4 +587,4 @@ memory: parser 51/240000
 9 entries saved by goto default
 Optimizer space used: output 82/240000
 82 table entries, 0 zero
-maximum spread: 39, maximum offset: 68
+maximum spread: 38, maximum offset: 68

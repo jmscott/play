@@ -46,7 +46,7 @@ func init() {
 %token	ARG  ARG_LIST
 %token	ATT  ATT_TUPLE
 %token	ATT_ARRAY
-%token	RUN  RUN_REF
+%token	RUN
 %token	COMMAND  COMMAND_REF
 %token	CREATE
 %token	EXPAND_ENV
@@ -326,7 +326,7 @@ new_name:
 	  {
 	  	lex := yylex.(*yyLexState)
 
-		lex.Error(fmt.Sprintf("name exists as scanner: %s", lex.name))
+		lex.error("name exists as scanner: %s", lex.name)
 		return 0
 	  }
 	|
@@ -334,7 +334,7 @@ new_name:
 	  {
 	  	lex := yylex.(*yyLexState)
 
-		lex.Error(fmt.Sprintf("name exists as command: %s", lex.name))
+		lex.error("name exists as command: %s", lex.name)
 		return 0
 	  }
 	;
@@ -481,18 +481,29 @@ when:
 flow_stmt:
 	  RUN  COMMAND_REF {
 	  	lex := yylex.(*yyLexState)
+		cmd := lex.name2ast[lex.name].command_ref
+
+		rc := lex.run_cmd2ast[cmd]
+		if rc != nil {
+			lex.error("command run twice: \"%s\"", cmd.name)
+			return 0
+		}
+
 	  	$$ = &ast{
 			yy_tok:		RUN,
 			line_no:        yylex.(*yyLexState).line_no,
-			command_ref:	lex.name2ast[lex.name].command_ref,
+			command_ref:	cmd,
 		}
-	  }  '('  arg_list ')'
-	  {
+	  }  '('  arg_list ')' {
+	  	lex := yylex.(*yyLexState)
+		cmd := lex.name2ast[lex.name].command_ref
+
 	  	ar := $<ast>3
 		ar.left = $5
 		ar.left.parent = ar
 
 		$$ = ar
+		lex.run_cmd2ast[cmd] = ar 
 	  }
 	;
 
@@ -628,6 +639,7 @@ type yyLexState struct {
 	uint64
 
 	name2ast		map[string]*ast
+	run_cmd2ast		map[*command]*ast
 	name_is_name		bool
 }
 
@@ -987,6 +999,7 @@ func parse(in io.RuneReader) (*ast, error) {
 		in:		in,
 		line_no:	1,
 		name2ast:	make(map[string]*ast),
+		run_cmd2ast:	make(map[*command]*ast),
 		ast_root:	&ast{
 					yy_tok:		FLOW,
 					line_no:	1,
