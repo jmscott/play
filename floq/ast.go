@@ -33,6 +33,8 @@ func (a *ast) String() string {
 	var what string
 
 	switch a.yy_tok {
+	case 0:
+		panic("ast has yy_tok == 0")
 	case STMT:
 		what = fmt.Sprintf("STMT@#%d", a.line_no)
 	case SCANNER_REF:
@@ -50,6 +52,14 @@ func (a *ast) String() string {
 	case ATT_ARRAY:
 		ar := a.array_ref
 		what = fmt.Sprintf("ATT_ARRAY(l=%d,c=%d)", len(ar), cap(ar))
+	case yy_AND:
+		what = "AND"
+	case yy_OR:
+		what = "OR"
+	case yy_FALSE:
+		what = "FALSE"
+	case yy_TRUE:
+		what = "TRUE"
 	default:
 		//  print token name or int value of yy token
 		offset := a.yy_tok - __MIN_YYTOK + 3
@@ -91,6 +101,19 @@ func (a *ast) walk_print(indent int) {
 			as.walk_print(indent)
 		}
 	}
+}
+
+func (a *ast) is_bool() bool {
+	switch a.yy_tok {
+	case yy_AND, yy_OR,
+	     yy_TRUE, yy_FALSE,
+	     EQ, NEQ,
+	     GT, GTE,
+	     LT, LTE,
+	     MATCH, NO_MATCH:
+		return true
+	}
+	return false
 }
 
 func (a *ast) print() {
