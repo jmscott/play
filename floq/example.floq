@@ -17,3 +17,16 @@ create Command eat_blob {
 			"--udig"
 		]
 };
+
+create Command hello {
+	Path:	"echo",
+	Args:	[
+			"hello,",
+			"world"
+		]
+};
+
+run hello("hello", "world")
+	when
+	(( true ))
+	;
