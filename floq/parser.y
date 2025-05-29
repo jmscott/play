@@ -58,6 +58,7 @@ func init() {
 %token	TRACER  TRACER_REF
 %token	yy_TRUE  yy_FALSE  yy_AND  yy_OR  NOT
 %token	EQ  NEQ  GT  GTE  LT  LTE  MATCH  NO_MATCH
+%token	CONCAT
 %token	WHEN
 
 %type	<uint64>	UINT64		
@@ -65,7 +66,7 @@ func init() {
 %type	<ast>		flow
 
 %type	<int>		bool_rel
-%type	<ast>		const_expr
+%type	<ast>		bool_const  constant
 %type	<ast>		qualify
 %type	<ast>		att  atts  att_tuple  att_value  att_expr att_array
 %type	<ast>		arg  arg_list
@@ -90,7 +91,25 @@ flow:
 	  }
 	;
 
-const_expr:
+bool_const:
+	  yy_TRUE
+	  {
+	  	$$ = &ast{
+			yy_tok:		yy_TRUE,
+			line_no:        yylex.(*yyLexState).line_no,
+		}
+	  }
+	|
+	  yy_FALSE
+	  {
+	  	$$ = &ast{
+			yy_tok:		yy_FALSE,
+			line_no:        yylex.(*yyLexState).line_no,
+		}
+	  }
+	;
+
+constant:
 	  UINT64
 	  {
 	  	$$ = &ast{
@@ -118,25 +137,11 @@ const_expr:
 		}
 	  }
 	|
-	  yy_TRUE
-	  {
-	  	$$ = &ast{
-			yy_tok:		yy_TRUE,
-			line_no:        yylex.(*yyLexState).line_no,
-		}
-	  }
-	|
-	  yy_FALSE
-	  {
-	  	$$ = &ast{
-			yy_tok:		yy_FALSE,
-			line_no:        yylex.(*yyLexState).line_no,
-		}
-	  }
+	  bool_const
 	;
 
 att_expr:
-	  const_expr
+	  constant
 	;
 
 att_array:
@@ -590,7 +595,7 @@ bool_rel:
 	;
 
 qualify:
-	  const_expr
+	  bool_const
 	|
 	  NOT  qualify  %prec NOT
 	  {
@@ -659,6 +664,8 @@ qualify:
 	;
 
 arg:
+	  constant
+	|
 	  qualify
 	;
 
@@ -1019,8 +1026,6 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 		goto LEX_ERROR
 
 	case c == '=':
-		var tok int
-
 		//  clang "==" equality
 
 		tok, err = lex.lookahead('=', EQ, 0)
@@ -1040,8 +1045,6 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 		return tok
 
 	case c == '!':
-		var tok int
-
 		//  clang inequality "!="
 
 		tok, err = lex.lookahead('=', NEQ, 0)
@@ -1060,9 +1063,14 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 		}
 		return tok
 
-	case c == '>':
-		var tok int
+	case c == '|':
+		tok, err = lex.lookahead('|', CONCAT, '|')
+		if err != nil {
+			goto LEX_ERROR
+		}
+		return tok
 
+	case c == '>':
 		tok, err = lex.lookahead('=', GTE, GT)
 		if err != nil {
 			goto LEX_ERROR
@@ -1070,7 +1078,6 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 		return tok
 
 	case c == '<':
-		var tok int
 
 		tok, err = lex.lookahead('=', LTE, LT)
 		if err != nil {
