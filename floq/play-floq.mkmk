@@ -72,6 +72,7 @@ GOSRCs="
 	flow.go
 	parser.go
 	scanner.go
+	string.go
 	tracer.go
 	tsort.go
 	value.go
