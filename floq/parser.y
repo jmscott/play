@@ -25,18 +25,20 @@ const max_name_rune_count = 127
 
 func init() {
 
+	//  sanity test for mapping yy tokens to name
 	if yyToknames[3] != "__MIN_YYTOK" {
 		panic("yyToknames[3] != __MIN_YYTOK: correct yacc command?")
 	}
-	//yyDebug = 4
+
+	//yyDebug = 2
 }
 %}
 
 %union {
 	ast		*ast
 	name		string
-	string		string
-	uint64		uint64
+	string
+	uint64
 	int
 }
 
@@ -51,7 +53,7 @@ func init() {
 %token	COMMAND  COMMAND_REF
 %token	CREATE
 %token	EXPAND_ENV
-%token	FLOW  STMT
+%token	FLOW  STMT_LIST  STMT
 %token	NAME  UINT64  STRING
 %token	OF  LINES
 %token	SCANNER  SCANNER_REF
@@ -65,20 +67,19 @@ func init() {
 %type	<string>	STRING  new_name
 %type	<ast>		flow
 
-%type	<ast>		att  atts  att_tuple  att_value  att_expr att_array_list
 %type	<ast>		arg_list
-%type	<ast>		create  create_tuple  create_stmt
-%type	<ast>		flow_stmt
+%type	<ast>		att  atts  att_tuple  att_value  att_expr att_array_list
 %type	<ast>		constant  expr
-%type	<ast>		stmt  stmt_list
+%type	<ast>		create  create_tuple
+%type	<ast>		flow_stmt  create_stmt  stmt  stmt_list
 %type	<ast>		scanner  command  tracer
 
-%left			yy_AND  yy_OR
-%left			EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
-%left			ADD  SUB
-%left			MUL  DIV
-%left			CONCAT
-%nonassoc		NOT
+%left		yy_AND  yy_OR
+%left		EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
+%left		ADD  SUB
+%left		MUL  DIV
+%left		CONCAT
+%right		NOT
 
 %%
 
@@ -86,11 +87,9 @@ flow:
 	  stmt_list
 	  {
 		lex := yylex.(*yyLexState)
-
 		$1.parent = lex.ast_root
 		lex.ast_root.left = $1
 	  }
-	;
 	;
 
 constant:
@@ -493,7 +492,7 @@ create_stmt:
 
 		$1.left = $2
 
-		//  frisk the attibutes of command
+		//  frisk the attibutes of tracer
 
 		tra := atra.tracer_ref
 		e := tra.frisk_att(al) 
@@ -545,26 +544,25 @@ create_stmt:
 
 	  } create_tuple {
 	  	lex := yylex.(*yyLexState)
-
 		lex.name_is_name = false
-		lex.name2ast[$3] = $2
 
-		al := $5
-		acmd := $2
-		al.parent = $2
-		acmd.left = al
+		c := $1
+		cmd := $2
+		nm := $3
+		ctup := $5
+		cref := cmd.command_ref
 
-	  	acmd.command_ref.name = $3
-	  	acmd.parent = $1
+		cmd.parent = c
+		c.left = cmd
+		ctup.parent = c
+		c.right = ctup
 
-		$1.left = $2
+		lex.name2ast[nm] = cmd
+		cref.name = nm
 
-		//  frisk the attibutes of command
-
-		cmd := acmd.command_ref
-		e := cmd.frisk_att(al) 
+		e := cref.frisk_att(ctup) 
 		if e != "" {
-			lex.error("command: %s: %s", cmd.name, e)
+			lex.error("command: %s: %s", nm, e)
 			return 0
 		}
 		$$ = $1
@@ -572,9 +570,17 @@ create_stmt:
 	;	
 
 flow_stmt:
-	  RUN  COMMAND_REF {
+	  RUN  COMMAND_REF  {
 	  	lex := yylex.(*yyLexState)
-		cmd := lex.name2ast[lex.name].command_ref
+		cast := lex.name2ast[lex.name]
+		if cast == nil {
+			panic("impossible missing command ast: " + lex.name)
+		}
+		cmd := cast.command_ref
+
+		if cmd == nil {
+			panic("command: impossible nil: " + lex.name)
+		}
 
 		rc := lex.run_cmd2ast[cmd]
 		if rc != nil {
@@ -586,38 +592,72 @@ flow_stmt:
 			yy_tok:		RUN,
 			line_no:        yylex.(*yyLexState).line_no,
 			command_ref:	cmd,
+			left:		cast,
 		}
-	  }  '('  arg_list ')' {
+		cast.parent = $$
+	  }  '('  arg_list  ')' {
 	  	lex := yylex.(*yyLexState)
 		cmd := lex.name2ast[lex.name].command_ref
 
 	  	ar := $<ast>3
-		ar.left = $5
-		ar.left.parent = ar
+		ar.right = $5
+		ar.right.parent = ar
 
-		$$ = ar
 		lex.run_cmd2ast[cmd] = ar 
+		$$ = ar
 	  }
 	;
 
 stmt:
 	  create_stmt
+	  {
+	  	$$ = &ast{
+			yy_tok:		STMT,
+			left:		$1,
+			line_no:        yylex.(*yyLexState).line_no,
+		}
+		$1.parent = $$
+	  }
 	|
 	  flow_stmt
-	|
-	  flow_stmt  WHEN  expr
 	  {
-		$1.right = $3
-		$3.parent = $1
+	  	$$ = &ast{
+			yy_tok:		STMT,
+			left:		$1,
+			line_no:        yylex.(*yyLexState).line_no,
+		}
+		$1.parent = $$
+	  }
+	|
+	  flow_stmt  WHEN  {
+	  	$<ast>$ = &ast{
+				yy_tok:		WHEN,
+				line_no:	yylex.(*yyLexState).line_no,
+		}
+	  }  expr  {
+	  	when := $<ast>3
+
+		$$ = &ast{
+			yy_tok:		STMT,
+			left:		$1,
+			right:		when,
+			line_no:	yylex.(*yyLexState).line_no,
+		}
+		$1.parent = $$
+		when.parent = $$
+		when.left = $4
+		$4.parent = $$
 	  }
 	;
 
 stmt_list:
 	  /*  empty */
 	  {
+		lex := yylex.(*yyLexState)
 	  	$$ = &ast{
-			yy_tok:         STMT,
-			line_no:        yylex.(*yyLexState).line_no,
+			yy_tok:         STMT_LIST,
+			line_no:        lex.line_no,
+			parent:         lex.ast_root,
 		}
 	  }
 	|
@@ -625,34 +665,40 @@ stmt_list:
 	  {
 	  	lex := yylex.(*yyLexState)
 
-		a := &ast{
-			yy_tok:		STMT,
-			line_no:	$1.line_no,
-			left:		$1,	
+		s := $1
+		sl := &ast{
+			yy_tok:		STMT_LIST,
+			line_no:	lex.line_no,
+			left:		s,
 			parent:		lex.ast_root,
+			uint64:		1,
 		}
-		$1.parent = a
+		s.parent = s
 
-		$$ = a
+		$$ = sl
 	  }
 	|
 	  stmt_list  stmt  ';'
 	  {
-	  	lex := yylex.(*yyLexState)
-
-		s := &ast{
-			yy_tok:		STMT,
-			line_no:	$2.line_no,
-			left:		$2,	
-			parent:         lex.ast_root,
-		}
-		$2.parent = s
-
-		//  find end statement
 		sl := $1
-		for ;  sl.next != nil;  sl = sl.next {}
-		sl.next = s
-		s.previous = sl
+		if sl.yy_tok != STMT_LIST {
+			panic(fmt.Sprintf(
+				"stmt_list not STMT_LIST: %s",
+				sl.name(),
+			))
+		}
+		s := $2
+
+		//  find end of stmt list
+
+		s_tail := sl.left
+		for ;  s_tail.next != nil;  s_tail = s_tail.next {}
+		s.uint64 = s_tail.uint64 + 1
+		s_tail.next = s
+		s.previous = s_tail
+		s.parent = sl
+
+		sl.uint64++		//  count the # stmt
 
 		$$ = $1
 	  }
@@ -674,6 +720,7 @@ arg_list:
 	  	al := &ast{
 			yy_tok:		ARG_LIST,
 			line_no:	lex.line_no,
+			uint64:		1,
 		}
 		al.left = $1
 		$1.parent = al
@@ -692,6 +739,8 @@ arg_list:
 		for an = al.left;  an.next != nil;  an = an.next {}
 		an.next = e
 		e.previous = an
+
+		al.uint64++
 
 		$$ = $1
 	  }
@@ -989,17 +1038,17 @@ func (lex *yyLexState) scanner_uint64(yylval *yySymType, c rune) (err error) {
 	return
 }
 
-func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (*ast) {
+func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 
 	switch tok {
 	case NOT:
 		if left.is_bool() == false {
-			lex.mkerror("NOT: can not negate %s", left.name())
+			lex.error("NOT: can not negate %s", left.name())
 			return nil
 		}
 	case yy_AND, yy_OR:
 		if left.is_bool() == false {
-			lex.mkerror(
+			lex.error(
 				"%s: left expr not bool: got %s, want BOOL",
 				yy_name(tok),
 				left.name(),
@@ -1007,7 +1056,7 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (*ast) {
 			return nil
 		}
 		if right.is_bool() == false {
-			lex.mkerror(
+			lex.error(
 				"%s: right expr not bool: got %s, want BOOL",
 				yy_name(tok),
 				right.name(),
@@ -1016,9 +1065,10 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (*ast) {
 		}
 	case EQ, NEQ, LT, LTE, GTE, GT:
 		can_compare := (left.is_string() && right.is_string()) ||
-		              (left.is_uint64() && right.is_uint64())
+		               (left.is_uint64() && right.is_uint64()) ||
+		               (left.is_bool() && right.is_bool())
 		if !can_compare {
-			lex.mkerror(
+			lex.error(
 				"%s: can not compare %s and %s",
 				yy_name(tok),
 				left.name(),
@@ -1028,11 +1078,11 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (*ast) {
 		}
 	case CONCAT, MATCH, NOMATCH:
 		if left.is_string() == false {
-			lex.mkerror("%s: left is not string", left.name())
+			lex.error("%s: left is not string", left.name())
 			return nil
 		}
 		if right.is_string() == false {
-			lex.mkerror("%s: right is not string", right.name())
+			lex.error("%s: right is not string", right.name())
 			return nil
 		}
 	default:
@@ -1041,13 +1091,19 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (*ast) {
 			yy_name(tok),
 		)
 		panic(msg)
+		return nil	//  NOTREACHED
 	}
 
-	return &ast{
+	a = &ast{
 		yy_tok:		tok,
 		left:		left,
 		right:		right,
 	}
+	left.parent = a
+	if right != nil {
+		right.parent = a
+	}
+	return a
 }
 
 //  lexical scan of a token
@@ -1060,6 +1116,7 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 	if lex.eof {
 		return 0
 	}
+	yylval.name = ""
 	c, eof, err := skip_space(lex)
 	if err != nil {
 		goto LEX_ERROR
@@ -1230,4 +1287,10 @@ func yy_name(tok int) (name string) {
 		name = fmt.Sprintf( "UNKNOWN(%d)", tok)
 	}
 	return
+}
+
+func WTF(format string, args ...interface{}) {
+
+	format = "WTF: " + format
+	fmt.Fprintf(stderr, fmt.Sprintf(format, args...) + "\n")
 }

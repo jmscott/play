@@ -12,6 +12,7 @@ var (
 )
 
 //  temporary die() used only during boot up
+
 func croak(format string, args ...interface{}) {
 
 	fmt.Fprintf(stderr, "floq: ERROR: %s\n", fmt.Sprintf(format, args...))

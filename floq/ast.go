@@ -31,6 +31,9 @@ type ast struct {
 }
 
 func (a *ast) name() string {
+	if a == nil {
+		return "nil"
+	}
 	return yy_name(a.yy_tok)
 }
 
@@ -41,8 +44,8 @@ func (a *ast) String() string {
 	switch a.yy_tok {
 	case 0:
 		panic("ast has yy_tok == 0")
-	case STMT:
-		what = fmt.Sprintf("STMT@#%d", a.line_no)
+	case ARG_LIST:
+		what = fmt.Sprintf("ARG_LIST(argc=%d)", a.uint64)
 	case SCANNER_REF:
 		what = fmt.Sprintf("SCANNER_REF(%s)", a.scanner_ref.name)
 	case COMMAND_REF:
@@ -57,7 +60,7 @@ func (a *ast) String() string {
 		what = fmt.Sprintf("UINT64(%d)", a.uint64)
 	case ATT_ARRAY:
 		ar := a.array_ref
-		what = fmt.Sprintf("ATT_ARRAY(l=%d,c=%d)", len(ar), cap(ar))
+		what = fmt.Sprintf("ATT_ARRAY(len=%d,cap=%d)", len(ar), cap(ar))
 	case yy_AND:
 		what = "AND"
 	case yy_OR:
@@ -66,7 +69,12 @@ func (a *ast) String() string {
 		what = "FALSE"
 	case yy_TRUE:
 		what = "TRUE"
+	case STMT_LIST:
+		what = fmt.Sprintf("STMT_LIST(count=#%d)", a.uint64)
+	case STMT:
+		what = fmt.Sprintf("STMT(#%d @ line=#%d)", a.uint64, a.line_no)
 	default:
+		what = a.name()
 	}
 	return what
 }
