@@ -5,28 +5,36 @@ create Scanner of lines stdin {
 create Tracer tty;
 
 create Command eat_blob {
-	Path:	"blobio",
-	Env:	[
-			ExpandEnv "BLOBIO_ROOT=$BLOBIO_ROOT",
-			ExpandEnv "BLOBIO_SERVICE=$BLOBIO_SERVICE"
-		],
-	Args:	[
+	path:	"blobio",
+	argv:	[
 			"eat",
 			"--service",
 			ExpandEnv "fs:$BLOBIO_ROOT",
 			"--udig"
+		],
+
+	env:	[
+			ExpandEnv "BLOBIO_ROOT=$BLOBIO_ROOT",
+			ExpandEnv "BLOBIO_SERVICE=$BLOBIO_SERVICE"
 		]
 };
 
 create Command hello {
-	Path:	"echo",
-	Args:	[
+	path:	"echo",
+	argv:	[
 			"hello,",
 			"world"
 		]
 };
 
-run hello("hello", "world")
-	when
-	(( true ))
-	;
+run
+hello
+(
+	"hello",
+	"world",
+	true or true
+) 
+  when
+  (true != false) or (false == false)
+  and (not true) != false
+;
