@@ -12,6 +12,8 @@ type string_value struct {
 
 type string_chan chan *string_value
 
+//  concatenate two strings
+
 func (flo *flow) strcat(left, right string_chan) (out string_chan) {
 
 	out = make(string_chan)
@@ -25,7 +27,7 @@ func (flo *flow) strcat(left, right string_chan) (out string_chan) {
 
 			var lv, rv *string_value
 
-			// wait for left and right sides to arrive
+			// wait for left and right values to arrive
 
 			for lv == nil || rv == nil {
 				select {
