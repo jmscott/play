@@ -57,3 +57,11 @@ func (flo *flow) strcat(left, right string_chan) (out string_chan) {
 
 	return out
 }
+
+func (a *ast) is_string() bool {
+
+	if a.yy_tok == STRING || a.yy_tok == CONCAT {
+		return true
+	}
+	return false
+}

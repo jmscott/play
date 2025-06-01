@@ -30,6 +30,10 @@ type ast struct {
 	array_ref	[]string
 }
 
+func (a *ast) name() string {
+	return yy_name(a.yy_tok)
+}
+
 func (a *ast) String() string {
 
 	var what string
@@ -63,13 +67,6 @@ func (a *ast) String() string {
 	case yy_TRUE:
 		what = "TRUE"
 	default:
-		//  print token name or int value of yy token
-		offset := a.yy_tok - __MIN_YYTOK + 3
-		if (a.yy_tok > __MIN_YYTOK) {
-			what = yyToknames[offset]
-		} else {
-			what = fmt.Sprintf( "UNKNOWN(%d)", a.yy_tok)
-		}
 	}
 	return what
 }

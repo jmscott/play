@@ -319,7 +319,7 @@ func (a *ast) is_bool() bool {
 	     EQ, NEQ,
 	     GT, GTE,
 	     LT, LTE,
-	     MATCH, NO_MATCH:
+	     MATCH, NOMATCH:
 		return true
 	}
 	return false

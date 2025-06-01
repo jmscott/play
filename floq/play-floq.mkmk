@@ -75,6 +75,7 @@ GOSRCs="
 	string.go
 	tracer.go
 	tsort.go
+	uint64.go
 	value.go
 "
 SRCs="

@@ -57,7 +57,7 @@ func init() {
 %token	SCANNER  SCANNER_REF
 %token	TRACER  TRACER_REF
 %token	yy_TRUE  yy_FALSE  yy_AND  yy_OR  NOT
-%token	EQ  NEQ  GT  GTE  LT  LTE  MATCH  NO_MATCH
+%token	EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
 %token	CONCAT
 %token	WHEN
 
@@ -65,18 +65,19 @@ func init() {
 %type	<string>	STRING  new_name
 %type	<ast>		flow
 
-%type	<int>		bool_rel
-%type	<ast>		bool_const  constant
-%type	<ast>		qualify
-%type	<ast>		att  atts  att_tuple  att_value  att_expr att_array
-%type	<ast>		arg  arg_list
+%type	<ast>		att  atts  att_tuple  att_value  att_expr att_array_list
+%type	<ast>		arg_list
 %type	<ast>		create  create_tuple  create_stmt
 %type	<ast>		flow_stmt
+%type	<ast>		constant  expr
 %type	<ast>		stmt  stmt_list
 %type	<ast>		scanner  command  tracer
 
 %left			yy_AND  yy_OR
-%left			EQ  NEQ  GT  GTE  LT  LTE  MATCH  NO_MATCH
+%left			EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
+%left			ADD  SUB
+%left			MUL  DIV
+%left			CONCAT
 %nonassoc		NOT
 
 %%
@@ -90,23 +91,6 @@ flow:
 		lex.ast_root.left = $1
 	  }
 	;
-
-bool_const:
-	  yy_TRUE
-	  {
-	  	$$ = &ast{
-			yy_tok:		yy_TRUE,
-			line_no:        yylex.(*yyLexState).line_no,
-		}
-	  }
-	|
-	  yy_FALSE
-	  {
-	  	$$ = &ast{
-			yy_tok:		yy_FALSE,
-			line_no:        yylex.(*yyLexState).line_no,
-		}
-	  }
 	;
 
 constant:
@@ -137,14 +121,136 @@ constant:
 		}
 	  }
 	|
-	  bool_const
+	  yy_TRUE
+	  {
+	  	$$ = &ast{
+			yy_tok:		yy_TRUE,
+			line_no:        yylex.(*yyLexState).line_no,
+		}
+	  }
+	|
+	  yy_FALSE
+	  {
+	  	$$ = &ast{
+			yy_tok:		yy_FALSE,
+			line_no:        yylex.(*yyLexState).line_no,
+		}
+	  }
+	;
+
+expr:
+	  constant
+	|
+	  expr  yy_AND  expr
+	  {
+	  	lex := yylex.(*yyLexState)
+		$$ = lex.new_rel_op(yy_AND, $1, $3)
+		if $$ == nil {
+			return 0
+		}
+	  }
+	|
+	  expr  yy_OR  expr
+	  {
+	  	lex := yylex.(*yyLexState)
+		$$ = lex.new_rel_op(yy_OR, $1, $3)
+		if $$ == nil {
+			return 0
+		}
+	  }
+	|
+	  expr  LT  expr
+	  {
+	  	lex := yylex.(*yyLexState)
+		$$ = lex.new_rel_op(LT, $1, $3)
+		if $$ == nil {
+			return 0
+		}
+	  }
+	|
+	  expr  LTE  expr
+	  {
+	  	lex := yylex.(*yyLexState)
+		$$ = lex.new_rel_op(LTE, $1, $3)
+		if $$ == nil {
+			return 0
+		}
+	  }
+	|
+	  expr  EQ  expr
+	  {
+	  	lex := yylex.(*yyLexState)
+		$$ = lex.new_rel_op(EQ, $1, $3)
+		if $$ == nil {
+			return 0
+		}
+	  }
+	|
+	  expr  NEQ  expr
+	  {
+	  	lex := yylex.(*yyLexState)
+		$$ = lex.new_rel_op(NEQ, $1, $3)
+		if $$ == nil {
+			return 0
+		}
+	  }
+	|
+	  expr  GTE  expr
+	  {
+	  	lex := yylex.(*yyLexState)
+		$$ = lex.new_rel_op(GTE, $1, $3)
+		if $$ == nil {
+			return 0
+		}
+	  }
+	|
+	  expr  GT  expr
+	  {
+	  	lex := yylex.(*yyLexState)
+		$$ = lex.new_rel_op(GT, $1, $3)
+		if $$ == nil {
+			return 0
+		}
+	  }
+	|
+	  expr  MATCH  expr
+	  {
+	  	lex := yylex.(*yyLexState)
+		$$ = lex.new_rel_op(MATCH, $1, $3)
+		if $$ == nil {
+			return 0
+		}
+	  }
+	|
+	  expr  NOMATCH  expr
+	  {
+	  	lex := yylex.(*yyLexState)
+		$$ = lex.new_rel_op(NOMATCH, $1, $3)
+		if $$ == nil {
+			return 0
+		}
+	  }
+	|
+	  NOT  expr  %prec NOT
+	  {
+	  	lex := yylex.(*yyLexState)
+		$$ = lex.new_rel_op(NOT, $2, nil)
+		if $$ == nil {
+			return 0
+		}
+	  }
+	|
+	  '('  expr  ')'
+	  {
+	  	$$ = $2
+	  }
 	;
 
 att_expr:
 	  constant
 	;
 
-att_array:
+att_array_list:
 	  /*  empty  */
 	  {
 	  	$$ = &ast{
@@ -171,7 +277,7 @@ att_array:
 		}
 	  }
 	|
-	  att_array  ','  att_expr
+	  att_array_list  ','  att_expr
 	  {
 	  	lex := yylex.(*yyLexState)
 
@@ -194,7 +300,7 @@ att_array:
 att_value:
 	  att_expr
 	|
-	  '['  att_array  ']'
+	  '['  att_array_list  ']'
 	  {
 	  	$$ = $2
 	  }
@@ -499,7 +605,7 @@ stmt:
 	|
 	  flow_stmt
 	|
-	  flow_stmt  WHEN  qualify
+	  flow_stmt  WHEN  expr
 	  {
 		$1.right = $3
 		$3.parent = $1
@@ -552,123 +658,6 @@ stmt_list:
 	  }
 	;
 
-bool_rel:
-	  EQ
-	  {
-	  	$$ = EQ
-	  }
-	|
-	  NEQ
-	  {
-	  	$$ = NEQ
-	  }
-	|
-	  GT
-	  {
-	  	$$ = GT
-	  }
-	|
-	  GTE
-	  {
-	  	$$ = GTE
-	  }
-	|
-	  LT
-	  {
-	  	$$ = LT
-	  }
-	|
-	  LTE
-	  {
-	  	$$ = LTE
-	  }
-	|
-	  MATCH
-	  {
-	  	$$ = MATCH
-	  }
-	|
-	  NO_MATCH
-	  {
-	  	$$ = NO_MATCH
-	  }
-	;
-
-qualify:
-	  bool_const
-	|
-	  NOT  qualify  %prec NOT
-	  {
-	  	$$ = &ast{
-			yy_tok:	NOT,
-			left:	$2,
-			line_no: yylex.(*yyLexState).line_no,
-		}
-		$2.parent = $$
-	  }
-	|
-	  '('  qualify  ')'
-	  {
-	  	$$ = $2
-	  }
-	|
-	  qualify  yy_AND {
-	  	$$ = &ast{
-			yy_tok: yy_AND,
-			line_no: yylex.(*yyLexState).line_no,
-		}
-	  }  qualify {
-	  	qa := $<ast>3
-		qa.left = $1
-		qa.right = $4
-
-	  	qa.left.parent = qa
-	  	qa.right.parent = qa
-
-		$$ = qa
-	  }
-	|
-	  qualify  yy_OR {
-	  	$$ = &ast{
-			yy_tok: yy_OR,
-			line_no: yylex.(*yyLexState).line_no,
-		}
-	  }  qualify {
-	  	qo := $<ast>3
-		qo.left = $1
-		qo.right = $4
-
-	  	qo.left.parent = qo
-	  	qo.right.parent = qo
-
-		$$ = qo
-	  }
-	|
-	  qualify  bool_rel {
-	  	$<ast>$ = &ast{
-			yy_tok:	$2,
-			line_no: yylex.(*yyLexState).line_no,
-		}
-	  } qualify {
-
-	  	bop := $<ast>3
-
-	  	bop.left = $1
-		bop.left.parent = bop
-
-	  	bop.right = $4
-		bop.right.parent = bop
-
-		$$ = bop
-	  }
-	;
-
-arg:
-	  constant
-	|
-	  qualify
-	;
-
 arg_list:
 	  /*  empty */
 	  {
@@ -678,7 +667,7 @@ arg_list:
 		}
 	  }
 	|
-	  arg
+	  expr
 	  {
 		lex := yylex.(*yyLexState)
 
@@ -692,7 +681,7 @@ arg_list:
 		$$ = al
 	  }
 	|
-	  arg_list  ','  arg
+	  arg_list  ','  expr
 	  {
 		al := $1
 	  	e := $3
@@ -1000,6 +989,67 @@ func (lex *yyLexState) scanner_uint64(yylval *yySymType, c rune) (err error) {
 	return
 }
 
+func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (*ast) {
+
+	switch tok {
+	case NOT:
+		if left.is_bool() == false {
+			lex.mkerror("NOT: can not negate %s", left.name())
+			return nil
+		}
+	case yy_AND, yy_OR:
+		if left.is_bool() == false {
+			lex.mkerror(
+				"%s: left expr not bool: got %s, want BOOL",
+				yy_name(tok),
+				left.name(),
+			)
+			return nil
+		}
+		if right.is_bool() == false {
+			lex.mkerror(
+				"%s: right expr not bool: got %s, want BOOL",
+				yy_name(tok),
+				right.name(),
+			)
+			return nil
+		}
+	case EQ, NEQ, LT, LTE, GTE, GT:
+		can_compare := (left.is_string() && right.is_string()) ||
+		              (left.is_uint64() && right.is_uint64())
+		if !can_compare {
+			lex.mkerror(
+				"%s: can not compare %s and %s",
+				yy_name(tok),
+				left.name(),
+				right.name(),
+			)
+			return nil
+		}
+	case CONCAT, MATCH, NOMATCH:
+		if left.is_string() == false {
+			lex.mkerror("%s: left is not string", left.name())
+			return nil
+		}
+		if right.is_string() == false {
+			lex.mkerror("%s: right is not string", right.name())
+			return nil
+		}
+	default:
+		msg := fmt.Sprintf(
+			"new_rel_op: impossible yy token: %s",
+			yy_name(tok),
+		)
+		panic(msg)
+	}
+
+	return &ast{
+		yy_tok:		tok,
+		left:		left,
+		right:		right,
+	}
+}
+
 //  lexical scan of a token
 
 func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
@@ -1057,7 +1107,7 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 
 		//  expr negate match regexp operator "!~"
 
-		tok, err = lex.lookahead('~', NO_MATCH, 0)
+		tok, err = lex.lookahead('~', NOMATCH, 0)
 		if err != nil {
 			goto LEX_ERROR
 		}
@@ -1169,4 +1219,15 @@ func parse(in io.RuneReader) (*ast, error) {
 	}
 	yyParse(lex)
 	return lex.ast_root, lex.err
+}
+
+func yy_name(tok int) (name string) {
+	//  print token name or int value of yy token
+	offset := tok - __MIN_YYTOK + 3
+	if (tok > __MIN_YYTOK) {
+		name = yyToknames[offset]
+	} else {
+		name = fmt.Sprintf( "UNKNOWN(%d)", tok)
+	}
+	return
 }
