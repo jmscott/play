@@ -16,7 +16,7 @@ var (
 func croak(format string, args ...interface{}) {
 
 	fmt.Fprintf(stderr, "floq: ERROR: %s\n", fmt.Sprintf(format, args...))
-	fmt.Fprintf(stderr, "usage: floq [parse|ast] server.floq\n")
+	fmt.Fprintf(stderr, "usage: floq [parse|ast] path/to/prog.floq\n")
 	os.Exit(16)
 }
 
@@ -49,7 +49,7 @@ func main() {
 
 	root, err := parse(bufio.NewReader(floq))
 	if err != nil {
-		croak("parse() failed: %s", err)
+		croak("parse(%s) failed: %s", floq_path, err)
 	}
 
 	switch action {
