@@ -1,11 +1,8 @@
 /*
  *  Synopsis:
- *	Build an abstract syntax tree for Yacc grammar of "floq" language.
+ *	Build an abstract syntax tree for "floq" language.
  *  Note:
- *	Not clear if att names, like "Args" should be upper case.
- *	The idea of upper case is to adopt the golang scoping, should
- *	reflection every be implemeneted.  floq scoping still very much in the
- *	air.
+ *	func lookahead() ignores eof.  that is not correct.
  */
 
 %{
@@ -30,7 +27,7 @@ func init() {
 		panic("yyToknames[3] != __MIN_YYTOK: correct yacc command?")
 	}
 
-	//yyDebug = 2
+	//yyDebug = 4
 }
 %}
 
@@ -225,6 +222,15 @@ expr:
 	  {
 	  	lex := yylex.(*yyLexState)
 		$$ = lex.new_rel_op(NOMATCH, $1, $3)
+		if $$ == nil {
+			return 0
+		}
+	  }
+	|
+	  expr  CONCAT  expr
+	  {
+	  	lex := yylex.(*yyLexState)
+		$$ = lex.new_rel_op(CONCAT, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -829,6 +835,8 @@ func (lex *yyLexState) get() (c rune, eof bool, err error) {
 	return c, false, nil
 }
 
+//  Note: end of file ignored!!
+
 func (lex *yyLexState) lookahead(peek rune, ifyes int, ifno int) (int, error) {
 	
 	next, eof, err := lex.get()
@@ -1145,7 +1153,7 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 
 		//  expr regexp operator "=~"
 
-		tok, err = lex.lookahead('~', MATCH, 0)
+		tok, err = lex.lookahead('~', MATCH, '=')
 		if err != nil {
 			goto LEX_ERROR
 		}
@@ -1164,7 +1172,7 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 
 		//  expr negate match regexp operator "!~"
 
-		tok, err = lex.lookahead('~', NOMATCH, 0)
+		tok, err = lex.lookahead('~', NOMATCH, '!')
 		if err != nil {
 			goto LEX_ERROR
 		}
