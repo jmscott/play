@@ -1079,7 +1079,7 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 		               (left.is_uint64() && right.is_uint64()) ||
 		               (left.is_bool() && right.is_bool())
 		if !can_compare {
-			lex.line_no = left.line_no
+			lex.line_no = right.line_no
 			lex.error(
 				"%s: can not compare %s and %s",
 				yy_name(tok),
@@ -1112,6 +1112,7 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 		yy_tok:		tok,
 		left:		left,
 		right:		right,
+		line_no:	left.line_no,	//  ought to be op line no
 	}
 	left.parent = a
 	if right != nil {
