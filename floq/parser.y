@@ -1051,11 +1051,13 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 	switch tok {
 	case NOT:
 		if left.is_bool() == false {
+			lex.line_no = left.line_no
 			lex.error("NOT: can not negate %s", left.name())
 			return nil
 		}
 	case yy_AND, yy_OR:
 		if left.is_bool() == false {
+			lex.line_no = left.line_no
 			lex.error(
 				"%s: left expr not bool: got %s, want BOOL",
 				yy_name(tok),
@@ -1064,6 +1066,7 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 			return nil
 		}
 		if right.is_bool() == false {
+			lex.line_no = right.line_no
 			lex.error(
 				"%s: right expr not bool: got %s, want BOOL",
 				yy_name(tok),
@@ -1076,6 +1079,7 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 		               (left.is_uint64() && right.is_uint64()) ||
 		               (left.is_bool() && right.is_bool())
 		if !can_compare {
+			lex.line_no = left.line_no
 			lex.error(
 				"%s: can not compare %s and %s",
 				yy_name(tok),
@@ -1086,10 +1090,12 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 		}
 	case CONCAT, MATCH, NOMATCH:
 		if left.is_string() == false {
+			lex.line_no = left.line_no
 			lex.error("%s: left is not string", left.name())
 			return nil
 		}
 		if right.is_string() == false {
+			lex.line_no = right.line_no
 			lex.error("%s: right is not string", right.name())
 			return nil
 		}
