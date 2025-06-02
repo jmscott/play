@@ -2,6 +2,10 @@ package main
 
 //  A rummy records for temporal + tri-state logic: true, false, null, waiting
 //  There are known knowns, there are known unknowns ...
+//
+//   Note:
+//	Rummy devised from different project and may be more complex than
+//	need.  orginal idea was to process map timeouts onto null
 
 type rummy uint8
 
@@ -190,7 +194,7 @@ func (bv *bool_value) rummy() rummy {
 
 func (flo *flow) wait_bool2(
 	op [137]rummy,
-	in_left, in_right bool_chan,
+	left, right bool_chan,
 ) (
 	next rummy,
 ) {
@@ -200,7 +204,7 @@ func (flo *flow) wait_bool2(
 	for next == rum_WAIT {
 
 		select {
-		case l := <-in_left:
+		case l := <-left:
 			if l == nil {
 				return rum_NIL
 			}
@@ -211,7 +215,7 @@ func (flo *flow) wait_bool2(
 			}
 			lv = l
 
-		case r := <-in_right:
+		case r := <-right:
 			if r == nil {
 				return rum_NIL
 			}
@@ -227,21 +231,21 @@ func (flo *flow) wait_bool2(
 
 	//  drain unread channel.
 	//
-	//  Note: reading in the background causes a mutiple read of
+	//  Note: reading in the background causes a multiple read of
 	//        same left/right hand side.  Why?  Shouldn't the flow
 	//	  block on current sequence until all qualfications converge?
 
 	if lv == nil {
-		<-in_left
+		<-left
 	} else if rv == nil {
-		<-in_right
+		<-right
 	}
 	return next
 }
 
 func (flo *flow) bool2(
 	op [137]rummy,
-	in_left, in_right bool_chan,
+	left, right bool_chan,
 ) (out bool_chan) {
 
 	out = make(bool_chan)
@@ -257,7 +261,7 @@ func (flo *flow) bool2(
 			var b, is_null bool
 
 			//  Note: op can go away
-			rum := flo.wait_bool2(op, in_left, in_right)
+			rum := flo.wait_bool2(op, left, right)
 			switch rum {
 			case rum_NIL:
 				return
@@ -278,7 +282,7 @@ func (flo *flow) bool2(
 	return
 }
 
-func (flo *flow) true() (out bool_chan) {
+func (flo *flow) const_true() (out bool_chan) {
 
 	out = make(bool_chan)
 
@@ -295,7 +299,28 @@ func (flo *flow) true() (out bool_chan) {
 	return
 }
 
-func (flo *flow) false() (out bool_chan) {
+func (flo *flow) not(in bool_chan) (out bool_chan) {
+
+	out = make(bool_chan)
+
+	go func() {
+		for {
+			flo = flo.get()
+
+			bv := <- in
+
+			out <- &bool_value{
+					bool:		!bv.bool,
+					is_null:	bv.is_null,
+					flow:		flo,
+			}
+		}
+	}()
+
+	return out
+}
+
+func (flo *flow) const_false() (out bool_chan) {
 
 	out = make(bool_chan)
 
