@@ -13,7 +13,6 @@ type string_value struct {
 type string_chan chan *string_value
 
 
-
 //  wait for left and right hand strings of any binary operator
 //
 //  Note: how does passing *string_value compare to string_value?
@@ -259,6 +258,24 @@ func (flo *flow) lte_string(left, right string_chan) (out bool_chan) {
 				bv.bool = lv.string <= rv.string
 			}
 			out <- bv
+		}
+	}()
+
+	return out
+}
+
+func (flo *flow) const_string(s string) (out string_chan) {
+
+	out = make(string_chan)
+	go func() {
+		for {
+			flo = flo.get()
+
+			out <- &string_value{
+				string:	s,
+				is_null: false,
+				flow:	flo,
+			}
 		}
 	}()
 
