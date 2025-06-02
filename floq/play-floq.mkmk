@@ -71,6 +71,7 @@ GOSRCs="
 	command.go
 	flow.go
 	parser.go
+	regexp.go
 	scanner.go
 	string.go
 	tracer.go
