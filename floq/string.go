@@ -12,7 +12,32 @@ type string_value struct {
 
 type string_chan chan *string_value
 
-//  concatenate two strings
+
+
+//  wait for left and right hand strings of any binary operator
+//
+//  Note: how does passing *string_value compare to string_value?
+
+func (left string_chan) wait2(right string_chan) (
+	lv, rv *string_value, closed bool,
+) {
+
+	for lv == nil || rv == nil {
+		select {
+		case lv = <- left:
+			closed = lv == nil
+			if closed {
+				return
+			}
+		case rv = <- right:
+			closed = rv == nil
+			if rv == nil {
+				return
+			}
+		}
+	}
+	return
+}
 
 func (flo *flow) strcat(left, right string_chan) (out string_chan) {
 
@@ -25,21 +50,9 @@ func (flo *flow) strcat(left, right string_chan) (out string_chan) {
 
 			flo = flo.get()
 
-			var lv, rv *string_value
-
-			// wait for left and right values to arrive
-
-			for lv == nil || rv == nil {
-				select {
-				case lv = <- left:
-					if lv == nil {
-						return
-					}
-				case rv = <- right:
-					if rv == nil {
-						return
-					}
-				}
+			lv, rv, done := left.wait2(right)
+			if done {
+				return
 			}
 
 			sv := &string_value {
@@ -54,6 +67,198 @@ func (flo *flow) strcat(left, right string_chan) (out string_chan) {
 				sv.string = b.String()
 			}
 			out <- sv
+		}
+	}()
+
+	return out
+}
+
+//  compare two strings for equality
+
+func (flo *flow) eq_string(left, right string_chan) (out bool_chan) {
+
+	out = make(bool_chan)
+
+	go func() {
+
+		for {
+			defer close(out)
+
+			flo = flo.get()
+
+			lv, rv, done := left.wait2(right)
+			if done {
+				return
+			}
+
+			bv := &bool_value {
+				is_null:	lv.is_null || rv.is_null,
+				flow:		flo,
+			}
+			if !bv.is_null {
+				bv.bool = lv.string == rv.string
+			}
+			out <- bv
+		}
+	}()
+
+	return out
+}
+
+//  compare two strings for equality
+
+func (flo *flow) neq_string(left, right string_chan) (out bool_chan) {
+
+	out = make(bool_chan)
+
+	go func() {
+
+		for {
+			defer close(out)
+
+			flo = flo.get()
+
+			lv, rv, done := left.wait2(right)
+			if done {
+				return
+			}
+
+			bv := &bool_value {
+				is_null:	lv.is_null || rv.is_null,
+				flow:		flo,
+			}
+			if !bv.is_null {
+				bv.bool = lv.string != rv.string
+			}
+			out <- bv
+		}
+	}()
+
+	return out
+}
+
+//  compare two strings for left lexically greater than right
+
+func (flo *flow) gt_string(left, right string_chan) (out bool_chan) {
+
+	out = make(bool_chan)
+
+	go func() {
+
+		for {
+			defer close(out)
+
+			flo = flo.get()
+
+			lv, rv, done := left.wait2(right)
+			if done {
+				return
+			}
+
+			bv := &bool_value {
+				is_null:	lv.is_null || rv.is_null,
+				flow:		flo,
+			}
+			if !bv.is_null {
+				bv.bool = lv.string > rv.string
+			}
+			out <- bv
+		}
+	}()
+
+	return out
+}
+
+//  compare two strings for left lexically greater than or equal to right
+
+func (flo *flow) gte_string(left, right string_chan) (out bool_chan) {
+
+	out = make(bool_chan)
+
+	go func() {
+
+		for {
+			defer close(out)
+
+			flo = flo.get()
+
+			lv, rv, done := left.wait2(right)
+			if done {
+				return
+			}
+
+			bv := &bool_value {
+				is_null:	lv.is_null || rv.is_null,
+				flow:		flo,
+			}
+			if !bv.is_null {
+				bv.bool = lv.string >= rv.string
+			}
+			out <- bv
+		}
+	}()
+
+	return out
+}
+
+//  compare two strings for left lexically less than right
+
+func (flo *flow) lt_string(left, right string_chan) (out bool_chan) {
+
+	out = make(bool_chan)
+
+	go func() {
+
+		for {
+			defer close(out)
+
+			flo = flo.get()
+
+			lv, rv, done := left.wait2(right)
+			if done {
+				return
+			}
+
+			bv := &bool_value {
+				is_null:	lv.is_null || rv.is_null,
+				flow:		flo,
+			}
+			if !bv.is_null {
+				bv.bool = lv.string < rv.string
+			}
+			out <- bv
+		}
+	}()
+
+	return out
+}
+
+//  compare two strings for left lexically less than or equal to right
+
+func (flo *flow) lte_string(left, right string_chan) (out bool_chan) {
+
+	out = make(bool_chan)
+
+	go func() {
+
+		for {
+			defer close(out)
+
+			flo = flo.get()
+
+			lv, rv, done := left.wait2(right)
+			if done {
+				return
+			}
+
+			bv := &bool_value {
+				is_null:	lv.is_null || rv.is_null,
+				flow:		flo,
+			}
+			if !bv.is_null {
+				bv.bool = lv.string <= rv.string
+			}
+			out <- bv
 		}
 	}()
 
