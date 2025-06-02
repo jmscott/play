@@ -20,7 +20,6 @@ type string_chan chan *string_value
 func (left string_chan) wait2(right string_chan) (
 	lv, rv *string_value, closed bool,
 ) {
-
 	for lv == nil || rv == nil {
 		select {
 		case lv = <- left:
