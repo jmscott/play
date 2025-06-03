@@ -17,9 +17,11 @@ func (cmd *command) frisk_att(al *ast) string {
 
 	for an := al.left;  an != nil;  an = an.next {
 		switch an.left.string {
+
+		//  Note: no attribute can be given twice, so collapse
 		case "path":
 			if cmd.path != "" {
-				return "att more than once: path"
+				return "attribute more than once: path"
 			}
 			cmd.path = an.right.string
 		case "argv":
@@ -33,11 +35,11 @@ func (cmd *command) frisk_att(al *ast) string {
 			}
 			cmd.env = an.right.array_ref
 		default:
-			return "unknown att: " + an.left.string
+			return "unknown attribute: " + an.left.string
 		}
 	}
 	if cmd.path == "" {
-		return "missing required attribute: path"
+		return "missing attribute: \"path\""
 	}
 	return ""
 }

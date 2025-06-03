@@ -7,7 +7,7 @@ state 0
 
 	RUN  shift 7
 	CREATE  shift 8
-	.  reduce 53 (src line 659)
+	.  reduce 53 (src line 656)
 
 	flow  goto 1
 	create  goto 6
@@ -46,7 +46,7 @@ state 3
 state 4
 	stmt:  create_stmt.    (49)
 
-	.  reduce 49 (src line 617)
+	.  reduce 49 (src line 614)
 
 
 state 5
@@ -54,7 +54,7 @@ state 5
 	stmt:  flow_stmt.WHEN $$51 expr 
 
 	WHEN  shift 11
-	.  reduce 50 (src line 627)
+	.  reduce 50 (src line 624)
 
 
 state 6
@@ -94,14 +94,14 @@ state 9
 state 10
 	stmt_list:  stmt ';'.    (54)
 
-	.  reduce 54 (src line 669)
+	.  reduce 54 (src line 666)
 
 
 state 11
 	stmt:  flow_stmt WHEN.$$51 expr 
 	$$51: .    (51)
 
-	.  reduce 51 (src line 637)
+	.  reduce 51 (src line 634)
 
 	$$51  goto 20
 
@@ -158,14 +158,14 @@ state 18
 	flow_stmt:  RUN COMMAND_REF.$$47 '(' arg_list ')' 
 	$$47: .    (47)
 
-	.  reduce 47 (src line 578)
+	.  reduce 47 (src line 575)
 
 	$$47  goto 28
 
 state 19
 	stmt_list:  stmt_list stmt ';'.    (55)
 
-	.  reduce 55 (src line 686)
+	.  reduce 55 (src line 683)
 
 
 state 20
@@ -213,7 +213,7 @@ state 25
 	create_stmt:  create scanner new_name.$$43 create_tuple 
 	$$43: .    (43)
 
-	.  reduce 43 (src line 512)
+	.  reduce 43 (src line 511)
 
 	$$43  goto 39
 
@@ -221,7 +221,7 @@ state 26
 	create_stmt:  create command new_name.$$45 create_tuple 
 	$$45: .    (45)
 
-	.  reduce 45 (src line 546)
+	.  reduce 45 (src line 544)
 
 	$$45  goto 40
 
@@ -264,7 +264,7 @@ state 29
 	MATCH  shift 51
 	NOMATCH  shift 52
 	CONCAT  shift 53
-	.  reduce 52 (src line 643)
+	.  reduce 52 (src line 640)
 
 
 state 30
@@ -381,7 +381,7 @@ state 42
 	yy_FALSE  shift 37
 	NOT  shift 31
 	'('  shift 32
-	.  reduce 56 (src line 713)
+	.  reduce 56 (src line 710)
 
 	arg_list  goto 62
 	constant  goto 30
@@ -623,7 +623,7 @@ state 59
 	COMMAND_REF  shift 24
 	NAME  shift 22
 	SCANNER_REF  shift 23
-	.  reduce 28 (src line 348)
+	.  reduce 28 (src line 349)
 
 	new_name  goto 78
 	att  goto 77
@@ -632,13 +632,13 @@ state 59
 state 60
 	create_stmt:  create scanner new_name $$43 create_tuple.    (44)
 
-	.  reduce 44 (src line 518)
+	.  reduce 44 (src line 517)
 
 
 state 61
 	create_stmt:  create command new_name $$45 create_tuple.    (46)
 
-	.  reduce 46 (src line 551)
+	.  reduce 46 (src line 549)
 
 
 state 62
@@ -675,7 +675,7 @@ state 63
 	MATCH  shift 51
 	NOMATCH  shift 52
 	CONCAT  shift 53
-	.  reduce 57 (src line 721)
+	.  reduce 57 (src line 718)
 
 
 state 64
@@ -909,7 +909,7 @@ state 76
 state 77
 	atts:  att.    (29)
 
-	.  reduce 29 (src line 356)
+	.  reduce 29 (src line 357)
 
 
 state 78
@@ -922,7 +922,7 @@ state 78
 state 79
 	flow_stmt:  RUN COMMAND_REF $$47 '(' arg_list ')'.    (48)
 
-	.  reduce 48 (src line 604)
+	.  reduce 48 (src line 601)
 
 
 state 80
@@ -997,13 +997,13 @@ state 84
 	MATCH  shift 51
 	NOMATCH  shift 52
 	CONCAT  shift 53
-	.  reduce 58 (src line 736)
+	.  reduce 58 (src line 733)
 
 
 state 85
 	atts:  atts ',' att.    (30)
 
-	.  reduce 30 (src line 370)
+	.  reduce 30 (src line 371)
 
 
 state 86

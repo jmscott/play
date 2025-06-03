@@ -147,7 +147,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:754
+//line parser.y:751
 
 var keyword = map[string]int{
 	"and":       yy_AND,
@@ -693,7 +693,7 @@ func yy_name(tok int) (name string) {
 func WTF(format string, args ...interface{}) {
 
 	format = "WTF: " + format
-	fmt.Fprintf(stderr, fmt.Sprintf(format, args...)+"\n")
+	fmt.Fprintf(os.Stderr, fmt.Sprintf(format, args...)+"\n")
 }
 
 //line yacctab:1
@@ -1398,9 +1398,10 @@ yydefault:
 				line_no: lex.line_no,
 			}
 			a.left = &ast{
-				parent: a,
-				yy_tok: NAME,
-				string: yyDollar[1].string,
+				parent:  a,
+				yy_tok:  NAME,
+				string:  yyDollar[1].string,
+				line_no: lex.line_no,
 			}
 
 			a.right = yyDollar[3].ast
@@ -1422,7 +1423,7 @@ yydefault:
 		}
 	case 28:
 		yyDollar = yyS[yypt-0 : yypt+1]
-//line parser.y:350
+//line parser.y:351
 		{
 			yyVAL.ast = &ast{
 				yy_tok:  ATT_TUPLE,
@@ -1431,7 +1432,7 @@ yydefault:
 		}
 	case 29:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:358
+//line parser.y:359
 		{
 			lex := yylex.(*yyLexState)
 
@@ -1446,7 +1447,7 @@ yydefault:
 		}
 	case 30:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:372
+//line parser.y:373
 		{
 			al := yyDollar[1].ast
 			a := yyDollar[3].ast
@@ -1577,9 +1578,8 @@ yydefault:
 			//  frisk the attibutes of tracer
 
 			tra := atra.tracer_ref
-			e := tra.frisk_att(al)
-			if e != "" {
-				lex.error("tracer: %s: %s", tra.name, e)
+			lex.err = al.frisk_att("tracer: " + tra.name)
+			if lex.err != nil {
 				return 0
 			}
 
@@ -1587,7 +1587,7 @@ yydefault:
 		}
 	case 43:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:514
+//line parser.y:513
 		{
 			//  Note:  could production "new_name" set "name_is_name"?
 			yylex.(*yyLexState).name_is_name = true
@@ -1595,7 +1595,7 @@ yydefault:
 		}
 	case 44:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line parser.y:518
+//line parser.y:517
 		{
 
 			lex := yylex.(*yyLexState)
@@ -1616,9 +1616,8 @@ yydefault:
 			//  frisk the attibutes of command
 
 			scan := ascan.scanner_ref
-			e := scan.frisk_att(al)
-			if e != "" {
-				lex.error("scanner: %s: %s", scan.name, e)
+			lex.err = al.frisk_att("scanner: " + scan.name)
+			if lex.err != nil {
 				return 0
 			}
 
@@ -1626,14 +1625,14 @@ yydefault:
 		}
 	case 45:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:548
+//line parser.y:546
 		{
 			yylex.(*yyLexState).name_is_name = true
 
 		}
 	case 46:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line parser.y:551
+//line parser.y:549
 		{
 			lex := yylex.(*yyLexState)
 			lex.name_is_name = false
@@ -1652,16 +1651,15 @@ yydefault:
 			lex.name2ast[nm] = cmd
 			cref.name = nm
 
-			e := cref.frisk_att(ctup)
-			if e != "" {
-				lex.error("command: %s: %s", nm, e)
+			lex.err = ctup.frisk_att("command: "+cref.name, "path")
+			if lex.err != nil {
 				return 0
 			}
 			yyVAL.ast = yyDollar[1].ast
 		}
 	case 47:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line parser.y:579
+//line parser.y:576
 		{
 			lex := yylex.(*yyLexState)
 			cast := lex.name2ast[lex.name]
@@ -1690,7 +1688,7 @@ yydefault:
 		}
 	case 48:
 		yyDollar = yyS[yypt-6 : yypt+1]
-//line parser.y:604
+//line parser.y:601
 		{
 			lex := yylex.(*yyLexState)
 			cmd := lex.name2ast[lex.name].command_ref
@@ -1704,7 +1702,7 @@ yydefault:
 		}
 	case 49:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:619
+//line parser.y:616
 		{
 			yyVAL.ast = &ast{
 				yy_tok:  STMT,
@@ -1715,7 +1713,7 @@ yydefault:
 		}
 	case 50:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:629
+//line parser.y:626
 		{
 			yyVAL.ast = &ast{
 				yy_tok:  STMT,
@@ -1726,7 +1724,7 @@ yydefault:
 		}
 	case 51:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line parser.y:638
+//line parser.y:635
 		{
 			yyVAL.ast = &ast{
 				yy_tok:  WHEN,
@@ -1735,7 +1733,7 @@ yydefault:
 		}
 	case 52:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line parser.y:643
+//line parser.y:640
 		{
 			when := yyDollar[3].ast
 
@@ -1752,7 +1750,7 @@ yydefault:
 		}
 	case 53:
 		yyDollar = yyS[yypt-0 : yypt+1]
-//line parser.y:661
+//line parser.y:658
 		{
 			lex := yylex.(*yyLexState)
 			yyVAL.ast = &ast{
@@ -1763,7 +1761,7 @@ yydefault:
 		}
 	case 54:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line parser.y:671
+//line parser.y:668
 		{
 			lex := yylex.(*yyLexState)
 
@@ -1781,7 +1779,7 @@ yydefault:
 		}
 	case 55:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:688
+//line parser.y:685
 		{
 			sl := yyDollar[1].ast
 			if sl.yy_tok != STMT_LIST {
@@ -1808,7 +1806,7 @@ yydefault:
 		}
 	case 56:
 		yyDollar = yyS[yypt-0 : yypt+1]
-//line parser.y:715
+//line parser.y:712
 		{
 			yyVAL.ast = &ast{
 				yy_tok:  ARG_LIST,
@@ -1817,7 +1815,7 @@ yydefault:
 		}
 	case 57:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.y:723
+//line parser.y:720
 		{
 			lex := yylex.(*yyLexState)
 
@@ -1833,7 +1831,7 @@ yydefault:
 		}
 	case 58:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.y:738
+//line parser.y:735
 		{
 			al := yyDollar[1].ast
 			e := yyDollar[3].ast

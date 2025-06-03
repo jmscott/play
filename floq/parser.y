@@ -324,6 +324,7 @@ att:
 				parent:		a,
 				yy_tok:		NAME,
 				string:		$1,
+				line_no:        lex.line_no,
 		}
 
 		a.right = $3
@@ -373,7 +374,6 @@ atts:
 		al := $1
 	  	a := $3
 		a.parent = al
-
 
 		var an *ast
 		for an = al.left;  an.next != nil;  an = an.next {}
@@ -501,9 +501,8 @@ create_stmt:
 		//  frisk the attibutes of tracer
 
 		tra := atra.tracer_ref
-		e := tra.frisk_att(al) 
-		if e != "" {
-			lex.error("tracer: %s: %s", tra.name, e)
+		lex.err = al.frisk_att("tracer: " + tra.name) 
+		if lex.err != nil {
 			return 0
 		}
 
@@ -535,9 +534,8 @@ create_stmt:
 		//  frisk the attibutes of command
 
 		scan := ascan.scanner_ref
-		e := scan.frisk_att(al) 
-		if e != "" {
-			lex.error("scanner: %s: %s", scan.name, e)
+		lex.err = al.frisk_att("scanner: " + scan.name) 
+		if lex.err != nil {
 			return 0
 		}
 
@@ -566,9 +564,8 @@ create_stmt:
 		lex.name2ast[nm] = cmd
 		cref.name = nm
 
-		e := cref.frisk_att(ctup) 
-		if e != "" {
-			lex.error("command: %s: %s", nm, e)
+		lex.err = ctup.frisk_att("command: " + cref.name, "path") 
+		if lex.err != nil {
 			return 0
 		}
 		$$ = $1
@@ -1307,5 +1304,5 @@ func yy_name(tok int) (name string) {
 func WTF(format string, args ...interface{}) {
 
 	format = "WTF: " + format
-	fmt.Fprintf(stderr, fmt.Sprintf(format, args...) + "\n")
+	fmt.Fprintf(os.Stderr, fmt.Sprintf(format, args...) + "\n")
 }

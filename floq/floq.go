@@ -4,19 +4,18 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"syscall"
-)
-
-var (
-	stderr = os.NewFile(uintptr(syscall.Stderr), "/dev/stderr")
 )
 
 //  temporary die() used only during boot up
 
 func croak(format string, args ...interface{}) {
 
-	fmt.Fprintf(stderr, "floq: ERROR: %s\n", fmt.Sprintf(format, args...))
-	fmt.Fprintf(stderr, "usage: floq [parse|ast] path/to/prog.floq\n")
+	fmt.Fprintf(
+		os.Stderr,
+		"floq: ERROR: %s\n",
+		fmt.Sprintf(format, args...),
+	)
+	fmt.Fprintf(os.Stderr, "usage: floq [parse|ast] path/to/prog.floq\n")
 	os.Exit(16)
 }
 

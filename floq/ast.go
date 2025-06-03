@@ -2,6 +2,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -112,4 +113,52 @@ func (a *ast) walk_print(indent int) {
 
 func (a *ast) print() {
 	a.walk_print(0)
+}
+
+//  frisk ast of attributes for duplicates and missing required
+//
+//  Note:
+//	line numbers of ATT nodes not quite right!
+//
+//	consider adding att:type to check that right hand ast matches types.
+
+func (a *ast) frisk_att(what string, need...interface{}) error {
+
+	if a.yy_tok != ATT_TUPLE {
+		panic("start node not ATT_TUPLE")
+	}
+	const fmt_dup = "duplicate attribute"
+	const fmt_need = "need attribute"
+
+	err := func(name string, lno int, msg string) error {
+
+		name = "\"" + name + "\""
+		near := ", near line " + fmt.Sprintf("%d", lno)
+		return errors.New(msg + ": " + what + ": " + name + near)
+	}
+
+	//  frisk for duplicate attributes
+
+	seen := make(map[string]bool)
+
+	for an := a.left;  an != nil;  an = an.next {
+		if an.yy_tok != ATT {
+			panic("left node not ATT")
+		}
+		nm := an.left.string
+		if seen[nm] {
+			return err(nm, a.line_no, fmt_dup)
+		}
+		seen[nm] = true
+	}
+
+	//  insure required atts exist
+
+	for _, nm := range need {
+		n := nm.(string)
+		if !seen[n] {
+			return err(n, a.line_no, fmt_need)
+		}
+	}
+	return nil
 }

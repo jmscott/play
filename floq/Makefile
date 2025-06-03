@@ -62,6 +62,7 @@ parser.go: parser.y
 	$(GOEXE) fmt parser.go
 
 floq: $(GOSRCs)
+	#$(GOEXE) build -gcflags -S $(GOSRCs)
 	$(GOEXE) build $(GOSRCs)
 
 floq-execv: floq-execv.c
