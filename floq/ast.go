@@ -44,7 +44,7 @@ func (a *ast) String() string {
 
 	switch a.yy_tok {
 	case 0:
-		panic("ast has yy_tok == 0")
+		impossible("ast has yy_tok == 0")
 	case ARG_LIST:
 		what = fmt.Sprintf("ARG_LIST(argc=%d)", a.uint64)
 	case SCANNER_REF:
@@ -89,7 +89,7 @@ func (a *ast) walk_print(indent int) {
 		fmt.Println("")
 	} else {
 		if a.parent == nil {
-			panic(fmt.Sprintf("ast: %s: parent is nil", a))
+			impossible("parent ast is nil")
 		}
 		for i := 0;  i < indent;  i++ {
 			fmt.Print("  ")
@@ -125,7 +125,7 @@ func (a *ast) print() {
 func (a *ast) frisk_att(what string, need...interface{}) error {
 
 	if a.yy_tok != ATT_TUPLE {
-		panic("start node not ATT_TUPLE")
+		impossible("start node not ATT_TUPLE")
 	}
 	const fmt_dup = "duplicate attribute"
 	const fmt_need = "need attribute"
@@ -143,21 +143,21 @@ func (a *ast) frisk_att(what string, need...interface{}) error {
 
 	for an := a.left;  an != nil;  an = an.next {
 		if an.yy_tok != ATT {
-			panic("left node not ATT")
+			impossible("left node not ATT")
 		}
-		nm := an.left.string
-		if seen[nm] {
-			return err(nm, a.line_no, fmt_dup)
+		name := an.left.string
+		if seen[name] {
+			return err(name, a.line_no, fmt_dup)
 		}
-		seen[nm] = true
+		seen[name] = true
 	}
 
 	//  insure required atts exist
 
-	for _, nm := range need {
-		n := nm.(string)
-		if !seen[n] {
-			return err(n, a.line_no, fmt_need)
+	for _, val := range need {
+		name := val.(string)
+		if !seen[name] {
+			return err(name, a.line_no, fmt_need)
 		}
 	}
 	return nil

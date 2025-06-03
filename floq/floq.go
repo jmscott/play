@@ -60,3 +60,7 @@ func main() {
 	}
 	os.Exit(0)
 }
+
+func impossible(msg string) {
+	panic("impossible: " + msg)
+}

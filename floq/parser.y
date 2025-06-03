@@ -24,7 +24,7 @@ func init() {
 
 	//  sanity test for mapping yy tokens to name
 	if yyToknames[3] != "__MIN_YYTOK" {
-		panic("yyToknames[3] != __MIN_YYTOK: correct yacc command?")
+		impossible("yyToknames[3] != __MIN_YYTOK: correct yacc command?")
 	}
 
 	//yyDebug = 4
