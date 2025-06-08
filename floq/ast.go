@@ -4,6 +4,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type ast struct {
@@ -71,9 +72,9 @@ func (a *ast) String() string {
 	case yy_TRUE:
 		what = "TRUE"
 	case STMT_LIST:
-		what = fmt.Sprintf("STMT_LIST(count=#%d)", a.uint64)
+		what = fmt.Sprintf("STMT_LIST(cnt=#%d)", a.uint64)
 	case STMT:
-		what = fmt.Sprintf("STMT(#%d @ line=#%d)", a.uint64, a.line_no)
+		what = fmt.Sprintf("STMT(#%d @ lno=#%d)", a.uint64, a.line_no)
 	default:
 		what = a.name()
 	}
@@ -115,12 +116,92 @@ func (a *ast) print() {
 	a.walk_print(0)
 }
 
-//  frisk ast of attributes for duplicates and missing required
+func (a *ast) frisk_att2(what string, need...ast) error {
+
+	if a.yy_tok != ATT_TUPLE {
+		impossible("start node not ATT_TUPLE")
+	}
+
+	const fmt_dup = "duplicate attribute"
+	const fmt_need = "need attribute"
+	const fmt_no = "unknown attribute"
+	const fmt_type = "wrong type"
+	const fmt_nostr = "STRING empty"
+
+	err := func(name string, lno int, msg string) error {
+
+		name = "\"" + name + "\""
+		near := ", near line " + fmt.Sprintf("%d", lno)
+		return errors.New(msg + ": " + what + ": " + name + near)
+	}
+
+	//  map list of need ast to name for quick check
+
+	name2need := make(map[string]*ast)
+	for _, an := range need {
+		name2need[an.string] = &an
+	}
+
+	seen := make(map[string]*ast)
+
+	//  scan each ATT nodes of ATT_TUPLE
+
+	for an := a.left;  an != nil;  an = an.next {
+		if an.yy_tok != ATT {
+			an.impossible("left node not ATT")
+		}
+		name := an.left.string
+		
+		//  more than one att exists
+		if seen[name] != nil {
+			return err(name, seen[name].line_no, fmt_dup)
+		}
+		ar := an.right
+		if ar == nil {
+			an.impossible("ATT has nil right")
+		}
+
+		//  is the node known?
+		ann := name2need[name]
+		if ann == nil {
+			return err(name, an.line_no, fmt_no)	//  unkn
+		}
+
+		/*
+		 * do the types match?
+		 *
+		 *  Note:
+		 *	error message "wrong type:" is opaque.  ought to include
+		 *	expected type
+		 */
+		if ar.yy_tok != ann.yy_tok {
+			return err(name, ar.line_no, fmt_type)
+		}
+
+		//  no empty strings
+		if ar.yy_tok == STRING && ar.string == "" {
+			return err(name, ar.line_no, fmt_nostr)
+		}
+		seen[name] = ar
+	}
+
+	//  scan for required nodes in "need" twig
+	for nm, an := range name2need {
+		
+		if an.uint64 > 0 && seen[nm] == nil {
+			return err(nm, an.line_no, fmt_need)
+		}
+	}
+
+	return nil
+}
+
+//  frisk ast of attributes for duplicates and missing required and
+//  correct types: STRING, UINT64, ARRAY_REF
 //
 //  Note:
-//	line numbers of ATT nodes not quite right!
+//	Currently [ arrays ] can contain mixed types.
 //
-//	consider adding att:type to check that right hand ast matches types.
 
 func (a *ast) frisk_att(what string, need...interface{}) error {
 
@@ -137,27 +218,78 @@ func (a *ast) frisk_att(what string, need...interface{}) error {
 		return errors.New(msg + ": " + what + ": " + name + near)
 	}
 
-	//  frisk for duplicate attributes
+	//  frisk for duplicate attributes and record right hand node of ATT
 
-	seen := make(map[string]bool)
+	seen := make(map[string]*ast)
 
 	for an := a.left;  an != nil;  an = an.next {
 		if an.yy_tok != ATT {
-			impossible("left node not ATT")
+			an.impossible("left node not ATT")
 		}
 		name := an.left.string
-		if seen[name] {
-			return err(name, a.line_no, fmt_dup)
+		if seen[name] != nil {
+			return err(name, seen[name].line_no, fmt_dup)
 		}
-		seen[name] = true
+		if an.right == nil {
+			an.impossible("ATT has nil right")
+		}
+		seen[name] = an.right
 	}
 
-	//  insure required atts exist
+	//  insure required atts exist and match types
 
 	for _, val := range need {
-		name := val.(string)
-		if !seen[name] {
-			return err(name, a.line_no, fmt_need)
+		name_tok := strings.Split(val.(string), ":")
+		if len(name_tok) != 2 {
+			a.impossible("corrupt name:yy_tok: '%s'", val)
+		}
+		nm, tok_nm := name_tok[0], name_tok[1]
+		if len(nm) == 0 {
+			a.impossible("name:tok: name is 0 length")
+		}
+		if len(tok_nm) == 1 {
+			a.impossible("name:tok: tok name is empty")
+		}
+		tok := yy_name2tok(tok_nm)
+		if tok <= __MIN_YYTOK  {
+			a.impossible("name:tok: yy_tok is unknown: %s", tok_nm)
+		}
+
+		ar := seen[nm]
+		if ar == nil {
+			return err(nm, a.line_no, fmt_need)
+		}
+		if tok != ar.yy_tok {
+			ar.impossible("ATT: right yy_tok not %s", tok_nm)
+		}
+	}
+	return nil
+}
+
+func (a *ast) impossible(format string, args...interface{}) {
+
+	msg := fmt.Sprintf(format, args...)
+	impossible("%s: %s, near line %d", msg, a.name(), a.line_no)
+	//  NOTREACHED*/
+}
+
+func (at *ast) find_ATT(name string) (*ast) {
+
+	if at.yy_tok != ATT_TUPLE {
+		at.impossible("node not ATT_TUPLE")
+	}
+	for a := at.left;  a != nil;  a = a.next {
+		if a.parent != at {
+			a.impossible("parent not ATT_TUPLE")
+		}
+		if a.yy_tok != ATT {
+			a.impossible("child not ATT")
+		}
+		if a.left == nil {
+			a.impossible("left is nil")
+		}
+		if a.left.string == name {
+			return a
 		}
 	}
 	return nil

@@ -296,7 +296,24 @@ func (flo *flow) const_true() (out bool_chan) {
 		}
 	}()
 
-	return
+	return out
+}
+
+func (flo *flow) const_false() (out bool_chan) {
+
+	out = make(bool_chan)
+
+	go func() {
+		for {
+			flo = flo.get()
+			out <- &bool_value{
+				bool:	false,
+				flow:	flo,
+			}
+		}
+	}()
+
+	return out
 }
 
 func (flo *flow) not(in bool_chan) (out bool_chan) {
@@ -318,23 +335,6 @@ func (flo *flow) not(in bool_chan) (out bool_chan) {
 	}()
 
 	return out
-}
-
-func (flo *flow) const_false() (out bool_chan) {
-
-	out = make(bool_chan)
-
-	go func() {
-		for {
-			flo = flo.get()
-			out <- &bool_value{
-				bool:	false,
-				flow:	flo,
-			}
-		}
-	}()
-
-	return
 }
 
 func (a *ast) is_bool() bool {

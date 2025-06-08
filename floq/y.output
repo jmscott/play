@@ -7,7 +7,7 @@ state 0
 
 	RUN  shift 7
 	CREATE  shift 8
-	.  reduce 53 (src line 656)
+	.  reduce 53 (src line 662)
 
 	flow  goto 1
 	create  goto 6
@@ -29,7 +29,7 @@ state 2
 
 	RUN  shift 7
 	CREATE  shift 8
-	.  reduce 1 (src line 83)
+	.  reduce 1 (src line 89)
 
 	create  goto 6
 	flow_stmt  goto 5
@@ -46,7 +46,7 @@ state 3
 state 4
 	stmt:  create_stmt.    (49)
 
-	.  reduce 49 (src line 614)
+	.  reduce 49 (src line 620)
 
 
 state 5
@@ -54,7 +54,7 @@ state 5
 	stmt:  flow_stmt.WHEN $$51 expr 
 
 	WHEN  shift 11
-	.  reduce 50 (src line 624)
+	.  reduce 50 (src line 630)
 
 
 state 6
@@ -81,7 +81,7 @@ state 7
 state 8
 	create:  CREATE.    (32)
 
-	.  reduce 32 (src line 394)
+	.  reduce 32 (src line 400)
 
 
 state 9
@@ -94,14 +94,14 @@ state 9
 state 10
 	stmt_list:  stmt ';'.    (54)
 
-	.  reduce 54 (src line 666)
+	.  reduce 54 (src line 672)
 
 
 state 11
 	stmt:  flow_stmt WHEN.$$51 expr 
 	$$51: .    (51)
 
-	.  reduce 51 (src line 634)
+	.  reduce 51 (src line 640)
 
 	$$51  goto 20
 
@@ -138,7 +138,7 @@ state 14
 state 15
 	tracer:  TRACER.    (35)
 
-	.  reduce 35 (src line 430)
+	.  reduce 35 (src line 436)
 
 
 state 16
@@ -151,21 +151,21 @@ state 16
 state 17
 	command:  COMMAND.    (34)
 
-	.  reduce 34 (src line 419)
+	.  reduce 34 (src line 425)
 
 
 state 18
 	flow_stmt:  RUN COMMAND_REF.$$47 '(' arg_list ')' 
 	$$47: .    (47)
 
-	.  reduce 47 (src line 575)
+	.  reduce 47 (src line 581)
 
 	$$47  goto 28
 
 state 19
 	stmt_list:  stmt_list stmt ';'.    (55)
 
-	.  reduce 55 (src line 683)
+	.  reduce 55 (src line 689)
 
 
 state 20
@@ -187,33 +187,33 @@ state 21
 	create_stmt:  create tracer new_name.$$41 create_tuple 
 	$$41: .    (41)
 
-	.  reduce 41 (src line 478)
+	.  reduce 41 (src line 484)
 
 	$$41  goto 38
 
 state 22
 	new_name:  NAME.    (36)
 
-	.  reduce 36 (src line 441)
+	.  reduce 36 (src line 447)
 
 
 state 23
 	new_name:  SCANNER_REF.    (37)
 
-	.  reduce 37 (src line 448)
+	.  reduce 37 (src line 454)
 
 
 state 24
 	new_name:  COMMAND_REF.    (38)
 
-	.  reduce 38 (src line 456)
+	.  reduce 38 (src line 462)
 
 
 state 25
 	create_stmt:  create scanner new_name.$$43 create_tuple 
 	$$43: .    (43)
 
-	.  reduce 43 (src line 511)
+	.  reduce 43 (src line 517)
 
 	$$43  goto 39
 
@@ -221,7 +221,7 @@ state 26
 	create_stmt:  create command new_name.$$45 create_tuple 
 	$$45: .    (45)
 
-	.  reduce 45 (src line 544)
+	.  reduce 45 (src line 550)
 
 	$$45  goto 40
 
@@ -264,13 +264,13 @@ state 29
 	MATCH  shift 51
 	NOMATCH  shift 52
 	CONCAT  shift 53
-	.  reduce 52 (src line 640)
+	.  reduce 52 (src line 646)
 
 
 state 30
 	expr:  constant.    (7)
 
-	.  reduce 7 (src line 137)
+	.  reduce 7 (src line 143)
 
 
 state 31
@@ -306,13 +306,13 @@ state 32
 state 33
 	constant:  UINT64.    (2)
 
-	.  reduce 2 (src line 92)
+	.  reduce 2 (src line 98)
 
 
 state 34
 	constant:  STRING.    (3)
 
-	.  reduce 3 (src line 101)
+	.  reduce 3 (src line 107)
 
 
 state 35
@@ -325,13 +325,13 @@ state 35
 state 36
 	constant:  yy_TRUE.    (5)
 
-	.  reduce 5 (src line 119)
+	.  reduce 5 (src line 125)
 
 
 state 37
 	constant:  yy_FALSE.    (6)
 
-	.  reduce 6 (src line 127)
+	.  reduce 6 (src line 133)
 
 
 state 38
@@ -339,7 +339,7 @@ state 38
 	create_tuple: .    (39)
 
 	'{'  shift 59
-	.  reduce 39 (src line 466)
+	.  reduce 39 (src line 472)
 
 	att_tuple  goto 58
 	create_tuple  goto 57
@@ -349,7 +349,7 @@ state 39
 	create_tuple: .    (39)
 
 	'{'  shift 59
-	.  reduce 39 (src line 466)
+	.  reduce 39 (src line 472)
 
 	att_tuple  goto 58
 	create_tuple  goto 60
@@ -359,7 +359,7 @@ state 40
 	create_tuple: .    (39)
 
 	'{'  shift 59
-	.  reduce 39 (src line 466)
+	.  reduce 39 (src line 472)
 
 	att_tuple  goto 58
 	create_tuple  goto 61
@@ -367,7 +367,7 @@ state 40
 state 41
 	scanner:  SCANNER OF LINES.    (33)
 
-	.  reduce 33 (src line 405)
+	.  reduce 33 (src line 411)
 
 
 state 42
@@ -381,7 +381,7 @@ state 42
 	yy_FALSE  shift 37
 	NOT  shift 31
 	'('  shift 32
-	.  reduce 56 (src line 710)
+	.  reduce 56 (src line 716)
 
 	arg_list  goto 62
 	constant  goto 30
@@ -566,7 +566,7 @@ state 54
 	expr:  expr.CONCAT expr 
 	expr:  NOT expr.    (19)
 
-	.  reduce 19 (src line 238)
+	.  reduce 19 (src line 244)
 
 
 state 55
@@ -601,19 +601,19 @@ state 55
 state 56
 	constant:  EXPAND_ENV STRING.    (4)
 
-	.  reduce 4 (src line 110)
+	.  reduce 4 (src line 116)
 
 
 state 57
 	create_stmt:  create tracer new_name $$41 create_tuple.    (42)
 
-	.  reduce 42 (src line 484)
+	.  reduce 42 (src line 490)
 
 
 state 58
 	create_tuple:  att_tuple.    (40)
 
-	.  reduce 40 (src line 474)
+	.  reduce 40 (src line 480)
 
 
 state 59
@@ -623,7 +623,7 @@ state 59
 	COMMAND_REF  shift 24
 	NAME  shift 22
 	SCANNER_REF  shift 23
-	.  reduce 28 (src line 349)
+	.  reduce 28 (src line 355)
 
 	new_name  goto 78
 	att  goto 77
@@ -632,13 +632,13 @@ state 59
 state 60
 	create_stmt:  create scanner new_name $$43 create_tuple.    (44)
 
-	.  reduce 44 (src line 517)
+	.  reduce 44 (src line 523)
 
 
 state 61
 	create_stmt:  create command new_name $$45 create_tuple.    (46)
 
-	.  reduce 46 (src line 549)
+	.  reduce 46 (src line 555)
 
 
 state 62
@@ -675,7 +675,7 @@ state 63
 	MATCH  shift 51
 	NOMATCH  shift 52
 	CONCAT  shift 53
-	.  reduce 57 (src line 718)
+	.  reduce 57 (src line 724)
 
 
 state 64
@@ -701,7 +701,7 @@ state 64
 	MATCH  shift 51
 	NOMATCH  shift 52
 	CONCAT  shift 53
-	.  reduce 8 (src line 139)
+	.  reduce 8 (src line 145)
 
 
 state 65
@@ -727,7 +727,7 @@ state 65
 	MATCH  shift 51
 	NOMATCH  shift 52
 	CONCAT  shift 53
-	.  reduce 9 (src line 148)
+	.  reduce 9 (src line 154)
 
 
 state 66
@@ -745,7 +745,7 @@ state 66
 	expr:  expr.CONCAT expr 
 
 	CONCAT  shift 53
-	.  reduce 10 (src line 157)
+	.  reduce 10 (src line 163)
 
 
 state 67
@@ -763,7 +763,7 @@ state 67
 	expr:  expr.CONCAT expr 
 
 	CONCAT  shift 53
-	.  reduce 11 (src line 166)
+	.  reduce 11 (src line 172)
 
 
 state 68
@@ -781,7 +781,7 @@ state 68
 	expr:  expr.CONCAT expr 
 
 	CONCAT  shift 53
-	.  reduce 12 (src line 175)
+	.  reduce 12 (src line 181)
 
 
 state 69
@@ -799,7 +799,7 @@ state 69
 	expr:  expr.CONCAT expr 
 
 	CONCAT  shift 53
-	.  reduce 13 (src line 184)
+	.  reduce 13 (src line 190)
 
 
 state 70
@@ -817,7 +817,7 @@ state 70
 	expr:  expr.CONCAT expr 
 
 	CONCAT  shift 53
-	.  reduce 14 (src line 193)
+	.  reduce 14 (src line 199)
 
 
 state 71
@@ -835,7 +835,7 @@ state 71
 	expr:  expr.CONCAT expr 
 
 	CONCAT  shift 53
-	.  reduce 15 (src line 202)
+	.  reduce 15 (src line 208)
 
 
 state 72
@@ -853,7 +853,7 @@ state 72
 	expr:  expr.CONCAT expr 
 
 	CONCAT  shift 53
-	.  reduce 16 (src line 211)
+	.  reduce 16 (src line 217)
 
 
 state 73
@@ -871,7 +871,7 @@ state 73
 	expr:  expr.CONCAT expr 
 
 	CONCAT  shift 53
-	.  reduce 17 (src line 220)
+	.  reduce 17 (src line 226)
 
 
 state 74
@@ -888,13 +888,13 @@ state 74
 	expr:  expr.CONCAT expr 
 	expr:  expr CONCAT expr.    (18)
 
-	.  reduce 18 (src line 229)
+	.  reduce 18 (src line 235)
 
 
 state 75
 	expr:  '(' expr ')'.    (20)
 
-	.  reduce 20 (src line 247)
+	.  reduce 20 (src line 253)
 
 
 state 76
@@ -909,7 +909,7 @@ state 76
 state 77
 	atts:  att.    (29)
 
-	.  reduce 29 (src line 357)
+	.  reduce 29 (src line 363)
 
 
 state 78
@@ -922,7 +922,7 @@ state 78
 state 79
 	flow_stmt:  RUN COMMAND_REF $$47 '(' arg_list ')'.    (48)
 
-	.  reduce 48 (src line 601)
+	.  reduce 48 (src line 607)
 
 
 state 80
@@ -954,7 +954,7 @@ state 81
 state 82
 	att_tuple:  '{' atts '}'.    (31)
 
-	.  reduce 31 (src line 387)
+	.  reduce 31 (src line 393)
 
 
 state 83
@@ -997,25 +997,25 @@ state 84
 	MATCH  shift 51
 	NOMATCH  shift 52
 	CONCAT  shift 53
-	.  reduce 58 (src line 733)
+	.  reduce 58 (src line 739)
 
 
 state 85
 	atts:  atts ',' att.    (30)
 
-	.  reduce 30 (src line 371)
+	.  reduce 30 (src line 377)
 
 
 state 86
 	att:  new_name ':' att_value.    (27)
 
-	.  reduce 27 (src line 314)
+	.  reduce 27 (src line 320)
 
 
 state 87
 	att_value:  att_expr.    (25)
 
-	.  reduce 25 (src line 305)
+	.  reduce 25 (src line 311)
 
 
 state 88
@@ -1027,7 +1027,7 @@ state 88
 	STRING  shift 34
 	yy_TRUE  shift 36
 	yy_FALSE  shift 37
-	.  reduce 22 (src line 258)
+	.  reduce 22 (src line 264)
 
 	att_expr  goto 91
 	att_array_list  goto 90
@@ -1036,7 +1036,7 @@ state 88
 state 89
 	att_expr:  constant.    (21)
 
-	.  reduce 21 (src line 254)
+	.  reduce 21 (src line 260)
 
 
 state 90
@@ -1051,7 +1051,7 @@ state 90
 state 91
 	att_array_list:  att_expr.    (23)
 
-	.  reduce 23 (src line 267)
+	.  reduce 23 (src line 273)
 
 
 state 92
@@ -1070,13 +1070,13 @@ state 92
 state 93
 	att_value:  '[' att_array_list ']'.    (26)
 
-	.  reduce 26 (src line 307)
+	.  reduce 26 (src line 313)
 
 
 state 94
 	att_array_list:  att_array_list ',' att_expr.    (24)
 
-	.  reduce 24 (src line 284)
+	.  reduce 24 (src line 290)
 
 
 55 terminals, 26 nonterminals

@@ -69,6 +69,7 @@ GOSRCs="
 	ast.go
 	bool.go
 	command.go
+	compile.go
 	flow.go
 	parser.go
 	regexp.go

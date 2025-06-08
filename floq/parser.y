@@ -24,7 +24,13 @@ func init() {
 
 	//  sanity test for mapping yy tokens to name
 	if yyToknames[3] != "__MIN_YYTOK" {
-		impossible("yyToknames[3] != __MIN_YYTOK: correct yacc command?")
+		impossible("yyToknames[3]!=__MIN_YYTOK: correct yacc command?")
+	}
+	//  simple sanity test
+	for i, nm := range yyToknames[4:] {
+		if yy_name(yy_name2tok(nm)) != nm {
+			impossible("yy_name != yy_tok: %s@%d", nm, i + 4)
+		}
 	}
 
 	//yyDebug = 4
@@ -501,7 +507,7 @@ create_stmt:
 		//  frisk the attibutes of tracer
 
 		tra := atra.tracer_ref
-		lex.err = al.frisk_att("tracer: " + tra.name) 
+		lex.err = al.frisk_att("tracer:" + tra.name) 
 		if lex.err != nil {
 			return 0
 		}
@@ -559,12 +565,12 @@ create_stmt:
 		cmd.parent = c
 		c.left = cmd
 		ctup.parent = c
-		c.right = ctup
+		cmd.left = ctup
 
 		lex.name2ast[nm] = cmd
 		cref.name = nm
 
-		lex.err = ctup.frisk_att("command: " + cref.name, "path") 
+		lex.err = cref.frisk_att(ctup)
 		if lex.err != nil {
 			return 0
 		}
@@ -676,7 +682,7 @@ stmt_list:
 			parent:		lex.ast_root,
 			uint64:		1,
 		}
-		s.parent = s
+		s.parent = sl
 
 		$$ = sl
 	  }
@@ -1293,12 +1299,22 @@ func parse(in io.RuneReader) (*ast, error) {
 func yy_name(tok int) (name string) {
 	//  print token name or int value of yy token
 	offset := tok - __MIN_YYTOK + 3
-	if (tok > __MIN_YYTOK) {
+	if (offset < len(yyToknames) && tok > __MIN_YYTOK) {
 		name = yyToknames[offset]
 	} else {
 		name = fmt.Sprintf( "UNKNOWN(%d)", tok)
 	}
 	return
+}
+
+func yy_name2tok(name string) int {
+
+	for i, nm := range yyToknames {
+		if nm == name {
+			return i + __MIN_YYTOK - 3
+		}
+	}
+	return __MIN_YYTOK - 2	// == "error" in yyToknames
 }
 
 func WTF(format string, args ...interface{}) {

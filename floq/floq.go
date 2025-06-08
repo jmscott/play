@@ -30,8 +30,7 @@ func main() {
 	action := argv[0]
 
 	switch action {
-		case "parse": 
-		case "ast": 
+		case "parse", "ast", "compile": 
 		default:
 			croak("unknown action: %s", action)
 	}
@@ -55,12 +54,15 @@ func main() {
 	case "parse":
 	case "ast":
 		root.walk_print(0)
+	case "compile":
+		flo := &flow{}
+		flo.compile(root)
 	default:
-		croak("unknown action: %s", action)
+		impossible("unknown action: %s", action)
 	}
 	os.Exit(0)
 }
 
-func impossible(msg string) {
-	panic("impossible: " + msg)
+func impossible(format string, args ...interface{}) {
+	panic(fmt.Sprintf("impossible: " + format, args...))
 }
