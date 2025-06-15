@@ -1,18 +1,21 @@
 package main
 
+//  compile a root abstract syntax tree into connected channels. data
+//  flows from least dependent leaves to most dependent "flow_stmt".
+
 func (flo *flow) compile(root *ast) (flow_chan, error) {
 
 	if root == nil {
 		return nil, nil
 	}
 	if root.yy_tok != FLOW {
-		impossible("root node not FLOW: %s", root.name())
+		corrupt("root node not FLOW: %s", root.name())
 	}
 	if root.left == nil {
-		impossible("root.left is nil")
+		corrupt("root.left is nil")
 	}
 	if root.left.yy_tok != STMT_LIST {
-		impossible("root.left not STMT_LIST: %s", root.left.name)
+		corrupt("root.left not STMT_LIST: %s", root.left.name)
 	}
 
 	//  map asts to their output channels
@@ -24,34 +27,45 @@ func (flo *flow) compile(root *ast) (flow_chan, error) {
 	var compile func(a *ast)
 
 	//  bottom up compilation of abstract syntax tree into network of 
-	//  channels.  consistency checks need cause tree may be change
-	//  significally from the yacc generated tree.
-	//  
+	//  channels.  consistency rechecks needed cause tree may have been
+	//  rewritten significally from the original yacc generated tree.
 
 	compile = func(a *ast) {
 
-		ckparent := func(a *ast, expect_tok int) {
-			if a.parent == nil {
-				a.impossible("parent is nil")
-			}
-			if a.parent.yy_tok != expect_tok {
-				a.impossible(
-					"parent not %s: %s",
-					yy_name(expect_tok),
-					a.parent.name(),
-				)
-			}
+		_die := func(format string, args...interface{}) {
+			a.corrupt("compile: " + format, args...)
 		}
-		ckleft := func(a *ast, expect_tok int) {
-			if a.left == nil {
-				a.impossible("left is nil")
+
+		ckparent := func(expect ...int) {
+			for _, tok := range expect {
+				if a.parent.yy_tok == tok {
+					return
+				}
 			}
-			if a.left.yy_tok != expect_tok {
-				a.impossible(
-					"left not %s: %s",
-					yy_name(expect_tok),
-					a.parent.name(),
-				)
+			_die("parent node: %s", a.parent.name())
+		}
+
+		ckleft := func(expect ...int) {
+			if a.left == nil {
+				_die("left is nil")
+			}
+			for _, tok := range expect {
+				if a.left.yy_tok == tok {
+					return
+				}
+			}
+			_die("left node: %s", a.left.name())
+		}
+
+		relop := func() {
+
+			tok := a.left.yy_tok
+
+			switch tok {
+			case STRING:
+			case UINT64:
+			default:
+				_die("relop: bad type: %s", yy_name(tok))
 			}
 		}
 
@@ -62,14 +76,27 @@ func (flo *flow) compile(root *ast) (flow_chan, error) {
 		compile(a.left)
 		compile(a.right)
 
+		if a.is_binary() {
+			if a.left == nil {
+				_die("left child is nil")
+			}
+			if a.right == nil {
+				_die("right child is nil")
+			}
+		} else if a.is_unary() {
+			if a.right != nil {
+				_die("right exists for unary op")
+			}
+		}
+		if a.parent == nil {
+			_die("parent is nill")
+		}
 		switch a.yy_tok {
 		case NAME:
 		case ATT:
-			ckparent(a, ATT_TUPLE)
+			ckparent(ATT_TUPLE)
 		case ATT_TUPLE:
-			if a.parent == nil {
-				a.impossible("parent is nill")
-			}
+			ckparent(COMMAND_REF, SCANNER_REF, TRACER_REF)
 		case yy_TRUE:
 			a2bool[a] = flo.const_true()
 		case yy_FALSE:
@@ -79,19 +106,66 @@ func (flo *flow) compile(root *ast) (flow_chan, error) {
 		case UINT64:
 			a2ui[a] = flo.const_uint64(a.uint64)
 		case SCANNER_REF:
-			ckleft(a, ATT_TUPLE)
+			ckleft(ATT_TUPLE)
 		case CREATE:
-			ckparent(a, STMT)
+			ckparent(STMT)
 		case STMT:
-			ckparent(a, STMT_LIST)
+			ckparent(STMT_LIST)
 		case STMT_LIST:
-			ckparent(a, FLOW)
+			a.corrupt("unexpected STMT_LIST")
+		case TRACER_REF, COMMAND_REF:
+			ckleft(ATT_TUPLE)
+		case ARG_LIST:
+		case RUN:
+		case LT, LTE, EQ, NEQ, GTE, GT:
+			relop()
+			switch a.left.yy_tok {
+			case STRING:
+				//a2bool[a] = relop_string[a.yy_tok]
+
+			/*
+			case UINT64:
+				a2bool[a] = flo.eq_uint64(
+						a2ui[a.left],
+						a2ui[a.right],
+				)
+			*/
+			default:
+				_die("relop: %s", yy_name)
+			}			
+		case yy_OR:
+			a2bool[a] = flo.bool2(
+					or,
+					a2bool[a.left],
+					a2bool[a.right],
+			)
+		case yy_AND:
+			a2bool[a] = flo.bool2(
+					and,
+					a2bool[a.left],
+					a2bool[a.right],
+			)
+		case NOT:
+			a2bool[a] = flo.not(a2bool[a.left])
+		case WHEN:
+			if a.parent.left.is_flowable() == false {
+				_die("parent of 'when' not flowable")
+			}
+			if a.left.is_bool() == false {
+				_die("qualification not bool")
+			}
+			a2bool[a] = a2bool[a.left] 
 		default:
-			a.impossible("can not compile ast")
+			_die("can not compile ast")
 		}
 	}
 
-	compile(root.left)
+	for stmt := root.left.left;  stmt != nil;  stmt = stmt.next {
+		if stmt.yy_tok != STMT {
+			stmt.corrupt("root.left.left not yy_tok STMT")
+		}
+		compile(stmt)
+	}
 
 	return make(flow_chan), nil
 }

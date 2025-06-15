@@ -24,12 +24,12 @@ func init() {
 
 	//  sanity test for mapping yy tokens to name
 	if yyToknames[3] != "__MIN_YYTOK" {
-		impossible("yyToknames[3]!=__MIN_YYTOK: correct yacc command?")
+		corrupt("yyToknames[3]!=__MIN_YYTOK: correct yacc command?")
 	}
 	//  simple sanity test
 	for i, nm := range yyToknames[4:] {
 		if yy_name(yy_name2tok(nm)) != nm {
-			impossible("yy_name != yy_tok: %s@%d", nm, i + 4)
+			corrupt("yy_name != yy_tok: %s@%d", nm, i + 4)
 		}
 	}
 
@@ -494,10 +494,10 @@ create_stmt:
 		lex.name_is_name = false
 		lex.name2ast[$3] = $2
 
-		al := $5
+		atup := $5
 		atra := $2
-		al.parent = $2
-		atra.left = al
+		atup.parent = $2
+		atra.left = atup
 
 	  	atra.tracer_ref.name = $3
 	  	atra.parent = $1
@@ -507,7 +507,7 @@ create_stmt:
 		//  frisk the attibutes of tracer
 
 		tra := atra.tracer_ref
-		lex.err = al.frisk_att("tracer:" + tra.name) 
+		lex.err = atup.frisk_att("tracer:" + tra.name) 
 		if lex.err != nil {
 			return 0
 		}
@@ -564,7 +564,7 @@ create_stmt:
 
 		cmd.parent = c
 		c.left = cmd
-		ctup.parent = c
+		ctup.parent = cmd
 		cmd.left = ctup
 
 		lex.name2ast[nm] = cmd
@@ -583,12 +583,12 @@ flow_stmt:
 	  	lex := yylex.(*yyLexState)
 		cast := lex.name2ast[lex.name]
 		if cast == nil {
-			panic("impossible missing command ast: " + lex.name)
+			corrupt("missing command ast: " + lex.name)
 		}
 		cmd := cast.command_ref
 
 		if cmd == nil {
-			panic("command: impossible nil: " + lex.name)
+			corrupt("command: nil command ref: " + lex.name)
 		}
 
 		rc := lex.run_cmd2ast[cmd]
@@ -618,6 +618,14 @@ flow_stmt:
 	;
 
 stmt:
+	  /* empty */
+	  {
+	  	$$ = &ast{
+			yy_tok:		STMT,
+			line_no:        yylex.(*yyLexState).line_no,
+		}
+	  }
+	|
 	  create_stmt
 	  {
 	  	$$ = &ast{
@@ -644,6 +652,13 @@ stmt:
 				line_no:	yylex.(*yyLexState).line_no,
 		}
 	  }  expr  {
+	  	lex := yylex.(*yyLexState)
+
+	  	if $4.is_bool() == false {
+			lex.error("when qualification not boolean")
+			return 0
+		}
+			
 	  	when := $<ast>3
 
 		$$ = &ast{
@@ -660,29 +675,20 @@ stmt:
 	;
 
 stmt_list:
-	  /*  empty */
-	  {
-		lex := yylex.(*yyLexState)
-	  	$$ = &ast{
-			yy_tok:         STMT_LIST,
-			line_no:        lex.line_no,
-			parent:         lex.ast_root,
-		}
-	  }
-	|
 	  stmt  ';'
 	  {
 	  	lex := yylex.(*yyLexState)
 
-		s := $1
+		stmt := $1
 		sl := &ast{
 			yy_tok:		STMT_LIST,
 			line_no:	lex.line_no,
-			left:		s,
+			left:		stmt,
 			parent:		lex.ast_root,
 			uint64:		1,
 		}
-		s.parent = sl
+		stmt.uint64 = 1
+		stmt.parent = sl
 
 		$$ = sl
 	  }
@@ -691,21 +697,23 @@ stmt_list:
 	  {
 		sl := $1
 		if sl.yy_tok != STMT_LIST {
-			panic(fmt.Sprintf(
-				"stmt_list not STMT_LIST: %s",
-				sl.name(),
-			))
+			sl.corrupt("stmt_list not STMT_LIST: %s", sl.name())
 		}
-		s := $2
+		stmt := $2
+		stmt.parent = sl
 
-		//  find end of stmt list
-
+		//  add stmt to end of STMT.
 		s_tail := sl.left
+		if s_tail == nil {
+			sl.corrupt("left STMT is nil")
+		}
 		for ;  s_tail.next != nil;  s_tail = s_tail.next {}
-		s.uint64 = s_tail.uint64 + 1
-		s_tail.next = s
-		s.previous = s_tail
-		s.parent = sl
+
+		//  order number in list
+		stmt.uint64 = s_tail.uint64 + 1
+
+		s_tail.next = stmt
+		stmt.previous = s_tail
 
 		sl.uint64++		//  count the # stmt
 
@@ -793,7 +801,7 @@ type yyLexState struct {
 func (lex *yyLexState) pushback(c rune) {
 
 	if lex.peek != 0 {
-		panic("pushback(): push before peek")	/* impossible */
+		corrupt("pushback(): push before peek")
 	}
 	lex.peek = c
 	if c == '\n' {
@@ -1103,11 +1111,8 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 			return nil
 		}
 	default:
-		msg := fmt.Sprintf(
-			"new_rel_op: impossible yy token: %s",
-			yy_name(tok),
-		)
-		panic(msg)
+		msg := fmt.Sprintf("new_rel_op:  yy token: %s", yy_name(tok))
+		corrupt(msg)
 		return nil	//  NOTREACHED
 	}
 

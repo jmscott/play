@@ -1,13 +1,11 @@
 
-0: shift/reduce conflict (shift 7(0), red'n 53(0)) on RUN
-0: shift/reduce conflict (shift 8(0), red'n 53(0)) on CREATE
 state 0
 	$accept: .flow $end 
-	stmt_list: .    (53)
+	stmt: .    (49)
 
 	RUN  shift 7
 	CREATE  shift 8
-	.  reduce 53 (src line 662)
+	.  reduce 49 (src line 620)
 
 	flow  goto 1
 	create  goto 6
@@ -26,9 +24,11 @@ state 1
 state 2
 	flow:  stmt_list.    (1)
 	stmt_list:  stmt_list.stmt ';' 
+	stmt: .    (49)
 
 	RUN  shift 7
 	CREATE  shift 8
+	';'  reduce 49 (src line 620)
 	.  reduce 1 (src line 89)
 
 	create  goto 6
@@ -44,17 +44,17 @@ state 3
 
 
 state 4
-	stmt:  create_stmt.    (49)
+	stmt:  create_stmt.    (50)
 
-	.  reduce 49 (src line 620)
+	.  reduce 50 (src line 628)
 
 
 state 5
-	stmt:  flow_stmt.    (50)
-	stmt:  flow_stmt.WHEN $$51 expr 
+	stmt:  flow_stmt.    (51)
+	stmt:  flow_stmt.WHEN $$52 expr 
 
 	WHEN  shift 11
-	.  reduce 50 (src line 630)
+	.  reduce 51 (src line 638)
 
 
 state 6
@@ -94,16 +94,16 @@ state 9
 state 10
 	stmt_list:  stmt ';'.    (54)
 
-	.  reduce 54 (src line 672)
+	.  reduce 54 (src line 677)
 
 
 state 11
-	stmt:  flow_stmt WHEN.$$51 expr 
-	$$51: .    (51)
+	stmt:  flow_stmt WHEN.$$52 expr 
+	$$52: .    (52)
 
-	.  reduce 51 (src line 640)
+	.  reduce 52 (src line 648)
 
-	$$51  goto 20
+	$$52  goto 20
 
 state 12
 	create_stmt:  create tracer.new_name $$41 create_tuple 
@@ -165,11 +165,11 @@ state 18
 state 19
 	stmt_list:  stmt_list stmt ';'.    (55)
 
-	.  reduce 55 (src line 689)
+	.  reduce 55 (src line 695)
 
 
 state 20
-	stmt:  flow_stmt WHEN $$51.expr 
+	stmt:  flow_stmt WHEN $$52.expr 
 
 	EXPAND_ENV  shift 35
 	UINT64  shift 33
@@ -251,7 +251,7 @@ state 29
 	expr:  expr.MATCH expr 
 	expr:  expr.NOMATCH expr 
 	expr:  expr.CONCAT expr 
-	stmt:  flow_stmt WHEN $$51 expr.    (52)
+	stmt:  flow_stmt WHEN $$52 expr.    (53)
 
 	yy_AND  shift 43
 	yy_OR  shift 44
@@ -264,7 +264,7 @@ state 29
 	MATCH  shift 51
 	NOMATCH  shift 52
 	CONCAT  shift 53
-	.  reduce 52 (src line 646)
+	.  reduce 53 (src line 654)
 
 
 state 30
@@ -381,7 +381,7 @@ state 42
 	yy_FALSE  shift 37
 	NOT  shift 31
 	'('  shift 32
-	.  reduce 56 (src line 716)
+	.  reduce 56 (src line 724)
 
 	arg_list  goto 62
 	constant  goto 30
@@ -675,7 +675,7 @@ state 63
 	MATCH  shift 51
 	NOMATCH  shift 52
 	CONCAT  shift 53
-	.  reduce 57 (src line 724)
+	.  reduce 57 (src line 732)
 
 
 state 64
@@ -997,7 +997,7 @@ state 84
 	MATCH  shift 51
 	NOMATCH  shift 52
 	CONCAT  shift 53
-	.  reduce 58 (src line 739)
+	.  reduce 58 (src line 747)
 
 
 state 85
@@ -1081,11 +1081,11 @@ state 94
 
 55 terminals, 26 nonterminals
 59 grammar rules, 95/16000 states
-2 shift/reduce, 0 reduce/reduce conflicts reported
+0 shift/reduce, 0 reduce/reduce conflicts reported
 75 working sets used
 memory: parser 74/240000
 37 extra closures
-239 shift entries, 1 exceptions
+239 shift entries, 2 exceptions
 52 goto entries
 21 entries saved by goto default
 Optimizer space used: output 127/240000

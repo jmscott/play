@@ -211,7 +211,7 @@ func (flo *flow) wait_bool2(
 
 			// cheap sanity test.  will go away soon
 			if lv != nil {
-				impossible("left hand value out of sync")
+				corrupt("left hand value out of sync")
 			}
 			lv = l
 
@@ -222,7 +222,7 @@ func (flo *flow) wait_bool2(
 
 			// cheap sanity test.  will go away soon
 			if rv != nil {
-				impossible("right hand value out of sync")
+				corrupt("right hand value out of sync")
 			}
 			rv = r
 		}

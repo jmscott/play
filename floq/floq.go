@@ -53,16 +53,16 @@ func main() {
 	switch action {
 	case "parse":
 	case "ast":
-		root.walk_print(0)
+		root.walk_print(0, nil)
 	case "compile":
 		flo := &flow{}
 		flo.compile(root)
 	default:
-		impossible("unknown action: %s", action)
+		croak("unknown action: %s", action)
 	}
 	os.Exit(0)
 }
 
-func impossible(format string, args ...interface{}) {
-	panic(fmt.Sprintf("impossible: " + format, args...))
+func corrupt(format string, args ...interface{}) {
+	panic(fmt.Sprintf("corrupt: " + format, args...))
 }

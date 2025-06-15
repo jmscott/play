@@ -43,9 +43,13 @@ func (a *ast) String() string {
 
 	var what string
 
+	if a == nil {
+		return "nil AST"
+	}
+
 	switch a.yy_tok {
 	case 0:
-		impossible("ast has yy_tok == 0")
+		a.corrupt("ast has yy_tok == 0")
 	case ARG_LIST:
 		what = fmt.Sprintf("ARG_LIST(argc=%d)", a.uint64)
 	case SCANNER_REF:
@@ -74,23 +78,34 @@ func (a *ast) String() string {
 	case STMT_LIST:
 		what = fmt.Sprintf("STMT_LIST(cnt=#%d)", a.uint64)
 	case STMT:
-		what = fmt.Sprintf("STMT(#%d @ lno=#%d)", a.uint64, a.line_no)
+		what = fmt.Sprintf(
+				"STMT(ord=#%d@lno=#%d)",
+				a.uint64,
+				a.line_no,
+		)
 	default:
 		what = a.name()
 	}
 	return what
 }
 
-func (a *ast) walk_print(indent int) {
+func (a *ast) walk_print(indent int, parent *ast) {
 
 	if a == nil {
 		return
+	}
+	if a.parent != parent {
+		if a.parent == nil {
+			a.corrupt("unexpected nil parent")
+		} else {
+			a.corrupt("unexpected parent: %s", a.parent.name())
+		}
 	}
 	if indent == 0 {
 		fmt.Println("")
 	} else {
 		if a.parent == nil {
-			impossible("parent ast is nil")
+			corrupt("parent ast is nil")
 		}
 		for i := 0;  i < indent;  i++ {
 			fmt.Print("  ")
@@ -100,26 +115,26 @@ func (a *ast) walk_print(indent int) {
 
 	//  print kids
 
-	a.left.walk_print(indent + 1)
-	a.right.walk_print(indent + 1)
+	a.left.walk_print(indent + 1, a)
+	a.right.walk_print(indent + 1, a)
 
 	//  print siblings
 
 	if a.previous == nil {
 		for as := a.next;  as != nil;  as = as.next {
-			as.walk_print(indent)
+			as.walk_print(indent, parent)
 		}
 	}
 }
 
 func (a *ast) print() {
-	a.walk_print(0)
+	a.walk_print(0, nil)
 }
 
 func (a *ast) frisk_att2(what string, need...ast) error {
 
 	if a.yy_tok != ATT_TUPLE {
-		impossible("start node not ATT_TUPLE")
+		corrupt("start node not ATT_TUPLE")
 	}
 
 	const fmt_dup = "duplicate attribute"
@@ -130,7 +145,7 @@ func (a *ast) frisk_att2(what string, need...ast) error {
 
 	err := func(name string, lno int, msg string) error {
 
-		name = "\"" + name + "\""
+		name = "node \"" + name + "\""
 		near := ", near line " + fmt.Sprintf("%d", lno)
 		return errors.New(msg + ": " + what + ": " + name + near)
 	}
@@ -148,7 +163,7 @@ func (a *ast) frisk_att2(what string, need...ast) error {
 
 	for an := a.left;  an != nil;  an = an.next {
 		if an.yy_tok != ATT {
-			an.impossible("left node not ATT")
+			an.corrupt("left node not ATT")
 		}
 		name := an.left.string
 		
@@ -158,7 +173,7 @@ func (a *ast) frisk_att2(what string, need...ast) error {
 		}
 		ar := an.right
 		if ar == nil {
-			an.impossible("ATT has nil right")
+			an.corrupt("ATT has nil right")
 		}
 
 		//  is the node known?
@@ -206,14 +221,14 @@ func (a *ast) frisk_att2(what string, need...ast) error {
 func (a *ast) frisk_att(what string, need...interface{}) error {
 
 	if a.yy_tok != ATT_TUPLE {
-		impossible("start node not ATT_TUPLE")
+		corrupt("start node not ATT_TUPLE")
 	}
 	const fmt_dup = "duplicate attribute"
 	const fmt_need = "need attribute"
 
 	err := func(name string, lno int, msg string) error {
 
-		name = "\"" + name + "\""
+		name = "node \"" + name + "\""
 		near := ", near line " + fmt.Sprintf("%d", lno)
 		return errors.New(msg + ": " + what + ": " + name + near)
 	}
@@ -224,14 +239,14 @@ func (a *ast) frisk_att(what string, need...interface{}) error {
 
 	for an := a.left;  an != nil;  an = an.next {
 		if an.yy_tok != ATT {
-			an.impossible("left node not ATT")
+			an.corrupt("left node not ATT")
 		}
 		name := an.left.string
 		if seen[name] != nil {
 			return err(name, seen[name].line_no, fmt_dup)
 		}
 		if an.right == nil {
-			an.impossible("ATT has nil right")
+			an.corrupt("ATT has nil right")
 		}
 		seen[name] = an.right
 	}
@@ -241,18 +256,18 @@ func (a *ast) frisk_att(what string, need...interface{}) error {
 	for _, val := range need {
 		name_tok := strings.Split(val.(string), ":")
 		if len(name_tok) != 2 {
-			a.impossible("corrupt name:yy_tok: '%s'", val)
+			a.corrupt("corrupt name:yy_tok: '%s'", val)
 		}
 		nm, tok_nm := name_tok[0], name_tok[1]
 		if len(nm) == 0 {
-			a.impossible("name:tok: name is 0 length")
+			a.corrupt("name:tok: name is 0 length")
 		}
 		if len(tok_nm) == 1 {
-			a.impossible("name:tok: tok name is empty")
+			a.corrupt("name:tok: tok name is empty")
 		}
 		tok := yy_name2tok(tok_nm)
 		if tok <= __MIN_YYTOK  {
-			a.impossible("name:tok: yy_tok is unknown: %s", tok_nm)
+			a.corrupt("name:tok: yy_tok is unknown: %s", tok_nm)
 		}
 
 		ar := seen[nm]
@@ -260,37 +275,113 @@ func (a *ast) frisk_att(what string, need...interface{}) error {
 			return err(nm, a.line_no, fmt_need)
 		}
 		if tok != ar.yy_tok {
-			ar.impossible("ATT: right yy_tok not %s", tok_nm)
+			ar.corrupt("ATT: right yy_tok not %s", tok_nm)
 		}
 	}
 	return nil
 }
 
-func (a *ast) impossible(format string, args...interface{}) {
+func (a *ast) corrupt(format string, args...interface{}) {
 
 	msg := fmt.Sprintf(format, args...)
-	impossible("%s: %s, near line %d", msg, a.name(), a.line_no)
+	corrupt("%s: node \"%s\", near line %d", msg, a.name(), a.line_no)
 	//  NOTREACHED*/
 }
 
 func (at *ast) find_ATT(name string) (*ast) {
 
 	if at.yy_tok != ATT_TUPLE {
-		at.impossible("node not ATT_TUPLE")
+		at.corrupt("node not ATT_TUPLE")
 	}
 	for a := at.left;  a != nil;  a = a.next {
 		if a.parent != at {
-			a.impossible("parent not ATT_TUPLE")
+			a.corrupt("parent not ATT_TUPLE")
 		}
 		if a.yy_tok != ATT {
-			a.impossible("child not ATT")
+			a.corrupt("child not ATT")
 		}
 		if a.left == nil {
-			a.impossible("left is nil")
+			a.corrupt("left is nil")
 		}
 		if a.left.string == name {
 			return a
 		}
+	}
+	return nil
+}
+
+//  is the node a binary operator(), left and right must exit
+func (a *ast) is_binary() bool {
+	switch a.yy_tok {
+	case yy_OR, yy_AND, LT, LTE, EQ, NEQ, GTE, GT:
+		return true
+	}
+	return false
+}
+
+//  is the node a unary operator(), left only exists
+func (a *ast) is_unary() bool {
+	switch a.yy_tok {
+	case NOT, WHEN:
+		return true
+	}
+	return false
+}
+
+func (a *ast) is_flowable() bool {
+	switch a.yy_tok {
+	case RUN:
+		return true
+	}
+	return false
+}
+
+//  insure type of parent ast node is in expected yy token set...
+
+func (a *ast) frisk_parent(expect ...int) error {
+	if a == nil {
+		return errors.New("frisk_parent: unexpected nil node")
+	}
+
+	if a.parent == nil {
+		return errors.New("frisk_parent: parent is nil")
+	}
+	if !a.parent.in_tok_set(expect...) {
+		return errors.New("parent not in exected yy token set")
+	}
+	return nil
+}
+
+func (a *ast) in_tok_set(expect ...int) bool {
+
+	for _, tok := range expect {
+		if tok == a.yy_tok {
+			return true
+		}
+	}
+	return false
+}
+
+//  insure type of ast kids are in expected yy type set... and
+//  point to proper nodes.
+
+func (a *ast) frisk_kids(expect ...int) error {
+	if a == nil {
+		return errors.New("node is kill")
+	}
+	var kid_prev *ast
+	for kid := a.left;  a.next != nil;  a = a.next { 
+		if kid.parent != a {
+			return errors.New("kid has wrong parent")
+		}
+		if kid_prev != nil && kid.previous != kid_prev {
+			return errors.New("kid has wrong prev")
+		}
+		found := kid.in_tok_set(expect...)
+		if !found {
+			return errors.New("kid not expected yy_tok")
+		}
+		kid_prev = kid
 	}
 	return nil
 }

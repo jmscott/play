@@ -103,10 +103,10 @@ func (cmd *command) frisk_att(atup *ast) (err error) {
 	}
 	ap := atup.find_ATT("path")
 	if ap == nil {
-		atup.impossible("can not find ATT 'path'")
+		atup.corrupt("can not find ATT 'path'")
 	}
 	if ap.right == nil {
-		ap.impossible("path ATT has not right")
+		ap.corrupt("path ATT has not right")
 	}
 	cmd.path, err = exec.LookPath(ap.right.string)
 	return err

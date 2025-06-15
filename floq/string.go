@@ -12,6 +12,15 @@ type string_value struct {
 
 type string_chan chan *string_value
 
+type relop_func func (*flow, string_chan, string_chan) bool_chan
+var relop_string = map[int]relop_func{
+		GT:	gt_string,
+		GTE:	gte_string,
+		EQ:	eq_string,
+		NEQ:	neq_string,
+		LTE:	lte_string,
+		LT:	lt_string,
+	}
 
 //  wait for left and right hand strings of any binary operator
 //
@@ -103,6 +112,10 @@ func (flo *flow) eq_string(left, right string_chan) (out bool_chan) {
 	return out
 }
 
+func eq_string(flo *flow, left, right string_chan) (out bool_chan) {
+	return flo.eq_string(left, right)
+}
+
 //  compare two strings for equality
 
 func (flo *flow) neq_string(left, right string_chan) (out bool_chan) {
@@ -133,6 +146,10 @@ func (flo *flow) neq_string(left, right string_chan) (out bool_chan) {
 	}()
 
 	return out
+}
+
+func neq_string(flo *flow, left, right string_chan) (out bool_chan) {
+	return flo.neq_string(left, right)
 }
 
 //  compare two strings for left lexically greater than right
@@ -167,6 +184,10 @@ func (flo *flow) gt_string(left, right string_chan) (out bool_chan) {
 	return out
 }
 
+func gt_string(flo *flow, left, right string_chan) (out bool_chan) {
+	return flo.gt_string(left, right)
+}
+
 //  compare two strings for left lexically greater than or equal to right
 
 func (flo *flow) gte_string(left, right string_chan) (out bool_chan) {
@@ -197,6 +218,10 @@ func (flo *flow) gte_string(left, right string_chan) (out bool_chan) {
 	}()
 
 	return out
+}
+
+func gte_string(flo *flow, left, right string_chan) (out bool_chan) {
+	return flo.gte_string(left, right)
 }
 
 //  compare two strings for left lexically less than right
@@ -231,6 +256,10 @@ func (flo *flow) lt_string(left, right string_chan) (out bool_chan) {
 	return out
 }
 
+func lt_string(flo *flow, left, right string_chan) (out bool_chan) {
+	return flo.lt_string(left, right)
+}
+
 //  compare two strings for left lexically less than or equal to right
 
 func (flo *flow) lte_string(left, right string_chan) (out bool_chan) {
@@ -261,6 +290,10 @@ func (flo *flow) lte_string(left, right string_chan) (out bool_chan) {
 	}()
 
 	return out
+}
+
+func lte_string(flo *flow, left, right string_chan) (out bool_chan) {
+	return flo.lte_string(left, right)
 }
 
 func (flo *flow) const_string(s string) (out string_chan) {
