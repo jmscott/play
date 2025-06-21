@@ -82,7 +82,7 @@ func init() {
 %left		ADD  SUB
 %left		MUL  DIV
 %left		CONCAT
-%right		NOT
+%right		NOT  EXPAND_ENV
 
 %%
 
@@ -581,11 +581,7 @@ create_stmt:
 flow_stmt:
 	  RUN  COMMAND_REF  {
 	  	lex := yylex.(*yyLexState)
-		cast := lex.name2ast[lex.name]
-		if cast == nil {
-			corrupt("missing command ast: " + lex.name)
-		}
-		cmd := cast.command_ref
+		cmd := lex.name2ast[lex.name].command_ref
 
 		if cmd == nil {
 			corrupt("command: nil command ref: " + lex.name)
@@ -601,19 +597,19 @@ flow_stmt:
 			yy_tok:		RUN,
 			line_no:        yylex.(*yyLexState).line_no,
 			command_ref:	cmd,
-			left:		cast,
 		}
-		cast.parent = $$
 	  }  '('  arg_list  ')' {
 	  	lex := yylex.(*yyLexState)
-		cmd := lex.name2ast[lex.name].command_ref
 
-	  	ar := $<ast>3
-		ar.right = $5
-		ar.right.parent = ar
+	  	arun := $<ast>3
+		cmd := arun.command_ref
+		argv := $5
 
-		lex.run_cmd2ast[cmd] = ar 
-		$$ = ar
+		arun.left = argv
+		argv.parent = arun
+
+		lex.run_cmd2ast[cmd] = arun 
+		$$ = arun
 	  }
 	;
 
@@ -653,24 +649,27 @@ stmt:
 		}
 	  }  expr  {
 	  	lex := yylex.(*yyLexState)
+		flo := $1
+	  	when := $<ast>3
+		cond := $4
 
-	  	if $4.is_bool() == false {
+	  	if cond.is_bool() == false {
 			lex.error("when qualification not boolean")
 			return 0
 		}
 			
-	  	when := $<ast>3
-
-		$$ = &ast{
+		stmt := &ast{
 			yy_tok:		STMT,
-			left:		$1,
+			left:		flo,
 			right:		when,
 			line_no:	yylex.(*yyLexState).line_no,
 		}
-		$1.parent = $$
-		when.parent = $$
-		when.left = $4
-		$4.parent = $$
+		flo.parent = stmt
+		when.parent = stmt
+		when.left = cond
+		cond.parent = when
+
+		$$ = stmt
 	  }
 	;
 
@@ -1087,7 +1086,7 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 		}
 	case EQ, NEQ, LT, LTE, GTE, GT:
 		can_compare := (left.is_string() && right.is_string()) ||
-		               (left.is_uint64() && right.is_uint64()) ||
+		               (left.is_ui64() && right.is_ui64()) ||
 		               (left.is_bool() && right.is_bool())
 		if !can_compare {
 			lex.line_no = right.line_no

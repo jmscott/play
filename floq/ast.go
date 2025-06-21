@@ -4,7 +4,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"strings"
 )
 
 type ast struct {
@@ -131,7 +130,7 @@ func (a *ast) print() {
 	a.walk_print(0, nil)
 }
 
-func (a *ast) frisk_att2(what string, need...ast) error {
+func (a *ast) frisk_att(what string, need...ast) error {
 
 	if a.yy_tok != ATT_TUPLE {
 		corrupt("start node not ATT_TUPLE")
@@ -208,76 +207,6 @@ func (a *ast) frisk_att2(what string, need...ast) error {
 		}
 	}
 
-	return nil
-}
-
-//  frisk ast of attributes for duplicates and missing required and
-//  correct types: STRING, UINT64, ARRAY_REF
-//
-//  Note:
-//	Currently [ arrays ] can contain mixed types.
-//
-
-func (a *ast) frisk_att(what string, need...interface{}) error {
-
-	if a.yy_tok != ATT_TUPLE {
-		corrupt("start node not ATT_TUPLE")
-	}
-	const fmt_dup = "duplicate attribute"
-	const fmt_need = "need attribute"
-
-	err := func(name string, lno int, msg string) error {
-
-		name = "node \"" + name + "\""
-		near := ", near line " + fmt.Sprintf("%d", lno)
-		return errors.New(msg + ": " + what + ": " + name + near)
-	}
-
-	//  frisk for duplicate attributes and record right hand node of ATT
-
-	seen := make(map[string]*ast)
-
-	for an := a.left;  an != nil;  an = an.next {
-		if an.yy_tok != ATT {
-			an.corrupt("left node not ATT")
-		}
-		name := an.left.string
-		if seen[name] != nil {
-			return err(name, seen[name].line_no, fmt_dup)
-		}
-		if an.right == nil {
-			an.corrupt("ATT has nil right")
-		}
-		seen[name] = an.right
-	}
-
-	//  insure required atts exist and match types
-
-	for _, val := range need {
-		name_tok := strings.Split(val.(string), ":")
-		if len(name_tok) != 2 {
-			a.corrupt("corrupt name:yy_tok: '%s'", val)
-		}
-		nm, tok_nm := name_tok[0], name_tok[1]
-		if len(nm) == 0 {
-			a.corrupt("name:tok: name is 0 length")
-		}
-		if len(tok_nm) == 1 {
-			a.corrupt("name:tok: tok name is empty")
-		}
-		tok := yy_name2tok(tok_nm)
-		if tok <= __MIN_YYTOK  {
-			a.corrupt("name:tok: yy_tok is unknown: %s", tok_nm)
-		}
-
-		ar := seen[nm]
-		if ar == nil {
-			return err(nm, a.line_no, fmt_need)
-		}
-		if tok != ar.yy_tok {
-			ar.corrupt("ATT: right yy_tok not %s", tok_nm)
-		}
-	}
 	return nil
 }
 
@@ -384,4 +313,23 @@ func (a *ast) frisk_kids(expect ...int) error {
 		kid_prev = kid
 	}
 	return nil
+}
+
+//
+//  derive the type of the ast expression.
+//
+//  Note:
+//	why not put the type of an expression in the ast while parsing
+//
+func (a *ast) yy_type() string {
+	switch a.yy_tok {
+	case yy_TRUE, yy_FALSE,
+	     LT,  LTE,  EQ,  NEQ,  GTE,  GT:
+		return "bool"
+	case STRING, CONCAT:
+		return "string"
+	case UINT64:
+		return "uint64"
+	}
+	return "unknown"
 }

@@ -75,7 +75,7 @@ func (flo *flow) osx0(cmd *command, when bool_chan) (out osx_chan) {
 
 func (cmd *command) frisk_att(atup *ast) (err error) {
 
-	err = atup.frisk_att2(
+	err = atup.frisk_att(
 		"command." + cmd.name,
 		ast{
 			string:		"path",

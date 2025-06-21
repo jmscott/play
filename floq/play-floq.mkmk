@@ -74,12 +74,14 @@ GOSRCs="
 	parser.go
 	regexp.go
 	scanner.go
+	server.go
 	string.go
 	tracer.go
 	tsort.go
 	uint64.go
 	value.go
 "
+
 SRCs="
 	$GOSRCs
 	parser.y

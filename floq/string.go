@@ -12,8 +12,8 @@ type string_value struct {
 
 type string_chan chan *string_value
 
-type relop_func func (*flow, string_chan, string_chan) bool_chan
-var relop_string = map[int]relop_func{
+type relop_str_func func (*flow, string_chan, string_chan) bool_chan
+var relop_string = map[int]relop_str_func{
 		GT:	gt_string,
 		GTE:	gte_string,
 		EQ:	eq_string,
@@ -46,7 +46,7 @@ func (left string_chan) wait2(right string_chan) (
 	return
 }
 
-func (flo *flow) strcat(left, right string_chan) (out string_chan) {
+func (flo *flow) concat(left, right string_chan) (out string_chan) {
 
 	out = make(string_chan)
 
@@ -316,7 +316,7 @@ func (flo *flow) const_string(s string) (out string_chan) {
 
 func (a *ast) is_string() bool {
 
-	if a.yy_tok == STRING || a.yy_tok == CONCAT {
+	if a.yy_tok == STRING || a.yy_tok == CONCAT || a.yy_tok == EXPAND_ENV {
 		return true
 	}
 	return false

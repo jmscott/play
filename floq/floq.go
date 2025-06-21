@@ -19,7 +19,8 @@ func croak(format string, args ...interface{}) {
 	os.Exit(16)
 }
 
-// flowd [parse|ast] <schema.flow>
+// usage: floq [parse|ast|compile] <schema.flow>
+
 func main() {
 
 	argv := os.Args[1:]
@@ -52,11 +53,20 @@ func main() {
 
 	switch action {
 	case "parse":
+
 	case "ast":
 		root.walk_print(0, nil)
+
 	case "compile":
-		flo := &flow{}
-		flo.compile(root)
+		_, _, err :=  compile(root)
+		if err != nil {
+			croak("compile(%s) failed: %s", floq_path, err)
+		}
+	case "server":
+		err := server(root)
+		if err != nil {
+			croak("server(%s) failed: %s", floq_path, err) 
+		}
 	default:
 		croak("unknown action: %s", action)
 	}

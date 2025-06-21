@@ -5,7 +5,7 @@ package main
 //
 //   Note:
 //	Rummy devised from different project and may be more complex than
-//	need.  orginal idea was to process map timeouts onto null
+//	needed.  orginal idea was to map process timeouts onto null
 
 type rummy uint8
 
@@ -179,6 +179,12 @@ type bool_value struct {
 
 type bool_chan chan *bool_value
 
+type relop_bool_func func (*flow, bool_chan, bool_chan) bool_chan
+var relop_bool = map[int]relop_bool_func{
+		EQ:	eq_bool,
+		NEQ:	neq_bool,
+	}
+
 func (bv *bool_value) rummy() rummy {
 
         switch {
@@ -349,4 +355,100 @@ func (a *ast) is_bool() bool {
 		return true
 	}
 	return false
+}
+
+//  wait for left and right hand bools of any binary operator
+//
+//  Note: how does passing *bool_value compare to bool_value?
+
+func (left bool_chan) wait2(right bool_chan) (
+	lv, rv *bool_value, closed bool,
+) {
+	for lv == nil || rv == nil {
+		select {
+		case lv = <- left:
+			closed = lv == nil
+			if closed {
+				return
+			}
+		case rv = <- right:
+			closed = rv == nil
+			if rv == nil {
+				return
+			}
+		}
+	}
+	return
+}
+
+//  compare two bools for equality
+
+func (flo *flow) eq_bool(left, right bool_chan) (out bool_chan) {
+
+	out = make(bool_chan)
+
+	go func() {
+
+		for {
+			defer close(out)
+
+			flo = flo.get()
+
+			lv, rv, done := left.wait2(right)
+			if done {
+				return
+			}
+
+			bv := &bool_value {
+				is_null:	lv.is_null || rv.is_null,
+				flow:		flo,
+			}
+			if !bv.is_null {
+				bv.bool = lv.bool == rv.bool
+			}
+			out <- bv
+		}
+	}()
+
+	return out
+}
+
+func eq_bool(flo *flow, left, right bool_chan) (out bool_chan) {
+	return flo.eq_bool(left, right)
+}
+
+//  compare two bools for equality
+
+func (flo *flow) neq_bool(left, right bool_chan) (out bool_chan) {
+
+	out = make(bool_chan)
+
+	go func() {
+
+		for {
+			defer close(out)
+
+			flo = flo.get()
+
+			lv, rv, done := left.wait2(right)
+			if done {
+				return
+			}
+
+			bv := &bool_value {
+				is_null:	lv.is_null || rv.is_null,
+				flow:		flo,
+			}
+			if !bv.is_null {
+				bv.bool = lv.bool != rv.bool
+			}
+			out <- bv
+		}
+	}()
+
+	return out
+}
+
+func neq_bool(flo *flow, left, right bool_chan) (out bool_chan) {
+	return flo.neq_bool(left, right)
 }
