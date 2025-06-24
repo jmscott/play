@@ -6,6 +6,10 @@ import (
 	"os"
 )
 
+func exit(status int) {
+	os.Exit(status)
+}
+
 //  temporary die() used only during boot up
 
 func croak(format string, args ...interface{}) {
@@ -16,7 +20,7 @@ func croak(format string, args ...interface{}) {
 		fmt.Sprintf(format, args...),
 	)
 	fmt.Fprintf(os.Stderr, "usage: floq [parse|ast] path/to/prog.floq\n")
-	os.Exit(16)
+	exit(16)
 }
 
 // usage: floq [parse|ast|compile] <schema.flow>
@@ -70,7 +74,7 @@ func main() {
 	default:
 		croak("unknown action: %s", action)
 	}
-	os.Exit(0)
+	exit(0)
 }
 
 func corrupt(format string, args ...interface{}) {

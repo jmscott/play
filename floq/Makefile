@@ -58,8 +58,8 @@ clean:
 	rm --force $(COMPILEs) y.output
 
 parser.go: parser.y
-	$(GOYACC) -o parser.go parser.y || (rm -f parser.go; exit 1)
-	#$(GOEXE) fmt parser.go
+	$(GOYACC) -o parser.go parser.y
+	$(GOEXE) fmt parser.go
 
 floq: $(GOSRCs)
 	#$(GOEXE) build -gcflags -S $(GOSRCs)

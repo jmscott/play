@@ -333,3 +333,115 @@ func (a *ast) yy_type() string {
 	}
 	return "unknown"
 }
+
+//  Frisk an ast for wiring mistaskes.
+
+func (a *ast) frisk() {
+
+	//  can we invoke a.frisk() on nil *ast?
+
+	if a == nil {
+		return
+	}
+
+	_corrupt := func(format string, args...interface{}) {
+		a.corrupt("frisk: " + format, args...)
+	}
+
+	if a.left != nil {
+		a.left.frisk()
+	}
+	if a.right != nil {
+		a.right.frisk()
+	}
+
+	if a.is_binary() {
+		if a.left == nil {
+			_corrupt("left child is nil")
+		}
+		if a.right == nil {
+			_corrupt("right child is nil")
+		}
+	} else if a.is_unary() {
+		if a.right != nil {
+			_corrupt("right exists for unary op")
+		}
+	}
+	if a.parent == nil {
+		_corrupt("parent is nil")
+	}
+
+	ckparent := func(expect ...int) {
+
+		for _, tok := range expect {
+			if a.parent.yy_tok == tok {
+				return
+			}
+		}
+		_corrupt("unexpected parent node: %s", a.parent.name())
+	}
+
+	ckleft := func(expect ...int) {
+
+		if a.left == nil {
+			_corrupt("left is nil")
+		}
+		for _, tok := range expect {
+			if a.left.yy_tok == tok {
+				return
+			}
+		}
+		_corrupt("unexpected left node: %s", a.left.name())
+	}
+
+	ckrelop := func() {
+
+		tok := a.left.yy_tok
+
+		switch tok {
+		case STRING, UINT64, yy_TRUE, yy_FALSE:
+		default:
+			_corrupt("bad relop type: %s", yy_name(tok))
+		}
+	}
+
+	//  Note:  consider moving parts of this code to ast.frisk()
+	switch a.yy_tok {
+	case NAME:
+	case ATT:
+		ckparent(ATT_TUPLE)
+	case ATT_TUPLE:
+		ckparent(COMMAND_REF, SCANNER_REF, TRACER_REF)
+	case yy_TRUE:
+	case yy_FALSE:
+	case STRING:
+	case UINT64:
+	case SCANNER_REF:
+		ckleft(ATT_TUPLE)
+	case CREATE:
+		ckparent(STMT)
+	case STMT:
+		ckparent(STMT_LIST)
+	case STMT_LIST:
+		_corrupt("unexpected STMT_LIST")
+	case TRACER_REF, COMMAND_REF:
+		ckleft(ATT_TUPLE)
+	case ARG_LIST:
+	case RUN:
+	case LT, LTE, EQ, NEQ, GTE, GT:
+		ckrelop()
+	case yy_OR:
+	case yy_AND:
+	case NOT:
+	case WHEN:
+		if a.parent.is_flowable() == false {
+			nm := a.parent.name()
+			_corrupt("parent of WHEN (%s) not flowable", nm)
+		}
+		if a.left.is_bool() == false {
+			_corrupt("qualification (%s) not bool", a.left.name())
+		}
+	default:
+		_corrupt("unknown ast node")
+	}
+}

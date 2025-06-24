@@ -24,8 +24,52 @@ type osx_value struct {
 
 type osx_chan chan osx_value
 
-//  run a command process with no arguments
-func (flo *flow) osx0(cmd *command, when bool_chan) (out osx_chan) {
+//  exec an os command process with no arguments
+func (flo *flow) osx0(cmd *command) (out osx_chan) {
+
+	out = make(osx_chan)
+
+	go func() {
+
+		//  check existence of executable in "path" variable
+
+		path, err := exec.LookPath(cmd.path)
+		if err != nil {
+			croak("exec.LookPath(%s) failed: %s", err)
+		}
+
+		//  build process environment
+		//
+		//  Note:
+		//	what about dups in env?
+		//
+
+		env := os.Environ()
+		for _, e := range cmd.env {
+			env = append(env, e)
+		}
+
+		for {
+			flo := flo.get()
+
+			cx := exec.Command(
+					path,
+			)
+			cx.Args = cmd.args
+			cx.Env = env
+
+			err := cx.Run() 
+			out <- osx_value{
+					flow:	flo,
+					err:	err,	
+				}
+		}
+	}()
+
+	return out
+}
+//  exec an os command process with no arguments
+func (flo *flow) osx0when(cmd *command, when bool_chan) (out osx_chan) {
 
 	out = make(osx_chan)
 

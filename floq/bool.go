@@ -179,8 +179,8 @@ type bool_value struct {
 
 type bool_chan chan *bool_value
 
-type relop_bool_func func (*flow, bool_chan, bool_chan) bool_chan
-var relop_bool = map[int]relop_bool_func{
+type relcmp_bool_func func (*flow, bool_chan, bool_chan) bool_chan
+var relcmp_bool = map[int]relcmp_bool_func{
 		EQ:	eq_bool,
 		NEQ:	neq_bool,
 	}

@@ -78,7 +78,8 @@ func init() {
 %type	<ast>		scanner  command  tracer
 
 %left		yy_AND  yy_OR
-%left		EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
+%left		EQ  NEQ  GT  GTE  LT  LTE
+%left		MATCH  NOMATCH
 %left		ADD  SUB
 %left		MUL  DIV
 %left		CONCAT
@@ -657,15 +658,16 @@ stmt:
 			lex.error("when qualification not boolean")
 			return 0
 		}
+
+		flo.right = when
 			
 		stmt := &ast{
 			yy_tok:		STMT,
 			left:		flo,
-			right:		when,
 			line_no:	yylex.(*yyLexState).line_no,
 		}
 		flo.parent = stmt
-		when.parent = stmt
+		when.parent = flo
 		when.left = cond
 		cond.parent = when
 
