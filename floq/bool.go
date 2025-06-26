@@ -381,11 +381,21 @@ func (left bool_chan) wait2(right bool_chan) (
 	return
 }
 
+func (out bool_chan) frisk(left, right bool_chan) {
+	if left == nil {
+		corrupt("left bool chan is nil")
+	}
+	if right == nil {
+		corrupt("right bool chan is nil")
+	}
+}
+
 //  compare two bools for equality
 
 func (flo *flow) eq_bool(left, right bool_chan) (out bool_chan) {
 
 	out = make(bool_chan)
+	out.frisk(left, right)
 
 	go func() {
 
@@ -422,6 +432,7 @@ func eq_bool(flo *flow, left, right bool_chan) (out bool_chan) {
 func (flo *flow) neq_bool(left, right bool_chan) (out bool_chan) {
 
 	out = make(bool_chan)
+	out.frisk(left, right)
 
 	go func() {
 
@@ -451,4 +462,22 @@ func (flo *flow) neq_bool(left, right bool_chan) (out bool_chan) {
 
 func neq_bool(flo *flow, left, right bool_chan) (out bool_chan) {
 	return flo.neq_bool(left, right)
+}
+
+func (out bool_chan) frisk_str(left, right string_chan) {
+	if left == nil {
+		corrupt("left string chan is nil")
+	}
+	if right == nil {
+		corrupt("right string chan is nil")
+	}
+}
+
+func (out bool_chan) frisk_ui64(left, right uint64_chan) {
+	if left == nil {
+		corrupt("left uint64 chan is nil")
+	}
+	if right == nil {
+		corrupt("right uint64 chan is nil")
+	}
 }

@@ -46,9 +46,21 @@ func (left string_chan) wait2(right string_chan) (
 	return
 }
 
+//  cheap sanity test
+
+func (out string_chan) frisk(left, right string_chan) {
+	if left == nil {
+		corrupt("left string_chan is nil")
+	}
+	if right == nil {
+		corrupt("right string_chan is nil")
+	}
+}
+
 func (flo *flow) concat(left, right string_chan) (out string_chan) {
 
 	out = make(string_chan)
+	out.frisk(left, right)
 
 	go func() {
 
@@ -80,11 +92,13 @@ func (flo *flow) concat(left, right string_chan) (out string_chan) {
 	return out
 }
 
+
 //  compare two strings for equality
 
 func (flo *flow) eq_string(left, right string_chan) (out bool_chan) {
 
 	out = make(bool_chan)
+	out.frisk_str(left, right)
 
 	go func() {
 
@@ -121,6 +135,7 @@ func eq_string(flo *flow, left, right string_chan) (out bool_chan) {
 func (flo *flow) neq_string(left, right string_chan) (out bool_chan) {
 
 	out = make(bool_chan)
+	out.frisk_str(left, right)
 
 	go func() {
 
@@ -157,6 +172,7 @@ func neq_string(flo *flow, left, right string_chan) (out bool_chan) {
 func (flo *flow) gt_string(left, right string_chan) (out bool_chan) {
 
 	out = make(bool_chan)
+	out.frisk_str(left, right)
 
 	go func() {
 
@@ -193,6 +209,7 @@ func gt_string(flo *flow, left, right string_chan) (out bool_chan) {
 func (flo *flow) gte_string(left, right string_chan) (out bool_chan) {
 
 	out = make(bool_chan)
+	out.frisk_str(left, right)
 
 	go func() {
 
@@ -229,6 +246,7 @@ func gte_string(flo *flow, left, right string_chan) (out bool_chan) {
 func (flo *flow) lt_string(left, right string_chan) (out bool_chan) {
 
 	out = make(bool_chan)
+	out.frisk_str(left, right)
 
 	go func() {
 
@@ -265,6 +283,7 @@ func lt_string(flo *flow, left, right string_chan) (out bool_chan) {
 func (flo *flow) lte_string(left, right string_chan) (out bool_chan) {
 
 	out = make(bool_chan)
+	out.frisk_str(left, right)
 
 	go func() {
 
@@ -299,6 +318,7 @@ func lte_string(flo *flow, left, right string_chan) (out bool_chan) {
 func (flo *flow) const_string(s string) (out string_chan) {
 
 	out = make(string_chan)
+
 	go func() {
 		for {
 			flo = flo.get()

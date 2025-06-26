@@ -46,6 +46,7 @@ func (left uint64_chan) wait2(right uint64_chan) (
 func (flo *flow) eq_ui64(left, right uint64_chan) (out bool_chan) {
 
 	out = make(bool_chan)
+	out.frisk_ui64(left, right)
 
 	go func() {
 
@@ -82,6 +83,7 @@ func eq_ui64(flo *flow, left, right uint64_chan) (out bool_chan) {
 func (flo *flow) neq_ui64(left, right uint64_chan) (out bool_chan) {
 
 	out = make(bool_chan)
+	out.frisk_ui64(left, right)
 
 	go func() {
 
@@ -118,6 +120,7 @@ func neq_ui64(flo *flow, left, right uint64_chan) (out bool_chan) {
 func (flo *flow) gt_ui64(left, right uint64_chan) (out bool_chan) {
 
 	out = make(bool_chan)
+	out.frisk_ui64(left, right)
 
 	go func() {
 
@@ -154,6 +157,7 @@ func gt_ui64(flo *flow, left, right uint64_chan) (out bool_chan) {
 func (flo *flow) gte_ui64(left, right uint64_chan) (out bool_chan) {
 
 	out = make(bool_chan)
+	out.frisk_ui64(left, right)
 
 	go func() {
 
@@ -190,6 +194,7 @@ func gte_ui64(flo *flow, left, right uint64_chan) (out bool_chan) {
 func (flo *flow) lt_ui64(left, right uint64_chan) (out bool_chan) {
 
 	out = make(bool_chan)
+	out.frisk_ui64(left, right)
 
 	go func() {
 
@@ -226,6 +231,7 @@ func lt_ui64(flo *flow, left, right uint64_chan) (out bool_chan) {
 func (flo *flow) lte_ui64(left, right uint64_chan) (out bool_chan) {
 
 	out = make(bool_chan)
+	out.frisk_ui64(left, right)
 
 	go func() {
 
@@ -256,9 +262,19 @@ func lte_ui64(flo *flow, left, right uint64_chan) (out bool_chan) {
 	return flo.lte_ui64(left, right)
 }
 
+func (out uint64_chan) frisk(left, right uint64_chan) {
+	if left == nil {
+		corrupt("left uint64 chan is nil")
+	}
+	if right == nil {
+		corrupt("eight uint64 chan is nil")
+	}
+}
+
 func (flo *flow) add_ui64(left, right uint64_chan) (out uint64_chan) {
 
 	out = make(uint64_chan)
+	out.frisk(left, right)
 
 	go func() {
 
@@ -289,6 +305,7 @@ func (flo *flow) add_ui64(left, right uint64_chan) (out uint64_chan) {
 func (flo *flow) mul_ui64(left, right uint64_chan) (out uint64_chan) {
 
 	out = make(uint64_chan)
+	out.frisk(left, right)
 
 	go func() {
 
@@ -319,6 +336,7 @@ func (flo *flow) mul_ui64(left, right uint64_chan) (out uint64_chan) {
 func (flo *flow) sub_ui64(left, right uint64_chan) (out uint64_chan) {
 
 	out = make(uint64_chan)
+	out.frisk(left, right)
 
 	go func() {
 
