@@ -43,27 +43,6 @@ func (flo *flow) compile(root *ast) (flow_chan, error) {
 			a.corrupt("compile: " + format, args...)
 		}
 
-		ckparent := func(expect ...int) {
-			for _, tok := range expect {
-				if a.parent.yy_tok == tok {
-					return
-				}
-			}
-			_die("parent node: %s", a.parent.name())
-		}
-
-		ckleft := func(expect ...int) {
-			if a.left == nil {
-				_die("left is nil")
-			}
-			for _, tok := range expect {
-				if a.left.yy_tok == tok {
-					return
-				}
-			}
-			_die("left node: %s", a.left.name())
-		}
-
 		relop := func() {
 
 			tok := a.left.yy_tok
@@ -115,9 +94,7 @@ func (flo *flow) compile(root *ast) (flow_chan, error) {
 		switch a.yy_tok {
 		case NAME:
 		case ATT:
-			ckparent(ATT_TUPLE)
 		case ATT_TUPLE:
-			ckparent(COMMAND_REF, SCANNER_REF, TRACER_REF)
 		case yy_TRUE:
 			a2bool[a] = flo.const_true()
 		case yy_FALSE:
@@ -127,15 +104,11 @@ func (flo *flow) compile(root *ast) (flow_chan, error) {
 		case UINT64:
 			a2ui[a] = flo.const_ui64(a.uint64)
 		case SCANNER_REF:
-			ckleft(ATT_TUPLE)
 		case CREATE:
-			ckparent(STMT)
 		case STMT:
-			ckparent(STMT_LIST)
 		case STMT_LIST:
 			a.corrupt("unexpected STMT_LIST")
 		case TRACER_REF, COMMAND_REF:
-			ckleft(ATT_TUPLE)
 		case ARG_LIST:
 		case RUN:
 		case LT, LTE, EQ, NEQ, GTE, GT:
@@ -168,7 +141,9 @@ func (flo *flow) compile(root *ast) (flow_chan, error) {
 			stmt.corrupt("root.left.left not yy_tok STMT")
 		}
 		stmt.frisk()
-		compile(stmt)
+		if stmt.left.yy_tok != CREATE {
+			compile(stmt)
+		}
 	}
 
 	return make(flow_chan), nil
