@@ -385,7 +385,7 @@ atts:
 		var an *ast
 		for an = al.left;  an.next != nil;  an = an.next {}
 		an.next = a
-		a.previous = a
+		a.prev = a
 
 		$$ = $1
 	  }
@@ -714,7 +714,7 @@ stmt_list:
 		stmt.uint64 = s_tail.uint64 + 1
 
 		s_tail.next = stmt
-		stmt.previous = s_tail
+		stmt.prev = s_tail
 
 		sl.uint64++		//  count the # stmt
 
@@ -756,7 +756,7 @@ arg_list:
 		var an *ast
 		for an = al.left;  an.next != nil;  an = an.next {}
 		an.next = e
-		e.previous = an
+		e.prev = an
 
 		al.uint64++
 
@@ -1088,7 +1088,7 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 		}
 	case EQ, NEQ, LT, LTE, GTE, GT:
 		can_compare := (left.is_string() && right.is_string()) ||
-		               (left.is_ui64() && right.is_ui64()) ||
+		               (left.is_uint64() && right.is_uint64()) ||
 		               (left.is_bool() && right.is_bool())
 		if !can_compare {
 			lex.line_no = right.line_no
@@ -1311,6 +1311,17 @@ func yy_name(tok int) (name string) {
 		name = fmt.Sprintf( "UNKNOWN(%d)", tok)
 	}
 	return
+}
+func yy_names(toks ...int) (names string) {
+
+       for _, tok := range toks {
+               if names == "" {
+                       names = yy_name(tok)
+               } else {
+                       names = names + "," + yy_name(tok)
+               }
+       }
+       return names
 }
 
 func yy_name2tok(name string) int {

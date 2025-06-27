@@ -67,12 +67,26 @@ func (flo *flow) compile(root *ast) (flow_chan, error) {
 		relop := func() {
 
 			tok := a.left.yy_tok
-
 			switch tok {
 			case STRING:
+				if relop_string[a.yy_tok] == nil {
+					_die("no flow operator")
+				}
+				a2bool[a] = relop_string[a.yy_tok](
+						flo,
+						a2str[a.left],
+						a2str[a.right],
+				)
+
 			case UINT64:
+				/*
+				a2bool[a] = flo.eq_ui64(
+						a2ui[a.left],
+						a2ui[a.right],
+				)
+				*/
 			default:
-				_die("relop: bad type: %s", yy_name(tok))
+				_die("relop: compile left %s", yy_name(tok))
 			}
 		}
 
@@ -126,20 +140,6 @@ func (flo *flow) compile(root *ast) (flow_chan, error) {
 		case RUN:
 		case LT, LTE, EQ, NEQ, GTE, GT:
 			relop()
-			switch a.left.yy_tok {
-			case STRING:
-				//a2bool[a] = relop_string[a.yy_tok]
-
-			/*
-			case UINT64:
-				a2bool[a] = flo.eq_uint64(
-						a2ui[a.left],
-						a2ui[a.right],
-				)
-			*/
-			default:
-				_die("relop: %s", yy_name)
-			}			
 		case yy_OR:
 			a2bool[a] = flo.bool2(
 					or,
@@ -156,6 +156,8 @@ func (flo *flow) compile(root *ast) (flow_chan, error) {
 			a2bool[a] = flo.not(a2bool[a.left])
 		case WHEN:
 			a2bool[a] = a2bool[a.left] 
+		case CONCAT:
+			a2str[a] = flo.concat(a2str[a.left], a2str[a.right])
 		default:
 			_die("can not compile ast")
 		}

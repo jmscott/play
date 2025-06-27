@@ -382,7 +382,7 @@ func (flo *flow) const_ui64(u64 uint64) (out uint64_chan) {
 	return out
 }
 
-func (a *ast) is_ui64() bool {
+func (a *ast) is_uint64() bool {
 
 	return a.yy_tok == UINT64 || a.yy_tok == ADD || a.yy_tok == SUB
 }

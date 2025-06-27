@@ -25,6 +25,7 @@ type osx_value struct {
 type osx_chan chan osx_value
 
 //  exec an os command process with no arguments
+
 func (flo *flow) osx0(cmd *command) (out osx_chan) {
 
 	out = make(osx_chan)

@@ -16,8 +16,8 @@ type ast struct {
 	right		*ast
 
 	//  siblings
-	previous	*ast
 	next		*ast
+	prev		*ast
 
 	parent		*ast
 
@@ -119,7 +119,7 @@ func (a *ast) walk_print(indent int, parent *ast) {
 
 	//  print siblings
 
-	if a.previous == nil {
+	if a.prev == nil {
 		for as := a.next;  as != nil;  as = as.next {
 			as.walk_print(indent, parent)
 		}
@@ -276,7 +276,12 @@ func (a *ast) frisk_parent(expect ...int) error {
 		return errors.New("frisk_parent: parent is nil")
 	}
 	if !a.parent.in_tok_set(expect...) {
-		return errors.New("parent not in exected yy token set")
+		return errors.New(fmt.Sprintf(
+			"parent (%s) of %s not in yy token set: %s",
+			a.parent.name(),
+			a.name(),
+			yy_names(expect...),
+		))
 	}
 	return nil
 }
@@ -291,26 +296,52 @@ func (a *ast) in_tok_set(expect ...int) bool {
 	return false
 }
 
-//  insure type of ast kids are in expected yy type set... and
-//  point to proper nodes.
+func (a *ast) error(format string, args...interface{}) error {
 
-func (a *ast) frisk_kids(expect ...int) error {
+	return errors.New(
+		fmt.Sprintf("node %s: %s",
+			a.name(),
+			fmt.Sprintf(format, args...),
+	))
+}
+
+//  verify type of ast kids are in expected yy type set... and
+//  point to proper relatives.
+
+func (a *ast) frisk_kids(twig string, expect ...int) error {
 	if a == nil {
-		return errors.New("node is kill")
+		return errors.New(twig + " node is kill")
 	}
-	var kid_prev *ast
-	for kid := a.left;  a.next != nil;  a = a.next { 
-		if kid.parent != a {
-			return errors.New("kid has wrong parent")
+
+	e := func(kid *ast, format string, args...interface{}) error {
+		fmt := fmt.Sprintf("%s kid (%s)", twig, kid.name())
+		return a.error(fmt, args...)
+	}
+
+	var k_prev, k *ast
+	if twig == "left" {
+		k = a.left
+	} else {
+		k = a.right
+	}
+	if k == nil {
+		return nil
+	}
+	for ;  k.next != nil;  k = k.next { 
+		if k.parent == nil {
+			return e(k, "has nil parent")
 		}
-		if kid_prev != nil && kid.previous != kid_prev {
-			return errors.New("kid has wrong prev")
+		if k.parent != a {
+			return e(k, "has wrong parent (%s)", k.parent.name()) 
 		}
-		found := kid.in_tok_set(expect...)
+		if k_prev != nil && k.prev != k_prev {
+			return e(k, "has wrong prev (%s)", k.prev.name())
+		}
+		found := k.in_tok_set(expect...)
 		if !found {
-			return errors.New("kid not expected yy_tok")
+			return e(k, "not in tok set (%s)", yy_names(expect...))
 		}
-		kid_prev = kid
+		k_prev = k
 	}
 	return nil
 }
@@ -334,7 +365,7 @@ func (a *ast) yy_type() string {
 	return "unknown"
 }
 
-//  Frisk an ast for wiring mistaskes.
+//  Frisk an ast tree for wiring mistakes, panic on error
 
 func (a *ast) frisk() {
 
@@ -373,12 +404,10 @@ func (a *ast) frisk() {
 
 	ckparent := func(expect ...int) {
 
-		for _, tok := range expect {
-			if a.parent.yy_tok == tok {
-				return
-			}
+		err := a.frisk_parent(expect...)
+		if err != nil {
+			_corrupt("ckparent: %s", err)
 		}
-		_corrupt("unexpected parent node: %s", a.parent.name())
 	}
 
 	ckleft := func(expect ...int) {
@@ -386,18 +415,19 @@ func (a *ast) frisk() {
 		if a.left == nil {
 			_corrupt("left is nil")
 		}
-		for _, tok := range expect {
-			if a.left.yy_tok == tok {
-				return
-			}
+		err := a.frisk_kids("left", expect...)
+		if err != nil {
+			_corrupt("ckleft: %s", err)
 		}
-		_corrupt("unexpected left node: %s", a.left.name())
 	}
 
 	ckrelop := func() {
 
-		tok := a.left.yy_tok
+		if a.left == nil {
+			_corrupt("ckrelop: left is nil")
+		}
 
+		tok := a.left.yy_tok
 		switch tok {
 		case STRING, UINT64, yy_TRUE, yy_FALSE:
 		default:
@@ -405,7 +435,6 @@ func (a *ast) frisk() {
 		}
 	}
 
-	//  Note:  consider moving parts of this code to ast.frisk()
 	switch a.yy_tok {
 	case NAME:
 	case ATT:
@@ -426,8 +455,51 @@ func (a *ast) frisk() {
 		_corrupt("unexpected STMT_LIST")
 	case TRACER_REF, COMMAND_REF:
 		ckleft(ATT_TUPLE)
+	case CONCAT:
 	case ARG_LIST:
+		if a.right != nil {
+			_corrupt("right node (%s) is not nil", a.right.name())
+		}
+
+		//  verify all args are expressions with proper parent
+		for arg := a.left;  arg != nil;  arg = arg.next {
+			if arg.parent != a {
+				fmt := "parent (%s) of arg (%s) not this arg"
+				_corrupt(fmt, arg.parent.name(), arg.name())
+			}
+			if arg.is_expression() == false {
+				_corrupt("arg node (%s) not expr", arg.name())
+			}
+		}
 	case RUN:
+		/*
+		 *  Parse tree
+	         *	RUN
+		 *		ARG_LIST(argc=0)
+		 *		WHEN
+		 *			(bool expression)?
+		 */
+		al := a.left
+		if al == nil {
+			_corrupt("left node is nil")
+		}
+		if al.yy_tok != ARG_LIST {
+			_corrupt("left node %s is not ARG_LIST", al.name())
+		}
+
+		w := a.right
+		if w != nil {
+			if w.yy_tok != WHEN {
+				_corrupt("right node (%s) not WHEN", w.name())
+			}
+			wl := w.left
+			if wl == nil {
+				_corrupt("WHEN.left is nil")
+			}
+			if wl.is_bool() == false {
+				_corrupt("WHEN.left (%s) not bool", wl.name())
+			}
+		}
 	case LT, LTE, EQ, NEQ, GTE, GT:
 		ckrelop()
 	case yy_OR:
@@ -444,4 +516,9 @@ func (a *ast) frisk() {
 	default:
 		_corrupt("unknown ast node")
 	}
+}
+
+//  Note: outght too be "is_value()"
+func (a *ast) is_expression() bool {
+	return a.is_bool() || a.is_string() || a.is_uint64()
 }

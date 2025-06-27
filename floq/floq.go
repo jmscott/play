@@ -35,7 +35,7 @@ func main() {
 	action := argv[0]
 
 	switch action {
-		case "parse", "ast", "compile": 
+		case "parse", "ast", "compile", "server": 
 		default:
 			croak("unknown action: %s", action)
 	}
