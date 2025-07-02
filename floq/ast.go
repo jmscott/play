@@ -484,9 +484,10 @@ func (a *ast) frisk() {
 			_corrupt("left node is nil")
 		}
 		if al.yy_tok != ARG_LIST {
-			_corrupt("left node %s is not ARG_LIST", al.name())
+			_corrupt("left node (%s) not ARG_LIST", al.name())
 		}
 
+		//  WHEN clause must have qualification
 		w := a.right
 		if w != nil {
 			if w.yy_tok != WHEN {
@@ -521,4 +522,30 @@ func (a *ast) frisk() {
 //  Note: outght too be "is_value()"
 func (a *ast) is_expression() bool {
 	return a.is_bool() || a.is_string() || a.is_uint64()
+}
+
+//  Note:  change to multiple tokens ... instead of is_flowable()
+func (a *ast) count_flowable(count int) int {
+	
+	return a.count(0, RUN)
+}
+
+//  Note:  change to multiple tokens ... instead of is_flowable()
+func (a *ast) count(count int, tokens ...int) int {
+	
+	if a == nil {
+		return count
+	}
+	if a.in_tok_set(tokens...) {
+		count++
+	}
+	count = a.left.count(count, tokens...)
+	count = a.right.count(count, tokens...)
+
+	if a.prev == nil {
+		for kid := a.next;  kid != nil;  kid = kid.next {
+			count = kid.count(count, tokens...)
+		}
+	}
+	return count
 }
