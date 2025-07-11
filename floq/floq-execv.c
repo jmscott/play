@@ -1,13 +1,20 @@
 /*
  *  Synopsis:
  *	Execute command vectors read from stdin and write summaries on stdout
- *  Usage:
- *	Invoked as a background worker by "floq server"
+ *  Description:
+ *	Invoked as a background worker by floq server. 
  *
- * 	#  to test at command line, do
- *	(echo /usr/bin/true;  echo) | floq-execv
- *	(echo /usr/bin/false;  echo) | floq-execv
- *	(echo /usr/bin/who;  echo) | floq-execv
+ *		#  to test at command line, do
+ *		echo /usr/bin/true | floq-execv
+ *		echo /usr/bin/false | floq-execv
+ *		echo /usr/bin/date | floq-execv
+ *
+ *	A single new-line tells floq to exit cleanly, eliminating the confusing
+ *	"ERROR: unexpected read(request) of 0" in the examples above.
+ *
+ *		#  exit cleanly with no ERROR
+ *
+ *		(echo /usr/bin/date;  echo) | floq-execv
  *	
  *	A summary of the exit status of the process is written to standard out:
  *	
@@ -23,23 +30,35 @@
  * 		A fatal error occured when execv'ing the process
  *		FAULT\t<error description>
  *
- *	Fatal errors for floq-execv are written to standard err and then
- *	floq-execv exits.
+ *	Fatal errors for floq-execv itself are written to standard err and then
+ *	floq-execv exits with value 1.
+ *
+ *		"unexpected read(request) of 0" means
+ *
+ *	echo a new line
+ *	unexpected
+ *
+ *	This program exists because older golang have following issues.
+ *
+ *		1.  no support RUSAGE_CHILDREN
+ *		2.  race detector does not play well with fast execs.
+ *		3.  a global lock once existed, inhibiting fasy execs.
  *
  *  Exit Status:
  *  	0	exit ok
  *  	1	exit error (written to standard error)
  *  Note:
- *	floq-execv exists because of odd behavior in floq when running
- *	the race detector (circa 2020 ish).
+ *	Should wall_duration be added to the process exit status?
  *
  *	No reason to limit output to 4096 bytes, since no need for atomic
  *	write.  The output limit should be either passed as command line
- *	option to floq-execv and/or in the request record.
+ *	option to floq-execv or in the request record.
  *
  *	What reaps child processes when parent panics?
  *
- *	Why kill the process upon SIGSTOP?
+ *	Use jmscott/libjmscott.a!
+ *
+ *	Should the process be killed upon receiving a STOP signal?
  */
 #include <sys/times.h>
 #include <sys/types.h>
@@ -63,8 +82,8 @@ static char *usage = "floq-execv";
 
 /*  maximum number arg vector sent to floq-execv from floq */
 
-#define MAX_X_ARG	255	//  max byte length of a single string argv[]
-#define MAX_X_ARGC	63	//  max elements in argv[]
+#define MAX_X_ARG	256	//  max byte length of a single string argv[]
+#define MAX_X_ARGC	64	//  max elements in argv[]
 
 static int	x_argc;
 
@@ -76,7 +95,7 @@ static char	args[MAX_X_ARGC * (MAX_X_ARG + 1)];
 static void
 die(char *msg)
 {
-	write(2, "ERROR\t", 6);
+	write(2, "\nERROR: ", 8);
 	write(2, msg, strlen(msg));
 	write(2, "\n", 1);
 	exit(1);
@@ -94,7 +113,7 @@ die3(char *msg1, char *msg2, char *msg3)
 	jmscott_die3(1, msg1, msg2, msg3);
 }
 
-/*  read a request from floq process to execute a command */
+/*  read a request from floq to execute a command */
 static void
 _read_request(char *buf)
 {
@@ -104,11 +123,12 @@ _read_request(char *buf)
 	*p = 0;
 
 AGAIN:
+	//  room for null (not written), since sizeof buf == MAX_MSG + 1
 	nr = jmscott_read(0, p, MAX_MSG - nread);
 	if (nr < 0)
 		die2("read(request) failed", strerror(errno));
 	if (nr == 0)
-		die("unexpected read(request) of 0");
+		die("unexpected read(request<stdin) of 0 bytes");
 	nread += nr;
 	p += nr;
 	if (buf[nread - 1] == '\n') {
@@ -250,7 +270,7 @@ fork_wait() {
 		die2("wait(request) impossible status", buf);
 	}
 
-	//  write the execution description record (xdr) back to floq server
+	//  write the execution description record (xdr) back to floq
 
 	snprintf(reply, sizeof reply, "%s\t%d\t%ld.%06ld\t%ld.%06ld\t%ld\n",
 			xclass,
