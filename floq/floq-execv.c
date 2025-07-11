@@ -2,9 +2,8 @@
  *  Synopsis:
  *	Execute command vectors read from stdin and write summaries on stdout
  *  Description:
- *	Invoked as a background worker by floq server. 
+ *	For command line testing, do
  *
- *		#  to test at command line, do
  *		echo /usr/bin/true | floq-execv
  *		echo /usr/bin/false | floq-execv
  *		echo /usr/bin/date | floq-execv
@@ -19,7 +18,8 @@
  *	A summary of the exit status of the process is written to standard out:
  *	
  *		# normal process exit
- *		EXIT\t<exit-code>\t<user-seconds>\t<system-seconds>
+ *		EXIT\t<exit-code>\t<user-seconds>\t<system-seconds>\tout-count\n
+ *		merged std{out,err} bytes ...
  *
  *		# process was interupted by a signal
  *		SIG\t<signal>\t<user-seconds>\t<system-seconds>
@@ -48,15 +48,17 @@
  *  	0	exit ok
  *  	1	exit error (written to standard error)
  *  Note:
+ *	Segregate stdout from stderr by having a count for each instead of a
+ *	merged count.
+ *	
  *	Should wall_duration be added to the process exit status?
+ *	For daemon mode this makes sense.
  *
  *	No reason to limit output to 4096 bytes, since no need for atomic
  *	write.  The output limit should be either passed as command line
  *	option to floq-execv or in the request record.
  *
  *	What reaps child processes when parent panics?
- *
- *	Use jmscott/libjmscott.a!
  *
  *	Should the process be killed upon receiving a STOP signal?
  */
@@ -233,6 +235,8 @@ fork_wait() {
 	if (pid == 0) {
 		_close(0);
 		_close(merge[0]);
+
+		//  dup stdout and stderr onto merge[1]
 		_dup2(merge[1], 1);
 		_dup2(merge[1], 2);
 		_close(merge[1]);
