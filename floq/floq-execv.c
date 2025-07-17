@@ -15,9 +15,16 @@
  *
  *		(echo /usr/bin/date;  echo) | floq-execv
  *	
- *	A summary of the exit status of the process is written to standard out:
+ *	A summary of the exit status of each execed process is written to
+ *	standard out, tab separated:
+ *
+ *		<xclass>\t<xstatus>\t<pid>\t<usecs>\t<ssecs>\t<<merge-out-len>\n
+ *		...<merge-out-len> bytes
+ *
+ *	where <merge-out-len> is number of bytes of stdout and stderr merged
+ *	together.  The exit class of the process is EXIT, SIG, STOP, FAULT
  *	
- *		# normal process exit
+ *		# normal process exit: 0 <= 255
  *		EXIT\t<exit-code>\t<user-seconds>\t<system-seconds>\tout-count\n
  *		merged std{out,err} bytes ...
  *
@@ -30,13 +37,13 @@
  * 		A fatal error occured when execv'ing the process
  *		FAULT\t<error description>
  *
+ *	followed by exit status, process id, user sec, sys secs, merged output
+ *	length, finally followed by exactly <merged-length> bytes.
+ *
  *	Fatal errors for floq-execv itself are written to standard err and then
  *	floq-execv exits with value 1.
  *
  *		"unexpected read(request) of 0" means
- *
- *	echo a new line
- *	unexpected
  *
  *	This program exists because older golang have following issues.
  *
@@ -80,7 +87,8 @@
 char *jmscott_progname = "floq-execv";
 static char *usage = "floq-execv";
 
-#define MAX_MSG	JMSCOTT_ATOMIC_WRITE_SIZE
+//#define MAX_MSG	JMSCOTT_ATOMIC_WRITE_SIZE
+#define MAX_MSG	4096
 
 /*  maximum number arg vector sent to floq-execv from floq */
 
@@ -276,14 +284,17 @@ fork_wait() {
 
 	//  write the execution description record (xdr) back to floq
 
-	snprintf(reply, sizeof reply, "%s\t%d\t%ld.%06ld\t%ld.%06ld\t%ld\n",
-			xclass,
-			xstatus,
-			ru.ru_utime.tv_sec,
-			(long)ru.ru_utime.tv_usec,
-			ru.ru_stime.tv_sec,
-			(long)ru.ru_stime.tv_usec,
-			olen
+	snprintf(
+		reply,
+		sizeof reply, "%s\t%d\t%ld\t%ld.%06ld\t%ld.%06ld\t%ld\n",
+		xclass,
+		xstatus,
+		(long)pid,
+		ru.ru_utime.tv_sec,
+		(long)ru.ru_utime.tv_usec,
+		ru.ru_stime.tv_sec,
+		(long)ru.ru_stime.tv_usec,
+		olen
 	);
 	_write(reply, strlen(reply));
 	if (olen > 0)
