@@ -305,19 +305,6 @@ func (a *ast) frisk() {
 		}
 	}
 
-	/*
-	ckleft := func(expect ...int) {
-
-		if a.left == nil {
-			_corrupt("left is nil")
-		}
-		err := a.frisk_kids("left", expect...)
-		if err != nil {
-			_corrupt("ckleft: %s", err)
-		}
-	}
-	*/
-
 	ckrelop := func() {
 
 		if a.left == nil {
