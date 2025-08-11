@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-var usage = "usage: floq [ast|compile|parse|server|stdio] path/to/prog.floq\n"
+var usage = "usage: floq [ast|compile|parse|server] path/to/prog.floq\n"
 
 func exit(status int) {
 	os.Exit(status)
@@ -37,7 +37,7 @@ func main() {
 	action := argv[0]
 
 	switch action {
-		case "parse", "ast", "compile", "server", "stdio": 
+		case "parse", "ast", "compile", "server":
 		default:
 			croak("unknown action: %s", action)
 	}
@@ -72,11 +72,6 @@ func main() {
 		err := server(root)
 		if err != nil {
 			croak("server(%s) failed: %s", floq_path, err) 
-		}
-	case "stdio":
-		err := stdio(root)
-		if err != nil {
-			croak("stdio(%s) failed: %s", floq_path, err) 
 		}
 	default:
 		croak("unknown action: %s", action)
