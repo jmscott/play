@@ -1,3 +1,9 @@
+"hoq" is archived and replaced by floq
+	
+		https://github.com/jmscott/play/tree/master/floq
+
+---------
+
 Here is a toy interpreter in golang built using the yacc tool in go core.
 The interpreter is named hoq, which means Higher Order Query.
 The hoq query language allows triggering the firing  of unix processes by
