@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"os/exec"
 )
 
@@ -14,56 +13,60 @@ type command struct {
 	env	[]string
 }
 
+/*
+
+//  result of waiting on an executing command
 type osx_value struct {
 	*command
-	argv	[]string
-	err	error
-
-	*flow
+	argv		[]string
+	err		error
+	pid		int
+	start_time	time.Time
+	wall_duration	time.Duration
+	user_sec	int64
+	user_usec	int32
+	sys_sec		int64
+	sys_usec	int32
 }
 
-type osx_chan chan osx_value
+type osx_chan chan *osx_value
 
-//  exec an os command process with no arguments
+//  unconditionally exec an os command process with no dynamoic
+//  arguments
+
+func (flo *flow) osx(cmd *command, out osx_chan) {
+	cx := exec.Command(
+			cmd.path,
+	)
+	cx.Args = cmd.args
+	cx.Env = cmd.env
+
+	st := time.Now()
+	err := cx.Run() 
+	ru := cx.ProcessState.SysUsage().(*syscall.Rusage)
+	out <- &osx_value{
+			command:	cmd,
+			err:		err,	
+			pid:		cx.Process.Pid,	
+			user_sec:	ru.Utime.Sec,
+			user_usec:	ru.Utime.Usec,
+			sys_sec:	ru.Stime.Sec,
+			sys_usec:	ru.Stime.Usec,
+			start_time:	st,
+			wall_duration:	time.Since(st),
+	}
+}
 
 func (flo *flow) osx0(cmd *command) (out osx_chan) {
 
 	out = make(osx_chan)
+	//  check existence of executable in "path" variable
 
 	go func() {
-
-		//  check existence of executable in "path" variable
-
-		path, err := exec.LookPath(cmd.path)
-		if err != nil {
-			croak("exec.LookPath(%s) failed: %s", err)
-		}
-
-		//  build process environment
-		//
-		//  Note:
-		//	what about dups in env?
-		//
-
-		env := os.Environ()
-		for _, e := range cmd.env {
-			env = append(env, e)
-		}
-
 		for {
-			flo := flo.get()
+			flo = flo.get()
 
-			cx := exec.Command(
-					path,
-			)
-			cx.Args = cmd.args
-			cx.Env = env
-
-			err := cx.Run() 
-			out <- osx_value{
-					flow:	flo,
-					err:	err,	
-				}
+			flo.osx(cmd, out)
 		}
 	}()
 
@@ -76,42 +79,13 @@ func (flo *flow) osx0when(cmd *command, when bool_chan) (out osx_chan) {
 
 	go func() {
 
-		//  check existence of executable iin "path" variable
-
-		path, err := exec.LookPath(cmd.path)
-		if err != nil {
-			croak("exec.LookPath(%s) failed: %s", err)
-		}
-
-		//  build process environment
-		//
-		//  Note:
-		//	what about dups in env?
-		//
-
-		env := os.Environ()
-		for _, e := range cmd.env {
-			env = append(env, e)
-		}
-
 		for {
-			flo := flo.get()
+			flo = flo.get()
 
 			bv := <- when
-			if bv.bool == false {
-				continue
+			if bv.bool {
+				flo.osx(cmd, out)
 			}
-			cx := exec.Command(
-					path,
-			)
-			cx.Args = cmd.args
-			cx.Env = env
-
-			err := cx.Run() 
-			out <- osx_value{
-					flow:	flo,
-					err:	err,	
-				}
 		}
 	}()
 
@@ -153,6 +127,14 @@ func (cmd *command) frisk_att(atup *ast) (err error) {
 	if ap.right == nil {
 		ap.corrupt("path ATT has not right")
 	}
+
+	env := os.Environ()
+	for _, e := range cmd.env {
+		env = append(env, e)
+	}
+	cmd.env = env
+
 	cmd.path, err = exec.LookPath(ap.right.string)
 	return err
 }
+*/

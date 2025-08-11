@@ -10,6 +10,8 @@ type ast struct {
 
 	yy_tok		int
 	line_no		int
+	order		int
+	name		string
 
 	//  children
 	left		*ast
@@ -23,15 +25,13 @@ type ast struct {
 
 	//  golang needs unions!
 
-	tracer_ref	*tracer
-	scanner_ref	*scanner
+	tuple_ref	*tuple
 	command_ref	*command
 	uint64
 	string
-	array_ref	[]string
 }
 
-func (a *ast) name() string {
+func (a *ast) yy_name() string {
 	if a == nil {
 		return "nil"
 	}
@@ -51,21 +51,16 @@ func (a *ast) String() string {
 		a.corrupt("ast has yy_tok == 0")
 	case ARG_LIST:
 		what = fmt.Sprintf("ARG_LIST(argc=%d)", a.uint64)
-	case SCANNER_REF:
-		what = fmt.Sprintf("SCANNER_REF(%s)", a.scanner_ref.name)
-	case COMMAND_REF:
-		what = fmt.Sprintf("COMMAND_REF(%s)", a.command_ref.name)
-	case TRACER_REF:
-		what = fmt.Sprintf("TRACER_REF(%s)", a.tracer_ref.name)
 	case STRING:
-		what = fmt.Sprintf("STRING(%s)", a.string)
+		if a.name == "" {
+			what = fmt.Sprintf("STRING(%s)", a.string)
+		} else {
+			what = fmt.Sprintf("STRING#%s(%s)", a.name, a.string)
+		}
 	case NAME:
 		what = fmt.Sprintf("NAME(%s)", a.string)
 	case UINT64:
 		what = fmt.Sprintf("UINT64(%d)", a.uint64)
-	case ATT_ARRAY:
-		ar := a.array_ref
-		what = fmt.Sprintf("ATT_ARRAY(len=%d,cap=%d)", len(ar), cap(ar))
 	case yy_AND:
 		what = "AND"
 	case yy_OR:
@@ -74,8 +69,6 @@ func (a *ast) String() string {
 		what = "FALSE"
 	case yy_TRUE:
 		what = "TRUE"
-	case STMT_LIST:
-		what = fmt.Sprintf("STMT_LIST(cnt=#%d)", a.uint64)
 	case STMT:
 		what = fmt.Sprintf(
 				"STMT(ord=#%d@lno=#%d)",
@@ -83,7 +76,11 @@ func (a *ast) String() string {
 				a.line_no,
 		)
 	default:
-		what = a.name()
+		if a.name == "" {
+			what = a.yy_name()
+		} else {
+			what = fmt.Sprintf("%s#%s", a.yy_name(), a.name)
+		}
 	}
 	return what
 }
@@ -97,7 +94,7 @@ func (a *ast) walk_print(indent int, parent *ast) {
 		if a.parent == nil {
 			a.corrupt("unexpected nil parent")
 		} else {
-			a.corrupt("unexpected parent: %s", a.parent.name())
+			a.corrupt("unexpected parent: %s", a.parent.yy_name())
 		}
 	}
 	if indent == 0 {
@@ -130,113 +127,11 @@ func (a *ast) print() {
 	a.walk_print(0, nil)
 }
 
-func (a *ast) frisk_att(what string, need...ast) error {
-
-	if a.yy_tok != ATT_TUPLE {
-		corrupt("start node not ATT_TUPLE")
-	}
-
-	const fmt_dup = "duplicate attribute"
-	const fmt_need = "need attribute"
-	const fmt_no = "unknown attribute"
-	const fmt_type = "wrong type"
-	const fmt_nostr = "STRING empty"
-
-	err := func(name string, lno int, msg string) error {
-
-		name = "node \"" + name + "\""
-		near := ", near line " + fmt.Sprintf("%d", lno)
-		return errors.New(msg + ": " + what + ": " + name + near)
-	}
-
-	//  map list of need ast to name for quick check
-
-	name2need := make(map[string]*ast)
-	for _, an := range need {
-		name2need[an.string] = &an
-	}
-
-	seen := make(map[string]*ast)
-
-	//  scan each ATT nodes of ATT_TUPLE
-
-	for an := a.left;  an != nil;  an = an.next {
-		if an.yy_tok != ATT {
-			an.corrupt("left node not ATT")
-		}
-		name := an.left.string
-		
-		//  more than one att exists
-		if seen[name] != nil {
-			return err(name, seen[name].line_no, fmt_dup)
-		}
-		ar := an.right
-		if ar == nil {
-			an.corrupt("ATT has nil right")
-		}
-
-		//  is the node known?
-		ann := name2need[name]
-		if ann == nil {
-			return err(name, an.line_no, fmt_no)	//  unkn
-		}
-
-		/*
-		 * do the types match?
-		 *
-		 *  Note:
-		 *	error message "wrong type:" is opaque.  ought to include
-		 *	expected type
-		 */
-		if ar.yy_tok != ann.yy_tok {
-			return err(name, ar.line_no, fmt_type)
-		}
-
-		//  no empty strings
-		if ar.yy_tok == STRING && ar.string == "" {
-			return err(name, ar.line_no, fmt_nostr)
-		}
-		seen[name] = ar
-	}
-
-	//  scan for required nodes in "need" twig
-	for nm, an := range name2need {
-		
-		if an.uint64 > 0 && seen[nm] == nil {
-			return err(nm, an.line_no, fmt_need)
-		}
-	}
-
-	return nil
-}
-
 func (a *ast) corrupt(format string, args...interface{}) {
 
 	msg := fmt.Sprintf(format, args...)
-	corrupt("%s: node \"%s\", near line %d", msg, a.name(), a.line_no)
+	corrupt("%s: node \"%s\", near line %d", msg, a.yy_name(), a.line_no)
 	//  NOTREACHED*/
-}
-
-func (at *ast) find_ATT(name string) (*ast) {
-
-	if at.yy_tok != ATT_TUPLE {
-		at.corrupt("node not ATT_TUPLE")
-	}
-	for a := at.left;  a != nil;  a = a.next {
-		if a.parent != at {
-			a.corrupt("parent not ATT_TUPLE")
-		}
-		if a.yy_tok != ATT {
-			a.corrupt("child not ATT")
-		}
-		if a.left == nil {
-			a.corrupt("left is nil")
-		}
-		if a.left.string == name {
-			return a
-		}
-	}
-	return nil
 }
 
 //  is the node a binary operator(), left and right must exit
@@ -278,8 +173,8 @@ func (a *ast) frisk_parent(expect ...int) error {
 	if !a.parent.in_tok_set(expect...) {
 		return errors.New(fmt.Sprintf(
 			"parent (%s) of %s not in yy token set: %s",
-			a.parent.name(),
-			a.name(),
+			a.parent.yy_name(),
+			a.yy_name(),
 			yy_names(expect...),
 		))
 	}
@@ -300,7 +195,7 @@ func (a *ast) error(format string, args...interface{}) error {
 
 	return errors.New(
 		fmt.Sprintf("node %s: %s",
-			a.name(),
+			a.yy_name(),
 			fmt.Sprintf(format, args...),
 	))
 }
@@ -314,7 +209,7 @@ func (a *ast) frisk_kids(twig string, expect ...int) error {
 	}
 
 	e := func(kid *ast, format string, args...interface{}) error {
-		fmt := fmt.Sprintf("%s kid (%s)", twig, kid.name())
+		fmt := fmt.Sprintf("%s kid (%s)", twig, kid.yy_name())
 		return a.error(fmt, args...)
 	}
 
@@ -332,10 +227,10 @@ func (a *ast) frisk_kids(twig string, expect ...int) error {
 			return e(k, "has nil parent")
 		}
 		if k.parent != a {
-			return e(k, "has wrong parent (%s)", k.parent.name()) 
+			return e(k, "wrong parent (%s)", k.parent.yy_name()) 
 		}
 		if k_prev != nil && k.prev != k_prev {
-			return e(k, "has wrong prev (%s)", k.prev.name())
+			return e(k, "has wrong prev (%s)", k.prev.yy_name())
 		}
 		found := k.in_tok_set(expect...)
 		if !found {
@@ -410,6 +305,7 @@ func (a *ast) frisk() {
 		}
 	}
 
+	/*
 	ckleft := func(expect ...int) {
 
 		if a.left == nil {
@@ -420,6 +316,7 @@ func (a *ast) frisk() {
 			_corrupt("ckleft: %s", err)
 		}
 	}
+	*/
 
 	ckrelop := func() {
 
@@ -437,38 +334,35 @@ func (a *ast) frisk() {
 
 	switch a.yy_tok {
 	case NAME:
-	case ATT:
-		ckparent(ATT_TUPLE)
-	case ATT_TUPLE:
-		ckparent(COMMAND_REF, SCANNER_REF, TRACER_REF)
 	case yy_TRUE:
 	case yy_FALSE:
 	case STRING:
 	case UINT64:
-	case SCANNER_REF:
-		ckleft(ATT_TUPLE)
-	case CREATE:
-		ckparent(STMT)
 	case STMT:
 		ckparent(STMT_LIST)
 	case STMT_LIST:
 		_corrupt("unexpected STMT_LIST")
-	case TRACER_REF, COMMAND_REF:
-		ckleft(ATT_TUPLE)
 	case CONCAT:
 	case ARG_LIST:
 		if a.right != nil {
-			_corrupt("right node (%s) is not nil", a.right.name())
+			_corrupt("right node (%s) not nil", a.right.yy_name())
 		}
 
 		//  verify all args are expressions with proper parent
 		for arg := a.left;  arg != nil;  arg = arg.next {
 			if arg.parent != a {
 				fmt := "parent (%s) of arg (%s) not this arg"
-				_corrupt(fmt, arg.parent.name(), arg.name())
+				_corrupt(
+					fmt,
+					arg.parent.yy_name(),
+					arg.yy_name(),
+				)
 			}
 			if arg.is_expression() == false {
-				_corrupt("arg node (%s) not expr", arg.name())
+				_corrupt(
+					"arg node (%s) not expr",
+					arg.yy_name(),
+				)
 			}
 		}
 	case RUN:
@@ -484,21 +378,24 @@ func (a *ast) frisk() {
 			_corrupt("left node is nil")
 		}
 		if al.yy_tok != ARG_LIST {
-			_corrupt("left node (%s) not ARG_LIST", al.name())
+			_corrupt("left node (%s) not ARG_LIST", al.yy_name())
 		}
 
 		//  WHEN clause must have qualification
 		w := a.right
 		if w != nil {
 			if w.yy_tok != WHEN {
-				_corrupt("right node (%s) not WHEN", w.name())
+				_corrupt("right node (%s) not WHEN", w.yy_name())
 			}
 			wl := w.left
 			if wl == nil {
 				_corrupt("WHEN.left is nil")
 			}
 			if wl.is_bool() == false {
-				_corrupt("WHEN.left (%s) not bool", wl.name())
+				_corrupt(
+					"WHEN.left (%s) not bool",
+					wl.yy_name(),
+				)
 			}
 		}
 	case LT, LTE, EQ, NEQ, GTE, GT:
@@ -508,11 +405,11 @@ func (a *ast) frisk() {
 	case NOT:
 	case WHEN:
 		if a.parent.is_flowable() == false {
-			nm := a.parent.name()
+			nm := a.parent.yy_name()
 			_corrupt("parent of WHEN (%s) not flowable", nm)
 		}
 		if a.left.is_bool() == false {
-			_corrupt("qualification (%s) not bool", a.left.name())
+			_corrupt("qualification (%s) not bool",a.left.yy_name())
 		}
 	default:
 		_corrupt("unknown ast node")
@@ -525,27 +422,37 @@ func (a *ast) is_expression() bool {
 }
 
 //  Note:  change to multiple tokens ... instead of is_flowable()
-func (a *ast) count_flowable(count int) int {
-	
-	return a.count(0, RUN)
-}
-
-//  Note:  change to multiple tokens ... instead of is_flowable()
-func (a *ast) count(count int, tokens ...int) int {
+func (a *ast) count(tokens ...int) int {
 	
 	if a == nil {
-		return count
+		return 0
 	}
+	count := 0
 	if a.in_tok_set(tokens...) {
 		count++
 	}
-	count = a.left.count(count, tokens...)
-	count = a.right.count(count, tokens...)
+	count += a.left.count(tokens...)
+	count += a.right.count(tokens...)
 
 	if a.prev == nil {
 		for kid := a.next;  kid != nil;  kid = kid.next {
-			count = kid.count(count, tokens...)
+			count += kid.count(tokens...)
 		}
 	}
 	return count
+}
+
+func (parent *ast) push_left(kid *ast) {
+
+	var k *ast
+
+	kid.parent = parent
+	kid.order++
+	if parent.left == nil {
+		parent.left = kid
+		return
+	}
+	for k = parent.left;  k.next != nil;  k = k.next {} 
+	k.next = kid
+	kid.prev = k
 }

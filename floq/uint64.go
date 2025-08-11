@@ -10,8 +10,8 @@ type uint64_value struct {
 
 type uint64_chan chan *uint64_value
 
-type relop_ui64_func func (*flow, uint64_chan, uint64_chan) bool_chan
-var relop_ui64 = map[int]relop_ui64_func{
+type relop_uint64_func func (*flow, uint64_chan, uint64_chan) bool_chan
+var relop_uint64 = map[int]relop_uint64_func{
 		GT:	gt_ui64,
 		GTE:	gte_ui64,
 		EQ:	eq_ui64,

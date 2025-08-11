@@ -73,11 +73,10 @@ GOSRCs="
 	flow.go
 	parser.go
 	regexp.go
-	scanner.go
 	server.go
+	stdio.go
 	string.go
-	tracer.go
-	tsort.go
+	tuple.go
 	uint64.go
 	value.go
 "

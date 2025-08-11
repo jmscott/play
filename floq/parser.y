@@ -9,7 +9,6 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -50,32 +49,28 @@ func init() {
 
 %token	PARSE_ERROR
 %token	ARG  ARG_LIST
-%token	ATT  ATT_TUPLE
-%token	ATT_ARRAY
+%token	yy_SET  ARRAY  
 %token	RUN
 %token	COMMAND  COMMAND_REF
-%token	CREATE
+%token	DEFINE  TUPLE  AS
 %token	EXPAND_ENV
 %token	FLOW  STMT_LIST  STMT
 %token	NAME  UINT64  STRING
-%token	OF  LINES
-%token	SCANNER  SCANNER_REF
-%token	TRACER  TRACER_REF
-%token	yy_TRUE  yy_FALSE  yy_AND  yy_OR  NOT
+%token	yy_TRUE  yy_FALSE  yy_AND  yy_OR  NOT  yy_EMPTY
 %token	EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
 %token	CONCAT
 %token	WHEN
 
 %type	<uint64>	UINT64		
-%type	<string>	STRING  new_name
+%type	<string>	STRING  name
 %type	<ast>		flow
 
 %type	<ast>		arg_list
-%type	<ast>		att  atts  att_tuple  att_value  att_expr att_array_list
-%type	<ast>		constant  expr
-%type	<ast>		create  create_tuple
-%type	<ast>		flow_stmt  create_stmt  stmt  stmt_list
-%type	<ast>		scanner  command  tracer
+%type	<ast>		element  element_list
+%type	<ast>		array_element  array_element_list
+%type	<ast>		set  array
+%type	<ast>		constant  expr  qualification
+%type	<ast>		stmt  stmt_list
 
 %left		yy_AND  yy_OR
 %left		EQ  NEQ  GT  GTE  LT  LTE
@@ -99,45 +94,30 @@ flow:
 constant:
 	  UINT64
 	  {
-	  	$$ = &ast{
-			yy_tok:		UINT64,
-			uint64:		$1,
-			line_no:	yylex.(*yyLexState).line_no,
-		}
+	  	$$ = yylex.(*yyLexState).ast(UINT64)
+		$$.uint64 = $1
 	  }
 	|
 	  STRING
 	  {
-	  	$$ = &ast{
-			yy_tok:		STRING,
-			string:		$1,
-			line_no:        yylex.(*yyLexState).line_no,
-		}
+	  	$$ = yylex.(*yyLexState).ast(STRING)
+	  	$$.string = $1
 	  }
 	|
 	  EXPAND_ENV   STRING
 	  {
-	  	$$ = &ast{
-			yy_tok:		STRING,
-			string:		os.ExpandEnv($2),
-			line_no:        yylex.(*yyLexState).line_no,
-		}
+	  	$$ = yylex.(*yyLexState).ast(STRING)
+		$$.string = os.ExpandEnv($2)
 	  }
 	|
 	  yy_TRUE
 	  {
-	  	$$ = &ast{
-			yy_tok:		yy_TRUE,
-			line_no:        yylex.(*yyLexState).line_no,
-		}
+	  	$$ = yylex.(*yyLexState).ast(yy_TRUE)
 	  }
 	|
 	  yy_FALSE
 	  {
-	  	$$ = &ast{
-			yy_tok:		yy_FALSE,
-			line_no:        yylex.(*yyLexState).line_no,
-		}
+	  	$$ = yylex.(*yyLexState).ast(yy_TRUE)
 	  }
 	;
 
@@ -146,8 +126,7 @@ expr:
 	|
 	  expr  yy_AND  expr
 	  {
-	  	lex := yylex.(*yyLexState)
-		$$ = lex.new_rel_op(yy_AND, $1, $3)
+		$$ = yylex.(*yyLexState).new_rel_op(yy_AND, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -155,8 +134,7 @@ expr:
 	|
 	  expr  yy_OR  expr
 	  {
-	  	lex := yylex.(*yyLexState)
-		$$ = lex.new_rel_op(yy_OR, $1, $3)
+		$$ = yylex.(*yyLexState).new_rel_op(yy_OR, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -164,8 +142,7 @@ expr:
 	|
 	  expr  LT  expr
 	  {
-	  	lex := yylex.(*yyLexState)
-		$$ = lex.new_rel_op(LT, $1, $3)
+		$$ = yylex.(*yyLexState).new_rel_op(LT, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -173,8 +150,7 @@ expr:
 	|
 	  expr  LTE  expr
 	  {
-	  	lex := yylex.(*yyLexState)
-		$$ = lex.new_rel_op(LTE, $1, $3)
+		$$ = yylex.(*yyLexState).new_rel_op(LTE, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -182,8 +158,7 @@ expr:
 	|
 	  expr  EQ  expr
 	  {
-	  	lex := yylex.(*yyLexState)
-		$$ = lex.new_rel_op(EQ, $1, $3)
+		$$ = yylex.(*yyLexState).new_rel_op(EQ, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -191,8 +166,7 @@ expr:
 	|
 	  expr  NEQ  expr
 	  {
-	  	lex := yylex.(*yyLexState)
-		$$ = lex.new_rel_op(NEQ, $1, $3)
+		$$ = yylex.(*yyLexState).new_rel_op(NEQ, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -200,8 +174,7 @@ expr:
 	|
 	  expr  GTE  expr
 	  {
-	  	lex := yylex.(*yyLexState)
-		$$ = lex.new_rel_op(GTE, $1, $3)
+		$$ = yylex.(*yyLexState).new_rel_op(GTE, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -209,8 +182,7 @@ expr:
 	|
 	  expr  GT  expr
 	  {
-	  	lex := yylex.(*yyLexState)
-		$$ = lex.new_rel_op(GT, $1, $3)
+		$$ = yylex.(*yyLexState).new_rel_op(GT, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -218,8 +190,7 @@ expr:
 	|
 	  expr  MATCH  expr
 	  {
-	  	lex := yylex.(*yyLexState)
-		$$ = lex.new_rel_op(MATCH, $1, $3)
+		$$ = yylex.(*yyLexState).new_rel_op(MATCH, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -227,8 +198,7 @@ expr:
 	|
 	  expr  NOMATCH  expr
 	  {
-	  	lex := yylex.(*yyLexState)
-		$$ = lex.new_rel_op(NOMATCH, $1, $3)
+		$$ = yylex.(*yyLexState).new_rel_op(NOMATCH, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -236,8 +206,7 @@ expr:
 	|
 	  expr  CONCAT  expr
 	  {
-	  	lex := yylex.(*yyLexState)
-		$$ = lex.new_rel_op(CONCAT, $1, $3)
+		$$ = yylex.(*yyLexState).new_rel_op(CONCAT, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -245,8 +214,7 @@ expr:
 	|
 	  NOT  expr  %prec NOT
 	  {
-	  	lex := yylex.(*yyLexState)
-		$$ = lex.new_rel_op(NOT, $2, nil)
+		$$ = yylex.(*yyLexState).new_rel_op(NOT, $2, nil)
 		if $$ == nil {
 			return 0
 		}
@@ -258,359 +226,94 @@ expr:
 	  }
 	;
 
-att_expr:
-	  constant
-	;
-
-att_array_list:
+qualification:
 	  /*  empty  */
 	  {
-	  	$$ = &ast{
-			yy_tok:		ATT_ARRAY,
-			line_no:        yylex.(*yyLexState).line_no,
-			array_ref:	make([]string, 0),
-		}
+	  	$$ = yylex.(*yyLexState).ast(yy_TRUE)
 	  }
 	|
-	  att_expr
+	  WHEN  expr
 	  {
 	  	lex := yylex.(*yyLexState)
-
-	  	if $1.yy_tok != STRING {
-			lex.error("attribute array element not string")
+	  	if $2.is_bool() == false {
+			lex.mkerror("qualiication not boolean")
 			return 0
 		}
-	  	ar := make([]string, 1)
-		ar[0] = $1.string 
-	  	$$ = &ast{
-			yy_tok:		ATT_ARRAY,
-			line_no:        lex.line_no,
-			array_ref:	ar,
-		}
-	  }
-	|
-	  att_array_list  ','  att_expr
-	  {
-	  	lex := yylex.(*yyLexState)
-
-	  	if $3.yy_tok != STRING {
-			lex.error("attribute array element not string")
-			return 0
-		}
-
-		ar := $1.array_ref
-		ar = append(ar, $3.string)
-		$1.array_ref = ar
-		if len(ar) > 127 {
-			lex.error("attribute array > 127 elements")
-			return 0
-		}
-		$$ = $1
+		$$ = lex.ast(WHEN, $2)
 	  }
 	;
 
-att_value:
-	  att_expr
-	|
-	  '['  att_array_list  ']'
-	  {
-	  	$$ = $2
-	  }
-	;
-
-att:
-	  new_name  ':'  att_value
-	  {
-	  	lex := yylex.(*yyLexState)
-
-	  	a := &ast{
-			yy_tok:		ATT,
-			line_no:	lex.line_no,
-		}
-		a.left = &ast{
-				parent:		a,
-				yy_tok:		NAME,
-				string:		$1,
-				line_no:        lex.line_no,
-		}
-
-		a.right = $3
-		if a.right.yy_tok == STRING {
-			c := len(a.right.string)
-			format := a.left.string + ": string attribute: %s"
-			if c == 0 {
-				lex.error(format, "is empty")
-				return 0
-			}
-			if c > 127 {
-				lex.error(format, fmt.Sprintf("%d > 127", c))
-				return 0
-			}
-		}
-		$3.parent = a
-
-		$$ = a
-	  }
-	;
-
-atts:
-	  /*  empty */
-	  {
-	  	$$ = &ast{
-			yy_tok:         ATT_TUPLE,
-			line_no:        yylex.(*yyLexState).line_no,
-		}
-	  }
-	|
-	  att
-	  {
-		lex := yylex.(*yyLexState)
-
-	  	al := &ast{
-			yy_tok:		ATT_TUPLE,
-			line_no:	lex.line_no,
-		}
-		al.left = $1
-		$1.parent = al
-
-		$$ = al
-	  }
-	|
-	  atts ','  att
-	  {
-		al := $1
-	  	a := $3
-		a.parent = al
-
-		var an *ast
-		for an = al.left;  an.next != nil;  an = an.next {}
-		an.next = a
-		a.prev = a
-
-		$$ = $1
-	  }
-	;
-
-att_tuple:
-	  '{'  atts  '}'
-	  {
-	  	$$ = $2;
-	  }
-	;
-
-create:
-	  CREATE
-	  {
-		lex := yylex.(*yyLexState)
-	  	$$ = &ast{
-			yy_tok:		CREATE,
-			line_no:        lex.line_no,
-		}
-	  }
-	;
-
-scanner:
-	  SCANNER  OF  LINES
-	  {
-		lex := yylex.(*yyLexState)
-	  	$$ = &ast{
-			yy_tok:		SCANNER_REF,
-			line_no:        lex.line_no,
-			scanner_ref:	&scanner {
-						split:	bufio.ScanLines,
-					},
-		}
-	  }
-	;
-
-command:
-  	  COMMAND
-	  {
-	  	lex := yylex.(*yyLexState)
-		$$ = &ast{
-			yy_tok:		COMMAND_REF,
-			line_no:        lex.line_no,
-			command_ref:	&command{},
-		}
-	  }
-	;
-tracer:
-  	  TRACER
-	  {
-	  	lex := yylex.(*yyLexState)
-		$$ = &ast{
-			yy_tok:		TRACER_REF,
-			line_no:        lex.line_no,
-			tracer_ref:	&tracer{},
-		}
-	  }
-	;
-new_name:
+name:
 	  NAME
 	  {
 	  	lex := yylex.(*yyLexState)
 
 	  	$$ = lex.name 
 	  }
-	|
-	  SCANNER_REF
-	  {
-	  	lex := yylex.(*yyLexState)
+	;
 
-		lex.error("name exists as scanner: %s", lex.name)
-		return 0
-	  }
+array_element:
+	  constant
 	|
-	  COMMAND_REF
+	  array
+	|
+	  set
+	;
+array:
+	  '['  array_element_list  ']'
 	  {
-	  	lex := yylex.(*yyLexState)
-
-		lex.error("name exists as command: %s", lex.name)
-		return 0
+		$$ = $2
 	  }
 	;
 
-create_tuple:
-	  /*  empty */
+array_element_list:
+	  /*  empty  */
 	  {
-	  	$$ = &ast{
-			yy_tok: ATT_TUPLE,
-			line_no:        yylex.(*yyLexState).line_no,
-		}
+	  	$$ = yylex.(*yyLexState).ast(ARRAY)
 	  }
 	|
-	  att_tuple
+	  array_element
+	  {
+	  	$$ = yylex.(*yyLexState).ast(ARRAY, $1)
+	  }
+	|
+	  array_element_list  ','  array_element
+	  {
+		$1.push_left($3)
+	  }
 	;
 
-create_stmt:
-	  create  tracer  new_name
+element:
+	  array_element
+	|
+	  name  ':'  array_element
 	  {
-		//  Note:  could production "new_name" set "name_is_name"?
-	  	yylex.(*yyLexState).name_is_name = true
+	  	$3.name = $1
+		$$ = $3
+	  }
+	;
 
-	  } create_tuple {
-	  	
-	  	lex := yylex.(*yyLexState)
-
-		lex.name_is_name = false
-		lex.name2ast[$3] = $2
-
-		atup := $5
-		atra := $2
-		atup.parent = $2
-		atra.left = atup
-
-	  	atra.tracer_ref.name = $3
-	  	atra.parent = $1
-
-		$1.left = $2
-
-		//  frisk the attibutes of tracer
-
-		tra := atra.tracer_ref
-		lex.err = atup.frisk_att("tracer:" + tra.name) 
-		if lex.err != nil {
-			return 0
-		}
-
-		$$ = $1
+element_list:
+	  /*  empty  */
+	  {
+	  	$$ = yylex.(*yyLexState).ast(yy_SET)
 	  }
 	|
-	  create  scanner  new_name
+	  element
 	  {
-		//  Note:  could production "new_name" set "name_is_name"?
-	  	yylex.(*yyLexState).name_is_name = true
-
-	  } create_tuple {
-	  	
-	  	lex := yylex.(*yyLexState)
-
-		lex.name_is_name = false
-		lex.name2ast[$3] = $2
-
-		al := $5
-		ascan := $2
-		al.parent = $2
-		ascan.left = al
-
-	  	ascan.scanner_ref.name = $3
-	  	ascan.parent = $1
-
-		$1.left = $2
-
-		//  frisk the attibutes of command
-
-		scan := ascan.scanner_ref
-		lex.err = al.frisk_att("scanner: " + scan.name) 
-		if lex.err != nil {
-			return 0
-		}
-
-		$$ = $1
+	  	$$ = yylex.(*yyLexState).ast(yy_SET, $1)
 	  }
 	|
-	  create  command  new_name
+	  element_list  ','  element
 	  {
-		yylex.(*yyLexState).name_is_name = true
-
-	  } create_tuple {
-	  	lex := yylex.(*yyLexState)
-		lex.name_is_name = false
-
-		c := $1
-		cmd := $2
-		nm := $3
-		ctup := $5
-		cref := cmd.command_ref
-
-		cmd.parent = c
-		c.left = cmd
-		ctup.parent = cmd
-		cmd.left = ctup
-
-		lex.name2ast[nm] = cmd
-		cref.name = nm
-
-		lex.err = cref.frisk_att(ctup)
-		if lex.err != nil {
-			return 0
-		}
-		$$ = $1
+		$1.push_left($3)
 	  }
-	;	
+	;
 
-flow_stmt:
-	  RUN  COMMAND_REF  {
-	  	lex := yylex.(*yyLexState)
-		cmd := lex.name2ast[lex.name].command_ref
-
-		if cmd == nil {
-			corrupt("command: nil command ref: " + lex.name)
-		}
-
-		rc := lex.run_cmd2ast[cmd]
-		if rc != nil {
-			lex.error("command run twice: \"%s\"", cmd.name)
-			return 0
-		}
-
-	  	$$ = &ast{
-			yy_tok:		RUN,
-			line_no:        yylex.(*yyLexState).line_no,
-			command_ref:	cmd,
-		}
-	  }  '('  arg_list  ')' {
-	  	lex := yylex.(*yyLexState)
-
-	  	arun := $<ast>3
-		cmd := arun.command_ref
-		argv := $5
-
-		arun.left = argv
-		argv.parent = arun
-
-		lex.run_cmd2ast[cmd] = arun 
-		$$ = arun
+set:
+	  '{'  element_list  '}'
+	  {
+	  	$$ = $2
 	  }
 	;
 
@@ -623,55 +326,40 @@ stmt:
 		}
 	  }
 	|
-	  create_stmt
+	  DEFINE  TUPLE  name  AS  set
 	  {
-	  	$$ = &ast{
-			yy_tok:		STMT,
-			left:		$1,
-			line_no:        yylex.(*yyLexState).line_no,
-		}
-		$1.parent = $$
-	  }
-	|
-	  flow_stmt
-	  {
-	  	$$ = &ast{
-			yy_tok:		STMT,
-			left:		$1,
-			line_no:        yylex.(*yyLexState).line_no,
-		}
-		$1.parent = $$
-	  }
-	|
-	  flow_stmt  WHEN  {
-	  	$<ast>$ = &ast{
-				yy_tok:		WHEN,
-				line_no:	yylex.(*yyLexState).line_no,
-		}
-	  }  expr  {
 	  	lex := yylex.(*yyLexState)
-		flo := $1
-	  	when := $<ast>3
-		cond := $4
 
-	  	if cond.is_bool() == false {
-			lex.error("when qualification not boolean")
-			return 0
-		}
+	  	define := lex.ast(DEFINE, lex.ast(TUPLE), $5)
 
-		flo.right = when
-			
-		stmt := &ast{
-			yy_tok:		STMT,
-			left:		flo,
-			line_no:	yylex.(*yyLexState).line_no,
-		}
-		flo.parent = stmt
-		when.parent = flo
-		when.left = cond
-		cond.parent = when
+		tup := define.left
+		tup.name = $3
+		tup.tuple_ref = &tuple{name: $3}
+		lex.name2ast[$<string>3] = tup
 
-		$$ = stmt
+		$$ = define
+	  }
+	|
+	  DEFINE  COMMAND  name  AS  set
+	  {
+	  	lex := yylex.(*yyLexState)
+		name := $3
+
+	  	define := lex.ast(DEFINE, lex.ast(COMMAND), $5)
+
+		cmd := define.left
+		cmd.name = name
+		cmd.command_ref = &command{name: name}
+		lex.name2ast[name] = cmd
+
+		$$ = define
+	  }
+	|
+	  RUN  COMMAND_REF  '('  arg_list  ')'  qualification
+	  {
+	  	lex := yylex.(*yyLexState)
+
+		$$ = lex.ast(RUN, $4, $6)
 	  }
 	;
 
@@ -688,7 +376,7 @@ stmt_list:
 			parent:		lex.ast_root,
 			uint64:		1,
 		}
-		stmt.uint64 = 1
+		stmt.order = 1
 		stmt.parent = sl
 
 		$$ = sl
@@ -697,28 +385,12 @@ stmt_list:
 	  stmt_list  stmt  ';'
 	  {
 		sl := $1
-		if sl.yy_tok != STMT_LIST {
-			sl.corrupt("stmt_list not STMT_LIST: %s", sl.name())
-		}
 		stmt := $2
 		stmt.parent = sl
 
-		//  add stmt to end of STMT.
-		s_tail := sl.left
-		if s_tail == nil {
-			sl.corrupt("left STMT is nil")
-		}
-		for ;  s_tail.next != nil;  s_tail = s_tail.next {}
+		sl.push_left(stmt)
 
-		//  order number in list
-		stmt.uint64 = s_tail.uint64 + 1
-
-		s_tail.next = stmt
-		stmt.prev = s_tail
-
-		sl.uint64++		//  count the # stmt
-
-		$$ = $1
+		$$ = sl
 	  }
 	;
 
@@ -752,7 +424,7 @@ arg_list:
 	  	e := $3
 		e.parent = al
 
-		//  find the tail of arg list
+		//  append arg expression to tail of arg list
 		var an *ast
 		for an = al.left;  an.next != nil;  an = an.next {}
 		an.next = e
@@ -767,18 +439,16 @@ arg_list:
 
 var keyword = map[string]int{
 	"and":			yy_AND,
-	"Command":		COMMAND,
-	"create":		CREATE,
+	"as":			AS,
+	"command":		COMMAND,
+	"define":		DEFINE,
 	"ExpandEnv":		EXPAND_ENV,
 	"false":		yy_FALSE,
-	"lines":		LINES,
 	"not":			NOT,
-	"of":			OF,
 	"or":			yy_OR,
 	"run":			RUN,
-	"Scanner":		SCANNER,
-	"Tracer":		TRACER,
 	"true":			yy_TRUE,
+	"tuple":		TUPLE,
 	"when":			WHEN,
 }
 
@@ -795,7 +465,7 @@ type yyLexState struct {
 	uint64
 
 	name2ast		map[string]*ast
-	run_cmd2ast		map[*command]*ast
+	command_ref		*command
 	name_is_name		bool
 }
 
@@ -808,6 +478,22 @@ func (lex *yyLexState) pushback(c rune) {
 	if c == '\n' {
 		lex.line_no--
 	}
+}
+
+func (lex *yyLexState) ast(yy_tok int, args...*ast) *ast {
+	an := &ast{
+		yy_tok:		yy_tok,
+		line_no:	lex.line_no,
+	}
+	for _, a := range args {
+		a.parent = an
+		if an.left == nil {
+			an.left = a
+		} else {
+			an.right = a
+		}
+	}
+	return an
 }
 
 /*
@@ -1019,8 +705,15 @@ func (lex *yyLexState) scanner_word(
 
 	lex.name = w
 	if lex.name_is_name == false && lex.name2ast[w] != nil {
-		yylval.name = w
-		return lex.name2ast[w].yy_tok, nil
+		//yylval.name = w
+		a := lex.name2ast[w]
+		switch a.yy_tok {
+		case COMMAND:
+			lex.command_ref = a.command_ref 
+			return COMMAND_REF, nil
+		default:
+			return lex.name2ast[w].yy_tok, nil
+		}
 	}
 	return NAME, nil
 }
@@ -1064,7 +757,7 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 	case NOT:
 		if left.is_bool() == false {
 			lex.line_no = left.line_no
-			lex.error("NOT: can not negate %s", left.name())
+			lex.error("NOT: can not negate %s", left.yy_name())
 			return nil
 		}
 	case yy_AND, yy_OR:
@@ -1073,7 +766,7 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 			lex.error(
 				"%s: left expr not bool: got %s, want BOOL",
 				yy_name(tok),
-				left.name(),
+				left.yy_name(),
 			)
 			return nil
 		}
@@ -1082,7 +775,7 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 			lex.error(
 				"%s: right expr not bool: got %s, want BOOL",
 				yy_name(tok),
-				right.name(),
+				right.yy_name(),
 			)
 			return nil
 		}
@@ -1095,20 +788,20 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 			lex.error(
 				"%s: can not compare %s and %s",
 				yy_name(tok),
-				left.name(),
-				right.name(),
+				left.yy_name(),
+				right.yy_name(),
 			)
 			return nil
 		}
 	case CONCAT, MATCH, NOMATCH:
 		if left.is_string() == false {
 			lex.line_no = left.line_no
-			lex.error("%s: left is not string", left.name())
+			lex.error("%s: left is not string", left.yy_name())
 			return nil
 		}
 		if right.is_string() == false {
 			lex.line_no = right.line_no
-			lex.error("%s: right is not string", right.name())
+			lex.error("%s: right is not string", right.yy_name())
 			return nil
 		}
 	default:
@@ -1292,7 +985,6 @@ func parse(in io.RuneReader) (*ast, error) {
 		in:		in,
 		line_no:	1,
 		name2ast:	make(map[string]*ast),
-		run_cmd2ast:	make(map[*command]*ast),
 		ast_root:	&ast{
 					yy_tok:		FLOW,
 					line_no:	1,
@@ -1332,10 +1024,4 @@ func yy_name2tok(name string) int {
 		}
 	}
 	return __MIN_YYTOK - 2	// == "error" in yyToknames
-}
-
-func WTF(format string, args ...interface{}) {
-
-	format = "WTF: " + format
-	fmt.Fprintf(os.Stderr, fmt.Sprintf(format, args...) + "\n")
 }

@@ -6,8 +6,6 @@ type string_value struct {
 	string
 
 	is_null		bool
-
-	*flow
 }
 
 type string_chan chan *string_value
@@ -76,7 +74,6 @@ func (flo *flow) concat(left, right string_chan) (out string_chan) {
 
 			sv := &string_value {
 				is_null:	lv.is_null || rv.is_null,
-				flow:		flo,
 			}
 			if !sv.is_null {
 				var b strings.Builder
@@ -326,7 +323,6 @@ func (flo *flow) const_string(s string) (out string_chan) {
 			out <- &string_value{
 				string:	s,
 				is_null: false,
-				flow:	flo,
 			}
 		}
 	}()

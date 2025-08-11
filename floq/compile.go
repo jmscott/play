@@ -1,22 +1,29 @@
 package main
 
-func compile(root *ast) (*flow, flow_chan, error) {
+func compile(root *ast) (*flow, error) {
 
-	flo := &flow{}
-	fc, err := flo.compile(root)
-	return flo, fc, err
+	flo := new_flow()
+	err := flo.compile(root)
+	return flo, err
+}
+
+func new_flow() *flow {
+	return &flow{
+		resolved:       make(chan struct{}),
+		next:           make(chan flow_chan),
+	}
 }
 
 //  compile a root abstract syntax tree into connected channels. data
 //  flows from least dependent leaves to most dependent "flow_stmt".
 
-func (flo *flow) compile(root *ast) (flow_chan, error) {
+func (flo *flow) compile(root *ast) error {
 
 	if root == nil {
-		return nil, nil
+		return nil
 	}
 	if root.yy_tok != FLOW {
-		corrupt("root node not FLOW: %s", root.name())
+		corrupt("root node not FLOW: %s", root.yy_name())
 	}
 	if root.left == nil {
 		corrupt("root.left is nil")
@@ -31,16 +38,16 @@ func (flo *flow) compile(root *ast) (flow_chan, error) {
 	a2str := make(map[*ast]string_chan)
 	a2ui := make(map[*ast]uint64_chan)
 
-	var compile func(a *ast)
+	var compile1 func(a *ast)
 
 	//  bottom up compilation of abstract syntax tree into network of 
 	//  channels.  consistency rechecks needed cause tree may have been
 	//  rewritten significally from the original yacc generated tree.
 
-	compile = func(a *ast) {
+	compile1 = func(a *ast) {
 
-		_die := func(format string, args...interface{}) {
-			a.corrupt("compile: " + format, args...)
+		_corrupt := func(format string, args...interface{}) {
+			a.corrupt("compile1: " + format, args...)
 		}
 
 		relop := func() {
@@ -49,7 +56,7 @@ func (flo *flow) compile(root *ast) (flow_chan, error) {
 			switch tok {
 			case STRING:
 				if relop_string[a.yy_tok] == nil {
-					_die("no flow operator")
+					_corrupt("no string flow op")
 				}
 				a2bool[a] = relop_string[a.yy_tok](
 						flo,
@@ -58,14 +65,17 @@ func (flo *flow) compile(root *ast) (flow_chan, error) {
 				)
 
 			case UINT64:
-				/*
-				a2bool[a] = flo.eq_ui64(
+				if relop_uint64[a.yy_tok] == nil {
+					_corrupt("no uint64 flow op")
+				}
+				a2bool[a] = relop_uint64[a.yy_tok](
+						flo,
 						a2ui[a.left],
 						a2ui[a.right],
 				)
-				*/
 			default:
-				_die("relop: compile left %s", yy_name(tok))
+				nm := yy_name(tok)
+				_corrupt("relop: can not compile left (%s)", nm)
 			}
 		}
 
@@ -73,28 +83,26 @@ func (flo *flow) compile(root *ast) (flow_chan, error) {
 			return
 		}
 
-		compile(a.left)
-		compile(a.right)
+		compile1(a.left)
+		compile1(a.right)
 
 		if a.is_binary() {
 			if a.left == nil {
-				_die("left child is nil")
+				_corrupt("left child is nil for binary op")
 			}
 			if a.right == nil {
-				_die("right child is nil")
+				_corrupt("right child is nil for binary op")
 			}
 		} else if a.is_unary() {
 			if a.right != nil {
-				_die("right exists for unary op")
+				_corrupt("right exists for unary op")
 			}
 		}
 		if a.parent == nil {
-			_die("parent is nill")
+			_corrupt("parent is nill")
 		}
 		switch a.yy_tok {
-		case NAME:
-		case ATT:
-		case ATT_TUPLE:
+		case STMT:
 		case yy_TRUE:
 			a2bool[a] = flo.const_true()
 		case yy_FALSE:
@@ -103,14 +111,10 @@ func (flo *flow) compile(root *ast) (flow_chan, error) {
 			a2str[a] = flo.const_string(a.string)
 		case UINT64:
 			a2ui[a] = flo.const_ui64(a.uint64)
-		case SCANNER_REF:
-		case CREATE:
-		case STMT:
-		case STMT_LIST:
-			a.corrupt("unexpected STMT_LIST")
-		case TRACER_REF, COMMAND_REF:
 		case ARG_LIST:
-		case RUN:
+			if a.left != nil {
+				_corrupt("ARG_LIST has left child")
+			}
 		case LT, LTE, EQ, NEQ, GTE, GT:
 			relop()
 		case yy_OR:
@@ -127,24 +131,25 @@ func (flo *flow) compile(root *ast) (flow_chan, error) {
 			)
 		case NOT:
 			a2bool[a] = flo.not(a2bool[a.left])
-		case WHEN:
-			a2bool[a] = a2bool[a.left] 
 		case CONCAT:
 			a2str[a] = flo.concat(a2str[a.left], a2str[a.right])
 		default:
-			_die("can not compile ast")
+			_corrupt("can not compile ast")
 		}
 	}
+
+	//  compile each statement, skipping CREATE nodes, which are handled
+	//  in the parser
 
 	for stmt := root.left.left;  stmt != nil;  stmt = stmt.next {
 		if stmt.yy_tok != STMT {
 			stmt.corrupt("root.left.left not yy_tok STMT")
 		}
 		stmt.frisk()
-		if stmt.left.yy_tok != CREATE {
-			compile(stmt)
+		if stmt.left.yy_tok != DEFINE {
+			compile1(stmt)
 		}
 	}
 
-	return make(flow_chan), nil
+	return nil
 }

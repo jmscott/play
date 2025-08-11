@@ -6,11 +6,13 @@ import (
 	"os"
 )
 
+var usage = "usage: floq [ast|compile|parse|server|stdio] path/to/prog.floq\n"
+
 func exit(status int) {
 	os.Exit(status)
 }
 
-//  temporary die() used only during boot up
+//  die() during boot up
 
 func croak(format string, args ...interface{}) {
 
@@ -19,7 +21,7 @@ func croak(format string, args ...interface{}) {
 		"floq: ERROR: %s\n",
 		fmt.Sprintf(format, args...),
 	)
-	fmt.Fprintf(os.Stderr, "usage: floq [parse|ast] path/to/prog.floq\n")
+	fmt.Fprintf(os.Stderr, usage)
 	exit(16)
 }
 
@@ -35,7 +37,7 @@ func main() {
 	action := argv[0]
 
 	switch action {
-		case "parse", "ast", "compile", "server": 
+		case "parse", "ast", "compile", "server", "stdio": 
 		default:
 			croak("unknown action: %s", action)
 	}
@@ -62,7 +64,7 @@ func main() {
 		root.walk_print(0, nil)
 
 	case "compile":
-		_, _, err :=  compile(root)
+		_, err :=  compile(root)
 		if err != nil {
 			croak("compile(%s) failed: %s", floq_path, err)
 		}
@@ -70,6 +72,11 @@ func main() {
 		err := server(root)
 		if err != nil {
 			croak("server(%s) failed: %s", floq_path, err) 
+		}
+	case "stdio":
+		err := stdio(root)
+		if err != nil {
+			croak("stdio(%s) failed: %s", floq_path, err) 
 		}
 	default:
 		croak("unknown action: %s", action)
@@ -79,4 +86,9 @@ func main() {
 
 func corrupt(format string, args ...interface{}) {
 	panic(fmt.Sprintf("corrupt: " + format, args...))
+}
+
+func WTF(format string, args ...interface{}) {
+
+	os.Stderr.Write([]byte(fmt.Sprintf("WTF: " + format, args...) + "\n"))
 }

@@ -5,9 +5,9 @@ type flow_chan chan *flow
 
 type flow struct {
 
-        resolved chan struct{}
+        resolved	chan struct{}
 
-	next chan flow_chan
+	next chan	flow_chan
 }
 
 func (flo *flow) get() *flow {
