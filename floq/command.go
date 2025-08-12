@@ -2,6 +2,8 @@ package main
 
 import (
 	"os/exec"
+	"syscall"
+	"time"
 )
 
 type command struct {
@@ -12,8 +14,6 @@ type command struct {
 	args	[]string
 	env	[]string
 }
-
-/*
 
 //  result of waiting on an executing command
 type osx_value struct {
@@ -31,10 +31,9 @@ type osx_value struct {
 
 type osx_chan chan *osx_value
 
-//  unconditionally exec an os command process with no dynamoic
-//  arguments
+//  exec an os command process and write description of run
 
-func (flo *flow) osx(cmd *command, out osx_chan) {
+func (flo *flow) osx_run(cmd *command, out osx_chan) {
 	cx := exec.Command(
 			cmd.path,
 	)
@@ -57,22 +56,23 @@ func (flo *flow) osx(cmd *command, out osx_chan) {
 	}
 }
 
+//  unconditionally run a process with no argv
 func (flo *flow) osx0(cmd *command) (out osx_chan) {
 
 	out = make(osx_chan)
-	//  check existence of executable in "path" variable
 
 	go func() {
 		for {
 			flo = flo.get()
 
-			flo.osx(cmd, out)
+			flo.osx_run(cmd, out)
 		}
 	}()
 
 	return out
 }
-//  exec an os command process with no arguments
+
+//  conditionally run a command process with no arguments
 func (flo *flow) osx0when(cmd *command, when bool_chan) (out osx_chan) {
 
 	out = make(osx_chan)
@@ -84,57 +84,10 @@ func (flo *flow) osx0when(cmd *command, when bool_chan) (out osx_chan) {
 
 			bv := <- when
 			if bv.bool {
-				flo.osx(cmd, out)
+				flo.osx_run(cmd, out)
 			}
 		}
 	}()
 
 	return out
 }
-
-func (cmd *command) frisk_att(atup *ast) (err error) {
-
-	err = atup.frisk_att(
-		"command." + cmd.name,
-		ast{
-			string:		"path",
-			yy_tok:		STRING,
-			uint64:		1,
-		},
-		ast{
-			string:		"argv",
-			yy_tok:		ATT_ARRAY,
-			uint64:		0,
-		},
-		ast{
-			string:		"env",
-			yy_tok:		ATT_ARRAY,
-			uint64:		0,
-		},
-		ast{
-			string:		"dir",
-			yy_tok:		STRING,
-			uint64:		0,
-		},
-	)
-	if err != nil {
-		return err
-	}
-	ap := atup.find_ATT("path")
-	if ap == nil {
-		atup.corrupt("can not find ATT 'path'")
-	}
-	if ap.right == nil {
-		ap.corrupt("path ATT has not right")
-	}
-
-	env := os.Environ()
-	for _, e := range cmd.env {
-		env = append(env, e)
-	}
-	cmd.env = env
-
-	cmd.path, err = exec.LookPath(ap.right.string)
-	return err
-}
-*/

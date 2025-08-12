@@ -11,6 +11,7 @@ type ast struct {
 	yy_tok		int
 	line_no		int
 	order		int
+	count		int
 	name		string
 
 	//  children
@@ -22,8 +23,6 @@ type ast struct {
 	prev		*ast
 
 	parent		*ast
-
-	//  golang needs unions!
 
 	tuple_ref	*tuple
 	command_ref	*command
@@ -49,18 +48,52 @@ func (a *ast) String() string {
 	switch a.yy_tok {
 	case 0:
 		a.corrupt("ast has yy_tok == 0")
-	case ARG_LIST:
-		what = fmt.Sprintf("ARG_LIST(argc=%d)", a.uint64)
+	case ARGV:
+		what = fmt.Sprintf("ARGV (cnt=%d)", a.count)
+	case ARRAY:
+		if a.name == "" {
+			what = fmt.Sprintf("ARRAY (argc=%d)", a.count)
+		} else {
+			what = fmt.Sprintf(
+				"ARRAY:%s (cnt=%d)",
+				a.name,
+				a.count,
+			)
+		}
+
+	case DEFINE:
+		what = fmt.Sprintf(
+			"DEFINE (ord=%d, lno=%d)",
+			a.order,
+			a.line_no,
+		)
+	case RUN:
+		what = fmt.Sprintf(
+				"RUN:%s (ord=%d, lno=%d)",
+				a.command_ref.name,
+				a.order,
+				a.line_no,
+			)
+	case STMT_LIST:
+		what = fmt.Sprintf("STMT_LIST (cnt=%d)", a.count)
+	case yy_SET:
+		if a.name == "" {
+			what = fmt.Sprintf("SET (cnt=%d)", a.count)
+		} else {
+			what = fmt.Sprintf("SET:%s (cnt=%d)", a.name, a.count)
+		}
 	case STRING:
 		if a.name == "" {
-			what = fmt.Sprintf("STRING(%s)", a.string)
+			what = fmt.Sprintf("STRING %s", a.string)
 		} else {
-			what = fmt.Sprintf("STRING#%s(%s)", a.name, a.string)
+			what = fmt.Sprintf("STRING:%s %s", a.name, a.string)
 		}
-	case NAME:
-		what = fmt.Sprintf("NAME(%s)", a.string)
 	case UINT64:
-		what = fmt.Sprintf("UINT64(%d)", a.uint64)
+		if a.name == "" {
+			what = fmt.Sprintf("UINT64 (%d)", a.uint64)
+		} else {
+			what = fmt.Sprintf("UINT64:%s (%d)", a.name, a.uint64)
+		}
 	case yy_AND:
 		what = "AND"
 	case yy_OR:
@@ -69,17 +102,11 @@ func (a *ast) String() string {
 		what = "FALSE"
 	case yy_TRUE:
 		what = "TRUE"
-	case STMT:
-		what = fmt.Sprintf(
-				"STMT(ord=#%d@lno=#%d)",
-				a.uint64,
-				a.line_no,
-		)
 	default:
 		if a.name == "" {
 			what = a.yy_name()
 		} else {
-			what = fmt.Sprintf("%s#%s", a.yy_name(), a.name)
+			what = fmt.Sprintf("%s:%s", a.yy_name(), a.name)
 		}
 	}
 	return what
@@ -297,14 +324,6 @@ func (a *ast) frisk() {
 		_corrupt("parent is nil")
 	}
 
-	ckparent := func(expect ...int) {
-
-		err := a.frisk_parent(expect...)
-		if err != nil {
-			_corrupt("ckparent: %s", err)
-		}
-	}
-
 	ckrelop := func() {
 
 		if a.left == nil {
@@ -325,12 +344,10 @@ func (a *ast) frisk() {
 	case yy_FALSE:
 	case STRING:
 	case UINT64:
-	case STMT:
-		ckparent(STMT_LIST)
 	case STMT_LIST:
 		_corrupt("unexpected STMT_LIST")
 	case CONCAT:
-	case ARG_LIST:
+	case ARGV:
 		if a.right != nil {
 			_corrupt("right node (%s) not nil", a.right.yy_name())
 		}
@@ -356,7 +373,7 @@ func (a *ast) frisk() {
 		/*
 		 *  Parse tree
 	         *	RUN
-		 *		ARG_LIST(argc=0)
+		 *		ARGV (cnt=0)
 		 *		WHEN
 		 *			(bool expression)?
 		 */
@@ -364,8 +381,8 @@ func (a *ast) frisk() {
 		if al == nil {
 			_corrupt("left node is nil")
 		}
-		if al.yy_tok != ARG_LIST {
-			_corrupt("left node (%s) not ARG_LIST", al.yy_name())
+		if al.yy_tok != ARGV {
+			_corrupt("left node (%s) not ARGV", al.yy_name())
 		}
 
 		//  WHEN clause must have qualification
@@ -409,7 +426,7 @@ func (a *ast) is_expression() bool {
 }
 
 //  Note:  change to multiple tokens ... instead of is_flowable()
-func (a *ast) count(tokens ...int) int {
+func (a *ast) yy_count(tokens ...int) int {
 	
 	if a == nil {
 		return 0
@@ -418,12 +435,12 @@ func (a *ast) count(tokens ...int) int {
 	if a.in_tok_set(tokens...) {
 		count++
 	}
-	count += a.left.count(tokens...)
-	count += a.right.count(tokens...)
+	count += a.left.yy_count(tokens...)
+	count += a.right.yy_count(tokens...)
 
 	if a.prev == nil {
 		for kid := a.next;  kid != nil;  kid = kid.next {
-			count += kid.count(tokens...)
+			count += kid.yy_count(tokens...)
 		}
 	}
 	return count
@@ -431,15 +448,28 @@ func (a *ast) count(tokens ...int) int {
 
 func (parent *ast) push_left(kid *ast) {
 
+	parent.push_lr(&parent.left, kid)
+}
+
+func (parent *ast) push_right(kid *ast) {
+
+	parent.push_lr(&parent.right, kid)
+}
+
+func (parent *ast) push_lr(lr **ast, kid *ast) {
+
 	var k *ast
 
 	kid.parent = parent
-	kid.order++
-	if parent.left == nil {
-		parent.left = kid
+	if *lr == nil {
+		*lr = kid
+		kid.order = 1
+		parent.count = 1
 		return
 	}
-	for k = parent.left;  k.next != nil;  k = k.next {} 
+	for k = *lr;  k.next != nil;  k = k.next {}
 	k.next = kid
+	kid.order = k.order + 1
+	parent.count++
 	kid.prev = k
 }

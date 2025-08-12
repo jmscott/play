@@ -37,6 +37,7 @@ func (flo *flow) compile(root *ast) error {
 	a2bool := make(map[*ast]bool_chan)
 	a2str := make(map[*ast]string_chan)
 	a2ui := make(map[*ast]uint64_chan)
+	//a2osx := make(map[*ast]osx_chan)
 
 	var compile1 func(a *ast)
 
@@ -102,7 +103,6 @@ func (flo *flow) compile(root *ast) error {
 			_corrupt("parent is nill")
 		}
 		switch a.yy_tok {
-		case STMT:
 		case yy_TRUE:
 			a2bool[a] = flo.const_true()
 		case yy_FALSE:
@@ -111,9 +111,9 @@ func (flo *flow) compile(root *ast) error {
 			a2str[a] = flo.const_string(a.string)
 		case UINT64:
 			a2ui[a] = flo.const_ui64(a.uint64)
-		case ARG_LIST:
+		case ARGV:
 			if a.left != nil {
-				_corrupt("ARG_LIST has left child")
+				_corrupt("ARGV has left child")
 			}
 		case LT, LTE, EQ, NEQ, GTE, GT:
 			relop()
@@ -133,18 +133,16 @@ func (flo *flow) compile(root *ast) error {
 			a2bool[a] = flo.not(a2bool[a.left])
 		case CONCAT:
 			a2str[a] = flo.concat(a2str[a.left], a2str[a.right])
+			
 		default:
 			_corrupt("can not compile ast")
 		}
 	}
 
-	//  compile each statement, skipping CREATE nodes, which are handled
+	//  compile each statement, skipping  nodes, which are handled
 	//  in the parser
 
 	for stmt := root.left.left;  stmt != nil;  stmt = stmt.next {
-		if stmt.yy_tok != STMT {
-			stmt.corrupt("root.left.left not yy_tok STMT")
-		}
 		stmt.frisk()
 		if stmt.left.yy_tok != DEFINE {
 			compile1(stmt)

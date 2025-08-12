@@ -48,14 +48,14 @@ func init() {
 %token	__MIN_YYTOK
 
 %token	PARSE_ERROR
-%token	ARG  ARG_LIST
+%token	ARGV
 %token	yy_SET  ARRAY  
 %token	RUN
 %token	COMMAND  COMMAND_REF
 %token	DEFINE  TUPLE  AS
 %token	EXPAND_ENV
-%token	FLOW  STMT_LIST  STMT
-%token	NAME  UINT64  STRING
+%token	FLOW  STMT_LIST
+%token	UINT64  STRING  NAME
 %token	yy_TRUE  yy_FALSE  yy_AND  yy_OR  NOT  yy_EMPTY
 %token	EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
 %token	CONCAT
@@ -64,7 +64,6 @@ func init() {
 %type	<uint64>	UINT64		
 %type	<string>	STRING  name
 %type	<ast>		flow
-
 %type	<ast>		arg_list
 %type	<ast>		element  element_list
 %type	<ast>		array_element  array_element_list
@@ -318,14 +317,6 @@ set:
 	;
 
 stmt:
-	  /* empty */
-	  {
-	  	$$ = &ast{
-			yy_tok:		STMT,
-			line_no:        yylex.(*yyLexState).line_no,
-		}
-	  }
-	|
 	  DEFINE  TUPLE  name  AS  set
 	  {
 	  	lex := yylex.(*yyLexState)
@@ -355,11 +346,16 @@ stmt:
 		$$ = define
 	  }
 	|
-	  RUN  COMMAND_REF  '('  arg_list  ')'  qualification
+	  RUN  COMMAND_REF
 	  {
+	  	$<string>$ = yylex.(*yyLexState).command_ref.name
+	  }
+	  '('  arg_list  ')'  qualification {
 	  	lex := yylex.(*yyLexState)
 
-		$$ = lex.ast(RUN, $4, $6)
+		run := lex.ast(RUN, $5, $7)
+		run.command_ref = lex.name2ast[$<string>3].command_ref
+		$$ = run
 	  }
 	;
 
@@ -368,16 +364,7 @@ stmt_list:
 	  {
 	  	lex := yylex.(*yyLexState)
 
-		stmt := $1
-		sl := &ast{
-			yy_tok:		STMT_LIST,
-			line_no:	lex.line_no,
-			left:		stmt,
-			parent:		lex.ast_root,
-			uint64:		1,
-		}
-		stmt.order = 1
-		stmt.parent = sl
+		sl := lex.ast(STMT_LIST, $1)
 
 		$$ = sl
 	  }
@@ -385,10 +372,7 @@ stmt_list:
 	  stmt_list  stmt  ';'
 	  {
 		sl := $1
-		stmt := $2
-		stmt.parent = sl
-
-		sl.push_left(stmt)
+		sl.push_left($2)
 
 		$$ = sl
 	  }
@@ -397,23 +381,15 @@ stmt_list:
 arg_list:
 	  /*  empty */
 	  {
-	  	$$ = &ast{
-			yy_tok:         ARG_LIST,
-			line_no:        yylex.(*yyLexState).line_no,
-		}
+		$$ = yylex.(*yyLexState).ast(ARGV)
 	  }
 	|
 	  expr
 	  {
 		lex := yylex.(*yyLexState)
 
-	  	al := &ast{
-			yy_tok:		ARG_LIST,
-			line_no:	lex.line_no,
-			uint64:		1,
-		}
-		al.left = $1
-		$1.parent = al
+		arg := $1
+		al := lex.ast(ARGV, arg)
 
 		$$ = al
 	  }
@@ -421,18 +397,8 @@ arg_list:
 	  arg_list  ','  expr
 	  {
 		al := $1
-	  	e := $3
-		e.parent = al
-
-		//  append arg expression to tail of arg list
-		var an *ast
-		for an = al.left;  an.next != nil;  an = an.next {}
-		an.next = e
-		e.prev = an
-
-		al.uint64++
-
-		$$ = $1
+		al.push_left($3)
+		$$ = al
 	  }
 	;
 %%
@@ -486,11 +452,12 @@ func (lex *yyLexState) ast(yy_tok int, args...*ast) *ast {
 		line_no:	lex.line_no,
 	}
 	for _, a := range args {
-		a.parent = an
 		if an.left == nil {
-			an.left = a
+			an.push_left(a)
+		} else if an.right == nil {
+			an.push_right(a)
 		} else {
-			an.right = a
+			an.corrupt("ast: both left/right kids exist")
 		}
 	}
 	return an
