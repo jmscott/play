@@ -9,9 +9,9 @@ import (
 type ast struct {
 
 	yy_tok		int
-	line_no		int
-	order		int
-	count		int
+	line_no		uint32
+	order		uint32
+	count		uint32
 	name		string
 
 	//  children
@@ -117,12 +117,11 @@ func (a *ast) walk_print(indent int, parent *ast) {
 	if a == nil {
 		return
 	}
-	if a.parent != parent {
+	if parent != nil && a.parent != parent {
 		if a.parent == nil {
 			a.corrupt("unexpected nil parent")
-		} else {
-			a.corrupt("unexpected parent: %s", a.parent.yy_name())
 		}
+		a.corrupt("unexpected parent: %s", a.parent.yy_name())
 	}
 	if indent == 0 {
 		fmt.Println("")
@@ -293,7 +292,7 @@ func (a *ast) frisk() {
 
 	//  can we invoke a.frisk() on nil *ast?
 
-	if a == nil {
+	if a == nil || a.yy_tok == DEFINE {
 		return
 	}
 
@@ -332,7 +331,7 @@ func (a *ast) frisk() {
 
 		tok := a.left.yy_tok
 		switch tok {
-		case STRING, UINT64, yy_TRUE, yy_FALSE:
+		case STRING, UINT64, yy_TRUE, yy_FALSE, NOT:
 		default:
 			_corrupt("bad relop type: %s", yy_name(tok))
 		}
@@ -389,7 +388,7 @@ func (a *ast) frisk() {
 		w := a.right
 		if w != nil {
 			if w.yy_tok != WHEN {
-				_corrupt("right node (%s) not WHEN", w.yy_name())
+				_corrupt("right node (%s) not WHEN",w.yy_name())
 			}
 			wl := w.left
 			if wl == nil {

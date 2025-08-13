@@ -57,7 +57,7 @@ func (flo *flow) osx_run(cmd *command, out osx_chan) {
 }
 
 //  unconditionally run a process with no argv
-func (flo *flow) osx0(cmd *command) (out osx_chan) {
+func (flo *flow) osx0x(cmd *command) (out osx_chan) {
 
 	out = make(osx_chan)
 
@@ -73,7 +73,7 @@ func (flo *flow) osx0(cmd *command) (out osx_chan) {
 }
 
 //  conditionally run a command process with no arguments
-func (flo *flow) osx0when(cmd *command, when bool_chan) (out osx_chan) {
+func (flo *flow) osx0(cmd *command, when bool_chan) (out osx_chan) {
 
 	out = make(osx_chan)
 

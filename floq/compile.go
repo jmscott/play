@@ -37,7 +37,7 @@ func (flo *flow) compile(root *ast) error {
 	a2bool := make(map[*ast]bool_chan)
 	a2str := make(map[*ast]string_chan)
 	a2ui := make(map[*ast]uint64_chan)
-	//a2osx := make(map[*ast]osx_chan)
+	a2osx := make(map[*ast]osx_chan)
 
 	var compile1 func(a *ast)
 
@@ -56,9 +56,6 @@ func (flo *flow) compile(root *ast) error {
 			tok := a.left.yy_tok
 			switch tok {
 			case STRING:
-				if relop_string[a.yy_tok] == nil {
-					_corrupt("no string flow op")
-				}
 				a2bool[a] = relop_string[a.yy_tok](
 						flo,
 						a2str[a.left],
@@ -66,17 +63,17 @@ func (flo *flow) compile(root *ast) error {
 				)
 
 			case UINT64:
-				if relop_uint64[a.yy_tok] == nil {
-					_corrupt("no uint64 flow op")
-				}
 				a2bool[a] = relop_uint64[a.yy_tok](
 						flo,
 						a2ui[a.left],
 						a2ui[a.right],
 				)
 			default:
-				nm := yy_name(tok)
-				_corrupt("relop: can not compile left (%s)", nm)
+				a2bool[a] = relop_bool[a.yy_tok](
+						flo,
+						a2bool[a.left],
+						a2bool[a.right],
+				)
 			}
 		}
 
@@ -112,8 +109,14 @@ func (flo *flow) compile(root *ast) error {
 		case UINT64:
 			a2ui[a] = flo.const_ui64(a.uint64)
 		case ARGV:
-			if a.left != nil {
-				_corrupt("ARGV has left child")
+			if a.count == 0 {
+				if a.left != nil {
+					_corrupt("ARGV has left child")
+				}
+			} else {
+				if a.left == nil {
+					_corrupt("ARGV has nil left child")
+				}
 			}
 		case LT, LTE, EQ, NEQ, GTE, GT:
 			relop()
@@ -133,7 +136,14 @@ func (flo *flow) compile(root *ast) error {
 			a2bool[a] = flo.not(a2bool[a.left])
 		case CONCAT:
 			a2str[a] = flo.concat(a2str[a.left], a2str[a.right])
-			
+		case WHEN:
+			a2bool[a] = a2bool[a.left]
+		case RUN:
+			if a.left.left != nil {
+				_corrupt("can not compile ARGV (yet)")
+			}
+			a2osx[a] = flo.osx0(a.command_ref, a2bool[a.right])
+
 		default:
 			_corrupt("can not compile ast")
 		}
@@ -143,10 +153,11 @@ func (flo *flow) compile(root *ast) error {
 	//  in the parser
 
 	for stmt := root.left.left;  stmt != nil;  stmt = stmt.next {
-		stmt.frisk()
-		if stmt.left.yy_tok != DEFINE {
-			compile1(stmt)
+		if stmt.yy_tok == DEFINE {
+			continue
 		}
+		stmt.frisk()
+		compile1(stmt)
 	}
 
 	return nil

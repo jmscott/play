@@ -228,14 +228,17 @@ expr:
 qualification:
 	  /*  empty  */
 	  {
-	  	$$ = yylex.(*yyLexState).ast(yy_TRUE)
+	  	lex := yylex.(*yyLexState)
+	  	$$ = lex.ast(WHEN, lex.ast(yy_TRUE))
 	  }
 	|
 	  WHEN  expr
 	  {
 	  	lex := yylex.(*yyLexState)
+
+		//  Note:  move to ast.frisk()
 	  	if $2.is_bool() == false {
-			lex.mkerror("qualiication not boolean")
+			lex.error("qualification not boolean")
 			return 0
 		}
 		$$ = lex.ast(WHEN, $2)
@@ -346,6 +349,14 @@ stmt:
 		$$ = define
 	  }
 	|
+	  RUN  NAME
+	  {
+	  	lex := yylex.(*yyLexState)
+
+	  	lex.error("run: command not defined: %s", lex.name)
+		return 0
+	  }
+	|
 	  RUN  COMMAND_REF
 	  {
 	  	$<string>$ = yylex.(*yyLexState).command_ref.name
@@ -362,19 +373,12 @@ stmt:
 stmt_list:
 	  stmt  ';'
 	  {
-	  	lex := yylex.(*yyLexState)
-
-		sl := lex.ast(STMT_LIST, $1)
-
-		$$ = sl
+		$$ = yylex.(*yyLexState).ast(STMT_LIST, $1)
 	  }
 	|
 	  stmt_list  stmt  ';'
 	  {
-		sl := $1
-		sl.push_left($2)
-
-		$$ = sl
+		$1.push_left($2)
 	  }
 	;
 
@@ -386,19 +390,12 @@ arg_list:
 	|
 	  expr
 	  {
-		lex := yylex.(*yyLexState)
-
-		arg := $1
-		al := lex.ast(ARGV, arg)
-
-		$$ = al
+		$$ = yylex.(*yyLexState).ast(ARGV, $1)
 	  }
 	|
 	  arg_list  ','  expr
 	  {
-		al := $1
-		al.push_left($3)
-		$$ = al
+		$1.push_left($3)
 	  }
 	;
 %%
@@ -420,7 +417,7 @@ var keyword = map[string]int{
 
 type yyLexState struct {
 	in			io.RuneReader	//  source stream
-	line_no			int	   	//  lexical line number
+	line_no			uint32	   	//  lexical line number
 	eof			bool       	//  seen eof in token stream
 	peek			rune       	//  lookahead in lexer
 	err			error

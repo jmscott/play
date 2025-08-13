@@ -25,7 +25,7 @@ func croak(format string, args ...interface{}) {
 	exit(16)
 }
 
-// usage: floq [parse|ast|compile] <schema.flow>
+// usage: floq [server|parse|ast|compile] <schema.flow>
 
 func main() {
 
