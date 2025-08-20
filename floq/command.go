@@ -3,16 +3,18 @@ package main
 import (
 	"os/exec"
 	"syscall"
+	"sync"
 	"time"
 )
 
 type command struct {
 	
-	name	string
-	cmd	*exec.Cmd
-	path	string
-	args	[]string
-	env	[]string
+	name		string
+	cmd		*exec.Cmd
+	path		string
+	look_path	string
+	args		[]string
+	env		[]string
 }
 
 //  result of waiting on an executing command
@@ -20,6 +22,7 @@ type osx_value struct {
 	*command
 	argv		[]string
 	err		error
+	exit_status	int
 	pid		int
 	start_time	time.Time
 	wall_duration	time.Duration
@@ -31,61 +34,259 @@ type osx_value struct {
 
 type osx_chan chan *osx_value
 
-//  exec an os command process and write description of run
+//  argv_value represents a function or query string argument vector
+type argv_value struct {
+	argv    []string
+	is_null bool
 
-func (flo *flow) osx_run(cmd *command, out osx_chan) {
-	cx := exec.Command(
-			cmd.path,
-	)
-	cx.Args = cmd.args
-	cx.Env = cmd.env
-
-	st := time.Now()
-	err := cx.Run() 
-	ru := cx.ProcessState.SysUsage().(*syscall.Rusage)
-	out <- &osx_value{
-			command:	cmd,
-			err:		err,	
-			pid:		cx.Process.Pid,	
-			user_sec:	ru.Utime.Sec,
-			user_usec:	ru.Utime.Usec,
-			sys_sec:	ru.Stime.Sec,
-			sys_usec:	ru.Stime.Usec,
-			start_time:	st,
-			wall_duration:	time.Since(st),
-	}
+	*flow
 }
 
-//  unconditionally run a process with no argv
-func (flo *flow) osx0x(cmd *command) (out osx_chan) {
+//  argv_chan is channel of *argv_values;  nil indicates closure
+type argv_chan chan *argv_value
+
+//  exec an os command process
+
+func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
+	cx := exec.Command(
+			cmd.look_path,
+	)
+	cx.Args = cmd.args
+	cx.Args = append(cx.Args, argv...)
+	cx.Env = cmd.env
+
+	val := &osx_value{
+			command:	cmd,
+			start_time:	time.Now(),
+	}
+	val.err = cx.Run() 
+	if out == nil {
+		return
+	}
+	if val.err != nil {
+		out <- val
+		return
+	}
+	ru := cx.ProcessState.SysUsage().(*syscall.Rusage)
+
+	val.pid = cx.Process.Pid
+	val.exit_status = cx.ProcessState.ExitCode()
+	val.user_sec = ru.Utime.Sec
+	val.user_usec = ru.Utime.Usec
+	val.sys_sec = ru.Stime.Sec
+	val.sys_usec = ru.Stime.Usec
+	val.wall_duration = time.Since(val.start_time)
+
+	out <- val
+}
+
+//  run a process with no argv
+
+func (flo *flow) osx0(cmd *command) (out osx_chan) {
 
 	out = make(osx_chan)
 
 	go func() {
 		for {
+WTF("run: cmd=%#v", cmd)
+			flo.osx_run(cmd, nil, out)
 			flo = flo.get()
-
-			flo.osx_run(cmd, out)
 		}
 	}()
 
 	return out
 }
 
-//  conditionally run a command process with no arguments
-func (flo *flow) osx0(cmd *command, when bool_chan) (out osx_chan) {
+//  run a process with argv
+
+func (flo *flow) osx(cmd *command, in argv_chan) (out osx_chan) {
 
 	out = make(osx_chan)
 
 	go func() {
-
 		for {
+			av := <-in
+			if av == nil {
+				return
+			}
+			if av.is_null == false {
+				flo.osx_run(cmd, av.argv, out)
+			}
 			flo = flo.get()
+		}
+	}()
 
+	return out
+}
+
+
+//  conditionally run a command process with no argv
+
+func (flo *flow) osx0w(cmd *command, when bool_chan) (out osx_chan) {
+
+	out = make(osx_chan)
+
+	go func() {
+		for {
 			bv := <- when
 			if bv.bool {
-				flo.osx_run(cmd, out)
+				flo.osx_run(cmd, nil, out)
 			}
+			flo = flo.get()
+		}
+	}()
+
+	return out
+}
+
+//  conditionally run a command process with argv
+
+func (flo *flow) osxw(
+	cmd *command,
+	args argv_chan,
+	when bool_chan,
+) (out osx_chan) {
+
+	out = make(osx_chan)
+
+	go func() {
+		for {
+			var bv *bool_value
+			var av *argv_value
+
+			//  wait for both argv[] and when clause to finish
+			for bv == nil || av == nil {
+				select {
+				case bv = <-when:
+					if bv != nil {
+						panic("when out of sync")
+					}
+				case av = <-args:
+					if av != nil {
+						panic("argv out of sync")
+					}
+				default:
+					return
+				}
+			}
+			if bv.bool && av.is_null == false {
+				flo.osx_run(cmd, nil, out)
+			}
+			flo = flo.get()
+		}
+	}()
+
+	return out
+}
+
+//  read strings from multiple input channels and write assmbled argv[]
+//  any null value renders the whole argv[] null
+
+func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
+
+	//  track a received string and position in argv[]
+	type arg_value struct {
+		*string_value
+		position uint8
+	}
+
+	out = make(argv_chan)
+	argc := uint8(len(in_args))
+
+	//  called func has arguments, so wait on multple string channels
+	//  before sending assembled argv[]
+
+	go func() {
+
+		defer close(out)
+
+		//  merge() many string channels onto a single channel of
+		//  argument values.
+
+		merge := func() (mout chan arg_value) {
+
+			var wg sync.WaitGroup
+			mout = make(chan arg_value)
+
+			io := func(sc string_chan, p uint8) {
+				for sv := range sc {
+					mout <- arg_value{
+						string_value: sv,
+						position:     p,
+					}
+				}
+				wg.Done()
+			}
+
+			wg.Add(len(in_args))
+			for i, sc := range in_args {
+				go io(sc, uint8(i))
+			}
+
+			//  Start a goroutine to close 'mout' channel
+			//  once all the output goroutines are done.
+
+			go func() {
+				wg.Wait()
+				close(mout)
+			}()
+			return
+		}()
+
+		for {
+
+			av := make([]string, argc)
+			ac := uint8(0)
+			is_null := false
+
+			//  read until we have an argv[] for which all elements
+			//  are also non-null.  any null argv[] element makes
+			//  the whole argv[] null
+
+			for ac < argc {
+
+				a := <-merge
+
+				//  Note: compile generates error for
+				//        arg_value{}
+
+				if a == (arg_value{}) {
+					return
+				}
+
+				sv := a.string_value
+				pos := a.position
+
+				//  any null element forces entire argv[]
+				//  to be null
+
+				if a.is_null {
+					is_null = true
+				}
+
+				//  cheap sanity test tp insure we don't
+				//  see the same argument twice
+				//
+				//  Note:
+				//	technically this implies an empty
+				//	string is not allowed which is probably
+				//	unreasonable
+
+				if av[pos] != "" {
+					panic("argv[] element not \"\"")
+				}
+				av[pos] = sv.string
+				ac++
+			}
+
+			//  feed the hungry world our new, boundless argv[]
+			out <- &argv_value{
+				argv:    av,
+				is_null: is_null,
+				flow:    flo,
+			}
+			
+			flo = flo.get()
 		}
 	}()
 

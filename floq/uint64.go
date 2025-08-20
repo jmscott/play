@@ -1,5 +1,9 @@
 package main
 
+import (
+	"strconv"
+)
+
 type uint64_value struct {
 	uint64
 
@@ -382,7 +386,24 @@ func (flo *flow) const_ui64(u64 uint64) (out uint64_chan) {
 	return out
 }
 
+func (flo *flow) cast_uint64(in uint64_chan) (out string_chan) {
+
+	out = make(string_chan)
+	go func() {
+		for {
+			uiv := <- in
+			out <- &string_value{
+				string:	strconv.FormatUint(uiv.uint64, 10),
+				is_null:uiv.is_null,
+			}
+			flo = flo.get()
+		}
+	}()
+
+	return out
+}
+
 func (a *ast) is_uint64() bool {
 
-	return a.yy_tok == UINT64 || a.yy_tok == ADD || a.yy_tok == SUB
+	return a.yy_tok == UINT64
 }

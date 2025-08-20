@@ -6,11 +6,9 @@ func server(root *ast) error {
 	if err != nil {
 		return err
 	}
-
 	close(flo.resolved)	//  fire the first flow
 
-	for {
-		<- flo.resolved
-	}
-	return err
+	<- make(chan bool)
+
+	return nil
 }

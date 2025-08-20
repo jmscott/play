@@ -38,6 +38,7 @@ func (flo *flow) compile(root *ast) error {
 	a2str := make(map[*ast]string_chan)
 	a2ui := make(map[*ast]uint64_chan)
 	a2osx := make(map[*ast]osx_chan)
+	a2a := make(map[*ast]argv_chan)
 
 	var compile1 func(a *ast)
 
@@ -81,6 +82,8 @@ func (flo *flow) compile(root *ast) error {
 			return
 		}
 
+		//  compile from leaves to branches
+
 		compile1(a.left)
 		compile1(a.right)
 
@@ -109,15 +112,11 @@ func (flo *flow) compile(root *ast) error {
 		case UINT64:
 			a2ui[a] = flo.const_ui64(a.uint64)
 		case ARGV:
-			if a.count == 0 {
-				if a.left != nil {
-					_corrupt("ARGV has left child")
-				}
-			} else {
-				if a.left == nil {
-					_corrupt("ARGV has nil left child")
-				}
+			in := make([]string_chan, a.count)
+			for n := a.left;  n != nil;  n = n.next {
+				in[n.order] = a2str[n]
 			}
+			a2a[a] = flo.argv(in)
 		case LT, LTE, EQ, NEQ, GTE, GT:
 			relop()
 		case yy_OR:
@@ -139,11 +138,28 @@ func (flo *flow) compile(root *ast) error {
 		case WHEN:
 			a2bool[a] = a2bool[a.left]
 		case RUN:
-			if a.left.left != nil {
-				_corrupt("can not compile ARGV (yet)")
-			}
-			a2osx[a] = flo.osx0(a.command_ref, a2bool[a.right])
+			argv := a.left
+			when := a.right
 
+			if argv == nil {
+				if when == nil {
+					a2osx[a] = flo.osx0(a.command_ref)
+				} else {
+					a2osx[a] = flo.osx0w(
+							a.command_ref,
+							a2bool[when],
+					)
+				}
+			} else {
+				if when == nil {
+					a2osx[a] = flo.osx(
+						a.command_ref,
+						a2a[argv],
+					)
+				} else {
+					_corrupt("can not compile argv")
+				}
+			}
 		default:
 			_corrupt("can not compile ast")
 		}

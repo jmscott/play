@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"strconv"
 	"unicode"
 )
@@ -60,6 +61,7 @@ func init() {
 %token	EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
 %token	CONCAT
 %token	WHEN
+%token	CAST_UINT64
 
 %type	<uint64>	UINT64		
 %type	<string>	STRING  name
@@ -71,13 +73,13 @@ func init() {
 %type	<ast>		constant  expr  qualification
 %type	<ast>		stmt  stmt_list
 
-%left		yy_AND  yy_OR
-%left		EQ  NEQ  GT  GTE  LT  LTE
-%left		MATCH  NOMATCH
-%left		ADD  SUB
-%left		MUL  DIV
-%left		CONCAT
-%right		NOT  EXPAND_ENV
+%left			yy_AND  yy_OR
+%left			EQ  NEQ  GT  GTE  LT  LTE
+%left			MATCH  NOMATCH
+%left			ADD  SUB
+%left			MUL  DIV
+%left			CONCAT
+%right			NOT  EXPAND_ENV
 
 %%
 
@@ -116,7 +118,7 @@ constant:
 	|
 	  yy_FALSE
 	  {
-	  	$$ = yylex.(*yyLexState).ast(yy_TRUE)
+	  	$$ = yylex.(*yyLexState).ast(yy_FALSE)
 	  }
 	;
 
@@ -228,8 +230,7 @@ expr:
 qualification:
 	  /*  empty  */
 	  {
-	  	lex := yylex.(*yyLexState)
-	  	$$ = lex.ast(WHEN, lex.ast(yy_TRUE))
+	  	$$ = nil
 	  }
 	|
 	  WHEN  expr
@@ -238,7 +239,7 @@ qualification:
 
 		//  Note:  move to ast.frisk()
 	  	if $2.is_bool() == false {
-			lex.error("qualification not boolean")
+			lex.error("when: qualification not boolean")
 			return 0
 		}
 		$$ = lex.ast(WHEN, $2)
@@ -338,12 +339,25 @@ stmt:
 	  {
 	  	lex := yylex.(*yyLexState)
 		name := $3
+		set := $5
 
-	  	define := lex.ast(DEFINE, lex.ast(COMMAND), $5)
+	  	define := lex.ast(DEFINE, lex.ast(COMMAND), set)
 
 		cmd := define.left
 		cmd.name = name
-		cmd.command_ref = &command{name: name}
+		cmd.command_ref = &command{
+					name: name,
+					path: set.string_element("path"),
+					args: set.array_string_element("args"),
+					env: set.array_string_element("env"),
+				}
+		cf := cmd.command_ref
+		look_path, err := exec.LookPath(cf.path)
+		if err != nil {
+			lex.error("LookPath(%s) failed: %s", cf.path, err)
+			return 0
+		}
+		cmd.command_ref.look_path = look_path
 		lex.name2ast[name] = cmd
 
 		$$ = define
@@ -385,16 +399,28 @@ stmt_list:
 arg_list:
 	  /*  empty */
 	  {
-		$$ = yylex.(*yyLexState).ast(ARGV)
+		$$ = nil
 	  }
 	|
 	  expr
 	  {
-		$$ = yylex.(*yyLexState).ast(ARGV, $1)
+	  	lex := yylex.(*yyLexState)
+
+	  	if $1.is_string() == false {
+			lex.error("arg not string")
+			return 0
+		}
+		$$ = lex.ast(ARGV, $1)
 	  }
 	|
 	  arg_list  ','  expr
 	  {
+	  	lex := yylex.(*yyLexState)
+
+	  	if $3.is_string() == false {
+			lex.error("arg not string")
+			return 0
+		}
 		$1.push_left($3)
 	  }
 	;
@@ -448,13 +474,16 @@ func (lex *yyLexState) ast(yy_tok int, args...*ast) *ast {
 		yy_tok:		yy_tok,
 		line_no:	lex.line_no,
 	}
-	for _, a := range args {
-		if an.left == nil {
+	for i, a := range args {
+		if a == nil {
+			continue
+		}
+		if i == 0 {
 			an.push_left(a)
-		} else if an.right == nil {
+		} else if i == 1 {
 			an.push_right(a)
 		} else {
-			an.corrupt("ast: both left/right kids exist")
+			an.corrupt("ast: args range > 1: %d", i)
 		}
 	}
 	return an

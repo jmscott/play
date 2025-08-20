@@ -294,11 +294,11 @@ func (flo *flow) const_true() (out bool_chan) {
 
 	go func() {
 		for {
-			flo = flo.get()
 			out <- &bool_value{
 				bool:	true,
 				flow:	flo,
 			}
+			flo = flo.get()
 		}
 	}()
 
@@ -480,4 +480,28 @@ func (out bool_chan) frisk_ui64(left, right uint64_chan) {
 	if right == nil {
 		corrupt("right uint64 chan is nil")
 	}
+}
+
+func (flo *flow) cast_bool(in bool_chan) (out string_chan) {
+
+	out = make(string_chan)
+
+	go func() {
+		for {
+			bv := <-in
+			
+			sv := &string_value{
+					is_null:	bv.is_null,
+			}
+			if sv.is_null == false {
+				if bv.bool == true {
+					sv.string = "true"
+				} else {
+					sv.string = "false"
+				}
+			}
+			out <-sv
+		}
+	}()
+	return out
 }

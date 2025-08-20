@@ -372,15 +372,12 @@ func (a *ast) frisk() {
 		/*
 		 *  Parse tree
 	         *	RUN
-		 *		ARGV (cnt=0)
-		 *		WHEN
+		 *		nil | ARGV (cnt>0)
+		 *		nil | WHEN
 		 *			(bool expression)?
 		 */
 		al := a.left
-		if al == nil {
-			_corrupt("left node is nil")
-		}
-		if al.yy_tok != ARGV {
+		if al != nil && al.yy_tok != ARGV {
 			_corrupt("left node (%s) not ARGV", al.yy_name())
 		}
 
@@ -471,4 +468,47 @@ func (parent *ast) push_lr(lr **ast, kid *ast) {
 	kid.order = k.order + 1
 	parent.count++
 	kid.prev = k
+}
+
+func (set *ast) string_element(name string) string { 
+	if set.yy_tok != yy_SET {
+		set.corrupt("expected SET, got %s", yy_name(set.yy_tok))
+	}
+	var kid *ast
+	for kid = set.left;  kid.next != nil;  kid = kid.next {
+		if kid.name != name {
+			continue
+		}
+		if kid.yy_tok == STRING {
+			return kid.string
+		}
+	}
+	return ""
+}
+
+//  get a named []string from ARRAY element in a SET
+
+func (set *ast) array_string_element(name string) []string { 
+
+	if set.yy_tok != yy_SET {
+		set.corrupt("expected SET, got %s", yy_name(set.yy_tok))
+	}
+	var kid *ast
+	for kid = set.left;  kid != nil;  kid = kid.next {
+		if kid.name == name && kid.yy_tok == ARRAY {
+			break
+		}
+	}
+	if kid == nil {
+		return nil
+	}
+	ar := make([]string, kid.count)
+	var cnt int
+	for kid = kid.left;  kid != nil;  kid = kid.next {
+		if kid.yy_tok == STRING {
+			ar[cnt] = kid.string
+			cnt++
+		}
+	}
+	return ar[:cnt]
 }
