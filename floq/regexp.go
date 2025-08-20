@@ -15,8 +15,6 @@ func (flo *flow) match(left string_chan, re *regexp.Regexp) (out bool_chan) {
 		for {
 			defer close(out)
 
-			flo = flo.get()
-
 			var lv *string_value
 
 			// wait for left and right values to arrive
@@ -34,6 +32,7 @@ func (flo *flow) match(left string_chan, re *regexp.Regexp) (out bool_chan) {
 				bv.bool = re.MatchString(lv.string)
 			}
 			out <- bv
+			flo = flo.get()
 		}
 	}()
 
@@ -52,8 +51,6 @@ func (flo *flow) nomatch(left string_chan, re *regexp.Regexp) (out bool_chan) {
 		for {
 			defer close(out)
 
-			flo = flo.get()
-
 			var lv *string_value
 
 			// wait for left and right values to arrive
@@ -71,6 +68,8 @@ func (flo *flow) nomatch(left string_chan, re *regexp.Regexp) (out bool_chan) {
 				bv.bool = !re.MatchString(lv.string)
 			}
 			out <- bv
+
+			flo = flo.get()
 		}
 	}()
 

@@ -57,8 +57,6 @@ func (flo *flow) eq_ui64(left, right uint64_chan) (out bool_chan) {
 		for {
 			defer close(out)
 
-			flo = flo.get()
-
 			lv, rv, done := left.wait2(right)
 			if done {
 				return
@@ -72,6 +70,8 @@ func (flo *flow) eq_ui64(left, right uint64_chan) (out bool_chan) {
 				bv.bool = lv.uint64 == rv.uint64
 			}
 			out <- bv
+
+			flo = flo.get()
 		}
 	}()
 
@@ -94,8 +94,6 @@ func (flo *flow) neq_ui64(left, right uint64_chan) (out bool_chan) {
 		for {
 			defer close(out)
 
-			flo = flo.get()
-
 			lv, rv, done := left.wait2(right)
 			if done {
 				return
@@ -109,6 +107,8 @@ func (flo *flow) neq_ui64(left, right uint64_chan) (out bool_chan) {
 				bv.bool = lv.uint64 != rv.uint64
 			}
 			out <- bv
+
+			flo = flo.get()
 		}
 	}()
 
@@ -131,8 +131,6 @@ func (flo *flow) gt_ui64(left, right uint64_chan) (out bool_chan) {
 		for {
 			defer close(out)
 
-			flo = flo.get()
-
 			lv, rv, done := left.wait2(right)
 			if done {
 				return
@@ -146,6 +144,8 @@ func (flo *flow) gt_ui64(left, right uint64_chan) (out bool_chan) {
 				bv.bool = lv.uint64 > rv.uint64
 			}
 			out <- bv
+
+			flo = flo.get()
 		}
 	}()
 
@@ -168,8 +168,6 @@ func (flo *flow) gte_ui64(left, right uint64_chan) (out bool_chan) {
 		for {
 			defer close(out)
 
-			flo = flo.get()
-
 			lv, rv, done := left.wait2(right)
 			if done {
 				return
@@ -183,6 +181,8 @@ func (flo *flow) gte_ui64(left, right uint64_chan) (out bool_chan) {
 				bv.bool = lv.uint64 >= rv.uint64
 			}
 			out <- bv
+
+			flo = flo.get()
 		}
 	}()
 
@@ -205,8 +205,6 @@ func (flo *flow) lt_ui64(left, right uint64_chan) (out bool_chan) {
 		for {
 			defer close(out)
 
-			flo = flo.get()
-
 			lv, rv, done := left.wait2(right)
 			if done {
 				return
@@ -220,6 +218,8 @@ func (flo *flow) lt_ui64(left, right uint64_chan) (out bool_chan) {
 				bv.bool = lv.uint64 < rv.uint64
 			}
 			out <- bv
+
+			flo = flo.get()
 		}
 	}()
 
@@ -242,8 +242,6 @@ func (flo *flow) lte_ui64(left, right uint64_chan) (out bool_chan) {
 		for {
 			defer close(out)
 
-			flo = flo.get()
-
 			lv, rv, done := left.wait2(right)
 			if done {
 				return
@@ -257,6 +255,8 @@ func (flo *flow) lte_ui64(left, right uint64_chan) (out bool_chan) {
 				bv.bool = lv.uint64 <= rv.uint64
 			}
 			out <- bv
+
+			flo = flo.get()
 		}
 	}()
 
@@ -300,6 +300,8 @@ func (flo *flow) add_ui64(left, right uint64_chan) (out uint64_chan) {
 				uiv.uint64 = lv.uint64 + rv.uint64
 			}
 			out <- uiv
+
+			flo = flo.get()
 		}
 	}()
 
@@ -331,6 +333,8 @@ func (flo *flow) mul_ui64(left, right uint64_chan) (out uint64_chan) {
 				uiv.uint64 = lv.uint64 * rv.uint64
 			}
 			out <- uiv
+
+			flo = flo.get()
 		}
 	}()
 
@@ -347,8 +351,6 @@ func (flo *flow) sub_ui64(left, right uint64_chan) (out uint64_chan) {
 		for {
 			defer close(out)
 
-			flo = flo.get()
-
 			lv, rv, done := left.wait2(right)
 			if done {
 				return
@@ -362,6 +364,8 @@ func (flo *flow) sub_ui64(left, right uint64_chan) (out uint64_chan) {
 				uiv.uint64 = lv.uint64 - rv.uint64
 			}
 			out <- uiv
+
+			flo = flo.get()
 		}
 	}()
 
@@ -373,13 +377,12 @@ func (flo *flow) const_ui64(u64 uint64) (out uint64_chan) {
 	out = make(uint64_chan)
 	go func() {
 		for {
-			flo = flo.get()
-
 			out <- &uint64_value{
 				uint64:	u64,
 				is_null: false,
 				flow:	flo,
 			}
+			flo = flo.get()
 		}
 	}()
 

@@ -65,8 +65,6 @@ func (flo *flow) concat(left, right string_chan) (out string_chan) {
 		for {
 			defer close(out)
 
-			flo = flo.get()
-
 			lv, rv, done := left.wait2(right)
 			if done {
 				return
@@ -83,6 +81,7 @@ func (flo *flow) concat(left, right string_chan) (out string_chan) {
 				sv.string = b.String()
 			}
 			out <- sv
+			flo = flo.get()
 		}
 	}()
 
@@ -102,8 +101,6 @@ func (flo *flow) eq_string(left, right string_chan) (out bool_chan) {
 		for {
 			defer close(out)
 
-			flo = flo.get()
-
 			lv, rv, done := left.wait2(right)
 			if done {
 				return
@@ -117,6 +114,8 @@ func (flo *flow) eq_string(left, right string_chan) (out bool_chan) {
 				bv.bool = lv.string == rv.string
 			}
 			out <- bv
+
+			flo = flo.get()
 		}
 	}()
 
@@ -139,8 +138,6 @@ func (flo *flow) neq_string(left, right string_chan) (out bool_chan) {
 		for {
 			defer close(out)
 
-			flo = flo.get()
-
 			lv, rv, done := left.wait2(right)
 			if done {
 				return
@@ -154,6 +151,7 @@ func (flo *flow) neq_string(left, right string_chan) (out bool_chan) {
 				bv.bool = lv.string != rv.string
 			}
 			out <- bv
+			flo = flo.get()
 		}
 	}()
 
@@ -176,8 +174,6 @@ func (flo *flow) gt_string(left, right string_chan) (out bool_chan) {
 		for {
 			defer close(out)
 
-			flo = flo.get()
-
 			lv, rv, done := left.wait2(right)
 			if done {
 				return
@@ -191,6 +187,8 @@ func (flo *flow) gt_string(left, right string_chan) (out bool_chan) {
 				bv.bool = lv.string > rv.string
 			}
 			out <- bv
+
+			flo = flo.get()
 		}
 	}()
 
@@ -213,8 +211,6 @@ func (flo *flow) gte_string(left, right string_chan) (out bool_chan) {
 		for {
 			defer close(out)
 
-			flo = flo.get()
-
 			lv, rv, done := left.wait2(right)
 			if done {
 				return
@@ -228,6 +224,8 @@ func (flo *flow) gte_string(left, right string_chan) (out bool_chan) {
 				bv.bool = lv.string >= rv.string
 			}
 			out <- bv
+
+			flo = flo.get()
 		}
 	}()
 
@@ -250,8 +248,6 @@ func (flo *flow) lt_string(left, right string_chan) (out bool_chan) {
 		for {
 			defer close(out)
 
-			flo = flo.get()
-
 			lv, rv, done := left.wait2(right)
 			if done {
 				return
@@ -265,6 +261,8 @@ func (flo *flow) lt_string(left, right string_chan) (out bool_chan) {
 				bv.bool = lv.string < rv.string
 			}
 			out <- bv
+
+			flo = flo.get()
 		}
 	}()
 
@@ -287,8 +285,6 @@ func (flo *flow) lte_string(left, right string_chan) (out bool_chan) {
 		for {
 			defer close(out)
 
-			flo = flo.get()
-
 			lv, rv, done := left.wait2(right)
 			if done {
 				return
@@ -302,6 +298,8 @@ func (flo *flow) lte_string(left, right string_chan) (out bool_chan) {
 				bv.bool = lv.string <= rv.string
 			}
 			out <- bv
+
+			flo = flo.get()
 		}
 	}()
 
@@ -318,12 +316,11 @@ func (flo *flow) const_string(s string) (out string_chan) {
 
 	go func() {
 		for {
-			flo = flo.get()
-
 			out <- &string_value{
 				string:	s,
 				is_null: false,
 			}
+			flo = flo.get()
 		}
 	}()
 

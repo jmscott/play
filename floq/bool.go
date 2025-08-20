@@ -262,8 +262,6 @@ func (flo *flow) bool2(
 
 		for {
 
-			flo = flo.get()
-
 			var b, is_null bool
 
 			//  Note: op can go away
@@ -281,7 +279,8 @@ func (flo *flow) bool2(
 				is_null: is_null,
 				flow:    flo,
 			}
-			
+
+			flo = flo.get()
 		}
 	}()
 
@@ -311,11 +310,12 @@ func (flo *flow) const_false() (out bool_chan) {
 
 	go func() {
 		for {
-			flo = flo.get()
 			out <- &bool_value{
 				bool:	false,
 				flow:	flo,
 			}
+
+			flo = flo.get()
 		}
 	}()
 
@@ -328,8 +328,6 @@ func (flo *flow) not(in bool_chan) (out bool_chan) {
 
 	go func() {
 		for {
-			flo = flo.get()
-
 			bv := <- in
 
 			out <- &bool_value{
@@ -337,6 +335,7 @@ func (flo *flow) not(in bool_chan) (out bool_chan) {
 					is_null:	bv.is_null,
 					flow:		flo,
 			}
+			flo = flo.get()
 		}
 	}()
 
@@ -402,8 +401,6 @@ func (flo *flow) eq_bool(left, right bool_chan) (out bool_chan) {
 		for {
 			defer close(out)
 
-			flo = flo.get()
-
 			lv, rv, done := left.wait2(right)
 			if done {
 				return
@@ -417,6 +414,7 @@ func (flo *flow) eq_bool(left, right bool_chan) (out bool_chan) {
 				bv.bool = lv.bool == rv.bool
 			}
 			out <- bv
+			flo = flo.get()
 		}
 	}()
 
@@ -439,8 +437,6 @@ func (flo *flow) neq_bool(left, right bool_chan) (out bool_chan) {
 		for {
 			defer close(out)
 
-			flo = flo.get()
-
 			lv, rv, done := left.wait2(right)
 			if done {
 				return
@@ -454,6 +450,7 @@ func (flo *flow) neq_bool(left, right bool_chan) (out bool_chan) {
 				bv.bool = lv.bool != rv.bool
 			}
 			out <- bv
+			flo = flo.get()
 		}
 	}()
 
@@ -501,6 +498,7 @@ func (flo *flow) cast_bool(in bool_chan) (out string_chan) {
 				}
 			}
 			out <-sv
+			flo = flo.get()
 		}
 	}()
 	return out
