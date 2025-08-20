@@ -59,11 +59,12 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 			command:	cmd,
 			start_time:	time.Now(),
 	}
-	val.err = cx.Run() 
+
+	val.err = cx.Run()
 	if out == nil {
 		return
 	}
-	if val.err != nil {
+	if val.err != nil {		//  process failed to start
 		out <- val
 		return
 	}
@@ -88,7 +89,6 @@ func (flo *flow) osx0(cmd *command) (out osx_chan) {
 
 	go func() {
 		for {
-WTF("run: cmd=%#v", cmd)
 			flo.osx_run(cmd, nil, out)
 			flo = flo.get()
 		}
@@ -153,24 +153,15 @@ func (flo *flow) osxw(
 		for {
 			var bv *bool_value
 			var av *argv_value
-
 			//  wait for both argv[] and when clause to finish
 			for bv == nil || av == nil {
 				select {
 				case bv = <-when:
-					if bv != nil {
-						panic("when out of sync")
-					}
 				case av = <-args:
-					if av != nil {
-						panic("argv out of sync")
-					}
-				default:
-					return
 				}
 			}
-			if bv.bool && av.is_null == false {
-				flo.osx_run(cmd, nil, out)
+			if bv.bool == true && av.is_null == false {
+				flo.osx_run(cmd, av.argv, out)
 			}
 			flo = flo.get()
 		}
@@ -183,7 +174,6 @@ func (flo *flow) osxw(
 //  any null value renders the whole argv[] null
 
 func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
-
 	//  track a received string and position in argv[]
 	type arg_value struct {
 		*string_value

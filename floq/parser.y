@@ -14,6 +14,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"slices"
 	"strconv"
 	"unicode"
 )
@@ -358,6 +359,11 @@ stmt:
 			return 0
 		}
 		cmd.command_ref.look_path = look_path
+		cmd.command_ref.args = slices.Insert(
+						cmd.command_ref.args,
+						0,
+						look_path,
+					)				
 		lex.name2ast[name] = cmd
 
 		$$ = define

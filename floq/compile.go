@@ -38,7 +38,7 @@ func (flo *flow) compile(root *ast) error {
 	a2str := make(map[*ast]string_chan)
 	a2ui := make(map[*ast]uint64_chan)
 	a2osx := make(map[*ast]osx_chan)
-	a2a := make(map[*ast]argv_chan)
+	a2argv := make(map[*ast]argv_chan)
 
 	var compile1 func(a *ast)
 
@@ -87,21 +87,6 @@ func (flo *flow) compile(root *ast) error {
 		compile1(a.left)
 		compile1(a.right)
 
-		if a.is_binary() {
-			if a.left == nil {
-				_corrupt("left child is nil for binary op")
-			}
-			if a.right == nil {
-				_corrupt("right child is nil for binary op")
-			}
-		} else if a.is_unary() {
-			if a.right != nil {
-				_corrupt("right exists for unary op")
-			}
-		}
-		if a.parent == nil {
-			_corrupt("parent is nill")
-		}
 		switch a.yy_tok {
 		case yy_TRUE:
 			a2bool[a] = flo.const_true()
@@ -114,9 +99,9 @@ func (flo *flow) compile(root *ast) error {
 		case ARGV:
 			in := make([]string_chan, a.count)
 			for n := a.left;  n != nil;  n = n.next {
-				in[n.order] = a2str[n]
+				in[n.order-1] = a2str[n]
 			}
-			a2a[a] = flo.argv(in)
+			a2argv[a] = flo.argv(in)
 		case LT, LTE, EQ, NEQ, GTE, GT:
 			relop()
 		case yy_OR:
@@ -154,15 +139,20 @@ func (flo *flow) compile(root *ast) error {
 				if when == nil {
 					a2osx[a] = flo.osx(
 						a.command_ref,
-						a2a[argv],
+						a2argv[argv],
 					)
 				} else {
-					_corrupt("can not compile argv")
+					a2osx[a] = flo.osxw(
+						a.command_ref,
+						a2argv[argv],
+						a2bool[when],
+					)
 				}
 			}
 		default:
 			_corrupt("can not compile ast")
 		}
+		compile1(a.next)
 	}
 
 	//  compile each statement, skipping  nodes, which are handled
