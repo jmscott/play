@@ -149,6 +149,7 @@ func (flo *flow) compile(root *ast) error {
 					)
 				}
 			}
+			flo.osx_null(a2osx[a])
 		default:
 			_corrupt("can not compile ast")
 		}

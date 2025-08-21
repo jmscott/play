@@ -174,6 +174,7 @@ func (flo *flow) osxw(
 //  any null value renders the whole argv[] null
 
 func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
+
 	//  track a received string and position in argv[]
 	type arg_value struct {
 		*string_value
@@ -183,15 +184,15 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 	out = make(argv_chan)
 	argc := uint8(len(in_args))
 
-	//  called func has arguments, so wait on multple string channels
+	//  called RUN has arguments, so wait on args via string channels
 	//  before sending assembled argv[]
 
 	go func() {
 
 		defer close(out)
 
-		//  merge() many string channels onto a single channel of
-		//  argument values.
+		//  merge() output of string channels onto a single channel of
+		//  []string values.
 
 		merge := func() (mout chan arg_value) {
 
@@ -248,28 +249,22 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 				pos := a.position
 
 				//  any null element forces entire argv[]
-				//  to be null
+				//  to be null.  not sure this is reasonable.
 
 				if a.is_null {
 					is_null = true
 				}
 
-				//  cheap sanity test tp insure we don't
+				//  cheap sanity test to insure we don't
 				//  see the same argument twice
-				//
-				//  Note:
-				//	technically this implies an empty
-				//	string is not allowed which is probably
-				//	unreasonable
 
 				if av[pos] != "" {
-					panic("argv[] element not \"\"")
+					croak("argv[%d] element not \"\"", pos)
 				}
 				av[pos] = sv.string
 				ac++
 			}
 
-			//  feed the hungry world our new, boundless argv[]
 			out <- &argv_value{
 				argv:    av,
 				is_null: is_null,
@@ -281,4 +276,13 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 	}()
 
 	return out
+}
+
+func (flo *flow) osx_null(in osx_chan) {
+
+	go func() {
+		<- in
+
+		flo = flo.get()
+	}()
 }
