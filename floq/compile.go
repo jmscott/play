@@ -150,6 +150,7 @@ func (flo *flow) compile(root *ast) error {
 				}
 			}
 			flo.osx_null(a2osx[a])
+			osx_wg.Add(1)
 		default:
 			_corrupt("can not compile ast")
 		}

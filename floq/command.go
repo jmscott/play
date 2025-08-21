@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+var osx_wg	sync.WaitGroup
+
 type command struct {
 	
 	name		string
@@ -64,20 +66,17 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 	if out == nil {
 		return
 	}
-	if val.err != nil {		//  process failed to start
-		out <- val
-		return
+	if val.err == nil {		//  process failed to start
+		ru := cx.ProcessState.SysUsage().(*syscall.Rusage)
+
+		val.pid = cx.Process.Pid
+		val.exit_status = cx.ProcessState.ExitCode()
+		val.user_sec = ru.Utime.Sec
+		val.user_usec = ru.Utime.Usec
+		val.sys_sec = ru.Stime.Sec
+		val.sys_usec = ru.Stime.Usec
+		val.wall_duration = time.Since(val.start_time)
 	}
-	ru := cx.ProcessState.SysUsage().(*syscall.Rusage)
-
-	val.pid = cx.Process.Pid
-	val.exit_status = cx.ProcessState.ExitCode()
-	val.user_sec = ru.Utime.Sec
-	val.user_usec = ru.Utime.Usec
-	val.sys_sec = ru.Stime.Sec
-	val.sys_usec = ru.Stime.Usec
-	val.wall_duration = time.Since(val.start_time)
-
 	out <- val
 }
 
@@ -90,6 +89,7 @@ func (flo *flow) osx0(cmd *command) (out osx_chan) {
 	go func() {
 		for {
 			flo.osx_run(cmd, nil, out)
+			osx_wg.Done()
 			flo = flo.get()
 		}
 	}()
@@ -112,6 +112,7 @@ func (flo *flow) osx(cmd *command, in argv_chan) (out osx_chan) {
 			if av.is_null == false {
 				flo.osx_run(cmd, av.argv, out)
 			}
+			osx_wg.Done()
 			flo = flo.get()
 		}
 	}()
@@ -132,6 +133,7 @@ func (flo *flow) osx0w(cmd *command, when bool_chan) (out osx_chan) {
 			if bv.bool {
 				flo.osx_run(cmd, nil, out)
 			}
+			osx_wg.Done()
 			flo = flo.get()
 		}
 	}()
@@ -163,6 +165,7 @@ func (flo *flow) osxw(
 			if bv.bool == true && av.is_null == false {
 				flo.osx_run(cmd, av.argv, out)
 			}
+			osx_wg.Done()
 			flo = flo.get()
 		}
 	}()

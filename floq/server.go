@@ -6,6 +6,12 @@ func server(root *ast) error {
 	if err != nil {
 		return err
 	}
+
+	go func() {
+		osx_wg.Wait()
+		exit(0)
+	}()
+
 	close(flo.resolved)	//  fire the first flow
 
 	<- make(chan bool)
