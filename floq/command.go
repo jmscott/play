@@ -289,3 +289,20 @@ func (flo *flow) osx_null(in osx_chan) {
 		flo = flo.get()
 	}()
 }
+
+func (cmd *command) is_sysatt(name string) bool {
+
+	switch name {
+	case "exit_status":
+		return true
+	}
+	return false
+}
+
+func (cmd *command) is_sysatt_uint64(name string) bool {
+	switch name {
+	case "exit_status":
+		return true
+	}
+	return false
+}

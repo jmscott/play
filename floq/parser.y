@@ -37,7 +37,7 @@ func init() {
 		}
 	}
 
-	yyDebug = 4
+	//yyDebug = 4
 }
 %}
 
@@ -48,6 +48,7 @@ func init() {
 	uint64
 	int
 	command_ref	*command
+	sysatt		*sysatt
 }
 
 //  lowest numbered yytoken.  must be first in list.
@@ -61,7 +62,7 @@ func init() {
 %token	DEFINE  TUPLE  AS
 %token	EXPAND_ENV
 %token	FLOW  STMT_LIST
-%token	UINT64  STRING  NAME  SYSATT
+%token	UINT64  STRING  NAME  COMMAND_SYSATT
 %token	yy_TRUE  yy_FALSE  yy_AND  yy_OR  NOT  yy_EMPTY
 %token	EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
 %token	CONCAT
@@ -78,6 +79,7 @@ func init() {
 %type	<ast>		constant  expr  qualification
 %type	<ast>		stmt  stmt_list
 %type	<command_ref>	COMMAND_REF
+%type	<sysatt>	COMMAND_SYSATT
 
 %left			yy_AND  yy_OR
 %left			EQ  NEQ  GT  GTE  LT  LTE
@@ -132,12 +134,37 @@ expr:
 	  COMMAND_REF  '$'  {
 	  	yylex.(*yyLexState).name_is_name = true
 	  }  name  {
-	  	
 		lex := yylex.(*yyLexState)
+		cmd := $1
+		name := $4
 
-		proj := lex.ast(SYSATT)
-		proj.command_ref = $1
-		proj.name = $4
+		if cmd.is_sysatt(name) == false {
+			lex.mkerror(
+				"command: %s, unknown system attribute: %s",
+				cmd.name,
+				name,
+			)
+			return 0
+		}
+
+		csa := lex.ast(COMMAND_SYSATT)
+		csa.name = name
+		csa.sysatt_ref = &sysatt{
+				name:	name,
+				command_ref:  cmd,
+		}
+		if lex.run_name == cmd.name {
+			lex.error(
+				"command: %s: att %s refers to itself",
+				cmd.name,
+				csa.sysatt_ref.full_name(),
+			)
+			return 0
+		}
+				
+		lex.depends[lex.run_name] = cmd.name
+
+		$$ = csa
 	  }
 	|
 	  expr  yy_AND  expr
@@ -393,11 +420,17 @@ stmt:
 		return 0
 	  }
 	|
-	  RUN  COMMAND_REF  '('  arg_list  ')'  qualification  {
+	  RUN  COMMAND_REF
+	  {
+	  	yylex.(*yyLexState).run_name = $2.name
+	  }
+	  '('  arg_list  ')'  qualification  {
 	  	lex := yylex.(*yyLexState)
+		lex.run_name = ""
 
-		run := lex.ast(RUN, $4, $6)
+		run := lex.ast(RUN, $5, $7)
 		run.command_ref = $2
+
 		$$ = run
 	  }
 	;
@@ -473,7 +506,10 @@ type yyLexState struct {
 
 	name2ast		map[string]*ast
 	name2cmd		map[string]*command
+	depends			map[string]string
+
 	command_ref		*command
+	run_name		string
 	name_is_name		bool
 }
 
@@ -1000,12 +1036,22 @@ func parse(in io.RuneReader) (*ast, error) {
 		line_no:	1,
 		name2ast:	make(map[string]*ast),
 		name2cmd:	make(map[string]*command),
+		depends:	make(map[string]string),
 		ast_root:	&ast{
 					yy_tok:		FLOW,
 					line_no:	1,
 				},
 	}
 	yyParse(lex)
+
+	//  check for cyclic dependencies
+	var depends []string
+	for key, val := range lex.depends {
+		depends = append(depends, key + " " + val)
+	}
+	if len(depends) > 0 && tsort(depends) == nil {
+		return nil, lex.mkerror("cyclic dependncy")
+	}
 	return lex.ast_root, lex.err
 }
 

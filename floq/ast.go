@@ -26,6 +26,7 @@ type ast struct {
 
 	tuple_ref	*tuple
 	command_ref	*command
+	sysatt_ref	*sysatt
 	uint64
 	string
 }
@@ -102,6 +103,13 @@ func (a *ast) String() string {
 		what = "FALSE"
 	case yy_TRUE:
 		what = "TRUE"
+	case COMMAND_SYSATT:
+		what = fmt.Sprintf(
+				"%s:%s$%s",
+				a.yy_name(), 
+				a.sysatt_ref.command_ref.name,
+				a.sysatt_ref.name,
+			)
 	default:
 		if a.name == "" {
 			what = a.yy_name()

@@ -75,6 +75,8 @@ GOSRCs="
 	regexp.go
 	server.go
 	string.go
+	sysatt.go
+	tsort.go
 	tuple.go
 	uint64.go
 	value.go
