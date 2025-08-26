@@ -58,8 +58,7 @@ func (p2 *pass2) plumb(a *ast) error {
 		if kid.parent != a {
 			return kid.error("%s:  parent not %s", what, a)
 		}
-		err := p2.plumb(kid)
-		if err != nil {
+		if err := p2.plumb(kid);  err != nil {
 			return err
 		}
 		return nil
@@ -72,14 +71,13 @@ func (p2 *pass2) plumb(a *ast) error {
 		return err
 	}
 
-	if a.prev != nil {	//  avoid redundant plumbs of siblings
+	if a.prev != nil {	//  in middle of sibling list
 		return nil
 	}
 
 	//  plumb each sibling
 
-	var prev *ast
-	for sib := a.next;  sib != nil;  sib = sib.next {
+	for sib, prev := a.next, (*ast)(nil);  sib != nil;  sib = sib.next {
 		if prev != nil {
 			if sib.prev == nil {
 				return sib.error("prev sibling is nil")
@@ -88,8 +86,7 @@ func (p2 *pass2) plumb(a *ast) error {
 				return sib.error("prev sibling not %s", prev)
 			}
 		}
-		err := p2.plumb(sib)
-		if err != nil {
+		if err := p2.plumb(sib);  err != nil {
 			return err
 		}
 		prev = sib
