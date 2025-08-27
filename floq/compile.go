@@ -88,6 +88,8 @@ func (flo *flow) compile(root *ast) error {
 		compile1(a.right)
 
 		switch a.yy_tok {
+		case CAST:
+			a2str[a] = flo.uint64_string(a2ui[a.left])
 		case yy_TRUE:
 			a2bool[a] = flo.const_true()
 		case yy_FALSE:
@@ -167,6 +169,5 @@ func (flo *flow) compile(root *ast) error {
 		stmt.frisk()
 		compile1(stmt)
 	}
-
 	return nil
 }
