@@ -32,6 +32,8 @@ type osx_value struct {
 	user_usec	int32
 	sys_sec		int64
 	sys_usec	int32
+
+	is_null		bool
 }
 
 type osx_chan chan *osx_value
@@ -305,4 +307,29 @@ func (cmd *command) is_sysatt_uint64(name string) bool {
 		return true
 	}
 	return false
+}
+
+func (cmd *command) String() string {
+	return cmd.name
+}
+
+func (flo *flow) osx_sysatt_ex(in osx_chan) (out uint64_chan) {
+
+	out = make(uint64_chan)
+
+	go func() {
+		xv := <- in
+		if xv == nil {
+			return
+		}
+
+		out <- &uint64_value{
+			uint64:		uint64(xv.exit_status),
+			is_null:	xv.is_null,
+		}
+
+		flo = flo.get()
+	}()
+
+	return out
 }

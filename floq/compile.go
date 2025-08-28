@@ -1,10 +1,10 @@
 package main
 
-func compile(root *ast) (*flow, error) {
+func compile(root *ast) (*flow) {
 
 	flo := new_flow()
-	err := flo.compile(root)
-	return flo, err
+	flo.compile(root)
+	return flo
 }
 
 func new_flow() *flow {
@@ -16,20 +16,12 @@ func new_flow() *flow {
 
 //  compile a root abstract syntax tree into connected channels. data
 //  flows from least dependent leaves to most dependent "flow_stmt".
+//  assume pass1() and pass2() called.
 
-func (flo *flow) compile(root *ast) error {
+func (flo *flow) compile(root *ast) {
 
 	if root == nil {
-		return nil
-	}
-	if root.yy_tok != FLOW {
-		corrupt("root node not FLOW: %s", root.yy_name())
-	}
-	if root.left == nil {
-		corrupt("root.left is nil")
-	}
-	if root.left.yy_tok != STMT_LIST {
-		corrupt("root.left not STMT_LIST: %s", root.left.name)
+		return
 	}
 
 	//  map asts to their output channels
@@ -47,6 +39,10 @@ func (flo *flow) compile(root *ast) error {
 	//  rewritten significally from the original yacc generated tree.
 
 	compile1 = func(a *ast) {
+
+		if a == nil || a.yy_tok == DEFINE {
+			return
+		}
 
 		_corrupt := func(format string, args...interface{}) {
 			a.corrupt("compile1: " + format, args...)
@@ -82,7 +78,7 @@ func (flo *flow) compile(root *ast) error {
 			return
 		}
 
-		//  compile from leaves to branches
+		//  compile from leaves to root
 
 		compile1(a.left)
 		compile1(a.right)
@@ -153,21 +149,11 @@ func (flo *flow) compile(root *ast) error {
 			}
 			flo.osx_null(a2osx[a])
 			osx_wg.Add(1)
+		case FLOW, STMT_LIST:
 		default:
 			_corrupt("can not compile ast")
 		}
 		compile1(a.next)
 	}
-
-	//  compile each statement, skipping  nodes, which are handled
-	//  in the parser
-
-	for stmt := root.left.left;  stmt != nil;  stmt = stmt.next {
-		if stmt.yy_tok == DEFINE {
-			continue
-		}
-		stmt.frisk()
-		compile1(stmt)
-	}
-	return nil
+	compile1(root)
 }

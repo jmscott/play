@@ -43,7 +43,7 @@ func (a *ast) String() string {
 	var what string
 
 	if a == nil {
-		return "nil AST"
+		return "(ast*)(nil)"
 	}
 
 	switch a.yy_tok {
@@ -69,11 +69,14 @@ func (a *ast) String() string {
 			a.line_no,
 		)
 	case RUN:
+		cmd := a.command_ref
 		what = fmt.Sprintf(
-				"RUN:%s (ord=%d, lno=%d)",
-				a.command_ref.name,
+				"RUN:%s (ord=%d,lno=%d,lp=%s,argc=%d)",
+				cmd.name,
 				a.order,
 				a.line_no,
+				cmd.look_path,
+				len(cmd.args),
 			)
 	case STMT_LIST:
 		what = fmt.Sprintf("STMT_LIST (cnt=%d)", a.count)
@@ -105,11 +108,12 @@ func (a *ast) String() string {
 		what = "TRUE"
 	case COMMAND_SYSATT:
 		what = fmt.Sprintf(
-				"%s:%s$%s",
+				"%s:%s",
 				a.yy_name(), 
-				a.sysatt_ref.command_ref.name,
-				a.sysatt_ref.name,
+				a.sysatt_ref,
 			)
+	case PROJECT_OSX_EXIT_STATUS:
+		what = fmt.Sprintf("PROJECT_OSX_EXIT_STATUS: %s", a.sysatt_ref)
 	default:
 		if a.name == "" {
 			what = a.yy_name()
@@ -194,27 +198,6 @@ func (a *ast) is_flowable() bool {
 	return false
 }
 
-//  insure type of parent ast node is in expected yy token set...
-
-func (a *ast) frisk_parent(expect ...int) error {
-	if a == nil {
-		return errors.New("frisk_parent: unexpected nil node")
-	}
-
-	if a.parent == nil {
-		return errors.New("frisk_parent: parent is nil")
-	}
-	if !a.parent.in_tok_set(expect...) {
-		return errors.New(fmt.Sprintf(
-			"parent (%s) of %s not in yy token set: %s",
-			a.parent.yy_name(),
-			a.yy_name(),
-			yy_names(expect...),
-		))
-	}
-	return nil
-}
-
 func (a *ast) in_tok_set(expect ...int) bool {
 
 	for _, tok := range expect {
@@ -227,9 +210,16 @@ func (a *ast) in_tok_set(expect ...int) bool {
 
 func (a *ast) error(format string, args...interface{}) error {
 
+	var lno string
+
+	if a.line_no > 0 {
+		lno = fmt.Sprintf(" @%d", a.line_no)
+	}
+
 	return errors.New(
-		fmt.Sprintf("node %s: %s",
+		fmt.Sprintf("node %s%s: %s",
 			a.yy_name(),
+			lno,
 			fmt.Sprintf(format, args...),
 	))
 }
@@ -294,136 +284,6 @@ func (a *ast) yy_type() string {
 	return "unknown"
 }
 
-//  Frisk an ast tree for wiring mistakes, panic on error
-
-func (a *ast) frisk() {
-
-	//  can we invoke a.frisk() on nil *ast?
-
-	if a == nil || a.yy_tok == DEFINE {
-		return
-	}
-
-	_corrupt := func(format string, args...interface{}) {
-		a.corrupt("frisk: " + format, args...)
-	}
-
-	if a.left != nil {
-		a.left.frisk()
-	}
-	if a.right != nil {
-		a.right.frisk()
-	}
-
-	if a.is_binary() {
-		if a.left == nil {
-			_corrupt("left child is nil")
-		}
-		if a.right == nil {
-			_corrupt("right child is nil")
-		}
-	} else if a.is_unary() {
-		if a.right != nil {
-			_corrupt("right exists for unary op")
-		}
-	}
-	if a.parent == nil {
-		_corrupt("parent is nil")
-	}
-
-	ckrelop := func() {
-
-		if a.left == nil {
-			_corrupt("ckrelop: left is nil")
-		}
-
-		tok := a.left.yy_tok
-		switch tok {
-		case STRING, UINT64, yy_TRUE, yy_FALSE, NOT:
-		default:
-			_corrupt("bad relop type: %s", yy_name(tok))
-		}
-	}
-
-	switch a.yy_tok {
-	case NAME:
-	case yy_TRUE:
-	case yy_FALSE:
-	case STRING:
-	case UINT64:
-	case STMT_LIST:
-		_corrupt("unexpected STMT_LIST")
-	case CONCAT:
-	case ARGV:
-		if a.right != nil {
-			_corrupt("right node (%s) not nil", a.right.yy_name())
-		}
-
-		//  verify all args are expressions with proper parent
-		for arg := a.left;  arg != nil;  arg = arg.next {
-			if arg.parent != a {
-				fmt := "parent (%s) of arg (%s) not this arg"
-				_corrupt(
-					fmt,
-					arg.parent.yy_name(),
-					arg.yy_name(),
-				)
-			}
-			if arg.is_expression() == false {
-				_corrupt(
-					"arg node (%s) not expr",
-					arg.yy_name(),
-				)
-			}
-		}
-	case RUN:
-		/*
-		 *  Parse tree
-	         *	RUN
-		 *		nil | ARGV (cnt>0)
-		 *		nil | WHEN
-		 *			(bool expression)?
-		 */
-		al := a.left
-		if al != nil && al.yy_tok != ARGV {
-			_corrupt("left node (%s) not ARGV", al.yy_name())
-		}
-
-		//  WHEN clause must have qualification
-		w := a.right
-		if w != nil {
-			if w.yy_tok != WHEN {
-				_corrupt("right node (%s) not WHEN",w.yy_name())
-			}
-			wl := w.left
-			if wl == nil {
-				_corrupt("WHEN.left is nil")
-			}
-			if wl.is_bool() == false {
-				_corrupt(
-					"WHEN.left (%s) not bool",
-					wl.yy_name(),
-				)
-			}
-		}
-	case LT, LTE, EQ, NEQ, GTE, GT:
-		ckrelop()
-	case yy_OR:
-	case yy_AND:
-	case NOT:
-	case WHEN:
-		if a.parent.is_flowable() == false {
-			nm := a.parent.yy_name()
-			_corrupt("parent of WHEN (%s) not flowable", nm)
-		}
-		if a.left.is_bool() == false {
-			_corrupt("qualification (%s) not bool",a.left.yy_name())
-		}
-	default:
-		_corrupt("unknown ast node")
-	}
-}
-
 //  Note: outght too be "is_value()"
 func (a *ast) is_expression() bool {
 	return a.is_bool() || a.is_string() || a.is_uint64()
@@ -483,7 +343,7 @@ func (set *ast) string_element(name string) string {
 		set.corrupt("expected SET, got %s", yy_name(set.yy_tok))
 	}
 	var kid *ast
-	for kid = set.left;  kid.next != nil;  kid = kid.next {
+	for kid = set.left;  kid != nil;  kid = kid.next {
 		if kid.name != name {
 			continue
 		}

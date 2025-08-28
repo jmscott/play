@@ -62,12 +62,14 @@ func init() {
 %token	DEFINE  TUPLE  AS
 %token	EXPAND_ENV
 %token	FLOW  STMT_LIST
-%token	UINT64  STRING  NAME  COMMAND_SYSATT
+%token	UINT64  STRING  NAME
+%token	COMMAND_SYSATT  COMMAND_SYSATT_EXIT_STATUS
 %token	yy_TRUE  yy_FALSE  yy_AND  yy_OR  NOT  yy_EMPTY
+%token	yy_STRING  CAST
 %token	EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
 %token	CONCAT
 %token	WHEN
-%token	CAST_UINT64
+%token	PROJECT_OSX_EXIT_STATUS
 
 %type	<uint64>	UINT64		
 %type	<string>	STRING  name
@@ -131,6 +133,19 @@ constant:
 expr:
 	  constant
 	|
+	  expr  CAST  yy_STRING
+	  {
+	  	lex := yylex.(*yyLexState)
+
+		expr := $1
+
+		if expr.is_uint64() == false {
+			lex.mkerror("can only cast uint64 to string")
+			return 0
+		}
+	  	$$ = lex.ast(CAST, expr, lex.ast(yy_STRING))
+	  }
+	|
 	  COMMAND_REF  '$'  {
 	  	yylex.(*yyLexState).name_is_name = true
 	  }  name  {
@@ -153,16 +168,6 @@ expr:
 				name:	name,
 				command_ref:  cmd,
 		}
-		if lex.run_name == cmd.name {
-			lex.error(
-				"command: %s: att %s refers to itself",
-				cmd.name,
-				csa.sysatt_ref.full_name(),
-			)
-			return 0
-		}
-				
-		lex.depends[lex.run_name] = cmd.name
 
 		$$ = csa
 	  }
@@ -420,15 +425,10 @@ stmt:
 		return 0
 	  }
 	|
-	  RUN  COMMAND_REF
-	  {
-	  	yylex.(*yyLexState).run_name = $2.name
-	  }
-	  '('  arg_list  ')'  qualification  {
+	  RUN  COMMAND_REF  '('  arg_list  ')'  qualification  {
 	  	lex := yylex.(*yyLexState)
-		lex.run_name = ""
 
-		run := lex.ast(RUN, $5, $7)
+		run := lex.ast(RUN, $4, $6)
 		run.command_ref = $2
 
 		$$ = run
@@ -487,6 +487,7 @@ var keyword = map[string]int{
 	"not":			NOT,
 	"or":			yy_OR,
 	"run":			RUN,
+	"string":		yy_STRING,
 	"true":			yy_TRUE,
 	"tuple":		TUPLE,
 	"when":			WHEN,
@@ -506,10 +507,10 @@ type yyLexState struct {
 
 	name2ast		map[string]*ast
 	name2cmd		map[string]*command
+	name2run		map[string]*ast
 	depends			map[string]string
 
 	command_ref		*command
-	run_name		string
 	name_is_name		bool
 }
 
@@ -899,6 +900,12 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 		err = lex.mkerror("char not ascii: 0x%x", c)
 		goto LEX_ERROR
 
+	case c == ':':
+		tok, err = lex.lookahead(':', CAST, ':')
+		if err != nil {
+			goto LEX_ERROR
+		}
+		return tok
 	case c == '=':
 		//  clang "==" equality
 

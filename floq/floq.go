@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-var usage = "usage: floq [ast|compile|parse|server] path/to/prog.floq\n"
+var usage = "usage: floq [pass1|pass2|compile|frisk|server] path/to/prog.floq\n"
 
 func exit(status int) {
 	os.Exit(status)
@@ -25,8 +25,6 @@ func croak(format string, args ...interface{}) {
 	exit(16)
 }
 
-// usage: floq [server|parse|ast|compile] <schema.flow>
-
 func main() {
 
 	argv := os.Args[1:]
@@ -37,7 +35,11 @@ func main() {
 	action := argv[0]
 
 	switch action {
-		case "parse", "ast", "compile", "server":
+		case "frisk",
+		     "pass1",
+		     "pass2",
+		     "compile",
+		     "server":
 		default:
 			croak("unknown action: %s", action)
 	}
@@ -58,19 +60,28 @@ func main() {
 	}
 
 	switch action {
-	case "parse":
-
-	case "ast":
+	case "pass1":
+		root.walk_print(0, nil)
+	case "pass2":
+		if err = xpass2(root);  err != nil {
+			croak("xpass2(%s) failed: %s", floq_path, err)
+		}
 		root.walk_print(0, nil)
 
-	case "compile":
-		_, err :=  compile(root)
-		if err != nil {
-			croak("compile(%s) failed: %s", floq_path, err)
+	case "frisk":
+		if err = xpass2(root);  err != nil {
+			croak("frisk: xpass2(%s) failed: %s", floq_path, err)
 		}
+	case "compile":
+		if err := xpass2(root);  err != nil {
+			croak("compile/pass2(%s) failed: %s", floq_path, err)
+		}
+		compile(root)	//  any error is a panic()
 	case "server":
-		err := server(root)
-		if err != nil {
+		if err := xpass2(root);  err != nil {
+			croak("server/pass2(%s) failed: %s", floq_path, err)
+		}
+		if err := server(root);  err != nil {
 			croak("server(%s) failed: %s", floq_path, err) 
 		}
 	default:

@@ -330,8 +330,12 @@ func (flo *flow) const_string(s string) (out string_chan) {
 func (a *ast) is_string() bool {
 
 	switch a.yy_tok {
-	case STRING, CONCAT, EXPAND_ENV, CAST_UINT64:
+	case STRING, CONCAT, EXPAND_ENV:
 		return true
+	case CAST:
+		if a.right.yy_tok == yy_STRING {
+			return true
+		}
 	}
 	return false
 }

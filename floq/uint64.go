@@ -416,3 +416,27 @@ func (a *ast) is_uint64() bool {
 	}
 	return false
 }
+
+func (flo *flow) uint64_string(in uint64_chan) (out string_chan) {
+
+	out = make(string_chan)
+
+	go func() {
+		for {
+			u64 := <- in
+			if u64 == nil {
+				return
+			}
+			sv := &string_value{}
+			if u64.is_null == false {
+				sv.is_null = false
+				sv.string = strconv.FormatUint(u64.uint64, 10)
+			}
+			out <- sv
+
+			flo = flo.get()
+		}
+	}()
+
+	return out
+}

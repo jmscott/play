@@ -26,6 +26,9 @@ func tsort(graph []string) (order []string) {
 
 		source := pair[0]
 		target := pair[1]
+		if source == target {
+			return nil
+		}
 
 		node[source] = true
 		node[target] = true

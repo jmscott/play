@@ -2,10 +2,7 @@ package main
 
 func server(root *ast) error {
 
-	flo, err := compile(root) 
-	if err != nil {
-		return err
-	}
+	flo := compile(root) 
 
 	go func() {
 		osx_wg.Wait()

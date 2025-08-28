@@ -14,6 +14,11 @@ func (sa *sysatt) is_uint64() bool {
 	return false
 }
 
+func (sa *sysatt) String() string {
+
+	return sa.command_ref.name + "$" + sa.name
+}
+
 func (sa *sysatt) full_name() string {
 	if sa.command_ref != nil {
 		return sa.command_ref.name + "$" + sa.name
