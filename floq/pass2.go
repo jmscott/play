@@ -26,26 +26,6 @@ type pass2 struct {
 	active_run	*ast
 }
 
-/*
-func (rw *rewire) command_sysatt(a *ast) {
-
-	if a == nil {
-		return
-	}
-
-	if a.yy_tok != COMMAND_SYSATT {
-		a.left.rewire_command_sysatt()
-		a.right.rewire_command_sysatt()
-		return
-	}
-
-	sa := a.sysatt_ref
-	if sa.name != "exit_status" {
-		a.corrupt("rewire_command_sysatt: impossible att: %s", sa)
-	}
-	a.yy_tok = PROJECT_OSX_EXIT_STATUS
-}
-*/
 
 //  depth first check of node pointers
 
@@ -289,6 +269,32 @@ func (p2 *pass2) look_path(a *ast) error {
 	return p2.look_path(a.next)
 }
 
+func (p2 *pass2) RUN_parent_ARGV(a *ast) {
+
+	if a == nil {
+		return
+	}
+	return
+	p2.RUN_parent_ARGV(a.left)
+	p2.RUN_parent_ARGV(a.right)
+	if a.yy_tok == ARGV {
+		p := a.parent
+		if p.yy_tok != RUN {
+			a.corrupt("parent not RUN: %s", a.parent)
+		}
+		cmd := p.command_ref
+		if cmd == nil {
+			p.corrupt("command_ref is nil")
+		}
+		cnt := a.count
+		pcnt := uint32(len(cmd.args))
+		if pcnt != cnt + 1 {
+			a.corrupt("parent RUN arf=%d != cnt=%d+1", pcnt, cnt)
+		}
+	}
+	p2.RUN_parent_ARGV(a.next)
+}
+
 func xpass2(root *ast) error {
 
 	if root == nil {
@@ -343,5 +349,7 @@ func xpass2(root *ast) error {
 	if err := p2.look_path(root);  err != nil {
 		return err
 	}
+
+	p2.RUN_parent_ARGV(root)
 	return nil
 }
