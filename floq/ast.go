@@ -53,7 +53,7 @@ func (a *ast) String() string {
 		what = fmt.Sprintf("ARGV (cnt=%d)", a.count)
 	case ARRAY:
 		if a.name == "" {
-			what = fmt.Sprintf("ARRAY (argc=%d)", a.count)
+			what = fmt.Sprintf("ARRAY (cnt=%d)", a.count)
 		} else {
 			what = fmt.Sprintf(
 				"ARRAY:%s (cnt=%d)",
