@@ -17,6 +17,7 @@ type command struct {
 	look_path	string
 	args		[]string
 	env		[]string
+	ref_count	uint8
 }
 
 //  result of waiting on an executing command
@@ -332,4 +333,41 @@ func (flo *flow) osx_sysatt_ex(in osx_chan) (out uint64_chan) {
 	}()
 
 	return out
+}
+
+func (flo *flow) osx_fanout(in osx_chan, count uint8) (out []osx_chan) {
+
+	out = make([]osx_chan, count)
+	for i := uint8(0); i < count; i++ {
+		out[i] = make(osx_chan)
+	}
+	go func() {
+
+		defer func() {
+			for _, a := range out {
+				close(a)
+			}
+		}()
+
+		for {
+			xv := <-in
+			if xv == nil {
+				return
+			}
+
+			//  broadcast to channels in output slice
+
+			for _, xc := range out {
+				go func() {
+					xc <- xv
+				}()
+			}
+		}
+	}()
+	return out
+}
+
+func (a *ast) is_ref() bool {
+
+	return a.yy_tok == COMMAND_SYSATT || a.yy_tok == COMMAND_SYSATT_EXIT_STATUS
 }

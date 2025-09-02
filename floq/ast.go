@@ -380,3 +380,17 @@ func (set *ast) array_string_element(name string) []string {
 	}
 	return ar[:cnt]
 }
+
+func (a *ast) yy_ancestor(yy_tok int) *ast {
+
+	if a == nil {
+		return nil
+	}
+	if a.yy_tok == yy_tok {
+		return a
+	}
+	if a.parent == nil {
+		return nil
+	}
+	return a.parent.yy_ancestor(yy_tok)
+}

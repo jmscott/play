@@ -430,6 +430,7 @@ stmt:
 
 		run := lex.ast(RUN, $4, $6)
 		run.command_ref = $2
+		run.name = run.command_ref.name
 
 		$$ = run
 	  }

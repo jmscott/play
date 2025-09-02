@@ -23,7 +23,7 @@ type pass2 struct {
 	depends		map[string]string
 	run_sysatt	map[*command][]*ast
 
-	active_run	*ast
+	run_call	map[*command]bool
 }
 
 
@@ -99,14 +99,19 @@ func (p2 *pass2) map_run() {
 
 //  find all sysatt references to command in "run <command>" statement
 
-func (p2 *pass2) xrun_sysatt(a *ast) {
+func (p2 *pass2) xrun_sysatt(a *ast) error {
+
 
 	if a ==  nil {
-		return
+		return nil
 	}
 
-	p2.xrun_sysatt(a.left)
-	p2.xrun_sysatt(a.right)
+	if err := p2.xrun_sysatt(a.left);  err != nil {
+		return err
+	}
+	if err := p2.xrun_sysatt(a.right);  err != nil {
+		return err
+	}
 	
 	_die := func(format string, args...interface{}) {
 		a.corrupt("pass2: xrun_sysatt: " + format, args...)
@@ -122,10 +127,10 @@ func (p2 *pass2) xrun_sysatt(a *ast) {
 		if cmd == nil {
 			_die("command_ref is nil")
 		}
-		if p2.active_run != nil {
-			_die("active_run not nil")
+		if p2.run_call[cmd] {
+			return a.error("run more than once: %s", cmd.name)
 		}
-		p2.active_run = a
+		p2.run_call[cmd] = true
 
 	//  add sysatt to list of what references this active run
 
@@ -139,14 +144,11 @@ func (p2 *pass2) xrun_sysatt(a *ast) {
 			_die("sysatt_ref.command_ref is nil")
 		}
 		if len(p2.run_sysatt[cmd]) == 255 {
-			_die("sysatt ref > 255: %s", cmd)
+			return a.error("too many ref to coammnd: %s", cmd.name)
 		}
 		p2.run_sysatt[cmd] = append(p2.run_sysatt[cmd], a)
-
-	case DEFINE:
-		return
 	}
-	p2.xrun_sysatt(a.next)
+	return p2.xrun_sysatt(a.next)
 }
 
 func (p2 *pass2) walk_depends(a *ast) error {
@@ -178,10 +180,15 @@ func (p2 *pass2) walk_depends(a *ast) error {
 			return _err("sysatt_ref.command_ref is nil")
 		}
 
+		run := a.yy_ancestor(RUN)
+		if run == nil {
+			a.corrupt("no ancestor RUN node")
+		}
+
 		if p2.run[cmd.name] == nil {
 			return _err("command never run: %s", cmd.name)
 		}
-		p2.depends[cmd.name] = p2.active_run.command_ref.name
+		p2.depends[run.name] = cmd.name
 	}
 	if err := p2.walk_depends(a.left);  err != nil {
 		return err
@@ -215,10 +222,6 @@ func (p2 *pass2) cycle() error {
 		if stmt.yy_tok != RUN {
 			continue
 		}
-		if p2.active_run != nil {
-			return stmt.error("active run not nil")
-		}
-		p2.active_run = stmt
 
 		if err := p2.walk_depends(stmt.left);  err != nil {
 			return err
@@ -227,7 +230,6 @@ func (p2 *pass2) cycle() error {
 		if err := p2.walk_depends(stmt.right);  err != nil {
 			return err
 		}
-		p2.active_run = nil
 	}
 
 	//  check for cyclic dependencies
@@ -269,14 +271,14 @@ func (p2 *pass2) look_path(a *ast) error {
 	return p2.look_path(a.next)
 }
 
-func (p2 *pass2) RUN_parent_ARGV(a *ast) {
+func (p2 *pass2) run_parent_argv(a *ast) {
 
 	if a == nil {
 		return
 	}
 	return
-	p2.RUN_parent_ARGV(a.left)
-	p2.RUN_parent_ARGV(a.right)
+	p2.run_parent_argv(a.left)
+	p2.run_parent_argv(a.right)
 	if a.yy_tok == ARGV {
 		p := a.parent
 		if p.yy_tok != RUN {
@@ -292,7 +294,7 @@ func (p2 *pass2) RUN_parent_ARGV(a *ast) {
 			a.corrupt("parent RUN arf=%d != cnt=%d+1", pcnt, cnt)
 		}
 	}
-	p2.RUN_parent_ARGV(a.next)
+	p2.run_parent_argv(a.next)
 }
 
 func xpass2(root *ast) error {
@@ -330,6 +332,7 @@ func xpass2(root *ast) error {
 		run:		make(map[string]*ast),
 		depends:	make(map[string]string),
 		run_sysatt:	make(map[*command][]*ast),
+		run_call:	make(map[*command]bool),
 	}
 
 	if err := p2.plumb(root.left);  err != nil {
@@ -350,6 +353,11 @@ func xpass2(root *ast) error {
 		return err
 	}
 
-	p2.RUN_parent_ARGV(root)
+	//  check all references to RUN
+	if err := p2.xrun_sysatt(root);  err != nil {
+		return err
+	}
+
+	p2.run_parent_argv(root)
 	return nil
 }
