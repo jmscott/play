@@ -13,6 +13,7 @@ type ast struct {
 	order		uint32
 	count		uint32
 	name		string
+	ref_count	uint16
 
 	//  children
 	left		*ast
@@ -46,17 +47,29 @@ func (a *ast) String() string {
 		return "(ast*)(nil)"
 	}
 
+	colon := ":"
+	if a.left == nil && a.right != nil {
+		colon = "\\"
+	} else if a.left != nil && a.right == nil {
+		colon = "/"
+	}
+
 	switch a.yy_tok {
 	case 0:
 		a.corrupt("ast has yy_tok == 0")
 	case ARGV:
-		what = fmt.Sprintf("ARGV (cnt=%d)", a.count)
+		what = fmt.Sprintf("ARGV%s (cnt=%d)", colon, a.count)
 	case ARRAY:
 		if a.name == "" {
-			what = fmt.Sprintf("ARRAY (cnt=%d)", a.count)
+			what = fmt.Sprintf(
+				"ARRAY%s (cnt=%d)",
+				colon,
+				a.count,
+			)
 		} else {
 			what = fmt.Sprintf(
-				"ARRAY:%s (cnt=%d)",
+				"ARRAY%s%s (cnt=%d)",
+				colon,
 				a.name,
 				a.count,
 			)
@@ -64,27 +77,35 @@ func (a *ast) String() string {
 
 	case DEFINE:
 		what = fmt.Sprintf(
-			"DEFINE (ord=%d, lno=%d)",
+			"DEFINE%s (ord=%d, lno=%d)",
+			colon,
 			a.order,
 			a.line_no,
 		)
 	case RUN:
 		cmd := a.command_ref
 		what = fmt.Sprintf(
-				"RUN:%s (ord=%d,lno=%d,lp=%s,argc=%d)",
+				"RUN%s%s (ord=%d,lno=%d,lp=%s,rcnt=%d,argc=%d)",
+				colon,
 				cmd.name,
 				a.order,
 				a.line_no,
 				cmd.look_path,
+				a.ref_count,
 				len(cmd.args),
 			)
 	case STMT_LIST:
-		what = fmt.Sprintf("STMT_LIST (cnt=%d)", a.count)
+		what = fmt.Sprintf("STMT_LIST%s(cnt=%d)", colon, a.count)
 	case yy_SET:
 		if a.name == "" {
-			what = fmt.Sprintf("SET (cnt=%d)", a.count)
+			what = fmt.Sprintf("SET%s (cnt=%d)", colon, a.count)
 		} else {
-			what = fmt.Sprintf("SET:%s (cnt=%d)", a.name, a.count)
+			what = fmt.Sprintf(
+					"SET%s%s (cnt=%d)",
+					colon,
+					a.name,
+					a.count,
+			)
 		}
 	case STRING:
 		if a.name == "" {
@@ -116,9 +137,9 @@ func (a *ast) String() string {
 		what = fmt.Sprintf("PROJECT_OSX_EXIT_STATUS: %s", a.sysatt_ref)
 	default:
 		if a.name == "" {
-			what = a.yy_name()
+			what = a.yy_name() + colon
 		} else {
-			what = fmt.Sprintf("%s:%s", a.yy_name(), a.name)
+			what = fmt.Sprintf("%s%s%s", a.yy_name(), colon, a.name)
 		}
 	}
 	return what
