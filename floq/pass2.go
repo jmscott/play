@@ -134,7 +134,7 @@ func (p2 *pass2) xrun_sysatt(a *ast) error {
 
 	//  add sysatt to list of what references this active run
 
-	case COMMAND_SYSATT, COMMAND_SYSATT_EXIT_STATUS:
+	case COMMAND_SYSATT, COMMAND_SYSATT_EXIT_CODE:
 		sa := a.sysatt_ref
 		if sa == nil {
 			_die("sysatt_ref is nil")
@@ -291,10 +291,30 @@ func (p2 *pass2) run_parent_argv(a *ast) {
 		cnt := a.count
 		pcnt := uint32(len(cmd.args))
 		if pcnt != cnt + 1 {
-			a.corrupt("parent RUN arf=%d != cnt=%d+1", pcnt, cnt)
+			a.corrupt("parent RUN pcnt=%d != cnt=%d+1", pcnt, cnt)
 		}
 	}
 	p2.run_parent_argv(a.next)
+}
+
+func (p2 *pass2) argv_is_string(a *ast) error {
+	if a == nil {
+		return nil
+	}
+	if err := p2.argv_is_string(a.left);  err != nil {
+		return err
+	}
+	if err := p2.argv_is_string(a.right);  err != nil {
+		return err
+	}
+	if a.yy_tok == ARGV {
+		for arg := a.left;  arg != nil;  arg = arg.next {
+			if arg.is_string() == false {
+				return a.error("arg #%d not string", arg.order)
+			}
+		}
+	}
+	return p2.argv_is_string(a.next)
 }
 
 func xpass2(root *ast) error {
@@ -355,6 +375,11 @@ func xpass2(root *ast) error {
 
 	//  check all references to RUN
 	if err := p2.xrun_sysatt(root);  err != nil {
+		return err
+	}
+
+	//  all arguments to argv must be a string
+	if err := p2.argv_is_string(root);  err != nil {
 		return err
 	}
 
