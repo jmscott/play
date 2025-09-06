@@ -63,13 +63,13 @@ func init() {
 %token	EXPAND_ENV
 %token	FLOW  STMT_LIST
 %token	UINT64  STRING  NAME
-%token	COMMAND_SYSATT  COMMAND_SYSATT_EXIT_STATUS
+%token	COMMAND_SYSATT  COMMAND_SYSATT_EXIT_CODE
 %token	yy_TRUE  yy_FALSE  yy_AND  yy_OR  NOT  yy_EMPTY
 %token	yy_STRING  CAST
 %token	EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
 %token	CONCAT
 %token	WHEN
-%token	PROJECT_OSX_EXIT_STATUS
+%token	PROJECT_OSX_EXIT_CODE
 
 %type	<uint64>	UINT64		
 %type	<string>	STRING  name
@@ -140,7 +140,7 @@ expr:
 		expr := $1
 
 		if expr.is_uint64() == false {
-			lex.mkerror("can only cast uint64 to string")
+			lex.error("can only cast uint64 to string")
 			return 0
 		}
 	  	$$ = lex.ast(CAST, expr, lex.ast(yy_STRING))
@@ -154,7 +154,7 @@ expr:
 		name := $4
 
 		if cmd.is_sysatt(name) == false {
-			lex.mkerror(
+			lex.error(
 				"command: %s, unknown system attribute: %s",
 				cmd.name,
 				name,
@@ -431,7 +431,6 @@ stmt:
 		run := lex.ast(RUN, $4, $6)
 		run.command_ref = $2
 		run.name = run.command_ref.name
-
 		$$ = run
 	  }
 	;
@@ -456,23 +455,11 @@ arg_list:
 	|
 	  expr
 	  {
-	  	lex := yylex.(*yyLexState)
-
-	  	if $1.is_string() == false {
-			lex.error("arg not string")
-			return 0
-		}
-		$$ = lex.ast(ARGV, $1)
+		$$ = yylex.(*yyLexState).ast(ARGV, $1)
 	  }
 	|
 	  arg_list  ','  expr
 	  {
-	  	lex := yylex.(*yyLexState)
-
-	  	if $3.is_string() == false {
-			lex.error("arg not string")
-			return 0
-		}
 		$1.push_left($3)
 	  }
 	;

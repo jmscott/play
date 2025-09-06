@@ -25,7 +25,7 @@ type osx_value struct {
 	*command
 	argv		[]string
 	err		error
-	exit_status	int
+	exit_code	int
 	pid		int
 	start_time	time.Time
 	wall_duration	time.Duration
@@ -73,7 +73,7 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 		ru := cx.ProcessState.SysUsage().(*syscall.Rusage)
 
 		val.pid = cx.Process.Pid
-		val.exit_status = cx.ProcessState.ExitCode()
+		val.exit_code = cx.ProcessState.ExitCode()
 		val.user_sec = ru.Utime.Sec
 		val.user_usec = ru.Utime.Usec
 		val.sys_sec = ru.Stime.Sec
@@ -296,7 +296,7 @@ func (flo *flow) osx_null(in osx_chan) {
 func (cmd *command) is_sysatt(name string) bool {
 
 	switch name {
-	case "exit_status":
+	case "exit_code":
 		return true
 	}
 	return false
@@ -304,7 +304,7 @@ func (cmd *command) is_sysatt(name string) bool {
 
 func (cmd *command) is_sysatt_uint64(name string) bool {
 	switch name {
-	case "exit_status":
+	case "exit_code":
 		return true
 	}
 	return false
@@ -325,7 +325,7 @@ func (flo *flow) osx_sysatt_ex(in osx_chan) (out uint64_chan) {
 		}
 
 		out <- &uint64_value{
-			uint64:		uint64(xv.exit_status),
+			uint64:		uint64(xv.exit_code),
 			is_null:	xv.is_null,
 		}
 
@@ -369,5 +369,5 @@ func (flo *flow) osx_fanout(in osx_chan, count uint8) (out []osx_chan) {
 
 func (a *ast) is_ref() bool {
 
-	return a.yy_tok == COMMAND_SYSATT || a.yy_tok == COMMAND_SYSATT_EXIT_STATUS
+	return a.yy_tok == COMMAND_SYSATT || a.yy_tok == COMMAND_SYSATT_EXIT_CODE
 }
