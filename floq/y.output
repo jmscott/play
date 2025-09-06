@@ -63,7 +63,7 @@ state 6
 state 7
 	stmt_list:  stmt ';'.    (44)
 
-	.  reduce 44 (src line 439)
+	.  reduce 44 (src line 440)
 
 
 state 8
@@ -85,7 +85,7 @@ state 9
 state 10
 	stmt:  RUN name.    (42)
 
-	.  reduce 42 (src line 419)
+	.  reduce 42 (src line 420)
 
 
 state 11
@@ -98,13 +98,13 @@ state 11
 state 12
 	name:  NAME.    (26)
 
-	.  reduce 26 (src line 296)
+	.  reduce 26 (src line 297)
 
 
 state 13
 	stmt_list:  stmt_list stmt ';'.    (45)
 
-	.  reduce 45 (src line 444)
+	.  reduce 45 (src line 445)
 
 
 state 14
@@ -133,7 +133,7 @@ state 16
 	yy_FALSE  shift 29
 	NOT  shift 23
 	'('  shift 24
-	.  reduce 46 (src line 451)
+	.  reduce 46 (src line 452)
 
 	arg_list  goto 19
 	constant  goto 21
@@ -191,13 +191,13 @@ state 20
 	MATCH  shift 44
 	NOMATCH  shift 45
 	CONCAT  shift 46
-	.  reduce 47 (src line 456)
+	.  reduce 47 (src line 457)
 
 
 state 21
 	expr:  constant.    (7)
 
-	.  reduce 7 (src line 133)
+	.  reduce 7 (src line 134)
 
 
 state 22
@@ -242,13 +242,13 @@ state 24
 state 25
 	constant:  UINT64.    (2)
 
-	.  reduce 2 (src line 103)
+	.  reduce 2 (src line 104)
 
 
 state 26
 	constant:  STRING.    (3)
 
-	.  reduce 3 (src line 109)
+	.  reduce 3 (src line 110)
 
 
 state 27
@@ -261,19 +261,19 @@ state 27
 state 28
 	constant:  yy_TRUE.    (5)
 
-	.  reduce 5 (src line 121)
+	.  reduce 5 (src line 122)
 
 
 state 29
 	constant:  yy_FALSE.    (6)
 
-	.  reduce 6 (src line 126)
+	.  reduce 6 (src line 127)
 
 
 state 30
 	stmt:  DEFINE TUPLE name AS set.    (40)
 
-	.  reduce 40 (src line 371)
+	.  reduce 40 (src line 372)
 
 
 state 31
@@ -288,7 +288,7 @@ state 31
 	yy_FALSE  shift 29
 	'['  shift 58
 	'{'  shift 31
-	.  reduce 36 (src line 347)
+	.  reduce 36 (src line 348)
 
 	name  goto 54
 	element  goto 52
@@ -301,7 +301,7 @@ state 31
 state 32
 	stmt:  DEFINE COMMAND name AS set.    (41)
 
-	.  reduce 41 (src line 385)
+	.  reduce 41 (src line 386)
 
 
 state 33
@@ -309,7 +309,7 @@ state 33
 	qualification: .    (24)
 
 	WHEN  shift 60
-	.  reduce 24 (src line 277)
+	.  reduce 24 (src line 278)
 
 	qualification  goto 59
 
@@ -516,7 +516,7 @@ state 47
 	expr:  COMMAND_REF '$'.$$9 name 
 	$$9: .    (9)
 
-	.  reduce 9 (src line 148)
+	.  reduce 9 (src line 149)
 
 	$$9  goto 74
 
@@ -537,7 +537,7 @@ state 48
 	expr:  NOT expr.    (22)
 
 	CAST  shift 35
-	.  reduce 22 (src line 262)
+	.  reduce 22 (src line 263)
 
 
 state 49
@@ -574,7 +574,7 @@ state 49
 state 50
 	constant:  EXPAND_ENV STRING.    (4)
 
-	.  reduce 4 (src line 115)
+	.  reduce 4 (src line 116)
 
 
 state 51
@@ -589,13 +589,13 @@ state 51
 state 52
 	element_list:  element.    (37)
 
-	.  reduce 37 (src line 352)
+	.  reduce 37 (src line 353)
 
 
 state 53
 	element:  array_element.    (34)
 
-	.  reduce 34 (src line 337)
+	.  reduce 34 (src line 338)
 
 
 state 54
@@ -608,19 +608,19 @@ state 54
 state 55
 	array_element:  constant.    (27)
 
-	.  reduce 27 (src line 306)
+	.  reduce 27 (src line 307)
 
 
 state 56
 	array_element:  array.    (28)
 
-	.  reduce 28 (src line 308)
+	.  reduce 28 (src line 309)
 
 
 state 57
 	array_element:  set.    (29)
 
-	.  reduce 29 (src line 310)
+	.  reduce 29 (src line 311)
 
 
 state 58
@@ -634,7 +634,7 @@ state 58
 	yy_FALSE  shift 29
 	'['  shift 58
 	'{'  shift 31
-	.  reduce 31 (src line 320)
+	.  reduce 31 (src line 321)
 
 	array_element  goto 80
 	array_element_list  goto 79
@@ -645,7 +645,7 @@ state 58
 state 59
 	stmt:  RUN COMMAND_REF '(' arg_list ')' qualification.    (43)
 
-	.  reduce 43 (src line 427)
+	.  reduce 43 (src line 428)
 
 
 state 60
@@ -691,13 +691,13 @@ state 61
 	MATCH  shift 44
 	NOMATCH  shift 45
 	CONCAT  shift 46
-	.  reduce 48 (src line 467)
+	.  reduce 48 (src line 468)
 
 
 state 62
 	expr:  expr CAST yy_STRING.    (8)
 
-	.  reduce 8 (src line 135)
+	.  reduce 8 (src line 136)
 
 
 63: shift/reduce conflict (shift 35(0), red'n 11(1)) on CAST
@@ -726,7 +726,7 @@ state 63
 	MATCH  shift 44
 	NOMATCH  shift 45
 	CONCAT  shift 46
-	.  reduce 11 (src line 174)
+	.  reduce 11 (src line 175)
 
 
 64: shift/reduce conflict (shift 35(0), red'n 12(1)) on CAST
@@ -755,7 +755,7 @@ state 64
 	MATCH  shift 44
 	NOMATCH  shift 45
 	CONCAT  shift 46
-	.  reduce 12 (src line 182)
+	.  reduce 12 (src line 183)
 
 
 65: shift/reduce conflict (shift 35(0), red'n 13(2)) on CAST
@@ -778,7 +778,7 @@ state 65
 	MATCH  shift 44
 	NOMATCH  shift 45
 	CONCAT  shift 46
-	.  reduce 13 (src line 190)
+	.  reduce 13 (src line 191)
 
 
 66: shift/reduce conflict (shift 35(0), red'n 14(2)) on CAST
@@ -801,7 +801,7 @@ state 66
 	MATCH  shift 44
 	NOMATCH  shift 45
 	CONCAT  shift 46
-	.  reduce 14 (src line 198)
+	.  reduce 14 (src line 199)
 
 
 67: shift/reduce conflict (shift 35(0), red'n 15(2)) on CAST
@@ -824,7 +824,7 @@ state 67
 	MATCH  shift 44
 	NOMATCH  shift 45
 	CONCAT  shift 46
-	.  reduce 15 (src line 206)
+	.  reduce 15 (src line 207)
 
 
 68: shift/reduce conflict (shift 35(0), red'n 16(2)) on CAST
@@ -847,7 +847,7 @@ state 68
 	MATCH  shift 44
 	NOMATCH  shift 45
 	CONCAT  shift 46
-	.  reduce 16 (src line 214)
+	.  reduce 16 (src line 215)
 
 
 69: shift/reduce conflict (shift 35(0), red'n 17(2)) on CAST
@@ -870,7 +870,7 @@ state 69
 	MATCH  shift 44
 	NOMATCH  shift 45
 	CONCAT  shift 46
-	.  reduce 17 (src line 222)
+	.  reduce 17 (src line 223)
 
 
 70: shift/reduce conflict (shift 35(0), red'n 18(2)) on CAST
@@ -893,7 +893,7 @@ state 70
 	MATCH  shift 44
 	NOMATCH  shift 45
 	CONCAT  shift 46
-	.  reduce 18 (src line 230)
+	.  reduce 18 (src line 231)
 
 
 71: shift/reduce conflict (shift 35(0), red'n 19(3)) on CAST
@@ -914,7 +914,7 @@ state 71
 
 	CAST  shift 35
 	CONCAT  shift 46
-	.  reduce 19 (src line 238)
+	.  reduce 19 (src line 239)
 
 
 72: shift/reduce conflict (shift 35(0), red'n 20(3)) on CAST
@@ -935,7 +935,7 @@ state 72
 
 	CAST  shift 35
 	CONCAT  shift 46
-	.  reduce 20 (src line 246)
+	.  reduce 20 (src line 247)
 
 
 73: shift/reduce conflict (shift 35(0), red'n 21(4)) on CAST
@@ -955,7 +955,7 @@ state 73
 	expr:  expr CONCAT expr.    (21)
 
 	CAST  shift 35
-	.  reduce 21 (src line 254)
+	.  reduce 21 (src line 255)
 
 
 state 74
@@ -969,7 +969,7 @@ state 74
 state 75
 	expr:  '(' expr ')'.    (23)
 
-	.  reduce 23 (src line 270)
+	.  reduce 23 (src line 271)
 
 
 state 76
@@ -995,7 +995,7 @@ state 76
 state 77
 	set:  '{' element_list '}'.    (39)
 
-	.  reduce 39 (src line 364)
+	.  reduce 39 (src line 365)
 
 
 state 78
@@ -1027,7 +1027,7 @@ state 79
 state 80
 	array_element_list:  array_element.    (32)
 
-	.  reduce 32 (src line 325)
+	.  reduce 32 (src line 326)
 
 
 state 81
@@ -1057,31 +1057,31 @@ state 81
 	MATCH  shift 44
 	NOMATCH  shift 45
 	CONCAT  shift 46
-	.  reduce 25 (src line 282)
+	.  reduce 25 (src line 283)
 
 
 state 82
 	expr:  COMMAND_REF '$' $$9 name.    (10)
 
-	.  reduce 10 (src line 151)
+	.  reduce 10 (src line 152)
 
 
 state 83
 	element_list:  element_list ',' element.    (38)
 
-	.  reduce 38 (src line 357)
+	.  reduce 38 (src line 358)
 
 
 state 84
 	element:  name ':' array_element.    (35)
 
-	.  reduce 35 (src line 339)
+	.  reduce 35 (src line 340)
 
 
 state 85
 	array:  '[' array_element_list ']'.    (30)
 
-	.  reduce 30 (src line 313)
+	.  reduce 30 (src line 314)
 
 
 state 86
@@ -1104,7 +1104,7 @@ state 86
 state 87
 	array_element_list:  array_element_list ',' array_element.    (33)
 
-	.  reduce 33 (src line 330)
+	.  reduce 33 (src line 331)
 
 
 51 terminals, 16 nonterminals
