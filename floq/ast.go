@@ -156,10 +156,9 @@ func (a *ast) String() string {
 	case PROJECT_OSX_EXIT_CODE:
 		what = fmt.Sprintf("PROJECT_OSX_EXIT_CODE: %s", a.sysatt_ref)
 	default:
-		if a.name == "" {
-			what = a.yy_name() + colon
-		} else {
-			what = fmt.Sprintf("%s%s%s", a.yy_name(), colon, a.name)
+		what = fmt.Sprintf("%s%s%s", a.yy_name(), colon, a.name)
+		if a.order > 0 {
+			what = what + fmt.Sprintf(" (ord=%d)", a.order)
 		}
 	}
 	return what
