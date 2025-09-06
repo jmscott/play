@@ -29,60 +29,61 @@ type pass2 struct {
 
 //  depth first check of node pointers
 
-func (p2 *pass2) plumb(a *ast) error {
+func (p2 *pass2) plumb(a *ast) {
 
 	if a == nil {
-		return nil
+		return
 	}
 	if a.parent == nil {
-		return a.error("parent is nil")
+		a.corrupt("parent is nil")
 	}
 
-	plumb_kid := func(what string, kid *ast) error {
+	plumb_kid := func(what string, kid *ast) {
 		if kid == nil {
-			return nil
+			return
 		}
-		what = fmt.Sprintf("%s: %s", kid)
+		what = fmt.Sprintf("%s: %s", what, kid)
 		if kid.prev != nil {
-			return kid.error("%s: prev %s not nil", what, kid.prev)
+			kid.corrupt("%s: prev %s not nil", what, kid.prev)
 		}
 		if kid.parent != a {
-			return kid.error("%s:  parent not %s", what, a)
+			kid.corrupt("%s: parent not %s", what, a)
 		}
-		if err := p2.plumb(kid);  err != nil {
-			return err
-		}
-		return nil
+		p2.plumb(kid)
 	}
 
-	if err := plumb_kid("left", a.left);  err != nil {
-		return err
-	}
-	if err := plumb_kid("right", a.right);  err != nil {
-		return err
-	}
+	plumb_kid("left", a.left)
+	plumb_kid("right", a.right)
 
 	if a.prev != nil {	//  in middle of sibling list
-		return nil
+
+		//  Note: can we test order?
+		return
 	}
 
-	//  plumb each sibling
+	if a.prev != nil {
+		p := a.prev
+		if p.next == nil {
+			p.corrupt("next is nil in sib list")
+		}
+		if p.next != a {
+			p.corrupt("next is wrong sib: %s", a)
+		}
+	}
 
+	//
 	for sib, prev := a.next, (*ast)(nil);  sib != nil;  sib = sib.next {
 		if prev != nil {
 			if sib.prev == nil {
-				return sib.error("prev sibling is nil")
+				sib.corrupt("sib.prev sibling is nil")
 			}
 			if sib.prev != prev {
-				return sib.error("prev sibling not %s", prev)
+				sib.corrupt("prev sibling not %s", prev)
 			}
 		}
-		if err := p2.plumb(sib);  err != nil {
-			return err
-		}
+		p2.plumb(sib)
 		prev = sib
 	}
-	return nil
 }
 
 func (p2 *pass2) map_run() {
@@ -409,12 +410,8 @@ func xpass2(root *ast) error {
 		run_call:	make(map[*command]bool),
 	}
 
-	if err := p2.plumb(root.left);  err != nil {
-		return err
-	}
-	if err := p2.plumb(root.right);  err != nil {
-		return err
-	}
+	p2.plumb(root.left)
+	p2.plumb(root.right)
 
 	p2.map_run()
 
@@ -450,11 +447,7 @@ func xpass2(root *ast) error {
 	 *	would be nice to specify error occured in after rewiring
 	 */
 
-	if err := p2.plumb(root.left);  err != nil {
-		return err
-	}
-	if err := p2.plumb(root.right);  err != nil {
-		return err
-	}
+	p2.plumb(root.left)
+	p2.plumb(root.right)
 	return nil
 }
