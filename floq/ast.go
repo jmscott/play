@@ -84,16 +84,26 @@ func (a *ast) String() string {
 		)
 	case RUN:
 		cmd := a.command_ref
-		what = fmt.Sprintf(
-				"RUN%s%s (ord=%d,lno=%d,lp=%s,rcnt=%d,argc=%d)",
-				colon,
-				cmd.name,
-				a.order,
-				a.line_no,
-				cmd.look_path,
-				a.ref_count,
-				len(cmd.args),
+		if cmd == nil {
+			what = fmt.Sprintf(
+					"RUN%s (ord=%d,lno=%d,rcnt=%d)",
+					colon,
+					a.order,
+					a.line_no,
+					a.ref_count,
 			)
+		} else {
+			what = fmt.Sprintf(
+				"RUN%s%s (ord=%d,lno=%d,lp=%s,rcnt=%d,argc=%d)",
+					colon,
+					cmd.name,
+					a.order,
+					a.line_no,
+					cmd.look_path,
+					a.ref_count,
+					len(cmd.args),
+				)
+		}
 	case STMT_LIST:
 		what = fmt.Sprintf("STMT_LIST%s(cnt=%d)", colon, a.count)
 	case yy_SET:
@@ -109,9 +119,18 @@ func (a *ast) String() string {
 		}
 	case STRING:
 		if a.name == "" {
-			what = fmt.Sprintf("STRING %s", a.string)
+			what = fmt.Sprintf(
+					"STRING (ord=%d) %s",
+					a.order,
+					a.string,
+			)
 		} else {
-			what = fmt.Sprintf("STRING:%s %s", a.name, a.string)
+			what = fmt.Sprintf(
+					"STRING:%s (ord=%d) %s",
+					a.name,
+					a.order,
+					a.string,
+			)
 		}
 	case UINT64:
 		if a.name == "" {
