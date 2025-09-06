@@ -317,6 +317,60 @@ func (p2 *pass2) argv_is_string(a *ast) error {
 	return p2.argv_is_string(a.next)
 }
 
+func (p2 *pass2) cast(a *ast) error {
+
+	if a == nil {
+		return nil
+	}
+	if err := p2.cast(a.left);  err != nil {
+		return err
+	}
+	if err := p2.cast(a.right);  err != nil {
+		return err
+	}
+	if a.yy_tok == CAST {
+		switch {
+		case a.left.is_uint64():
+			a.yy_tok = CAST_UINT64
+		case a.left.is_bool():
+			a.yy_tok = CAST_BOOL
+
+		//  casting a string to a string, so replace the CAST
+		//  with the string expression
+		case a.left.is_string():
+			//  Note: replace with a.hoist()
+
+			var exp *ast	//  the string expression of CAST
+			p := a.parent
+			switch {
+			case a.parent.left == a:
+				exp = a.left
+				p.left = exp
+			case a.parent.right == a:
+				exp = a.right
+				p.right = exp
+			default:
+				a.corrupt("CAST: parent no point to me")
+			}
+			exp.parent = p
+			exp.order = a.order
+			if a.prev != nil {
+				a.prev.next = exp
+				exp.prev = a.prev
+			}
+			if a.next != nil {
+				a.next.prev = exp
+				exp.next = a.next
+			}
+			exp.prev = a.prev
+			exp.next = a.next
+		default:
+			a.corrupt("CAST: unknown left type: %s", a.left)
+		}
+	}
+	return p2.cast(a.next)
+}
+
 func xpass2(root *ast) error {
 
 	if root == nil {
@@ -378,11 +432,29 @@ func xpass2(root *ast) error {
 		return err
 	}
 
+	if err := p2.cast(root);  err != nil {
+		return err
+	}
+
 	//  all arguments to argv must be a string
 	if err := p2.argv_is_string(root);  err != nil {
 		return err
 	}
 
 	p2.run_parent_argv(root)
+
+	/*
+	 *  second pass check of tree plumbing
+	 *
+	 *  Note:
+	 *	would be nice to specify error occured in after rewiring
+	 */
+
+	if err := p2.plumb(root.left);  err != nil {
+		return err
+	}
+	if err := p2.plumb(root.right);  err != nil {
+		return err
+	}
 	return nil
 }

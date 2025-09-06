@@ -332,7 +332,7 @@ func (a *ast) is_string() bool {
 	switch a.yy_tok {
 	case STRING, CONCAT, EXPAND_ENV:
 		return true
-	case CAST:
+	case CAST, CAST_UINT64, CAST_BOOL:
 		if a.right.yy_tok == yy_STRING {
 			return true
 		}
