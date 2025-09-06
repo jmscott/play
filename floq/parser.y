@@ -87,7 +87,7 @@ func init() {
 %left			EQ  NEQ  GT  GTE  LT  LTE
 %left			MATCH  NOMATCH
 %left			CONCAT
-%right			NOT  EXPAND_ENV
+%right			NOT  EXPAND_ENV  CAST  CAST_BOOL  CAST_UINT64
 
 %%
 
@@ -133,16 +133,12 @@ constant:
 expr:
 	  constant
 	|
-	  expr  CAST  yy_STRING
+	  expr  CAST  yy_STRING  %prec CAST
 	  {
 	  	lex := yylex.(*yyLexState)
 
 		expr := $1
 
-		if expr.is_uint64() == false {
-			lex.error("can only cast uint64 to string")
-			return 0
-		}
 	  	$$ = lex.ast(CAST, expr, lex.ast(yy_STRING))
 	  }
 	|
@@ -803,7 +799,7 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 		if left.is_bool() == false {
 			lex.line_no = left.line_no
 			lex.error(
-				"%s: left expr not bool: got %s, want BOOL",
+				"%s: left expr not bool: got %s",
 				yy_name(tok),
 				left.yy_name(),
 			)
@@ -812,7 +808,7 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 		if right.is_bool() == false {
 			lex.line_no = right.line_no
 			lex.error(
-				"%s: right expr not bool: got %s, want BOOL",
+				"%s: right expr not bool: got %s",
 				yy_name(tok),
 				right.yy_name(),
 			)
