@@ -4,6 +4,7 @@ type sysatt struct {
 
 	name		string
 	command_ref	*command
+	ref_count	int
 }
 
 func (sa *sysatt) is_uint64() bool {

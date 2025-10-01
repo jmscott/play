@@ -148,10 +148,12 @@ func (a *ast) String() string {
 		what = "TRUE"
 	case COMMAND_SYSATT:
 		what = fmt.Sprintf(
-				"%s:%s (ord=%d)",
+				"%s%s%s (ord=%d,rcnt=%d)",
 				a.yy_name(), 
+				colon,
 				a.sysatt_ref,
 				a.order,
+				a.sysatt_ref.ref_count,
 			)
 	case PROJECT_OSX_EXIT_CODE:
 		what = fmt.Sprintf("PROJECT_OSX_EXIT_CODE: %s", a.sysatt_ref)
@@ -324,7 +326,6 @@ func (a *ast) yy_type() string {
 	return "unknown"
 }
 
-//  Note: outght too be "is_value()"
 func (a *ast) is_expression() bool {
 	return a.is_bool() || a.is_string() || a.is_uint64()
 }

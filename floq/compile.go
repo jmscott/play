@@ -71,6 +71,10 @@ func (cmp *compilation) compile(a *ast) {
 	if a == nil {
 		return
 	}
+	if a.yy_tok == DEFINE {
+		cmp.compile(a.next)
+		return
+	}
 
 	_corrupt := func(format string, args...interface{}) {
 		a.corrupt("compile: " + format, args...)
@@ -90,12 +94,18 @@ func (cmp *compilation) compile(a *ast) {
 	a2osx := cmp.a2osx
 
 	switch a.yy_tok {
-	case CAST:
-		a2str[a] = flo.uint64_string(a2ui[a.left])
+	case CAST_UINT64:
+		a2str[a] = flo.cast_uint64(a2ui[a.left])
+	case CAST_BOOL:
+		a2str[a] = flo.cast_bool(a2bool[a.left])
+	case CAST_STRING:
+		a2str[a] = flo.cast_string(a2str[a.left])
 	case yy_TRUE:
 		a2bool[a] = flo.const_true()
 	case yy_FALSE:
 		a2bool[a] = flo.const_false()
+	case yy_STRING:
+		//  in a CAST ::string
 	case STRING:
 		a2str[a] = flo.const_string(a.string)
 	case UINT64:
@@ -152,7 +162,7 @@ func (cmp *compilation) compile(a *ast) {
 			flo.osx_null(a2osx[a])
 		}
 		osx_wg.Add(1)
-	case FLOW, STMT_LIST:
+	case FLOW, STMT_LIST, DEFINE:
 	default:
 		_corrupt("can not compile ast")
 	}

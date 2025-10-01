@@ -16,8 +16,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
-	"slices"
 	"strconv"
 	"unicode"
 )
@@ -69,7 +67,7 @@ func init() {
 %token	EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
 %token	CONCAT
 %token	WHEN
-%token	PROJECT_OSX_EXIT_CODE
+%token	PROJECT_OSX_EXIT_CODE  CAST_BOOL  CAST_UINT64  CAST_STRING
 
 %type	<uint64>	UINT64		
 %type	<string>	STRING  name
@@ -87,7 +85,7 @@ func init() {
 %left			EQ  NEQ  GT  GTE  LT  LTE
 %left			MATCH  NOMATCH
 %left			CONCAT
-%right			NOT  EXPAND_ENV  CAST  CAST_BOOL  CAST_UINT64
+%right			NOT  EXPAND_ENV  CAST
 
 %%
 
@@ -157,14 +155,12 @@ expr:
 			)
 			return 0
 		}
-
 		csa := lex.ast(COMMAND_SYSATT)
 		csa.name = name
 		csa.sysatt_ref = &sysatt{
-				name:	name,
-				command_ref:  cmd,
-		}
-
+					name:           name,
+					command_ref:    cmd,
+				}
 		$$ = csa
 	  }
 	|
@@ -397,17 +393,6 @@ stmt:
 				}
 		cf := cmd.command_ref
 		lex.name2cmd[name] = cf
-		look_path, err := exec.LookPath(cf.path)
-		if err != nil {
-			lex.error("LookPath(%s) failed: %s", cf.path, err)
-			return 0
-		}
-		cmd.command_ref.look_path = look_path
-		cmd.command_ref.args = slices.Insert(
-						cmd.command_ref.args,
-						0,
-						look_path,
-					)				
 		lex.name2ast[name] = cmd
 
 		$$ = define
@@ -491,6 +476,7 @@ type yyLexState struct {
 
 	name2ast		map[string]*ast
 	name2cmd		map[string]*command
+	name2satt		map[string]*sysatt
 	name2run		map[string]*ast
 	depends			map[string]string
 
@@ -1027,6 +1013,7 @@ func parse(in io.RuneReader) (*ast, error) {
 		line_no:	1,
 		name2ast:	make(map[string]*ast),
 		name2cmd:	make(map[string]*command),
+		name2satt:	make(map[string]*sysatt),
 		depends:	make(map[string]string),
 		ast_root:	&ast{
 					yy_tok:		FLOW,

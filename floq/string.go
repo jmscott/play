@@ -332,10 +332,27 @@ func (a *ast) is_string() bool {
 	switch a.yy_tok {
 	case STRING, CONCAT, EXPAND_ENV:
 		return true
-	case CAST, CAST_UINT64, CAST_BOOL:
+	case CAST, CAST_UINT64, CAST_BOOL, CAST_STRING:
 		if a.right.yy_tok == yy_STRING {
 			return true
 		}
 	}
 	return false
+}
+
+/*
+ *  Note:
+ *	cast string to string ... a no-op till better tree manipulation
+ */
+func (flo *flow) cast_string(in string_chan) (out string_chan) {
+
+	out = make(string_chan)
+
+	go func() {
+		for {
+			out <-<-in
+			flo = flo.get()
+		}
+	}()
+	return out
 }

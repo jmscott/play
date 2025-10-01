@@ -145,7 +145,7 @@ func (p2 *pass2) xrun_sysatt(a *ast) error {
 			_die("sysatt_ref.command_ref is nil")
 		}
 		if len(p2.run_sysatt[cmd]) == 255 {
-			return a.error("too many ref to coammnd: %s", cmd.name)
+			return a.error("too many ref to command: %s", cmd.name)
 		}
 		p2.run_sysatt[cmd] = append(p2.run_sysatt[cmd], a)
 	}
@@ -311,7 +311,11 @@ func (p2 *pass2) argv_is_string(a *ast) error {
 	if a.yy_tok == ARGV {
 		for arg := a.left;  arg != nil;  arg = arg.next {
 			if arg.is_string() == false {
-				return a.error("arg #%d not string", arg.order)
+				return a.error(
+					"arg #%d not string: %s",
+					arg.order,
+					arg,
+				)
 			}
 		}
 	}
@@ -330,43 +334,16 @@ func (p2 *pass2) cast(a *ast) error {
 		return err
 	}
 	if a.yy_tok == CAST {
+		l := a.left
 		switch {
-		case a.left.is_uint64():
+		case l.is_uint64():
 			a.yy_tok = CAST_UINT64
-		case a.left.is_bool():
+		case l.is_bool():
 			a.yy_tok = CAST_BOOL
-
-		//  casting a string to a string, so replace the CAST
-		//  with the string expression
-		case a.left.is_string():
-			//  Note: replace with a.hoist()
-
-			var exp *ast	//  the string expression of CAST
-			p := a.parent
-			switch {
-			case a.parent.left == a:
-				exp = a.left
-				p.left = exp
-			case a.parent.right == a:
-				exp = a.right
-				p.right = exp
-			default:
-				a.corrupt("CAST: parent no point to me")
-			}
-			exp.parent = p
-			exp.order = a.order
-			if a.prev != nil {
-				a.prev.next = exp
-				exp.prev = a.prev
-			}
-			if a.next != nil {
-				a.next.prev = exp
-				exp.next = a.next
-			}
-			exp.prev = a.prev
-			exp.next = a.next
+		case l.is_string():
+			a.yy_tok = CAST_STRING
 		default:
-			a.corrupt("CAST: unknown left type: %s", a.left)
+			a.corrupt("CAST: unknown left type: %s", l)
 		}
 	}
 	return p2.cast(a.next)
@@ -432,6 +409,8 @@ func xpass2(root *ast) error {
 	if err := p2.cast(root);  err != nil {
 		return err
 	}
+
+//for key, val := range p2.run_sysatt{
 
 	//  all arguments to argv must be a string
 	if err := p2.argv_is_string(root);  err != nil {

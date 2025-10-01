@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+//  Note: should NOT be global
 var osx_wg	sync.WaitGroup
 
 type command struct {
