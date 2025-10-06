@@ -93,13 +93,15 @@ func (a *ast) String() string {
 					a.ref_count,
 			)
 		} else {
+			format := "RUN%s%s " +
+				"(ord=%d,lno=%d," +
+				"rcnt=%d,cmdac=%d)"
 			what = fmt.Sprintf(
-				"RUN%s%s (ord=%d,lno=%d,lp=%s,rcnt=%d,argc=%d)",
+					format,
 					colon,
 					cmd.name,
 					a.order,
 					a.line_no,
-					cmd.look_path,
 					a.ref_count,
 					len(cmd.args),
 				)
