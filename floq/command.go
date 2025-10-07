@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"os/exec"
-	"syscall"
+	"strings"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -315,7 +317,9 @@ func (cmd *command) String() string {
 	return cmd.name
 }
 
-func (flo *flow) osx_sysatt_ex(in osx_chan) (out uint64_chan) {
+//  project the command$<att_uint64> from an osx_record
+
+func (flo *flow) osx_proj_exit_code(in osx_chan) (out uint64_chan) {
 
 	out = make(uint64_chan)
 
@@ -342,6 +346,7 @@ func (flo *flow) osx_fanout(in osx_chan, count uint8) (out []osx_chan) {
 	for i := uint8(0); i < count; i++ {
 		out[i] = make(osx_chan)
 	}
+
 	go func() {
 
 		defer func() {
@@ -363,12 +368,28 @@ func (flo *flow) osx_fanout(in osx_chan, count uint8) (out []osx_chan) {
 					xc <- xv
 				}()
 			}
+			flo = flo.get()
 		}
 	}()
 	return out
 }
+func (cmd *command) string(indent int) string {
 
-func (a *ast) is_ref() bool {
-
-	return a.yy_tok == COMMAND_SYSATT || a.yy_tok == COMMAND_SYSATT_EXIT_CODE
+	if cmd == nil {
+		return "nil command"
+	}
+	tab := strings.Repeat("\t", indent)
+	return fmt.Sprintf(`%s: {
+%s      path: %s
+%s look_path: %s
+%s ref_count: %d
+%s         @: %p
+%s  }`,		
+		cmd.name,
+		tab, cmd.path,
+		tab, cmd.look_path,
+		tab, cmd.ref_count,
+		tab, cmd,
+		strings.Repeat("\t", indent - 1),
+	)
 }

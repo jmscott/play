@@ -13,7 +13,7 @@ type ast struct {
 	order		uint32
 	count		uint32
 	name		string
-	ref_count	uint16
+	ref_count	uint8
 
 	//  children
 	left		*ast
@@ -83,29 +83,14 @@ func (a *ast) String() string {
 			a.line_no,
 		)
 	case RUN:
-		cmd := a.command_ref
-		if cmd == nil {
-			what = fmt.Sprintf(
-					"RUN%s (ord=%d,lno=%d,rcnt=%d)",
-					colon,
-					a.order,
-					a.line_no,
-					a.ref_count,
+		what = fmt.Sprintf(
+				"RUN%s (ord=%d,lno=%d,rcnt=%d) ",
+				colon,
+				a.order,
+				a.line_no,
+				a.ref_count,
 			)
-		} else {
-			format := "RUN%s%s " +
-				"(ord=%d,lno=%d," +
-				"rcnt=%d,cmdac=%d)"
-			what = fmt.Sprintf(
-					format,
-					colon,
-					cmd.name,
-					a.order,
-					a.line_no,
-					a.ref_count,
-					len(cmd.args),
-				)
-		}
+		what += a.command_ref.string(2)
 	case STMT_LIST:
 		what = fmt.Sprintf("STMT_LIST%s(cnt=%d)", colon, a.count)
 	case yy_SET:
@@ -148,17 +133,13 @@ func (a *ast) String() string {
 		what = "FALSE"
 	case yy_TRUE:
 		what = "TRUE"
-	case COMMAND_SYSATT:
-		what = fmt.Sprintf(
-				"%s%s%s (ord=%d,rcnt=%d)",
-				a.yy_name(), 
-				colon,
-				a.sysatt_ref,
-				a.order,
-				a.sysatt_ref.ref_count,
-			)
 	case PROJECT_OSX_EXIT_CODE:
-		what = fmt.Sprintf("PROJECT_OSX_EXIT_CODE: %s", a.sysatt_ref)
+		sa := a.sysatt_ref
+		what = fmt.Sprintf(
+			"PROJECT_OSX_EXIT_CODE: %s: %s\n",
+			sa,
+			sa.string(2),
+		)
 	default:
 		what = fmt.Sprintf("%s%s%s", a.yy_name(), colon, a.name)
 		if a.order > 0 {
@@ -229,14 +210,6 @@ func (a *ast) is_binary() bool {
 func (a *ast) is_unary() bool {
 	switch a.yy_tok {
 	case NOT, WHEN:
-		return true
-	}
-	return false
-}
-
-func (a *ast) is_flowable() bool {
-	switch a.yy_tok {
-	case RUN:
 		return true
 	}
 	return false
