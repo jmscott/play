@@ -71,7 +71,6 @@ func (p2 *pass2) plumb(a *ast) {
 		}
 	}
 
-	//
 	for sib, prev := a.next, (*ast)(nil);  sib != nil;  sib = sib.next {
 		if prev != nil {
 			if sib.prev == nil {
@@ -98,10 +97,34 @@ func (p2 *pass2) map_run() {
 	}
 }
 
+func (p2 *pass2) project_osx(a *ast) {
+	if a == nil {
+		return
+	}
+	p2.project_osx(a.left)
+	p2.project_osx(a.right)
+
+	if a.yy_tok == PROJECT_OSX {
+		sa := a.sysatt_ref
+		if sa == nil {
+			a.corrupt("project_osx: sysatt_ref == nil")
+		}
+		cmd := sa.command_ref
+		cmd.ref_count++
+		switch sa.name {
+		case "exit_code":
+			a.yy_tok = PROJECT_OSX_EXIT_CODE
+		default:
+			a.corrupt("unexpected sysatt: %s", a.sysatt_ref.name)
+		}
+		sa.call_order = cmd.ref_count
+	}
+	p2.project_osx(a.next)
+}
+
 //  find all sysatt references to command in "run <command>" statement
 
 func (p2 *pass2) xrun_sysatt(a *ast) error {
-
 
 	if a ==  nil {
 		return nil
@@ -135,7 +158,7 @@ func (p2 *pass2) xrun_sysatt(a *ast) error {
 
 	//  add sysatt to list of what references this active run
 
-	case COMMAND_SYSATT, COMMAND_SYSATT_EXIT_CODE:
+	case PROJECT_OSX_EXIT_CODE, PROJECT_OSX:
 		sa := a.sysatt_ref
 		if sa == nil {
 			_die("sysatt_ref is nil")
@@ -152,7 +175,7 @@ func (p2 *pass2) xrun_sysatt(a *ast) error {
 	return p2.xrun_sysatt(a.next)
 }
 
-func (p2 *pass2) walk_depends(a *ast) error {
+func (p2 *pass2) run_depends(a *ast) error {
 
 	if a == nil {
 		return nil
@@ -171,7 +194,7 @@ func (p2 *pass2) walk_depends(a *ast) error {
 		if rn != a {
 			return _err("node in p2.run unexpected: %s", rn)
 		}
-	case COMMAND_SYSATT:
+	case PROJECT_OSX_EXIT_CODE:
 		sa := a.sysatt_ref
 		if sa == nil {
 			return _err("sysatt_ref is nil")
@@ -181,6 +204,7 @@ func (p2 *pass2) walk_depends(a *ast) error {
 			return _err("sysatt_ref.command_ref is nil")
 		}
 
+		//  Note:  cheap sanity test
 		run := a.yy_ancestor(RUN)
 		if run == nil {
 			a.corrupt("no ancestor RUN node")
@@ -190,11 +214,12 @@ func (p2 *pass2) walk_depends(a *ast) error {
 			return _err("command never run: %s", cmd.name)
 		}
 		p2.depends[run.name] = cmd.name
+		run.ref_count++
 	}
-	if err := p2.walk_depends(a.left);  err != nil {
+	if err := p2.run_depends(a.left);  err != nil {
 		return err
 	}
-	if err := p2.walk_depends(a.right);  err != nil {
+	if err := p2.run_depends(a.right);  err != nil {
 		return err
 	}
 	if a.prev != nil {	//  in middle of sibling list
@@ -202,7 +227,7 @@ func (p2 *pass2) walk_depends(a *ast) error {
 	}
 
 	for sib := a.next;  sib != nil;  sib = sib.next {
-		if err := p2.walk_depends(sib);  err != nil {
+		if err := p2.run_depends(sib);  err != nil {
 			return err
 		}
 	}
@@ -224,11 +249,11 @@ func (p2 *pass2) cycle() error {
 			continue
 		}
 
-		if err := p2.walk_depends(stmt.left);  err != nil {
+		if err := p2.run_depends(stmt.left);  err != nil {
 			return err
 		}
 
-		if err := p2.walk_depends(stmt.right);  err != nil {
+		if err := p2.run_depends(stmt.right);  err != nil {
 			return err
 		}
 	}
@@ -277,7 +302,6 @@ func (p2 *pass2) run_parent_argv(a *ast) {
 	if a == nil {
 		return
 	}
-	return
 	p2.run_parent_argv(a.left)
 	p2.run_parent_argv(a.right)
 	if a.yy_tok == ARGV {
@@ -287,12 +311,7 @@ func (p2 *pass2) run_parent_argv(a *ast) {
 		}
 		cmd := p.command_ref
 		if cmd == nil {
-			p.corrupt("command_ref is nil")
-		}
-		cnt := a.count
-		pcnt := uint32(len(cmd.args))
-		if pcnt != cnt + 1 {
-			a.corrupt("parent RUN pcnt=%d != cnt=%d+1", pcnt, cnt)
+			a.corrupt("parent command_ref is nil: %s", p)
 		}
 	}
 	p2.run_parent_argv(a.next)
@@ -390,6 +409,7 @@ func xpass2(root *ast) error {
 	p2.plumb(root.left)
 	p2.plumb(root.right)
 
+	p2.project_osx(root)
 	p2.map_run()
 
 	if err := p2.cycle();  err != nil {
@@ -409,8 +429,6 @@ func xpass2(root *ast) error {
 	if err := p2.cast(root);  err != nil {
 		return err
 	}
-
-//for key, val := range p2.run_sysatt{
 
 	//  all arguments to argv must be a string
 	if err := p2.argv_is_string(root);  err != nil {

@@ -11,6 +11,8 @@ type compilation struct {
 	a2ui		map[*ast]uint64_chan
 	a2osx		map[*ast]osx_chan
 	a2argv		map[*ast]argv_chan
+	a2osxfo		map[*ast][]osx_chan
+	cmd2fo		map[*command][]osx_chan
 }
 
 func compile(root *ast) (*flow) {
@@ -26,6 +28,8 @@ func compile(root *ast) (*flow) {
 			a2ui:		make(map[*ast]uint64_chan),
 			a2osx:		make(map[*ast]osx_chan),
 			a2argv:		make(map[*ast]argv_chan),
+			a2osxfo:	make(map[*ast][]osx_chan),
+			cmd2fo:		make(map[*command][]osx_chan),
 	}
 	cmp.compile(root)
 	return cmp.flo
@@ -79,19 +83,58 @@ func (cmp *compilation) compile(a *ast) {
 	_corrupt := func(format string, args...interface{}) {
 		a.corrupt("compile: " + format, args...)
 	}
+	flo := cmp.flo
+	a2osx := cmp.a2osx
+	a2str := cmp.a2str
+	a2ui := cmp.a2ui
+	a2bool := cmp.a2bool
+	a2argv := cmp.a2argv
+	a2osxfo := cmp.a2osxfo
+	cmd2fo := cmp.cmd2fo
+
+	//  compile RUN before expressions
+	if a.yy_tok == RUN {
+		argv := a.left
+		when := a.right
+		cmd := a.command_ref
+
+		if argv == nil {
+			if when == nil {
+				a2osx[a] = flo.osx0(cmd)
+			} else {
+				a2osx[a] = flo.osx0w(cmd, a2bool[when])
+			}
+		} else {
+			if when == nil {
+				a2osx[a] = flo.osx(cmd, a2argv[argv])
+			} else {
+				a2osx[a] = flo.osxw(
+						cmd,
+						a2argv[argv],
+						a2bool[when],
+					)
+			}
+		}
+		if cmd.ref_count == 0 {
+			flo.osx_null(a2osx[a])
+		} else {
+			//  fanout osx record
+			a2osxfo[a] = flo.osx_fanout(a2osx[a], cmd.ref_count)
+
+			//  map command to fanout 
+			if cmd2fo[cmd] != nil {
+				_corrupt("command %s: fanout exists", cmd.name)
+			}
+			cmd2fo[cmd] = a2osxfo[a]
+		}
+		osx_wg.Add(1)
+	}
 
 	//  compile from leaves to root
 
 	cmp.compile(a.left)
 	cmp.compile(a.right)
 
-	flo := cmp.flo
-
-	a2str := cmp.a2str
-	a2ui := cmp.a2ui
-	a2bool := cmp.a2bool
-	a2argv := cmp.a2argv
-	a2osx := cmp.a2osx
 
 	switch a.yy_tok {
 	case CAST_UINT64:
@@ -137,31 +180,6 @@ func (cmp *compilation) compile(a *ast) {
 	case WHEN:
 		a2bool[a] = a2bool[a.left]
 	case RUN:
-		argv := a.left
-		when := a.right
-		cmd := a.command_ref
-
-		if argv == nil {
-			if when == nil {
-				a2osx[a] = flo.osx0(cmd)
-			} else {
-				a2osx[a] = flo.osx0w(cmd, a2bool[when])
-			}
-		} else {
-			if when == nil {
-				a2osx[a] = flo.osx(cmd, a2argv[argv])
-			} else {
-				a2osx[a] = flo.osxw(
-						cmd,
-						a2argv[argv],
-						a2bool[when],
-					)
-			}
-		}
-		if cmd.ref_count == 0 {
-			flo.osx_null(a2osx[a])
-		}
-		osx_wg.Add(1)
 	case FLOW, STMT_LIST, DEFINE:
 	default:
 		_corrupt("can not compile ast")

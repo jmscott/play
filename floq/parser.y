@@ -61,7 +61,7 @@ func init() {
 %token	EXPAND_ENV
 %token	FLOW  STMT_LIST
 %token	UINT64  STRING  NAME
-%token	COMMAND_SYSATT  COMMAND_SYSATT_EXIT_CODE
+%token	PROJECT_OSX
 %token	yy_TRUE  yy_FALSE  yy_AND  yy_OR  NOT  yy_EMPTY
 %token	yy_STRING  CAST
 %token	EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
@@ -79,7 +79,7 @@ func init() {
 %type	<ast>		constant  expr  qualification
 %type	<ast>		stmt  stmt_list
 %type	<command_ref>	COMMAND_REF
-%type	<sysatt>	COMMAND_SYSATT
+%type	<sysatt>	PROJECT_OSX
 
 %left			yy_AND  yy_OR
 %left			EQ  NEQ  GT  GTE  LT  LTE
@@ -155,7 +155,7 @@ expr:
 			)
 			return 0
 		}
-		csa := lex.ast(COMMAND_SYSATT)
+		csa := lex.ast(PROJECT_OSX)
 		csa.name = name
 		csa.sysatt_ref = &sysatt{
 					name:           name,

@@ -409,9 +409,9 @@ func (flo *flow) cast_uint64(in uint64_chan) (out string_chan) {
 func (a *ast) is_uint64() bool {
 
 	switch a.yy_tok {
-	case UINT64:
+	case UINT64, PROJECT_OSX_EXIT_CODE:
 		return true
-	case COMMAND_SYSATT:
+	case PROJECT_OSX:
 		return a.command_ref.is_sysatt_uint64(a.name)
 	}
 	return false
