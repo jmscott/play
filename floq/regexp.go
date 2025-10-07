@@ -38,6 +38,7 @@ func (flo *flow) match(left string_chan, re *regexp.Regexp) (out bool_chan) {
 
 	return out
 }
+
 //  negate match string against compiled regular expression
 //
 //	"abc" =~ "[b]"
