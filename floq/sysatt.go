@@ -43,12 +43,11 @@ func (sa *sysatt) string(indent int) string {
 	return fmt.Sprintf(`{
 %scommand_ref: %s@%p,
 %s call_order: %d
+%s          @: %p
 %s  }`,
-		tab,
-		cmd,
-		cmd,
-		tab,
-		sa.call_order,
+		tab, cmd, cmd,
+		tab, sa.call_order,
+		tab, sa,
 		strings.Repeat("\t", indent - 1),
 	)
 }

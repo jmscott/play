@@ -382,12 +382,16 @@ func (cmd *command) string(indent int) string {
 	return fmt.Sprintf(`%s: {
 %s      path: %s
 %s look_path: %s
+%s      args: %s
+%s       env: %s
 %s ref_count: %d
 %s         @: %p
 %s  }`,		
 		cmd.name,
 		tab, cmd.path,
 		tab, cmd.look_path,
+		tab, strings.Join(cmd.args, ", "),
+		tab, strings.Join(cmd.env, ", "),
 		tab, cmd.ref_count,
 		tab, cmd,
 		strings.Repeat("\t", indent - 1),
