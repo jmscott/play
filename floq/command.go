@@ -53,8 +53,12 @@ type argv_value struct {
 //  argv_chan is channel of *argv_values;  nil indicates closure
 type argv_chan chan *argv_value
 
-//  exec an os command process
-
+/*
+ *  exec an os command process
+ *
+ *  Note:
+ *	signals not handled correctly!
+ */
 func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 	cx := exec.Command(
 			cmd.look_path,
@@ -69,24 +73,38 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 	}
 
 	val.err = cx.Run()
-	if out == nil {
+	if out == nil {			// osx record not referenced
 		return
 	}
-	if val.err == nil {		//  process failed to start
-		ru := cx.ProcessState.SysUsage().(*syscall.Rusage)
-
+	if cx.Process != nil {
 		val.pid = cx.Process.Pid
+	}
+	if cx.ProcessState != nil {
 		val.exit_code = cx.ProcessState.ExitCode()
-		val.user_sec = ru.Utime.Sec
-		val.user_usec = ru.Utime.Usec
-		val.sys_sec = ru.Stime.Sec
-		val.sys_usec = ru.Stime.Usec
-		val.wall_duration = time.Since(val.start_time)
+
+		ru := cx.ProcessState.SysUsage().(*syscall.Rusage)
+		if ru != nil {
+			val.user_sec = ru.Utime.Sec
+			val.user_usec = ru.Utime.Usec
+			val.sys_sec = ru.Stime.Sec
+			val.sys_usec = ru.Stime.Usec
+			val.wall_duration = time.Since(val.start_time)
+		}
+	}
+
+	//  extract actual exit code from posix process
+	//
+	//  Note: signals not handled!
+
+	if val.err != nil {
+		if exiterr, ok := val.err.(*exec.ExitError); ok {
+			val.exit_code = exiterr.ExitCode()
+		}
 	}
 	out <- val
 }
 
-//  run a process with no argv
+//  run a process with no argv nor when predicate
 
 func (flo *flow) osx0(cmd *command) (out osx_chan) {
 
@@ -103,7 +121,7 @@ func (flo *flow) osx0(cmd *command) (out osx_chan) {
 	return out
 }
 
-//  run a process with argv
+//  run a process with argv and no when predicate
 
 func (flo *flow) osx(cmd *command, in argv_chan) (out osx_chan) {
 
@@ -161,6 +179,7 @@ func (flo *flow) osxw(
 		for {
 			var bv *bool_value
 			var av *argv_value
+
 			//  wait for both argv[] and when clause to finish
 			for bv == nil || av == nil {
 				select {
@@ -180,7 +199,6 @@ func (flo *flow) osxw(
 }
 
 //  read strings from multiple input channels and write assmbled argv[]
-//  any null value renders the whole argv[] null
 
 func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 
@@ -230,7 +248,7 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 				wg.Wait()
 				close(mout)
 			}()
-			return
+			return mout
 		}()
 
 		for {
@@ -247,8 +265,8 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 
 				a := <-merge
 
-				//  Note: compile generates error for
-				//        arg_value{}
+				//  Note: golang compile generates error for
+				//        arg_value{} without parens
 
 				if a == (arg_value{}) {
 					return
