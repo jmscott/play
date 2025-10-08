@@ -1,5 +1,9 @@
 package main
 
+import (
+	"fmt"
+)
+
 //  A rummy records for temporal + tri-state logic: true, false, null, waiting
 //  There are known knowns, there are known unknowns ...
 //
@@ -25,6 +29,23 @@ const (
 	//  known to be true
 	rum_TRUE = rummy(0x8)
 )
+
+func (rum rummy) String() string {
+	switch rum {
+	case rum_NIL:
+		return "NIL"
+	case rum_WAIT:
+		return "WAIT"
+	case rum_NULL:
+		return "NULL"
+	case rum_FALSE:
+		return "FALSE"
+	case rum_TRUE:
+		return "TRUE"
+	default:
+		return fmt.Sprintf("0x%02x", rum)
+	}
+}
 
 //  state tables for logical and/or
 var and = [137]rummy{}
@@ -279,7 +300,6 @@ func (flo *flow) bool2(
 				is_null: is_null,
 				flow:    flo,
 			}
-
 			flo = flo.get()
 		}
 	}()
