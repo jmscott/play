@@ -1,5 +1,7 @@
 package main
 
+// Note: change uint64 to uint63!  for compatiblebilit with signed uint63!
+
 import (
 	"strconv"
 )
@@ -119,7 +121,7 @@ func neq_ui64(flo *flow, left, right uint64_chan) (out bool_chan) {
 	return flo.neq_ui64(left, right)
 }
 
-//  compare two uint64s for left lexically greater than right
+//  compare two uint64s for left numerically greater than right
 
 func (flo *flow) gt_ui64(left, right uint64_chan) (out bool_chan) {
 
@@ -193,7 +195,7 @@ func gte_ui64(flo *flow, left, right uint64_chan) (out bool_chan) {
 	return flo.gte_ui64(left, right)
 }
 
-//  compare two uint64s for left lexically less than right
+//  compare two uint64s for left numerically less than right
 
 func (flo *flow) lt_ui64(left, right uint64_chan) (out bool_chan) {
 
@@ -230,7 +232,7 @@ func lt_ui64(flo *flow, left, right uint64_chan) (out bool_chan) {
 	return flo.lt_ui64(left, right)
 }
 
-//  compare two uint64s for left lexically less than or equal to right
+//  compare two uint64s for left numerically less than or equal to right
 
 func (flo *flow) lte_ui64(left, right uint64_chan) (out bool_chan) {
 
@@ -251,7 +253,7 @@ func (flo *flow) lte_ui64(left, right uint64_chan) (out bool_chan) {
 				is_null:	lv.is_null || rv.is_null,
 				flow:		flo,
 			}
-			if !bv.is_null {
+			if bv.is_null == false {
 				bv.bool = lv.uint64 <= rv.uint64
 			}
 			out <- bv
@@ -394,9 +396,14 @@ func (flo *flow) cast_uint64(in uint64_chan) (out string_chan) {
 	out = make(string_chan)
 	go func() {
 		for {
+			var s string
+
 			uiv := <- in
+			if uiv.is_null == false { 
+				s = strconv.FormatUint(uiv.uint64, 10)
+			}
 			out <- &string_value{
-				string:	strconv.FormatUint(uiv.uint64, 10),
+				string:	s,
 				is_null:uiv.is_null,
 			}
 			flo = flo.get()

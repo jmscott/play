@@ -44,10 +44,10 @@ func (sa *sysatt) string(indent int) string {
 %scommand_ref: %s@%p,
 %s call_order: %d
 %s          @: %p
-%s  }`,
+%s}`,
 		tab, cmd, cmd,
 		tab, sa.call_order,
 		tab, sa,
-		strings.Repeat("\t", indent - 1),
+		strings.Repeat("\t", indent),
 	)
 }

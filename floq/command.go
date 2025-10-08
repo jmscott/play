@@ -9,7 +9,10 @@ import (
 	"time"
 )
 
-//  Note: should NOT be global
+//  wait for all processes to stop then floq exits.
+//
+//  Note: why var osx_wf global?  why not in flow struct?
+
 var osx_wg	sync.WaitGroup
 
 type command struct {
@@ -104,7 +107,7 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 	out <- val
 }
 
-//  run a process with no argv nor when predicate
+//  run a process with no argv nor "when" predicate
 
 func (flo *flow) osx0(cmd *command) (out osx_chan) {
 
@@ -121,22 +124,32 @@ func (flo *flow) osx0(cmd *command) (out osx_chan) {
 	return out
 }
 
-//  run a process with argv and no when predicate
+//  run a process with an argv and no "when" predicate
 
 func (flo *flow) osx(cmd *command, in argv_chan) (out osx_chan) {
 
 	out = make(osx_chan)
 
+	null_osx := &osx_value{
+			is_null:	true,
+			command:	cmd,
+	}
 	go func() {
 		for {
 			av := <-in
 			if av == nil {
 				return
 			}
+
+			//  Note: huh.  when is argv[] null?
+
 			if av.is_null == false {
 				flo.osx_run(cmd, av.argv, out)
+			} else {
+				out <- null_osx
 			}
 			osx_wg.Done()
+
 			flo = flo.get()
 		}
 	}()
@@ -151,13 +164,20 @@ func (flo *flow) osx0w(cmd *command, when bool_chan) (out osx_chan) {
 
 	out = make(osx_chan)
 
+	null_osx := &osx_value{
+			is_null:	true,
+			command:	cmd,
+	}
 	go func() {
 		for {
 			bv := <- when
 			if bv.bool {
 				flo.osx_run(cmd, nil, out)
+			} else {
+				out <- null_osx
 			}
 			osx_wg.Done()
+
 			flo = flo.get()
 		}
 	}()
@@ -165,7 +185,7 @@ func (flo *flow) osx0w(cmd *command, when bool_chan) (out osx_chan) {
 	return out
 }
 
-//  conditionally run a command process with argv
+//  run a command process with argv and "when" predicate
 
 func (flo *flow) osxw(
 	cmd *command,
@@ -175,6 +195,10 @@ func (flo *flow) osxw(
 
 	out = make(osx_chan)
 
+	null_osx := &osx_value{
+			is_null: true,
+			command: cmd,
+		    }
 	go func() {
 		for {
 			var bv *bool_value
@@ -187,8 +211,13 @@ func (flo *flow) osxw(
 				case av = <-args:
 				}
 			}
+
+			//  Note:  when is argv null!
+
 			if bv.bool == true && av.is_null == false {
 				flo.osx_run(cmd, av.argv, out)
+			} else {
+				out <- null_osx
 			}
 			osx_wg.Done()
 			flo = flo.get()
@@ -198,7 +227,7 @@ func (flo *flow) osxw(
 	return out
 }
 
-//  read strings from multiple input channels and write assmbled argv[]
+//  read strings from multiple input channels and write assembled argv[]
 
 func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 
@@ -263,24 +292,26 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 
 			for ac < argc {
 
-				a := <-merge
+				arg := <-merge
 
+				//  merge channel closed
+				//
 				//  Note: golang compile generates error for
 				//        arg_value{} without parens
 
-				if a == (arg_value{}) {
+				if arg == (arg_value{}) {
 					return
 				}
 
-				sv := a.string_value
-				pos := a.position
+				sv := arg.string_value
+				pos := arg.position
 
 				//  any null element forces entire argv[]
 				//  to be null.  not sure this is reasonable.
+				//
+				//  Note: why, seems wrong!
 
-				if a.is_null {
-					is_null = true
-				}
+				sv.is_null = arg.is_null
 
 				//  cheap sanity test to insure we don't
 				//  see the same argument twice
@@ -404,7 +435,7 @@ func (cmd *command) string(indent int) string {
 %s       env: %s
 %s ref_count: %d
 %s         @: %p
-%s  }`,		
+%s}`,		
 		cmd.name,
 		tab, cmd.path,
 		tab, cmd.look_path,
@@ -412,6 +443,6 @@ func (cmd *command) string(indent int) string {
 		tab, strings.Join(cmd.env, ", "),
 		tab, cmd.ref_count,
 		tab, cmd,
-		strings.Repeat("\t", indent - 1),
+		strings.Repeat("\t", indent),
 	)
 }

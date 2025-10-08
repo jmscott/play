@@ -518,6 +518,7 @@ func (flo *flow) cast_bool(in bool_chan) (out string_chan) {
 				}
 			}
 			out <-sv
+
 			flo = flo.get()
 		}
 	}()

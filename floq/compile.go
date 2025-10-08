@@ -42,26 +42,36 @@ func (cmp *compilation) relop(a *ast) {
 	a2str := cmp.a2str
 	a2ui := cmp.a2ui
 
-	tok := a.left.yy_tok
-	switch tok {
-	case STRING:
+	l := a.left
+	r := a.right
+	switch {
+	case l.is_string() && r.is_string():
 		a2bool[a] = relop_string[a.yy_tok](
 				flo,
 				a2str[a.left],
 				a2str[a.right],
 		)
 
-	case UINT64:
+	case l.is_uint64() && r.is_uint64():
 		a2bool[a] = relop_uint64[a.yy_tok](
 				flo,
 				a2ui[a.left],
 				a2ui[a.right],
 		)
-	default:
+	case l.is_bool() && r.is_bool():
 		a2bool[a] = relop_bool[a.yy_tok](
 				flo,
 				a2bool[a.left],
 				a2bool[a.right],
+		)
+	default:
+		nm := a.yy_name()
+		a.corrupt(
+			"relop: %s: can not compile %s %s %s",
+			nm,
+			l,
+			nm,
+			r,
 		)
 	}
 }

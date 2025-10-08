@@ -26,7 +26,6 @@ type pass2 struct {
 	run_call	map[*command]bool
 }
 
-
 //  depth first check of node pointers
 
 func (p2 *pass2) plumb(a *ast) {
