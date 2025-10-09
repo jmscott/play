@@ -82,17 +82,18 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 	if cx.Process != nil {
 		val.pid = cx.Process.Pid
 	}
-	if cx.ProcessState != nil {
-		val.exit_code = cx.ProcessState.ExitCode()
+	if cx.ProcessState == nil {
+		panic("osx_run: process state is null")
+	}
+	val.exit_code = cx.ProcessState.ExitCode()
 
-		ru := cx.ProcessState.SysUsage().(*syscall.Rusage)
-		if ru != nil {
-			val.user_sec = ru.Utime.Sec
-			val.user_usec = ru.Utime.Usec
-			val.sys_sec = ru.Stime.Sec
-			val.sys_usec = ru.Stime.Usec
-			val.wall_duration = time.Since(val.start_time)
-		}
+	ru := cx.ProcessState.SysUsage().(*syscall.Rusage)
+	if ru != nil {
+		val.user_sec = ru.Utime.Sec
+		val.user_usec = ru.Utime.Usec
+		val.sys_sec = ru.Stime.Sec
+		val.sys_usec = ru.Stime.Usec
+		val.wall_duration = time.Since(val.start_time)
 	}
 
 	//  extract actual exit code from posix process
@@ -102,6 +103,8 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 	if val.err != nil {
 		if exiterr, ok := val.err.(*exec.ExitError); ok {
 			val.exit_code = exiterr.ExitCode()
+		} else {
+			corrupt("osx_run: can not get exit code: %s", val.err)
 		}
 	}
 	out <- val
