@@ -136,7 +136,7 @@ func (a *ast) String() string {
 	case PROJECT_OSX_EXIT_CODE:
 		sa := a.sysatt_ref
 		what = fmt.Sprintf(
-			"PROJECT_OSX_EXIT_CODE: %s: %s\n",
+			"PROJECT_OSX_EXIT_CODE: %s: %s",
 			sa,
 			sa.string(2),
 		)
