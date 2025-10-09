@@ -85,11 +85,10 @@ func init() {
 %type	<sysatt>	PROJECT_OSX
 
 %nonassoc		yy_IS
-%left			yy_AND  yy_OR
-%left			EQ  NEQ  GT  GTE  LT  LTE
-%left			MATCH  NOMATCH
+%left			yy_OR  yy_AND
+%left			EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
 %left			CONCAT
-%right			NOT  EXPAND_ENV  CAST  IS_NULL
+%right			NOT  EXPAND_ENV  CAST
 
 %%
 
