@@ -356,3 +356,35 @@ func (flo *flow) cast_string(in string_chan) (out string_chan) {
 	}()
 	return out
 }
+
+func (flo *flow) is_null_string(in string_chan) (out bool_chan) {
+
+	out = make(bool_chan)
+	go func() {
+		for {
+			out <- &bool_value{
+				bool:	(<-in).is_null,
+			}
+
+			flo = flo.get()
+		}
+	}()
+
+	return out
+}
+
+func (flo *flow) is_not_null_string(in string_chan) (out bool_chan) {
+
+	out = make(bool_chan)
+	go func() {
+		for {
+			out <- &bool_value{
+				bool:	(<-in).is_null == false,
+			}
+
+			flo = flo.get()
+		}
+	}()
+
+	return out
+}

@@ -370,6 +370,10 @@ func (a *ast) is_bool() bool {
 	     GT, GTE,
 	     LT, LTE,
 	     NOT,
+	     IS_NULL,
+	       IS_NULL_BOOL, IS_NULL_UINT64,  IS_NULL_STRING,
+	     IS_NOT_NULL,
+	       IS_NOT_NULL_BOOL, IS_NOT_NULL_UINT64, IS_NOT_NULL_STRING,
 	     MATCH, NOMATCH:
 		return true
 	}
@@ -522,5 +526,37 @@ func (flo *flow) cast_bool(in bool_chan) (out string_chan) {
 			flo = flo.get()
 		}
 	}()
+	return out
+}
+
+func (flo *flow) is_null_bool(in bool_chan) (out bool_chan) {
+
+	out = make(bool_chan)
+	go func() {
+		for {
+			out <- &bool_value{
+				bool:	(<-in).is_null,
+			}
+
+			flo = flo.get()
+		}
+	}()
+
+	return out
+}
+
+func (flo *flow) is_not_null_bool(in bool_chan) (out bool_chan) {
+
+	out = make(bool_chan)
+	go func() {
+		for {
+			out <- &bool_value{
+				bool:	(<-in).is_null == false,
+			}
+
+			flo = flo.get()
+		}
+	}()
+
 	return out
 }

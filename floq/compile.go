@@ -190,6 +190,18 @@ func (cmp *compilation) compile(a *ast) {
 		cmd := sa.command_ref
 		fo := cmd2fo[cmd]
 		a2ui[a] = flo.osx_proj_exit_code(fo[sa.call_order-1])
+	case IS_NULL_STRING:
+		a2bool[a] = flo.is_null_string(a2str[a.left])
+	case IS_NULL_UINT64:
+		a2bool[a] = flo.is_null_uint64(a2ui[a.left])
+	case IS_NULL_BOOL:
+		a2bool[a] = flo.is_null_bool(a2bool[a.left])
+	case IS_NOT_NULL_STRING:
+		a2bool[a] = flo.is_not_null_string(a2str[a.left])
+	case IS_NOT_NULL_UINT64:
+		a2bool[a] = flo.is_not_null_uint64(a2ui[a.left])
+	case IS_NOT_NULL_BOOL:
+		a2bool[a] = flo.is_not_null_bool(a2bool[a.left])
 	case FLOW, STMT_LIST, DEFINE:
 	default:
 		_corrupt("can not compile ast")

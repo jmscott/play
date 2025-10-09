@@ -18,12 +18,12 @@ type uint64_chan chan *uint64_value
 
 type relop_uint64_func func (*flow, uint64_chan, uint64_chan) bool_chan
 var relop_uint64 = map[int]relop_uint64_func{
-		GT:	gt_ui64,
-		GTE:	gte_ui64,
-		EQ:	eq_ui64,
-		NEQ:	neq_ui64,
-		LTE:	lte_ui64,
-		LT:	lt_ui64,
+		GT:			gt_ui64,
+		GTE:			gte_ui64,
+		EQ:			eq_ui64,
+		NEQ:			neq_ui64,
+		LTE:			lte_ui64,
+		LT:			lt_ui64,
 	}
 
 
@@ -406,6 +406,38 @@ func (flo *flow) cast_uint64(in uint64_chan) (out string_chan) {
 				string:	s,
 				is_null:uiv.is_null,
 			}
+			flo = flo.get()
+		}
+	}()
+
+	return out
+}
+
+func (flo *flow) is_null_uint64(in uint64_chan) (out bool_chan) {
+
+	out = make(bool_chan)
+	go func() {
+		for {
+			out <- &bool_value{
+				bool:	(<-in).is_null,
+			}
+
+			flo = flo.get()
+		}
+	}()
+
+	return out
+}
+
+func (flo *flow) is_not_null_uint64(in uint64_chan) (out bool_chan) {
+
+	out = make(bool_chan)
+	go func() {
+		for {
+			out <- &bool_value{
+				bool:	(<-in).is_null == false,
+			}
+
 			flo = flo.get()
 		}
 	}()

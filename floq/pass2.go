@@ -367,6 +367,38 @@ func (p2 *pass2) cast(a *ast) error {
 	return p2.cast(a.next)
 }
 
+func (p2 *pass2) is_null(a *ast) {
+
+	if a == nil {
+		return
+	}
+	p2.is_null(a.left)
+	p2.is_null(a.right)
+
+	l := a.left
+	switch a.yy_tok {
+	case IS_NULL:
+		switch {
+		case l.is_string():
+			a.yy_tok = IS_NULL_STRING
+		case l.is_uint64():
+			a.yy_tok = IS_NULL_UINT64
+		case l.is_bool():
+			a.yy_tok = IS_NULL_BOOL
+		}
+	case IS_NOT_NULL:
+		switch {
+		case l.is_string():
+			a.yy_tok = IS_NOT_NULL_STRING
+		case l.is_uint64():
+			a.yy_tok = IS_NOT_NULL_UINT64
+		case l.is_bool():
+			a.yy_tok = IS_NOT_NULL_BOOL
+		}
+	}
+	p2.is_null(a.next)
+}
+
 func xpass2(root *ast) error {
 
 	if root == nil {
@@ -410,6 +442,8 @@ func xpass2(root *ast) error {
 
 	p2.project_osx(root)
 	p2.map_run()
+
+	p2.is_null(root)
 
 	if err := p2.cycle();  err != nil {
 		return err

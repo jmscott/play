@@ -68,6 +68,9 @@ func init() {
 %token	CONCAT
 %token	WHEN
 %token	PROJECT_OSX_EXIT_CODE  CAST_BOOL  CAST_UINT64  CAST_STRING
+%token	yy_IS  yy_NULL  IS_NULL
+%token	IS_NULL  IS_NULL_UINT64  IS_NULL_STRING  IS_NULL_BOOL
+%token	IS_NOT_NULL  IS_NOT_NULL_UINT64  IS_NOT_NULL_STRING  IS_NOT_NULL_BOOL
 
 %type	<uint64>	UINT64		
 %type	<string>	STRING  name
@@ -81,11 +84,12 @@ func init() {
 %type	<command_ref>	COMMAND_REF
 %type	<sysatt>	PROJECT_OSX
 
+%nonassoc		yy_IS
 %left			yy_AND  yy_OR
 %left			EQ  NEQ  GT  GTE  LT  LTE
 %left			MATCH  NOMATCH
 %left			CONCAT
-%right			NOT  EXPAND_ENV  CAST
+%right			NOT  EXPAND_ENV  CAST  IS_NULL
 
 %%
 
@@ -255,6 +259,22 @@ expr:
 	  NOT  expr  %prec NOT
 	  {
 		$$ = yylex.(*yyLexState).new_rel_op(NOT, $2, nil)
+		if $$ == nil {
+			return 0
+		}
+	  }
+	|
+	  expr  yy_IS  yy_NULL  %prec yy_IS
+	  {
+	  	$$ = yylex.(*yyLexState).new_rel_op(IS_NULL, $1, nil)
+		if $$ == nil {
+			return 0
+		}
+	  }
+	|
+	  expr  yy_IS  NOT  yy_NULL  %prec yy_IS
+	  {
+	  	$$ = yylex.(*yyLexState).new_rel_op(IS_NOT_NULL, $1, nil)
 		if $$ == nil {
 			return 0
 		}
@@ -453,7 +473,9 @@ var keyword = map[string]int{
 	"define":		DEFINE,
 	"ExpandEnv":		EXPAND_ENV,
 	"false":		yy_FALSE,
+	"is":			yy_IS,
 	"not":			NOT,
+	"null":			yy_NULL,
 	"or":			yy_OR,
 	"run":			RUN,
 	"string":		yy_STRING,
@@ -772,6 +794,8 @@ func (lex *yyLexState) scan_uint64(yylval *yySymType, c rune) (err error) {
 	return
 }
 
+//  Note: move to pass2?
+
 func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 
 	switch tok {
@@ -825,6 +849,7 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 			lex.error("%s: right is not string", right.yy_name())
 			return nil
 		}
+	case IS_NULL, IS_NOT_NULL:
 	default:
 		msg := fmt.Sprintf("new_rel_op:  yy token: %s", yy_name(tok))
 		corrupt(msg)
