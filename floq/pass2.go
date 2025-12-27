@@ -81,6 +81,8 @@ func (p2 *pass2) plumb(a *ast) {
 	}
 }
 
+//  build map of RUN nodes
+
 func (p2 *pass2) map_run() {
 	if p2.root.left == nil {
 		return
