@@ -24,6 +24,7 @@ type command struct {
 	args		[]string
 	env		[]string
 	ref_count	uint8
+	tuple_ref	*tuple
 }
 
 //  result of waiting on an executing command
@@ -70,24 +71,27 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 	cx.Args = append(cx.Args, argv...)
 	cx.Env = cmd.env
 
+	err := cx.Run()
+
+	ps := cx.ProcessState
+	if ps == nil {
+		panic("osx_run: process state is null")
+	}
+
+	if out == nil {			// osx record not referenced in *.flow
+		return
+	}
 	val := &osx_value{
 			command:	cmd,
 			start_time:	time.Now(),
-	}
-
-	val.err = cx.Run()
-	if out == nil {			// osx record not referenced
-		return
+			err:		err,
 	}
 	if cx.Process != nil {
 		val.pid = cx.Process.Pid
 	}
-	if cx.ProcessState == nil {
-		panic("osx_run: process state is null")
-	}
-	val.exit_code = cx.ProcessState.ExitCode()
+	val.exit_code = ps.ExitCode()
 
-	ru := cx.ProcessState.SysUsage().(*syscall.Rusage)
+	ru := ps.SysUsage().(*syscall.Rusage)
 	if ru != nil {
 		val.user_sec = ru.Utime.Sec
 		val.user_usec = ru.Utime.Usec
