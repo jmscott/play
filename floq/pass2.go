@@ -1,11 +1,8 @@
 package main
 
 /*
- *  Note:
- *	Pardon the lack of single function to recurse through the ast.
- *	methods are not allowed as function pointers.
- *	doing the trick like in relop_string[]@string.go is more verbose
- *	than eexplicitly doing the node walk.
+ *  Synopsis:
+ *	Validate abstract syntax tree after correctly parse by pass1.
  */
 
 import (
