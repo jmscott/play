@@ -370,6 +370,33 @@ func (set *ast) string_element(name string) string {
 	return ""
 }
 
+func (set *ast) set_element(name string) *ast { 
+	if set.yy_tok != yy_SET {
+		set.corrupt("expected SET, got %s", yy_name(set.yy_tok))
+	}
+	var kid *ast
+	for kid = set.left;  kid != nil;  kid = kid.next {
+		if kid.name == name && kid.yy_tok == yy_SET {
+			return kid
+		}
+	}
+	return nil
+}
+
+//  get a named array element from a set
+func (set *ast) array_element(name string) (kid *ast) {
+	if set.yy_tok != yy_SET {
+		set.corrupt("expected SET, got %s", yy_name(set.yy_tok))
+	}
+
+	for kid = set.left;  kid != nil;  kid = kid.next {
+		if kid.name == name && kid.yy_tok == ARRAY {
+			return kid
+		}
+	}
+	return nil
+}
+
 //  get a named []string from ARRAY element in a SET
 
 func (set *ast) array_string_element(name string) []string { 

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 )
 
@@ -11,13 +10,6 @@ type sysatt struct {
 	name		string
 	command_ref	*command
 	call_order	uint8
-}
-
-var re_sysatt_indent *regexp.Regexp
-
-func init() {
-
-	re_sysatt_indent = regexp.MustCompile("(?m)\t([a-z])")
 }
 
 func (sa *sysatt) is_uint64() bool {

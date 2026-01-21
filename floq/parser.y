@@ -2,6 +2,8 @@
  *  Synopsis:
  *	Build an abstract syntax tree for "floq" language.
  *  Note:
+ *	In "set" ast duplicates can exist!
+ *
  *	Parser appears to be re-entrant.  However, only single static grammar
  *	per process.  for example, array yyToknames['] is global.  ughh.
  *
@@ -46,6 +48,7 @@ func init() {
 	uint64
 	int
 	command_ref	*command
+	tuple_ref	*tuple
 	sysatt		*sysatt
 }
 
@@ -55,13 +58,14 @@ func init() {
 %token	PARSE_ERROR
 %token	ARGV
 %token	yy_SET  ARRAY  
-%token	RUN
+%token	RUN  START
 %token	COMMAND  COMMAND_REF
-%token	DEFINE  TUPLE  AS
+%token	TUPLE  TUPLE_REF
+%token	DEFINE   AS
 %token	EXPAND_ENV
 %token	FLOW  STMT_LIST
 %token	UINT64  STRING  NAME
-%token	PROJECT_OSX
+%token	PROJECT_OSX  PROJECT_ATT
 %token	yy_TRUE  yy_FALSE  yy_AND  yy_OR  NOT  yy_EMPTY
 %token	yy_STRING  CAST
 %token	EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
@@ -82,6 +86,7 @@ func init() {
 %type	<ast>		constant  expr  qualification
 %type	<ast>		stmt  stmt_list
 %type	<command_ref>	COMMAND_REF
+%type	<tuple_ref>	TUPLE_REF
 %type	<sysatt>	PROJECT_OSX
 
 %nonassoc		yy_IS
@@ -158,12 +163,43 @@ expr:
 			)
 			return 0
 		}
+
 		csa := lex.ast(PROJECT_OSX)
 		csa.name = name
 		csa.sysatt_ref = &sysatt{
 					name:           name,
 					command_ref:    cmd,
 				}
+		$$ = csa
+	  }
+	|
+	  COMMAND_REF  '.'  {
+	  	yylex.(*yyLexState).name_is_name = true
+	  }  name  {
+		lex := yylex.(*yyLexState)
+		cmd := $1
+		name := $4
+		tup := cmd.tuple_ref
+
+		if tup == nil {
+			lex.error(
+				"command: %s: no tuple defined: %s",
+				cmd.name,
+				name,
+			)
+			return 0
+		}
+
+		if tup.atts[name] == nil {
+			lex.error(
+				"command: %s: no attribute defined: %s",
+				cmd.name,
+				name,
+			)
+			return 0
+		}
+		csa := lex.ast(PROJECT_ATT)
+		csa.name = name
 		$$ = csa
 	  }
 	|
@@ -355,6 +391,8 @@ element:
 	  }
 	;
 
+//  Note: checking for duplicates?!!
+
 element_list:
 	  /*  empty  */
 	  {
@@ -382,14 +420,21 @@ set:
 stmt:
 	  DEFINE  TUPLE  name  AS  set
 	  {
+	  	var err error
+
 	  	lex := yylex.(*yyLexState)
 
 	  	define := lex.ast(DEFINE, lex.ast(TUPLE), $5)
 
 		tup := define.left
-		tup.name = $3
-		tup.tuple_ref = &tuple{name: $3}
+		tup.tuple_ref, err = new_tuple($3, $5)
+		if err != nil {
+			lex.error("tuple %s: %s", $3, err)
+			return 0
+		}
 		lex.name2ast[$<string>3] = tup
+		lex.name2tuple[$<string>3] = tup.tuple_ref
+		tup.tuple_ref.atts = make(map[string]*attribute)
 
 		$$ = define
 	  }
@@ -417,6 +462,30 @@ stmt:
 		$$ = define
 	  }
 	|
+	  DEFINE  COMMAND  name  '.'  TUPLE_REF  AS  set
+	  {
+	  	lex := yylex.(*yyLexState)
+		name := $3
+		set := $7
+
+	  	define := lex.ast(DEFINE, lex.ast(COMMAND), set)
+
+		cmd := define.left
+		cmd.name = name
+		cmd.command_ref = &command{
+					name: name,
+					path: set.string_element("path"),
+					args: set.array_string_element("args"),
+					env: set.array_string_element("env"),
+					tuple_ref: $<tuple_ref>5,
+				}
+		cr := cmd.command_ref
+		lex.name2cmd[name] = cr
+		lex.name2ast[name] = cmd
+		cr.tuple_ref = $5
+		$$ = define
+	  }
+	|
 	  RUN  name
 	  {
 	  	lex := yylex.(*yyLexState)
@@ -432,6 +501,23 @@ stmt:
 		run.command_ref = $2
 		run.name = run.command_ref.name
 		$$ = run
+	  }
+	|
+	  START  name
+	  {
+	  	lex := yylex.(*yyLexState)
+
+	  	lex.error("start: command not defined: %s", lex.name)
+		return 0
+	  }
+	|
+	  START  COMMAND_REF  '('  arg_list  ')'  qualification  {
+	  	lex := yylex.(*yyLexState)
+
+		start := lex.ast(START, $4, $6)
+		start.command_ref = $2
+		start.name = start.command_ref.name
+		$$ = start
 	  }
 	;
 
@@ -497,11 +583,13 @@ type yyLexState struct {
 
 	name2ast		map[string]*ast
 	name2cmd		map[string]*command
+	name2tuple		map[string]*tuple
 	name2satt		map[string]*sysatt
 	name2run		map[string]*ast
 	depends			map[string]string
 
 	command_ref		*command
+	tuple_ref		*tuple
 	name_is_name		bool
 }
 
@@ -751,6 +839,14 @@ func (lex *yyLexState) scan_word(
 		lex.command_ref = lex.name2cmd[w]
 		yylval.command_ref = lex.command_ref
 		return COMMAND_REF, nil
+	}
+
+	//  TUPLE REFERENCE IN COMMAND  DEFINE
+
+	if lex.name2tuple[w] != nil {
+		lex.tuple_ref = lex.name2tuple[w]
+		yylval.tuple_ref = lex.tuple_ref
+		return TUPLE_REF, nil
 	}
 
 	if lex.name_is_name == false && lex.name2ast[w] != nil {
@@ -1037,6 +1133,7 @@ func parse(in io.RuneReader) (*ast, error) {
 		line_no:	1,
 		name2ast:	make(map[string]*ast),
 		name2cmd:	make(map[string]*command),
+		name2tuple:	make(map[string]*tuple),
 		name2satt:	make(map[string]*sysatt),
 		depends:	make(map[string]string),
 		ast_root:	&ast{
