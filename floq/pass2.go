@@ -113,7 +113,10 @@ func (p2 *pass2) project_osx(a *ast) {
 		case "exit_code":
 			a.yy_tok = PROJECT_OSX_EXIT_CODE
 		default:
-			a.corrupt("unexpected sysatt: %s", a.sysatt_ref.name)
+			a.corrupt(
+				"project_osx: unexpected sysatt: %s",
+				a.sysatt_ref.name,
+			)
 		}
 		sa.call_order = cmd.ref_count
 	}
@@ -366,6 +369,7 @@ func (p2 *pass2) cast(a *ast) error {
 	return p2.cast(a.next)
 }
 
+//  rewrite "IS NULL" ops for types string, uint64, bool
 func (p2 *pass2) is_null(a *ast) {
 
 	if a == nil {
@@ -397,6 +401,8 @@ func (p2 *pass2) is_null(a *ast) {
 	}
 	p2.is_null(a.next)
 }
+
+//  frisk&optimize abstract syntax tree compiled by pass1 (yacc grammar)
 
 func xpass2(root *ast) error {
 
@@ -439,21 +445,24 @@ func xpass2(root *ast) error {
 	p2.plumb(root.left)
 	p2.plumb(root.right)
 
-	p2.project_osx(root)
-	p2.map_run()
+	p2.project_osx(root)	//  resolve dependencies on commnd$att values
 
-	p2.is_null(root)
+	p2.map_run()		//  build a map of run nodes
 
-	if err := p2.cycle();  err != nil {
+	p2.is_null(root)	// rewrite "IS NULL" ops
+
+	if err := p2.cycle();  err != nil {	//  find cyclic dependencies
 		return err
 	}
 
-	//  resolve paths to executables in COMMAND_REF nodes
+	//  resolve file system paths to executables in COMMAND_REF nodes
+
 	if err := p2.look_path(root);  err != nil {
 		return err
 	}
 
 	//  check all references to RUN
+
 	if err := p2.xrun_sysatt(root);  err != nil {
 		return err
 	}
