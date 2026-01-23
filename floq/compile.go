@@ -11,7 +11,7 @@ type compilation struct {
 	a2ui		map[*ast]uint64_chan
 	a2osx		map[*ast]osx_chan
 	a2argv		map[*ast]argv_chan
-	a2osxfo		map[*ast][]osx_chan
+	a2osxfo		map[*ast][]osx_chan		//  fanout osx records
 	cmd2fo		map[*command][]osx_chan
 }
 
