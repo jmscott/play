@@ -124,3 +124,8 @@ func new_tuple(name string, define *ast) (*tuple, error) {
 
 	return tup, nil
 }
+
+func (tup *tuple) String() string {
+
+	return fmt.Sprintf("%s%#v", tup.name, tup.atts)
+}
