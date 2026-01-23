@@ -65,13 +65,14 @@ func init() {
 %token	EXPAND_ENV
 %token	FLOW  STMT_LIST
 %token	UINT64  STRING  NAME
-%token	PROJECT_OSX  PROJECT_ATT
+%token	PROJECT_OSX
 %token	yy_TRUE  yy_FALSE  yy_AND  yy_OR  NOT  yy_EMPTY
 %token	yy_STRING  CAST
 %token	EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
 %token	CONCAT
 %token	WHEN
-%token	PROJECT_OSX_EXIT_CODE  CAST_BOOL  CAST_UINT64  CAST_STRING
+%token	PROJECT_OSX_EXIT_CODE 
+%token	CAST_BOOL  CAST_UINT64  CAST_STRING
 %token	yy_IS  yy_NULL  IS_NULL
 %token	IS_NULL  IS_NULL_UINT64  IS_NULL_STRING  IS_NULL_BOOL
 %token	IS_NOT_NULL  IS_NOT_NULL_UINT64  IS_NOT_NULL_STRING  IS_NOT_NULL_BOOL
@@ -170,36 +171,6 @@ expr:
 					name:           name,
 					command_ref:    cmd,
 				}
-		$$ = csa
-	  }
-	|
-	  COMMAND_REF  '.'  {
-	  	yylex.(*yyLexState).name_is_name = true
-	  }  name  {
-		lex := yylex.(*yyLexState)
-		cmd := $1
-		name := $4
-		tup := cmd.tuple_ref
-
-		if tup == nil {
-			lex.error(
-				"command: %s: no tuple defined: %s",
-				cmd.name,
-				name,
-			)
-			return 0
-		}
-
-		if tup.atts[name] == nil {
-			lex.error(
-				"command: %s: no attribute defined: %s",
-				cmd.name,
-				name,
-			)
-			return 0
-		}
-		csa := lex.ast(PROJECT_ATT)
-		csa.name = name
 		$$ = csa
 	  }
 	|
@@ -434,7 +405,6 @@ stmt:
 		}
 		lex.name2ast[$<string>3] = tup
 		lex.name2tuple[$<string>3] = tup.tuple_ref
-		tup.tuple_ref.atts = make(map[string]*attribute)
 
 		$$ = define
 	  }
