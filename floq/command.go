@@ -71,6 +71,7 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 	cx.Args = append(cx.Args, argv...)
 	cx.Env = cmd.env
 
+	start_time := time.Now()
 	err := cx.Run()
 
 	ps := cx.ProcessState
@@ -83,7 +84,7 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 	}
 	val := &osx_value{
 			command:	cmd,
-			start_time:	time.Now(),
+			start_time:	start_time,
 			err:		err,
 	}
 	if cx.Process != nil {
@@ -355,7 +356,14 @@ func (flo *flow) osx_null(in osx_chan) {
 func (cmd *command) is_sysatt(name string) bool {
 
 	switch name {
-	case "exit_code":
+	case "exit_code",
+		"pid",
+		"start_time",
+		"wall_duration",
+		"user_sec",
+		"user_usec",
+		"sys_sec",
+		"sys_usec":
 		return true
 	}
 	return false
@@ -363,7 +371,7 @@ func (cmd *command) is_sysatt(name string) bool {
 
 func (cmd *command) is_sysatt_uint64(name string) bool {
 	switch name {
-	case "exit_code":
+	case "exit_code", "wall_duration":
 		return true
 	}
 	return false
@@ -373,7 +381,7 @@ func (cmd *command) String() string {
 	return cmd.name
 }
 
-//  project the command$<att_uint64> from an osx_record
+//  project the command$exit_code from an osx_record
 
 func (flo *flow) osx_proj_exit_code(in osx_chan) (out uint64_chan) {
 
@@ -387,6 +395,167 @@ func (flo *flow) osx_proj_exit_code(in osx_chan) (out uint64_chan) {
 
 		out <- &uint64_value{
 			uint64:		uint64(xv.exit_code),
+			is_null:	xv.is_null,
+		}
+
+		flo = flo.get()
+	}()
+
+	return out
+}
+
+//  project the command$pid from an osx_record
+
+func (flo *flow) osx_proj_pid(in osx_chan) (out uint64_chan) {
+
+	out = make(uint64_chan)
+
+	go func() {
+		xv := <- in
+		if xv == nil {
+			return
+		}
+
+		out <- &uint64_value{
+			uint64:		uint64(xv.pid),
+			is_null:	xv.is_null,
+		}
+
+		flo = flo.get()
+	}()
+
+	return out
+}
+
+func (flo *flow) osx_proj_start_time(in osx_chan) (out string_chan) {
+
+	out = make(string_chan)
+
+	go func() {
+		xv := <- in
+		if xv == nil {
+			return
+		}
+
+		out <- &string_value{
+			string:		xv.start_time.Format(
+						time.RFC3339Nano,
+					),
+			is_null:	xv.is_null,
+		}
+
+		flo = flo.get()
+	}()
+
+	return out
+}
+
+//  project the command$wall_duration from an osx_record
+
+func (flo *flow) osx_proj_wall_duration(in osx_chan) (out uint64_chan) {
+
+	out = make(uint64_chan)
+
+	go func() {
+		xv := <- in
+		if xv == nil {
+			return
+		}
+
+		out <- &uint64_value{
+			uint64:		uint64(xv.wall_duration),
+			is_null:	xv.is_null,
+		}
+
+		flo = flo.get()
+	}()
+
+	return out
+}
+
+//  project the command$user_sec from an osx_record
+
+func (flo *flow) osx_proj_user_sec(in osx_chan) (out uint64_chan) {
+
+	out = make(uint64_chan)
+
+	go func() {
+		xv := <- in
+		if xv == nil {
+			return
+		}
+
+		out <- &uint64_value{
+			uint64:		uint64(xv.user_sec),
+			is_null:	xv.is_null,
+		}
+
+		flo = flo.get()
+	}()
+
+	return out
+}
+
+//  project the command$user_usec from an osx_record
+
+func (flo *flow) osx_proj_user_usec(in osx_chan) (out uint64_chan) {
+
+	out = make(uint64_chan)
+
+	go func() {
+		xv := <- in
+		if xv == nil {
+			return
+		}
+
+		out <- &uint64_value{
+			uint64:		uint64(xv.user_usec),
+			is_null:	xv.is_null,
+		}
+
+		flo = flo.get()
+	}()
+
+	return out
+}
+
+//  project the command$sys_usec from an osx_record
+
+func (flo *flow) osx_proj_sys_usec(in osx_chan) (out uint64_chan) {
+
+	out = make(uint64_chan)
+
+	go func() {
+		xv := <- in
+		if xv == nil {
+			return
+		}
+
+		out <- &uint64_value{
+			uint64:		uint64(xv.sys_usec),
+			is_null:	xv.is_null,
+		}
+
+		flo = flo.get()
+	}()
+
+	return out
+}
+
+//  project the command$sys_sec from an osx_record
+
+func (flo *flow) osx_proj_sys_sec(in osx_chan) (out uint64_chan) {
+
+	out = make(uint64_chan)
+
+	go func() {
+		xv := <- in
+		if xv == nil {
+			return
+		}
+
+		out <- &uint64_value{
+			uint64:		uint64(xv.sys_sec),
 			is_null:	xv.is_null,
 		}
 

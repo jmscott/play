@@ -133,13 +133,6 @@ func (a *ast) String() string {
 		what = "FALSE"
 	case yy_TRUE:
 		what = "TRUE"
-	case PROJECT_OSX_EXIT_CODE:
-		sa := a.sysatt_ref
-		what = fmt.Sprintf(
-			"PROJECT_OSX_EXIT_CODE: %s: %s",
-			sa,
-			sa.string(2),
-		)
 	default:
 		what = fmt.Sprintf("%s%s%s", a.yy_name(), colon, a.name)
 		if a.order > 0 {

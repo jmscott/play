@@ -448,7 +448,14 @@ func (flo *flow) is_not_null_uint64(in uint64_chan) (out bool_chan) {
 func (a *ast) is_uint64() bool {
 
 	switch a.yy_tok {
-	case UINT64, PROJECT_OSX_EXIT_CODE:
+	case UINT64,
+		PROJECT_OSX_EXIT_CODE,
+		PROJECT_OSX_PID,
+		PROJECT_OSX_WALL_DURATION,
+		PROJECT_OSX_USER_SEC,
+		PROJECT_OSX_USER_USEC,
+		PROJECT_OSX_SYS_SEC,
+		PROJECT_OSX_SYS_USEC:
 		return true
 	case PROJECT_OSX:
 		return a.command_ref.is_sysatt_uint64(a.name)

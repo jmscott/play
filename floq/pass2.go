@@ -112,6 +112,20 @@ func (p2 *pass2) project_osx(a *ast) {
 		switch sa.name {
 		case "exit_code":
 			a.yy_tok = PROJECT_OSX_EXIT_CODE
+		case "pid":
+			a.yy_tok = PROJECT_OSX_PID
+		case "start_time":
+			a.yy_tok = PROJECT_OSX_START_TIME
+		case "wall_duration":
+			a.yy_tok = PROJECT_OSX_WALL_DURATION
+		case "user_sec":
+			a.yy_tok = PROJECT_OSX_USER_SEC
+		case "user_usec":
+			a.yy_tok = PROJECT_OSX_USER_USEC
+		case "sys_sec":
+			a.yy_tok = PROJECT_OSX_SYS_SEC
+		case "sys_usec":
+			a.yy_tok = PROJECT_OSX_SYS_USEC
 		default:
 			a.corrupt(
 				"project_osx: unexpected sysatt: %s",
