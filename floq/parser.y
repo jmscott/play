@@ -65,18 +65,25 @@ func init() {
 %token	EXPAND_ENV
 %token	FLOW  STMT_LIST
 %token	UINT64  STRING  NAME
-%token	PROJECT_OSX
 %token	yy_TRUE  yy_FALSE  yy_AND  yy_OR  NOT  yy_EMPTY
 %token	yy_STRING  CAST
 %token	EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
 %token	CONCAT
 %token	WHEN
-%token	PROJECT_OSX_EXIT_CODE 
-%token	PROJECT_OSX_PID 
-%token	PROJECT_OSX_START_TIME 
-%token	PROJECT_OSX_WALL_DURATION 
-%token	PROJECT_OSX_USER_SEC  PROJECT_OSX_USER_USEC
-%token	PROJECT_OSX_SYS_SEC  PROJECT_OSX_SYS_USEC
+
+//  project the rusage variables <commamd>$<var>
+
+%token	PROJECT_OSX_EXIT_CODE  OSX_EXIT_CODE 
+%token	PROJECT_OSX_PID   OSX_PID
+%token	PROJECT_OSX_START_TIME  OSX_START_TIME 
+%token	PROJECT_OSX_WALL_DURATION   OSX_WALL_DURATION
+%token	PROJECT_OSX_USER_SEC  OSX_USER_SEC
+%token	PROJECT_OSX_USER_USEC  OSX_USER_USEC
+%token	PROJECT_OSX_SYS_SEC  OSX_SYS_SEC
+%token	PROJECT_OSX_SYS_USEC  OSX_SYS_USEC
+%token	PROJECT_OSX_STDOUT  OSX_STDOUT
+%token	PROJECT_OSX_STDERR  OSX_STDERR
+
 %token	CAST_BOOL  CAST_UINT64  CAST_STRING
 %token	yy_IS  yy_NULL  IS_NULL
 %token	IS_NULL  IS_NULL_UINT64  IS_NULL_STRING  IS_NULL_BOOL
@@ -93,7 +100,6 @@ func init() {
 %type	<ast>		stmt  stmt_list
 %type	<command_ref>	COMMAND_REF
 %type	<tuple_ref>	TUPLE_REF
-%type	<sysatt>	PROJECT_OSX
 
 %nonassoc		yy_IS
 %left			yy_OR  yy_AND
@@ -156,27 +162,14 @@ expr:
 	|
 	  COMMAND_REF  '$'  {
 	  	yylex.(*yyLexState).name_is_name = true
-	  }  name  {
-		lex := yylex.(*yyLexState)
-		cmd := $1
-		name := $4
+	  }  name {
+	  	lex := yylex.(*yyLexState)
 
-		if cmd.is_sysatt(name) == false {
-			lex.error(
-				"command: %s, unknown system attribute: %s",
-				cmd.name,
-				name,
-			)
+		a := lex.project_osx($4, $1)
+		if a == nil {
 			return 0
 		}
-
-		csa := lex.ast(PROJECT_OSX)
-		csa.name = name
-		csa.sysatt_ref = &sysatt{
-					name:           name,
-					command_ref:    cmd,
-				}
-		$$ = csa
+		$$ = a
 	  }
 	|
 	  expr  yy_AND  expr
@@ -461,14 +454,6 @@ stmt:
 		$$ = define
 	  }
 	|
-	  RUN  name
-	  {
-	  	lex := yylex.(*yyLexState)
-
-	  	lex.error("run: command not defined: %s", lex.name)
-		return 0
-	  }
-	|
 	  RUN  COMMAND_REF  '('  arg_list  ')'  qualification  {
 	  	lex := yylex.(*yyLexState)
 
@@ -476,23 +461,6 @@ stmt:
 		run.command_ref = $2
 		run.name = run.command_ref.name
 		$$ = run
-	  }
-	|
-	  START  name
-	  {
-	  	lex := yylex.(*yyLexState)
-
-	  	lex.error("start: command not defined: %s", lex.name)
-		return 0
-	  }
-	|
-	  START  COMMAND_REF  '('  arg_list  ')'  qualification  {
-	  	lex := yylex.(*yyLexState)
-
-		start := lex.ast(START, $4, $6)
-		start.command_ref = $2
-		start.name = start.command_ref.name
-		$$ = start
 	  }
 	;
 
@@ -816,7 +784,7 @@ func (lex *yyLexState) scan_word(
 		return COMMAND_REF, nil
 	}
 
-	//  TUPLE REFERENCE IN COMMAND  DEFINE
+	//  TUPLE REFERENCE IN "COMMAND DEFINE" ?
 
 	if lex.name2tuple[w] != nil {
 		lex.tuple_ref = lex.name2tuple[w]
@@ -824,6 +792,7 @@ func (lex *yyLexState) scan_word(
 		return TUPLE_REF, nil
 	}
 
+	//  AST NODE ?
 	if lex.name_is_name == false && lex.name2ast[w] != nil {
 		return lex.name2ast[w].yy_tok, nil
 	}
@@ -1135,7 +1104,7 @@ func yy_name(tok int) (name string) {
 	if (offset < len(yyToknames) && tok > __MIN_YYTOK) {
 		name = yyToknames[offset]
 	} else {
-		name = fmt.Sprintf( "UNKNOWN(%d)", tok)
+		name = fmt.Sprintf("UNKNOWN(%d)", tok)
 	}
 	return
 }
@@ -1160,4 +1129,41 @@ func yy_name2tok(name string) int {
 		}
 	}
 	return __MIN_YYTOK - 2	// == "error" in yyToknames
+}
+
+func (lex *yyLexState) project_osx(name string, cmd *command) (*ast) {
+	a := &ast{
+		name:	name,
+		command_ref: cmd,
+		sysatt_ref:	&sysatt{
+					name:	name,
+					command_ref:	cmd,
+		},
+	}
+	switch name {
+	case "Stdout":
+		a.yy_tok = PROJECT_OSX_STDOUT
+	case "Stderr":
+		a.yy_tok = PROJECT_OSX_STDERR
+	case "exit_code": 
+		a.yy_tok = PROJECT_OSX_EXIT_CODE
+	case "pid":
+		a.yy_tok = PROJECT_OSX_PID
+	case "start_time": 
+		a.yy_tok = PROJECT_OSX_START_TIME
+	case "wall_duration": 
+		a.yy_tok = PROJECT_OSX_WALL_DURATION
+	case "user_sec":
+		a.yy_tok = PROJECT_OSX_USER_SEC
+	case "user_usec":
+		a.yy_tok = PROJECT_OSX_USER_USEC
+	case "sys_sec":
+		a.yy_tok = PROJECT_OSX_SYS_SEC
+	case "sys_usec":
+		a.yy_tok = PROJECT_OSX_USER_USEC
+	default:
+		lex.error("project_osx: %s: unknown att: %s", cmd.name, name)
+		return nil
+	}
+	return a
 }

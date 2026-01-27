@@ -133,6 +133,20 @@ func (a *ast) String() string {
 		what = "FALSE"
 	case yy_TRUE:
 		what = "TRUE"
+	case PROJECT_OSX_STDOUT,
+	     PROJECT_OSX_STDERR,
+	     PROJECT_OSX_EXIT_CODE,
+	     PROJECT_OSX_PID,
+	     PROJECT_OSX_START_TIME,
+	     PROJECT_OSX_WALL_DURATION,
+	     PROJECT_OSX_USER_SEC,
+	     PROJECT_OSX_USER_USEC,
+	     PROJECT_OSX_SYS_SEC,
+	     PROJECT_OSX_SYS_USEC:
+		what = fmt.Sprintf("%s: cord=%d",
+			a.yy_name(),
+			a.sysatt_ref.call_order,
+		)
 	default:
 		what = fmt.Sprintf("%s%s%s", a.yy_name(), colon, a.name)
 		if a.order > 0 {

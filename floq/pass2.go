@@ -18,6 +18,9 @@ type pass2 struct {
 
 	run		map[string]*ast
 	depends		map[string]string
+
+
+
 	run_sysatt	map[*command][]*ast
 
 	run_call	map[*command]bool
@@ -95,48 +98,6 @@ func (p2 *pass2) map_run() {
 	}
 }
 
-func (p2 *pass2) project_osx(a *ast) {
-	if a == nil {
-		return
-	}
-	p2.project_osx(a.left)
-	p2.project_osx(a.right)
-
-	if a.yy_tok == PROJECT_OSX {
-		sa := a.sysatt_ref
-		if sa == nil {
-			a.corrupt("project_osx: sysatt_ref == nil")
-		}
-		cmd := sa.command_ref
-		cmd.ref_count++
-		switch sa.name {
-		case "exit_code":
-			a.yy_tok = PROJECT_OSX_EXIT_CODE
-		case "pid":
-			a.yy_tok = PROJECT_OSX_PID
-		case "start_time":
-			a.yy_tok = PROJECT_OSX_START_TIME
-		case "wall_duration":
-			a.yy_tok = PROJECT_OSX_WALL_DURATION
-		case "user_sec":
-			a.yy_tok = PROJECT_OSX_USER_SEC
-		case "user_usec":
-			a.yy_tok = PROJECT_OSX_USER_USEC
-		case "sys_sec":
-			a.yy_tok = PROJECT_OSX_SYS_SEC
-		case "sys_usec":
-			a.yy_tok = PROJECT_OSX_SYS_USEC
-		default:
-			a.corrupt(
-				"project_osx: unexpected sysatt: %s",
-				a.sysatt_ref.name,
-			)
-		}
-		sa.call_order = cmd.ref_count
-	}
-	p2.project_osx(a.next)
-}
-
 //  find all sysatt references to command in "run <command>" statement
 
 func (p2 *pass2) xrun_sysatt(a *ast) error {
@@ -173,7 +134,14 @@ func (p2 *pass2) xrun_sysatt(a *ast) error {
 
 	//  add sysatt to list of what references this active run
 
-	case PROJECT_OSX_EXIT_CODE, PROJECT_OSX:
+	case PROJECT_OSX_EXIT_CODE,
+	     PROJECT_OSX_PID,
+	     PROJECT_OSX_START_TIME,
+	     PROJECT_OSX_WALL_DURATION,
+	     PROJECT_OSX_USER_SEC,  PROJECT_OSX_USER_USEC,
+	     PROJECT_OSX_SYS_SEC,  PROJECT_OSX_SYS_USEC,
+	     PROJECT_OSX_STDOUT,
+	     PROJECT_OSX_STDERR:
 		sa := a.sysatt_ref
 		if sa == nil {
 			_die("sysatt_ref is nil")
@@ -182,10 +150,15 @@ func (p2 *pass2) xrun_sysatt(a *ast) error {
 		if cmd == nil {
 			_die("sysatt_ref.command_ref is nil")
 		}
+		if p2.run_call[cmd] == false {
+			_die("referenced before run statement: %s", sa)
+		}
+
 		if len(p2.run_sysatt[cmd]) == 255 {
-			return a.error("too many ref to command: %s", cmd.name)
+			return a.error("too many ref to var: %s", sa)
 		}
 		p2.run_sysatt[cmd] = append(p2.run_sysatt[cmd], a)
+		a.sysatt_ref.call_order = uint8(len(p2.run_sysatt[cmd]))
 	}
 	return p2.xrun_sysatt(a.next)
 }
@@ -209,7 +182,14 @@ func (p2 *pass2) run_depends(a *ast) error {
 		if rn != a {
 			return _err("node in p2.run unexpected: %s", rn)
 		}
-	case PROJECT_OSX_EXIT_CODE:
+	case PROJECT_OSX_EXIT_CODE,
+	     PROJECT_OSX_PID,
+	     PROJECT_OSX_START_TIME,
+	     PROJECT_OSX_WALL_DURATION,
+	     PROJECT_OSX_USER_SEC,
+	     PROJECT_OSX_USER_USEC,
+	     PROJECT_OSX_SYS_SEC,
+	     PROJECT_OSX_SYS_USEC:
 		sa := a.sysatt_ref
 		if sa == nil {
 			return _err("sysatt_ref is nil")
@@ -230,6 +210,7 @@ func (p2 *pass2) run_depends(a *ast) error {
 		}
 		p2.depends[run.name] = cmd.name
 		run.ref_count++
+		cmd.ref_count++
 	}
 	if err := p2.run_depends(a.left);  err != nil {
 		return err
@@ -458,8 +439,6 @@ func xpass2(root *ast) error {
 
 	p2.plumb(root.left)
 	p2.plumb(root.right)
-
-	p2.project_osx(root)	//  resolve dependencies on commnd$att values
 
 	p2.map_run()		//  build a map of run nodes
 

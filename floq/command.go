@@ -40,6 +40,7 @@ type osx_value struct {
 	user_usec	int32
 	sys_sec		int64
 	sys_usec	int32
+	output		string
 
 	is_null		bool
 }
@@ -58,9 +59,11 @@ type argv_value struct {
 type argv_chan chan *argv_value
 
 /*
- *  exec an os command process
+ *  exec an os command process and build osx_value from process Stdout, Stderr,
+ *  pid, and several rusage fields.  
  *
  *  Note:
+ *	
  *	signals not handled correctly!
  */
 func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
@@ -71,47 +74,49 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 	cx.Args = append(cx.Args, argv...)
 	cx.Env = cmd.env
 
+	var stdout, stderr strings.Builder
+
+	cx.Stdout = &stdout
+	cx.Stderr = &stderr
+
 	start_time := time.Now()
 	err := cx.Run()
+	wall_duration  := time.Since(start_time)
 
-	ps := cx.ProcessState
-	if ps == nil {
-		panic("osx_run: process state is null")
+	/*
+	 *  golang exec considers any non-zero exit_code to be the error.
+	 *  "exit status <code>".  determine if error is real error.  
+	 */
+	if err != nil {
+		if strings.HasPrefix(err.Error(), "exit status ") == false {
+			croak("osx_run(%s) failed: %s", cmd.name, err)
+		}
 	}
-
-	if out == nil {			// osx record not referenced in *.flow
+	if out == nil {		//  caller does not want osx_val7ue
 		return
 	}
+
 	val := &osx_value{
 			command:	cmd,
 			start_time:	start_time,
-			err:		err,
+			wall_duration:	wall_duration,
+			pid:		cx.Process.Pid,
+		}
+
+	ps := cx.ProcessState
+	if ps == nil {
+		croak("osx_run: %s: process state is null", cmd.name)
 	}
-	if cx.Process != nil {
-		val.pid = cx.Process.Pid
-	}
+
 	val.exit_code = ps.ExitCode()
 
 	ru := ps.SysUsage().(*syscall.Rusage)
-	if ru != nil {
-		val.user_sec = ru.Utime.Sec
-		val.user_usec = ru.Utime.Usec
-		val.sys_sec = ru.Stime.Sec
-		val.sys_usec = ru.Stime.Usec
-		val.wall_duration = time.Since(val.start_time)
-	}
+	val.user_sec = ru.Utime.Sec
+	val.user_usec = ru.Utime.Usec
+	val.sys_sec = ru.Stime.Sec
+	val.sys_usec = ru.Stime.Usec
+	val.wall_duration = time.Since(val.start_time)
 
-	//  extract actual exit code from posix process
-	//
-	//  Note: signals not handled!
-
-	if val.err != nil {
-		if exiterr, ok := val.err.(*exec.ExitError); ok {
-			val.exit_code = exiterr.ExitCode()
-		} else {
-			corrupt("osx_run: can not get exit code: %s", val.err)
-		}
-	}
 	out <- val
 }
 
@@ -363,7 +368,8 @@ func (cmd *command) is_sysatt(name string) bool {
 		"user_sec",
 		"user_usec",
 		"sys_sec",
-		"sys_usec":
+		"sys_usec",
+		"StdoutPipe":
 		return true
 	}
 	return false
@@ -395,6 +401,29 @@ func (flo *flow) osx_proj_exit_code(in osx_chan) (out uint64_chan) {
 
 		out <- &uint64_value{
 			uint64:		uint64(xv.exit_code),
+			is_null:	xv.is_null,
+		}
+
+		flo = flo.get()
+	}()
+
+	return out
+}
+
+//  project the command$Output from an osx_record
+
+func (flo *flow) osx_proj_output(in osx_chan) (out string_chan) {
+
+	out = make(string_chan)
+
+	go func() {
+		xv := <- in
+		if xv == nil {
+			return
+		}
+
+		out <- &string_value{
+			string:		xv.output,
 			is_null:	xv.is_null,
 		}
 

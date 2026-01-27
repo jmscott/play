@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 var usage = "usage: floq [pass1|pass2|compile|frisk|server] path/to/prog.floq\n"
@@ -58,6 +60,19 @@ func main() {
 	if err != nil {
 		croak("parse(%s) failed: %s", floq_path, err)
 	}
+
+	go func() {
+		c := make(chan os.Signal)
+		signal.Notify(
+			c,
+			syscall.SIGTERM,
+			syscall.SIGQUIT,
+			syscall.SIGINT,
+		)
+		s := <-c
+		fmt.Fprintf(os.Stderr, "\nfloq: caught signal: %s\n", s)
+		os.Exit(0)
+	}()
 
 	switch action {
 	case "pass1":

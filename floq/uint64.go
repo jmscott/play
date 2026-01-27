@@ -457,8 +457,6 @@ func (a *ast) is_uint64() bool {
 		PROJECT_OSX_SYS_SEC,
 		PROJECT_OSX_SYS_USEC:
 		return true
-	case PROJECT_OSX:
-		return a.command_ref.is_sysatt_uint64(a.name)
 	}
 	return false
 }
