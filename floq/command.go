@@ -40,7 +40,8 @@ type osx_value struct {
 	user_usec	int32
 	sys_sec		int64
 	sys_usec	int32
-	output		string
+	Stdout		string
+	Stderr		string
 
 	is_null		bool
 }
@@ -115,7 +116,8 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 	val.user_usec = ru.Utime.Usec
 	val.sys_sec = ru.Stime.Sec
 	val.sys_usec = ru.Stime.Usec
-	val.wall_duration = time.Since(val.start_time)
+	val.Stdout = stdout.String()
+	val.Stderr = stderr.String()
 
 	out <- val
 }
@@ -358,23 +360,6 @@ func (flo *flow) osx_null(in osx_chan) {
 	}()
 }
 
-func (cmd *command) is_sysatt(name string) bool {
-
-	switch name {
-	case "exit_code",
-		"pid",
-		"start_time",
-		"wall_duration",
-		"user_sec",
-		"user_usec",
-		"sys_sec",
-		"sys_usec",
-		"StdoutPipe":
-		return true
-	}
-	return false
-}
-
 func (cmd *command) is_sysatt_uint64(name string) bool {
 	switch name {
 	case "exit_code", "wall_duration":
@@ -410,9 +395,9 @@ func (flo *flow) osx_proj_exit_code(in osx_chan) (out uint64_chan) {
 	return out
 }
 
-//  project the command$Output from an osx_record
+//  project the command$Stdout from an osx_record
 
-func (flo *flow) osx_proj_output(in osx_chan) (out string_chan) {
+func (flo *flow) osx_proj_Stdout(in osx_chan) (out string_chan) {
 
 	out = make(string_chan)
 
@@ -423,7 +408,30 @@ func (flo *flow) osx_proj_output(in osx_chan) (out string_chan) {
 		}
 
 		out <- &string_value{
-			string:		xv.output,
+			string:		xv.Stdout,
+			is_null:	xv.is_null,
+		}
+
+		flo = flo.get()
+	}()
+
+	return out
+}
+
+//  project the command$Stdout from an osx_record
+
+func (flo *flow) osx_proj_Stderr(in osx_chan) (out string_chan) {
+
+	out = make(string_chan)
+
+	go func() {
+		xv := <- in
+		if xv == nil {
+			return
+		}
+
+		out <- &string_value{
+			string:		xv.Stderr,
 			is_null:	xv.is_null,
 		}
 

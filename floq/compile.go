@@ -226,19 +226,15 @@ func (cmp *compilation) compile(a *ast) {
 		fo := cmd2fo[cmd]
 		a2ui[a] = flo.osx_proj_wall_duration(fo[sa.call_order-1])
 	case PROJECT_OSX_STDOUT:
-	/*
 		sa := a.sysatt_ref
 		cmd := sa.command_ref
 		fo := cmd2fo[cmd]
-		a2str[a] = flo.osx_proj_output(fo[sa.call_order-1])
-	*/
+		a2str[a] = flo.osx_proj_Stdout(fo[sa.call_order-1])
 	case PROJECT_OSX_STDERR:
-	/*
 		sa := a.sysatt_ref
 		cmd := sa.command_ref
 		fo := cmd2fo[cmd]
-		a2str[a] = flo.osx_proj_output(fo[sa.call_order-1])
-	*/
+		a2str[a] = flo.osx_proj_Stderr(fo[sa.call_order-1])
 	case IS_NULL_STRING:
 		a2bool[a] = flo.is_null_string(a2str[a.left])
 	case IS_NULL_UINT64:

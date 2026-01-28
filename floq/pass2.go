@@ -189,7 +189,9 @@ func (p2 *pass2) run_depends(a *ast) error {
 	     PROJECT_OSX_USER_SEC,
 	     PROJECT_OSX_USER_USEC,
 	     PROJECT_OSX_SYS_SEC,
-	     PROJECT_OSX_SYS_USEC:
+	     PROJECT_OSX_SYS_USEC,
+	     PROJECT_OSX_STDOUT,
+	     PROJECT_OSX_STDERR:
 		sa := a.sysatt_ref
 		if sa == nil {
 			return _err("sysatt_ref is nil")
