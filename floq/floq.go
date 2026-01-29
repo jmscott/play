@@ -82,7 +82,6 @@ func main() {
 			croak("xpass2(%s) failed: %s", floq_path, err)
 		}
 		root.walk_print(0, nil)
-
 	case "frisk":
 		if err = xpass2(root);  err != nil {
 			croak("frisk: xpass2(%s) failed: %s", floq_path, err)
