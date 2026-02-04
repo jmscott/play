@@ -372,6 +372,19 @@ func (cmd *command) String() string {
 	return cmd.name
 }
 
+func (flo *flow) osx_proj_tsv(
+	in osx_chan,
+	att *attribute,
+  ) (out string_chan) { 
+
+	out = make(string_chan)
+
+	go func() {
+		flo = flo.get()
+	}()
+	return out
+}
+
 //  project the command$exit_code from an osx_record
 
 func (flo *flow) osx_proj_exit_code(in osx_chan) (out uint64_chan) {

@@ -83,6 +83,7 @@ func init() {
 %token	PROJECT_OSX_SYS_USEC  OSX_SYS_USEC
 %token	PROJECT_OSX_STDOUT  OSX_STDOUT
 %token	PROJECT_OSX_STDERR  OSX_STDERR
+%token	PROJECT_OSX_TUPLE_TSV
 
 %token	CAST_BOOL  CAST_UINT64  CAST_STRING
 %token	yy_IS  yy_NULL  IS_NULL
@@ -165,7 +166,19 @@ expr:
 	  }  name {
 	  	lex := yylex.(*yyLexState)
 
-		a := lex.project_osx($4, $1)
+		a := lex.project_osx_sys($4, $1)
+		if a == nil {
+			return 0
+		}
+		$$ = a
+	  }
+	|
+	  COMMAND_REF  '.'  {
+	  	yylex.(*yyLexState).name_is_name = true
+	  }  name {
+	  	lex := yylex.(*yyLexState)
+
+		a := lex.project_osx_tuple($4, $1)
 		if a == nil {
 			return 0
 		}
@@ -1131,7 +1144,7 @@ func yy_name2tok(name string) int {
 	return __MIN_YYTOK - 2	// == "error" in yyToknames
 }
 
-func (lex *yyLexState) project_osx(name string, cmd *command) (*ast) {
+func (lex *yyLexState) project_osx_sys(name string, cmd *command) (*ast) {
 	a := &ast{
 		name:	name,
 		command_ref: cmd,
@@ -1139,6 +1152,7 @@ func (lex *yyLexState) project_osx(name string, cmd *command) (*ast) {
 					name:	name,
 					command_ref:	cmd,
 		},
+		line_no:	lex.line_no,
 	}
 	switch name {
 	case "Stdout":
@@ -1162,8 +1176,47 @@ func (lex *yyLexState) project_osx(name string, cmd *command) (*ast) {
 	case "sys_usec":
 		a.yy_tok = PROJECT_OSX_USER_USEC
 	default:
-		lex.error("project_osx: %s: unknown att: %s", cmd.name, name)
+		lex.error(
+			"project_osx_sys: %s: unknown att: %s",
+			cmd.name,
+			name,
+		)
 		return nil
 	}
+	cmd.ref_count++
+	return a
+}
+
+func (lex *yyLexState) project_osx_tuple(name string, cmd *command) (*ast) {
+
+	_e := func(format string, args...interface{}) (*ast) {
+
+		msg := fmt.Sprintf(format, args...)
+		lex.error("project_osx_tuple: %s.%s: %s", cmd.name, name, msg)
+		return nil
+	}
+
+	a := &ast{
+		name:	name,
+		yy_tok: PROJECT_OSX_TUPLE_TSV,
+		command_ref:	cmd,
+		line_no:	lex.line_no,
+	}
+	tup := cmd.tuple_ref
+	if tup == nil {
+		return _e("tuple_ref is nil")
+	}
+
+	if tup.tsv_line == nil {
+		return _e("tuple att \"tsv_field\" not defined")
+	}
+
+	ar := tup.atts[name]
+	if ar == nil {
+		return _e("unknown attribute: %s", name)
+	}
+	ar.call_order++
+	cmd.ref_count++
+	a.att_ref = ar
 	return a
 }

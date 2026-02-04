@@ -10,6 +10,7 @@ type attribute struct {
 	name		string
 	matches		*regexp.Regexp
 	tuple_ref	*tuple
+	call_order	uint8
 }
 
 type tuple struct {
@@ -25,6 +26,8 @@ type tuple struct {
 	atts		map[string]*attribute
 	tsv_line	[]*attribute
 }
+
+//  build a "DEFINE TUPLE" statement
 
 func new_tuple(name string, define *ast) (*tuple, error) {
 
@@ -105,13 +108,18 @@ func new_tuple(name string, define *ast) (*tuple, error) {
 	if tsv_line.count == 0 {
 		return et("array is empty")
 	}
+
+	//  "tsv_line" must  contain all attributes
 	if tsv_line.count != atts.count {
 		return et(
-			"attributes counts do not match: %d != %d", 
+			"\"attributes\" and \"tsv_list\" counts: %d != %d", 
 			atts.count,
 			tsv_line.count,
 		)
 	}
+
+	//  all members of "tsv_line" must be strings
+
 	tup.tsv_line = make([]*attribute, tsv_line.count)
 	for t := tsv_line.left;  t != nil;  t = t.next {
 		if t.yy_tok != STRING {

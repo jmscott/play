@@ -6,10 +6,21 @@ type compilation struct {
 
 	flo		*flow
 
+	//  boolean logical comparison, constants and the "when" predicate.
 	a2bool		map[*ast]bool_chan
+
+	//  string concatenation, comparison, constants and projections
+	//  of tuples
 	a2str		map[*ast]string_chan
-	a2ui		map[*ast]uint64_chan
+
+	//  unsigned 64bit int comparison, constants and projection 
+	a2ui64		map[*ast]uint64_chan
+
+	//  variations of the "run <command(...)", with or without "when"
+	//  predicate, with or without (...) arguments.
 	a2osx		map[*ast]osx_chan
+
+	//  
 	a2argv		map[*ast]argv_chan
 	a2osxfo		map[*ast][]osx_chan		//  fanout osx records
 	cmd2fo		map[*command][]osx_chan
@@ -25,7 +36,7 @@ func compile(root *ast) (*flow) {
 			},
 			a2bool:		make(map[*ast]bool_chan),
 			a2str:		make(map[*ast]string_chan),
-			a2ui:		make(map[*ast]uint64_chan),
+			a2ui64:		make(map[*ast]uint64_chan),
 			a2osx:		make(map[*ast]osx_chan),
 			a2argv:		make(map[*ast]argv_chan),
 			a2osxfo:	make(map[*ast][]osx_chan),
@@ -40,7 +51,7 @@ func (cmp *compilation) relop(a *ast) {
 	flo := cmp.flo
 	a2bool := cmp.a2bool
 	a2str := cmp.a2str
-	a2ui := cmp.a2ui
+	a2ui64 := cmp.a2ui64
 
 	l := a.left
 	r := a.right
@@ -55,8 +66,8 @@ func (cmp *compilation) relop(a *ast) {
 	case l.is_uint64() && r.is_uint64():
 		a2bool[a] = relop_uint64[a.yy_tok](
 				flo,
-				a2ui[a.left],
-				a2ui[a.right],
+				a2ui64[a.left],
+				a2ui64[a.right],
 		)
 	case l.is_bool() && r.is_bool():
 		a2bool[a] = relop_bool[a.yy_tok](
@@ -66,25 +77,19 @@ func (cmp *compilation) relop(a *ast) {
 		)
 	default:
 		nm := a.yy_name()
-		a.corrupt(
-			"relop: %s: can not compile %s %s %s",
-			nm,
-			l,
-			nm,
-			r,
-		)
+		a.corrupt("relop: %s: can not compile %s %s %s", nm, l, nm, r)
 	}
 }
 
-//  compile a root abstract syntax tree into connected channels. data
-//  flows from least dependent leaves to most dependent "flow_stmt".
-//  assume pass1() and pass2() called.
+//  compile a root abstract syntax tree into channels connecting the nodes.
 
 func (cmp *compilation) compile(a *ast) {
 
 	if a == nil {
 		return
 	}
+
+	//  skip "define command/tuple" statements.
 	if a.yy_tok == DEFINE {
 		cmp.compile(a.next)
 		return
@@ -93,10 +98,11 @@ func (cmp *compilation) compile(a *ast) {
 	_corrupt := func(format string, args...interface{}) {
 		a.corrupt("compile: " + format, args...)
 	}
+
 	flo := cmp.flo
 	a2osx := cmp.a2osx
 	a2str := cmp.a2str
-	a2ui := cmp.a2ui
+	a2ui64 := cmp.a2ui64
 	a2bool := cmp.a2bool
 	a2argv := cmp.a2argv
 	a2osxfo := cmp.a2osxfo
@@ -109,7 +115,7 @@ func (cmp *compilation) compile(a *ast) {
 
 	switch a.yy_tok {
 	case CAST_UINT64:
-		a2str[a] = flo.cast_uint64(a2ui[a.left])
+		a2str[a] = flo.cast_uint64(a2ui64[a.left])
 	case CAST_BOOL:
 		a2str[a] = flo.cast_bool(a2bool[a.left])
 	case CAST_STRING:
@@ -123,7 +129,7 @@ func (cmp *compilation) compile(a *ast) {
 	case STRING:
 		a2str[a] = flo.const_string(a.string)
 	case UINT64:
-		a2ui[a] = flo.const_ui64(a.uint64)
+		a2ui64[a] = flo.const_ui64(a.uint64)
 	case ARGV:
 		in := make([]string_chan, a.count)
 		for n := a.left;  n != nil;  n = n.next {
@@ -189,32 +195,32 @@ func (cmp *compilation) compile(a *ast) {
 		sa := a.sysatt_ref
 		cmd := sa.command_ref
 		fo := cmd2fo[cmd]
-		a2ui[a] = flo.osx_proj_exit_code(fo[sa.call_order-1])
+		a2ui64[a] = flo.osx_proj_exit_code(fo[sa.call_order-1])
 	case PROJECT_OSX_PID:
 		sa := a.sysatt_ref
 		cmd := sa.command_ref
 		fo := cmd2fo[cmd]
-		a2ui[a] = flo.osx_proj_pid(fo[sa.call_order-1])
+		a2ui64[a] = flo.osx_proj_pid(fo[sa.call_order-1])
 	case PROJECT_OSX_USER_SEC:
 		sa := a.sysatt_ref
 		cmd := sa.command_ref
 		fo := cmd2fo[cmd]
-		a2ui[a] = flo.osx_proj_user_sec(fo[sa.call_order-1])
+		a2ui64[a] = flo.osx_proj_user_sec(fo[sa.call_order-1])
 	case PROJECT_OSX_USER_USEC:
 		sa := a.sysatt_ref
 		cmd := sa.command_ref
 		fo := cmd2fo[cmd]
-		a2ui[a] = flo.osx_proj_user_usec(fo[sa.call_order-1])
+		a2ui64[a] = flo.osx_proj_user_usec(fo[sa.call_order-1])
 	case PROJECT_OSX_SYS_SEC:
 		sa := a.sysatt_ref
 		cmd := sa.command_ref
 		fo := cmd2fo[cmd]
-		a2ui[a] = flo.osx_proj_sys_sec(fo[sa.call_order-1])
+		a2ui64[a] = flo.osx_proj_sys_sec(fo[sa.call_order-1])
 	case PROJECT_OSX_SYS_USEC:
 		sa := a.sysatt_ref
 		cmd := sa.command_ref
 		fo := cmd2fo[cmd]
-		a2ui[a] = flo.osx_proj_sys_usec(fo[sa.call_order-1])
+		a2ui64[a] = flo.osx_proj_sys_usec(fo[sa.call_order-1])
 	case PROJECT_OSX_START_TIME:
 		sa := a.sysatt_ref
 		cmd := sa.command_ref
@@ -224,7 +230,7 @@ func (cmp *compilation) compile(a *ast) {
 		sa := a.sysatt_ref
 		cmd := sa.command_ref
 		fo := cmd2fo[cmd]
-		a2ui[a] = flo.osx_proj_wall_duration(fo[sa.call_order-1])
+		a2ui64[a] = flo.osx_proj_wall_duration(fo[sa.call_order-1])
 	case PROJECT_OSX_STDOUT:
 		sa := a.sysatt_ref
 		cmd := sa.command_ref
@@ -235,16 +241,20 @@ func (cmp *compilation) compile(a *ast) {
 		cmd := sa.command_ref
 		fo := cmd2fo[cmd]
 		a2str[a] = flo.osx_proj_Stderr(fo[sa.call_order-1])
+	case PROJECT_OSX_TUPLE_TSV:
+		ar := a.att_ref
+		fo := cmd2fo[a.command_ref]
+		a2str[a] = flo.osx_proj_tsv(fo[ar.call_order-1], ar)
 	case IS_NULL_STRING:
 		a2bool[a] = flo.is_null_string(a2str[a.left])
 	case IS_NULL_UINT64:
-		a2bool[a] = flo.is_null_uint64(a2ui[a.left])
+		a2bool[a] = flo.is_null_uint64(a2ui64[a.left])
 	case IS_NULL_BOOL:
 		a2bool[a] = flo.is_null_bool(a2bool[a.left])
 	case IS_NOT_NULL_STRING:
 		a2bool[a] = flo.is_not_null_string(a2str[a.left])
 	case IS_NOT_NULL_UINT64:
-		a2bool[a] = flo.is_not_null_uint64(a2ui[a.left])
+		a2bool[a] = flo.is_not_null_uint64(a2ui64[a.left])
 	case IS_NOT_NULL_BOOL:
 		a2bool[a] = flo.is_not_null_bool(a2bool[a.left])
 	case FLOW, STMT_LIST, DEFINE:

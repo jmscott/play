@@ -13,7 +13,6 @@ type ast struct {
 	order		uint32
 	count		uint32
 	name		string
-	ref_count	uint8
 
 	//  children
 	left		*ast
@@ -28,6 +27,7 @@ type ast struct {
 	tuple_ref	*tuple
 	command_ref	*command
 	sysatt_ref	*sysatt
+	att_ref		*attribute
 	uint64
 	string
 }
@@ -84,11 +84,10 @@ func (a *ast) String() string {
 		)
 	case RUN:
 		what = fmt.Sprintf(
-				"RUN%s (ord=%d,lno=%d,rcnt=%d) ",
+				"RUN%s (ord=%d,lno=%d) ",
 				colon,
 				a.order,
 				a.line_no,
-				a.ref_count,
 			)
 		what += a.command_ref.string(2)
 	case STMT_LIST:
@@ -107,15 +106,13 @@ func (a *ast) String() string {
 	case STRING:
 		if a.name == "" {
 			what = fmt.Sprintf(
-					"STRING (ord=%d) %s",
-					a.order,
+					"STRING \"%s\"",
 					a.string,
 			)
 		} else {
 			what = fmt.Sprintf(
-					"STRING:%s (ord=%d) %s",
+					"STRING:%s \"%s\"",
 					a.name,
-					a.order,
 					a.string,
 			)
 		}
@@ -143,15 +140,23 @@ func (a *ast) String() string {
 	     PROJECT_OSX_USER_USEC,
 	     PROJECT_OSX_SYS_SEC,
 	     PROJECT_OSX_SYS_USEC:
-		what = fmt.Sprintf("%s: cord=%d",
-			a.yy_name(),
-			a.sysatt_ref.call_order,
-		)
+		sar := a.sysatt_ref
+		what = fmt.Sprintf(
+				"%s: @%p, cord=%d",
+				sar,
+				sar,
+				sar.call_order,
+			)
+	case PROJECT_OSX_TUPLE_TSV:
+		att := a.att_ref
+		what = fmt.Sprintf(
+				"%s: @%p, cord=%d",
+				att,
+				att,
+				att.call_order,
+			)
 	default:
 		what = fmt.Sprintf("%s%s%s", a.yy_name(), colon, a.name)
-		if a.order > 0 {
-			what = what + fmt.Sprintf(" (ord=%d)", a.order)
-		}
 	}
 	return what
 }
