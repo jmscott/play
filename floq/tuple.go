@@ -6,28 +6,25 @@ import (
 	"regexp"
 )
 
+//  an attribute object in tuple.attributes set in "define tuple"
+//  statement
+
 type attribute struct {
 	name		string
 	matches		*regexp.Regexp
 	tuple_ref	*tuple
 	call_order	uint8
+	tsv_field	uint8
 }
 
 type tuple struct {
 	name		string
-			/*
-			 *  Note:
-			 *	we can not use attribute{}.  get wierd error
-			 *	
-			 *		"struct containing regexp.Regexp
-			 *		cannot be compared"
-			 *
-			 */
 	atts		map[string]*attribute
 	tsv_line	[]*attribute
 }
 
-//  build a "DEFINE TUPLE" statement
+
+//  build a tuple struct from a "DEFINE TUPLE" abstract syntax tree.
 
 func new_tuple(name string, define *ast) (*tuple, error) {
 
@@ -64,6 +61,9 @@ func new_tuple(name string, define *ast) (*tuple, error) {
 	if atts.count == 0 {
 		return ea("set is empty")
 	}
+	if atts.count > 255 {
+		return ea("too many elements in \"attributes\" set")
+	}
 
 	/*
 	 *  Build the attributes map for the tuple.
@@ -82,10 +82,6 @@ func new_tuple(name string, define *ast) (*tuple, error) {
 		if tup.atts[a.name] != nil {
 			return ea("defined more than once: %s", a.name)
 		}
-		tup.atts[a.name] = &attribute{
-					name:		a.name,
-					tuple_ref:	tup,
-				}
 		mat := a.left
 		if mat.yy_tok != STRING {
 			return ea(
@@ -96,8 +92,12 @@ func new_tuple(name string, define *ast) (*tuple, error) {
 		}
 		re, err := regexp.Compile(mat.string)
 		if err != nil {
-			return ea("can not compile re: %s", mat.string)
+			return ea("can not compile matches re: %s", mat.string)
 		}
+		tup.atts[a.name] = &attribute{
+					name:		a.name,
+					tuple_ref:	tup,
+				}
 		tup.atts[a.name].matches = re
 	}
 
@@ -109,17 +109,18 @@ func new_tuple(name string, define *ast) (*tuple, error) {
 		return et("array is empty")
 	}
 
-	//  "tsv_line" must  contain all attributes
+	//  "tsv_line" must  contain all attributes.  why?
 	if tsv_line.count != atts.count {
 		return et(
-			"\"attributes\" and \"tsv_list\" counts: %d != %d", 
+			"\"attributes\" and \"tsv_line\" counts: %d != %d", 
 			atts.count,
 			tsv_line.count,
 		)
 	}
 
-	//  all members of "tsv_line" must be strings
+	//  all members of "tsv_line" must be strings and no dups
 
+	seen := make(map[string]bool)
 	tup.tsv_line = make([]*attribute, tsv_line.count)
 	for t := tsv_line.left;  t != nil;  t = t.next {
 		if t.yy_tok != STRING {
@@ -128,6 +129,17 @@ func new_tuple(name string, define *ast) (*tuple, error) {
 				yy_name(t.yy_tok),
 			)
 		}
+		anm := t.string
+		if tup.atts[anm] == nil {
+			return et("unknown attribute: %s", anm)
+		}
+		if seen[anm] {
+			return et("duplicate attibute: %s", anm) 
+		}
+		fld := t.order-1
+		tup.tsv_line[fld] = tup.atts[anm]
+		tup.atts[anm].tsv_field = uint8(fld)
+		seen[anm] = true
 	}
 
 	return tup, nil
@@ -136,4 +148,13 @@ func new_tuple(name string, define *ast) (*tuple, error) {
 func (tup *tuple) String() string {
 
 	return fmt.Sprintf("%s%#v", tup.name, tup.atts)
+}
+
+func (att *attribute) String() string {
+	return fmt.Sprintf(
+		"%s.%s: cord=%d",
+		att.tuple_ref.name,
+		att.name,
+		att.call_order,
+	)
 }
