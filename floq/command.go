@@ -9,12 +9,6 @@ import (
 	"time"
 )
 
-//  wait for all processes to stop then floq exits.
-//
-//  Note: why var osx_wf global?  why not in flow struct?
-
-var osx_wg	sync.WaitGroup
-
 type command struct {
 	
 	name		string
@@ -131,7 +125,6 @@ func (flo *flow) osx0(cmd *command) (out osx_chan) {
 	go func() {
 		for {
 			flo.osx_run(cmd, nil, out)
-			osx_wg.Done()
 			flo = flo.get()
 		}
 	}()
@@ -163,7 +156,6 @@ func (flo *flow) osx(cmd *command, in argv_chan) (out osx_chan) {
 			} else {
 				out <- null_osx
 			}
-			osx_wg.Done()
 
 			flo = flo.get()
 		}
@@ -191,7 +183,6 @@ func (flo *flow) osx0w(cmd *command, when bool_chan) (out osx_chan) {
 			} else {
 				out <- null_osx
 			}
-			osx_wg.Done()
 
 			flo = flo.get()
 		}
@@ -234,7 +225,6 @@ func (flo *flow) osxw(
 			} else {
 				out <- null_osx
 			}
-			osx_wg.Done()
 			flo = flo.get()
 		}
 	}()
@@ -380,6 +370,16 @@ func (flo *flow) osx_proj_tsv(
 	out = make(string_chan)
 
 	go func() {
+		xv := <- in
+		if xv == nil {
+			return
+		}
+
+		out <- &string_value{
+			string:		"osx_proj_tsv: " + att.String(),
+			is_null:	xv.is_null,
+		}
+
 		flo = flo.get()
 	}()
 	return out
