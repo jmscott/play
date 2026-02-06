@@ -20,9 +20,14 @@ type compilation struct {
 	//  predicate, with or without (...) arguments.
 	a2osx		map[*ast]osx_chan
 
-	//  
+	//  argument vector for "run <commmand>" statements  
 	a2argv		map[*ast]argv_chan
+
+	//  fanout targets for specific osx_chan records, like
+	//  PROJECT_OSX_EXIT_CODE
 	a2osxfo		map[*ast][]osx_chan		//  fanout osx records
+	
+	//  fanout targets for all projections/consumers
 	cmd2fo		map[*command][]osx_chan
 }
 
@@ -181,16 +186,15 @@ func (cmp *compilation) compile(a *ast) {
 		if cmd.ref_count == 0 {
 			flo.osx_null(a2osx[a])
 		} else {
-			//  fanout osx record
-			a2osxfo[a] = flo.osx_fanout(a2osx[a], cmd.ref_count)
-
 			//  map command to fanout 
 			if cmd2fo[cmd] != nil {
 				_corrupt("command %s: fanout exists", cmd.name)
 			}
+
+			//  fanout osx record
+			a2osxfo[a] = flo.osx_fanout(a2osx[a], cmd.ref_count)
 			cmd2fo[cmd] = a2osxfo[a]
 		}
-		osx_wg.Add(1)
 	case PROJECT_OSX_EXIT_CODE:
 		sa := a.sysatt_ref
 		cmd := sa.command_ref
@@ -242,9 +246,9 @@ func (cmp *compilation) compile(a *ast) {
 		fo := cmd2fo[cmd]
 		a2str[a] = flo.osx_proj_Stderr(fo[sa.call_order-1])
 	case PROJECT_OSX_TUPLE_TSV:
-		ar := a.att_ref
+		att := a.att_ref
 		fo := cmd2fo[a.command_ref]
-		a2str[a] = flo.osx_proj_tsv(fo[ar.call_order-1], ar)
+		a2str[a] = flo.osx_proj_tsv(fo[att.call_order-1], att)
 	case IS_NULL_STRING:
 		a2bool[a] = flo.is_null_string(a2str[a.left])
 	case IS_NULL_UINT64:
