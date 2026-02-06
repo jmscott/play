@@ -168,20 +168,25 @@ func (a *ast) walk_print(indent int, parent *ast) {
 	}
 	if parent != nil && a.parent != parent {
 		if a.parent == nil {
-			a.corrupt("unexpected nil parent")
+			a.corrupt("unexpected nil ast parent")
 		}
-		a.corrupt("unexpected parent: %s", a.parent.yy_name())
+		a.corrupt(
+			"call parent(%s) not ast parent: %s",
+			parent.yy_name(),
+			a.parent.yy_name(),
+		)
 	}
 	if indent == 0 {
 		fmt.Println("")
 	} else {
 		if a.parent == nil {
-			corrupt("parent ast is nil")
+			a.corrupt("indent > 0: ast parent is nil")
 		}
 		for i := 0;  i < indent;  i++ {
 			fmt.Print("  ")
 		}
 	}
+
 	fmt.Println(a.String())
 
 	//  print kids
@@ -258,7 +263,7 @@ func (a *ast) error(format string, args...interface{}) error {
 
 func (a *ast) frisk_kids(twig string, expect ...int) error {
 	if a == nil {
-		return errors.New(twig + " node is kill")
+		return errors.New(twig + " node is nil")
 	}
 
 	e := func(kid *ast, format string, args...interface{}) error {
@@ -368,7 +373,7 @@ func (parent *ast) push_lr(lr **ast, kid *ast) {
 
 func (set *ast) string_element(name string) string { 
 	if set.yy_tok != yy_SET {
-		set.corrupt("expected SET, got %s", yy_name(set.yy_tok))
+		set.corrupt("ast: expected SET, got %s", set.yy_name())
 	}
 	var kid *ast
 	for kid = set.left;  kid != nil;  kid = kid.next {
@@ -384,7 +389,7 @@ func (set *ast) string_element(name string) string {
 
 func (set *ast) set_element(name string) *ast { 
 	if set.yy_tok != yy_SET {
-		set.corrupt("expected SET, got %s", yy_name(set.yy_tok))
+		set.corrupt("expected SET, got %s", set.yy_name())
 	}
 	var kid *ast
 	for kid = set.left;  kid != nil;  kid = kid.next {
@@ -398,7 +403,7 @@ func (set *ast) set_element(name string) *ast {
 //  get a named array element from a set
 func (set *ast) array_element(name string) (kid *ast) {
 	if set.yy_tok != yy_SET {
-		set.corrupt("expected SET, got %s", yy_name(set.yy_tok))
+		set.corrupt("expected SET, got %s", set.yy_name())
 	}
 
 	for kid = set.left;  kid != nil;  kid = kid.next {
@@ -414,7 +419,7 @@ func (set *ast) array_element(name string) (kid *ast) {
 func (set *ast) array_string_element(name string) []string { 
 
 	if set.yy_tok != yy_SET {
-		set.corrupt("expected SET, got %s", yy_name(set.yy_tok))
+		set.corrupt("expected SET, got %s", set.yy_name())
 	}
 	var kid *ast
 	for kid = set.left;  kid != nil;  kid = kid.next {
