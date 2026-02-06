@@ -221,33 +221,37 @@ func (p2 *pass2) xrun_att(a *ast) error {
 		a.corrupt("pass2: xrun_att: " + format, args...)
 	}
 
+	_e := func(format string, args...interface{}) error {
+		return a.error(format, args...)
+	}
+
 	if a.yy_tok == PROJECT_OSX_TUPLE_TSV {
 
 		att := a.att_ref
 		if att == nil {
 			_c("att_ref is nil")
 		}
-
 		cmd := a.command_ref
 		if cmd == nil {
-			_c("command_ref is nil")
-		}
-		if p2.run_call[cmd] != nil {
-			return a.error(
-				"referenced before \"run\" statement: %s",
-				cmd.name,
-			)
+			_c("att_ref.command_ref is nil")
 		}
 
-		if len(p2.run_att[cmd]) == 255 {
-			return a.error(
+		ar := p2.run_call[cmd]
+		if ar == nil {
+			return _e("command for att never run: %s", att)
+		}
+		if ar.line_no >= a.line_no {
+			return _e("run call after att: %s", att)
+		}
+
+		if len(p2.run_sysatt[cmd]) == 255 {
+			return _e(
 				"too many att ref to command: %s",
 				cmd.name,
 			)
-
 		}
 
-		//  append PROJECT_OSX_TUPLE_TSV... ast node to array of att
+		//  append PROJECT_OSX... ast node to array of sysatt
 		//  references.
 		p2.run_att[cmd] = append(p2.run_att[cmd], a)
 		a.att_ref.call_order = uint8(len(p2.run_att[cmd]))
@@ -265,14 +269,18 @@ func (p2 *pass2) run_depends(a *ast) error {
 		return a.error(format, args...)
 	}
 
+	_c := func(format string, args...interface{}) {
+		a.corrupt(format, args...)
+	}
+
 	switch a.yy_tok {
 	case RUN:
 		rn := p2.run[a.name]
 		if rn == nil {
-			return _e("node is nil in map p2.run")
+			_c("node is nil in map p2.run")
 		}
 		if rn != a {
-			return _e("node in p2.run unexpected: %s", rn)
+			_c("node in p2.run unexpected: %s", rn)
 		}
 	case PROJECT_OSX_EXIT_CODE,
 	     PROJECT_OSX_PID,
@@ -286,11 +294,11 @@ func (p2 *pass2) run_depends(a *ast) error {
 	     PROJECT_OSX_STDERR:
 		sa := a.sysatt_ref
 		if sa == nil {
-			return _e("sysatt_ref is nil")
+			_c("sysatt_ref is nil")
 		}
 		cmd := sa.command_ref
 		if cmd == nil {
-			return _e("sysatt_ref.command_ref is nil")
+			_c("sysatt_ref.command_ref is nil")
 		}
 
 		//  verify "run <command(...)" statement occurs before
@@ -305,17 +313,17 @@ func (p2 *pass2) run_depends(a *ast) error {
 	case PROJECT_OSX_TUPLE_TSV:
 		ar := a.att_ref
 		if ar == nil {
-			return _e("att_ref is nil")
+			_c("att_ref is nil")
 		}
 
 		tup := ar.tuple_ref
 		if tup == nil {
-			return _e("tuple_ref is nil")
+			_c("tuple_ref is nil")
 		}
 
 		cmd := a.command_ref
 		if cmd == nil {
-			return _e("cmd is nil")
+			_c("cmd is nil")
 		}
 
 		//p2.depends[run.name] = cmd.name
