@@ -196,59 +196,63 @@ func (cmp *compilation) compile(a *ast) {
 			cmd2fo[cmd] = a2osxfo[a]
 		}
 	case PROJECT_OSX_EXIT_CODE:
-		sa := a.sysatt_ref
-		cmd := sa.command_ref
+		proj := a.proj_ref
+		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2fo[cmd]
-		a2ui64[a] = flo.osx_proj_exit_code(fo[sa.call_order-1])
+		a2ui64[a] = flo.osx_proj_exit_code(fo[proj.call_order-1])
 	case PROJECT_OSX_PID:
-		sa := a.sysatt_ref
-		cmd := sa.command_ref
+		proj := a.proj_ref
+		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2fo[cmd]
-		a2ui64[a] = flo.osx_proj_pid(fo[sa.call_order-1])
+		a2ui64[a] = flo.osx_proj_pid(fo[proj.call_order-1])
 	case PROJECT_OSX_USER_SEC:
-		sa := a.sysatt_ref
-		cmd := sa.command_ref
+		proj := a.proj_ref
+		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2fo[cmd]
-		a2ui64[a] = flo.osx_proj_user_sec(fo[sa.call_order-1])
+		a2ui64[a] = flo.osx_proj_user_sec(fo[proj.call_order-1])
 	case PROJECT_OSX_USER_USEC:
-		sa := a.sysatt_ref
-		cmd := sa.command_ref
+		proj := a.proj_ref
+		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2fo[cmd]
-		a2ui64[a] = flo.osx_proj_user_usec(fo[sa.call_order-1])
+		a2ui64[a] = flo.osx_proj_user_usec(fo[proj.call_order-1])
 	case PROJECT_OSX_SYS_SEC:
-		sa := a.sysatt_ref
-		cmd := sa.command_ref
+		proj := a.proj_ref
+		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2fo[cmd]
-		a2ui64[a] = flo.osx_proj_sys_sec(fo[sa.call_order-1])
+		a2ui64[a] = flo.osx_proj_sys_sec(fo[proj.call_order-1])
 	case PROJECT_OSX_SYS_USEC:
-		sa := a.sysatt_ref
-		cmd := sa.command_ref
+		proj := a.proj_ref
+		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2fo[cmd]
-		a2ui64[a] = flo.osx_proj_sys_usec(fo[sa.call_order-1])
+		a2ui64[a] = flo.osx_proj_sys_usec(fo[proj.call_order-1])
 	case PROJECT_OSX_START_TIME:
-		sa := a.sysatt_ref
-		cmd := sa.command_ref
+		proj := a.proj_ref
+		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2fo[cmd]
-		a2str[a] = flo.osx_proj_start_time(fo[sa.call_order-1])
+		a2str[a] = flo.osx_proj_start_time(fo[proj.call_order-1])
 	case PROJECT_OSX_WALL_DURATION:
-		sa := a.sysatt_ref
-		cmd := sa.command_ref
+		proj := a.proj_ref
+		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2fo[cmd]
-		a2ui64[a] = flo.osx_proj_wall_duration(fo[sa.call_order-1])
+		a2ui64[a] = flo.osx_proj_wall_duration(fo[proj.call_order-1])
 	case PROJECT_OSX_STDOUT:
-		sa := a.sysatt_ref
-		cmd := sa.command_ref
+		proj := a.proj_ref
+		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2fo[cmd]
-		a2str[a] = flo.osx_proj_Stdout(fo[sa.call_order-1])
+		a2str[a] = flo.osx_proj_Stdout(fo[proj.call_order-1])
 	case PROJECT_OSX_STDERR:
-		sa := a.sysatt_ref
-		cmd := sa.command_ref
+		proj := a.proj_ref
+		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2fo[cmd]
-		a2str[a] = flo.osx_proj_Stderr(fo[sa.call_order-1])
+		a2str[a] = flo.osx_proj_Stderr(fo[proj.call_order-1])
 	case PROJECT_OSX_TUPLE_TSV:
-		att := a.att_ref
-		fo := cmd2fo[a.command_ref]
-		a2str[a] = flo.osx_proj_tsv(fo[att.call_order-1], att)
+		proj := a.proj_ref
+		cmd := proj.sysatt_ref.command_ref
+		fo := cmd2fo[cmd]
+		a2str[a] = flo.osx_proj_tuple_tsv(
+				fo[proj.call_order-1],
+				proj.att_ref,
+			)
 	case IS_NULL_STRING:
 		a2bool[a] = flo.is_null_string(a2str[a.left])
 	case IS_NULL_UINT64:

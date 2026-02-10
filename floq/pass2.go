@@ -23,14 +23,7 @@ type pass2 struct {
 	//
 	//  references can be in either the "when" clause or the argument
 	//  vector "run command(args...)"
-	run_sysatt	map[*command][]*ast
-
-	//  track PROJECT_OSX_TUPLE_TSV ast nodes referenced in "run <command>"
-	//  statements.
-	//
-	//  references can be in either the "when" clause or the argument
-	//  vector "run command(args...)"
-	run_att		map[*command][]*ast
+	run_proj	map[*projection][]*ast
 
 	//  "run <command>"  statements
 	run_call	map[*command]*ast
@@ -151,17 +144,13 @@ func (p2 *pass2) xrun_sysatt(a *ast) error {
 		return err
 	}
 
-	_c := func(format string, args...interface{}) {
-		a.corrupt(format, args...)
-	}
-
 	_e := func(format string, args...interface{}) error {
-		return a.error(format, args...)
+		return a.error("xrun_sysatt: " + format, args...)
 	}
 
 	switch a.yy_tok {
 
-	//  add sysatt to list of what references this "run".
+	//  add projection to list of what references this "run".
 	case PROJECT_OSX_EXIT_CODE,
 	     PROJECT_OSX_PID,
 	     PROJECT_OSX_START_TIME,
@@ -170,24 +159,18 @@ func (p2 *pass2) xrun_sysatt(a *ast) error {
 	     PROJECT_OSX_SYS_SEC,  PROJECT_OSX_SYS_USEC,
 	     PROJECT_OSX_STDOUT,
 	     PROJECT_OSX_STDERR:
-		sa := a.sysatt_ref
-		if sa == nil {
-			_c("sysatt_ref is nil")
-		}
-		cmd := sa.command_ref
-		if cmd == nil {
-			_c("sysatt_ref.command_ref is nil")
-		}
+		proj := a.proj_ref
 
+		cmd := proj.sysatt_ref.command_ref
 		ar := p2.run_call[cmd]
 		if ar == nil {
-			return _e("command for sysatt never run: %s", sa)
+			return _e("command for sysatt never run: %s", cmd.name)
 		}
 		if ar.line_no >= a.line_no {
-			return _e("run call after sysatt: %s", sa)
+			return _e("run call after sysatt: %s", )
 		}
 
-		if len(p2.run_sysatt[cmd]) == 255 {
+		if len(p2.run_proj[proj]) == 255 {
 			return _e(
 				"too many sysatt ref to command: %s",
 				cmd.name,
@@ -196,8 +179,8 @@ func (p2 *pass2) xrun_sysatt(a *ast) error {
 
 		//  append PROJECT_OSX... ast node to array of sysatt
 		//  references.
-		p2.run_sysatt[cmd] = append(p2.run_sysatt[cmd], a)
-		a.sysatt_ref.call_order = uint8(len(p2.run_sysatt[cmd]))
+		p2.run_proj[proj] = append(p2.run_proj[proj], a)
+		a.proj_ref.call_order = uint8(len(p2.run_proj[proj]))
 	}
 	return p2.xrun_sysatt(a.next)
 }
@@ -216,10 +199,6 @@ func (p2 *pass2) xrun_att(a *ast) error {
 	if err := p2.xrun_att(a.right);  err != nil {
 		return err
 	}
-	
-	_c := func(format string, args...interface{}) {
-		a.corrupt("pass2: xrun_att: " + format, args...)
-	}
 
 	_e := func(format string, args...interface{}) error {
 		return a.error(format, args...)
@@ -227,24 +206,18 @@ func (p2 *pass2) xrun_att(a *ast) error {
 
 	if a.yy_tok == PROJECT_OSX_TUPLE_TSV {
 
-		att := a.att_ref
-		if att == nil {
-			_c("att_ref is nil")
-		}
+		proj := a.proj_ref
 		cmd := a.command_ref
-		if cmd == nil {
-			_c("att_ref.command_ref is nil")
-		}
 
 		ar := p2.run_call[cmd]
 		if ar == nil {
-			return _e("command for att never run: %s", att)
+			return _e("command for att never run: %s", cmd.name)
 		}
 		if ar.line_no >= a.line_no {
-			return _e("run call after att: %s", att)
+			return _e("run call after att: %s", proj.name)
 		}
 
-		if len(p2.run_sysatt[cmd]) == 255 {
+		if len(p2.run_proj[proj]) == 255 {
 			return _e(
 				"too many att ref to command: %s",
 				cmd.name,
@@ -253,8 +226,8 @@ func (p2 *pass2) xrun_att(a *ast) error {
 
 		//  append PROJECT_OSX... ast node to array of sysatt
 		//  references.
-		p2.run_att[cmd] = append(p2.run_att[cmd], a)
-		a.att_ref.call_order = uint8(len(p2.run_att[cmd]))
+		p2.run_proj[proj] = append(p2.run_proj[proj], a)
+		proj.call_order = uint8(len(p2.run_proj[proj]))
 	}
 	return p2.xrun_att(a.next)
 }
@@ -270,7 +243,7 @@ func (p2 *pass2) run_depends(a *ast) error {
 	}
 
 	_c := func(format string, args...interface{}) {
-		a.corrupt(format, args...)
+		a.corrupt("run_depends: " + format, args...)
 	}
 
 	switch a.yy_tok {
@@ -292,38 +265,16 @@ func (p2 *pass2) run_depends(a *ast) error {
 	     PROJECT_OSX_SYS_USEC,
 	     PROJECT_OSX_STDOUT,
 	     PROJECT_OSX_STDERR:
-		sa := a.sysatt_ref
-		if sa == nil {
-			_c("sysatt_ref is nil")
+		proj := a.proj_ref
+		if proj == nil {
+			_c("proj_ref is nil")
 		}
-		cmd := sa.command_ref
-		if cmd == nil {
-			_c("sysatt_ref.command_ref is nil")
-		}
-
-		//  verify "run <command(...)" statement occurs before
-		//  an reference to its projected values.
-		if p2.run[cmd.name] == nil {
-			return _e("command never run: %s", cmd.name)
-		}
-
-		//  track cyclic references
-		//p2.depends[a.name] = cmd.name
+		_e("WTF: %#v", proj)
 
 	case PROJECT_OSX_TUPLE_TSV:
-		ar := a.att_ref
-		if ar == nil {
-			_c("att_ref is nil")
-		}
-
-		tup := ar.tuple_ref
-		if tup == nil {
-			_c("tuple_ref is nil")
-		}
-
-		cmd := a.command_ref
-		if cmd == nil {
-			_c("cmd is nil")
+		proj := a.proj_ref
+		if proj == nil {
+			_c("proj_ref is nil")
 		}
 
 		//p2.depends[run.name] = cmd.name
@@ -551,8 +502,7 @@ func xpass2(root *ast) error {
 		run:		make(map[string]*ast),
 		depends:	make(map[string]string),
 		run_call:	make(map[*command]*ast),
-		run_sysatt:	make(map[*command][]*ast),
-		run_att:	make(map[*command][]*ast),
+		run_proj:	make(map[*projection][]*ast),
 	}
 
 	p2.plumb(root.left)

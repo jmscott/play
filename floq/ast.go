@@ -24,9 +24,9 @@ type ast struct {
 
 	parent		*ast
 
+	proj_ref	*projection
 	tuple_ref	*tuple
 	command_ref	*command
-	sysatt_ref	*sysatt
 	att_ref		*attribute
 	uint64
 	string
@@ -130,31 +130,6 @@ func (a *ast) String() string {
 		what = "FALSE"
 	case yy_TRUE:
 		what = "TRUE"
-	case PROJECT_OSX_STDOUT,
-	     PROJECT_OSX_STDERR,
-	     PROJECT_OSX_EXIT_CODE,
-	     PROJECT_OSX_PID,
-	     PROJECT_OSX_START_TIME,
-	     PROJECT_OSX_WALL_DURATION,
-	     PROJECT_OSX_USER_SEC,
-	     PROJECT_OSX_USER_USEC,
-	     PROJECT_OSX_SYS_SEC,
-	     PROJECT_OSX_SYS_USEC:
-		sar := a.sysatt_ref
-		what = fmt.Sprintf(
-				"%s: @%p, cord=%d",
-				sar,
-				sar,
-				sar.call_order,
-			)
-	case PROJECT_OSX_TUPLE_TSV:
-		att := a.att_ref
-		what = fmt.Sprintf(
-				"%s: @%p, cord=%d",
-				att,
-				att,
-				att.call_order,
-			)
 	default:
 		what = fmt.Sprintf("%s%s%s", a.yy_name(), colon, a.name)
 	}

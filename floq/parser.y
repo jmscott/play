@@ -1147,10 +1147,11 @@ func yy_name2tok(name string) int {
 func (lex *yyLexState) project_osx_sys(name string, cmd *command) (*ast) {
 	a := &ast{
 		name:	name,
-		command_ref: cmd,
-		sysatt_ref:	&sysatt{
-					name:	name,
-					command_ref:	cmd,
+		proj_ref:	&projection{
+					sysatt_ref: &sysatt{
+						name: name,
+						command_ref:	cmd,
+					},
 		},
 		line_no:	lex.line_no,
 	}
@@ -1199,24 +1200,27 @@ func (lex *yyLexState) project_osx_tuple(name string, cmd *command) (*ast) {
 	a := &ast{
 		name:	name,
 		yy_tok: PROJECT_OSX_TUPLE_TSV,
-		command_ref:	cmd,
 		line_no:	lex.line_no,
 	}
+
 	tup := cmd.tuple_ref
 	if tup == nil {
-		return _e("tuple_ref is nil")
+		a.corrupt("tuple_ref is nil")
 	}
 
 	if tup.tsv_line == nil {
-		return _e("tuple att \"tsv_field\" not defined")
+		return _e("tuple atrribute \"tsv_field\" not defined")
 	}
 
-	ar := tup.atts[name]
-	if ar == nil {
-		return _e("unknown attribute: %s", name)
+	if tup.atts == nil {
+		return _e(
+			"no \"attributes\" object in define tuple: %s",
+			tup.name,
+		)
 	}
-	ar.call_order++
+	if tup.atts[name] == nil {
+		return _e("tuple %s: %s not an attribute", tup.name, name)
+	}
 	cmd.ref_count++
-	a.att_ref = ar
 	return a
 }

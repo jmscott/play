@@ -362,7 +362,7 @@ func (cmd *command) String() string {
 	return cmd.name
 }
 
-func (flo *flow) osx_proj_tsv(
+func (flo *flow) osx_proj_tuple_tsv(
 	in osx_chan,
 	att *attribute,
   ) (out string_chan) { 
@@ -376,7 +376,7 @@ func (flo *flow) osx_proj_tsv(
 		}
 
 		out <- &string_value{
-			string:		"osx_proj_tsv: " + att.String(),
+			string:		"osx_proj_tuple_tsv: " + att.String(),
 			is_null:	xv.is_null,
 		}
 

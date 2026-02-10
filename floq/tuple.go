@@ -23,6 +23,13 @@ type tuple struct {
 	tsv_line	[]*attribute
 }
 
+type projection struct {
+	name		string
+
+	att_ref		*attribute
+	sysatt_ref	*sysatt
+	call_order	uint8
+}
 
 //  build a tuple struct from a "DEFINE TUPLE" abstract syntax tree.
 
