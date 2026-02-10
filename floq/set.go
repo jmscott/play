@@ -6,22 +6,6 @@ import (
 	"errors"
 )
 
-type element struct {
-	bool
-	is_bool		bool
-
-	uint64
-	is_uint64	bool
-
-	string
-	is_string	bool
-
-	set
-	is_set		bool
-
-	array		[]element
-	is_array	bool
-}
 
 /*
  *  Elements of a set may be bool, uint63, string, set and arrays of
@@ -29,6 +13,17 @@ type element struct {
  *  from the bare element.
  */
 type set struct {
+
+	/*
+	 *  Bare elements like:
+	 *
+	 *	{
+	 *		true, false,
+	 *		123, 456,
+	 *		"hello, world",
+	 *		"good bye, cruel world"
+	 *	}
+	 */
 	bare_bool		map[bool]bool
 	bare_uint64		map[uint64]bool
 	bare_string		map[string]bool
@@ -46,7 +41,7 @@ func (s *set) add_bool(element bool) error {
 
 	_, exists := s.bare_bool[element]
 	if exists {
-		return errors.New("add_bool: exists")
+		return errors.New("element exists")
 	}
 	s.bare_bool[element] = true
 	return nil
@@ -56,7 +51,7 @@ func (s *set) add_uint64(element uint64) error {
 
 	_, exists := s.bare_uint64[element]
 	if exists {
-		return errors.New("add_uint64: exists")
+		return errors.New("element exists")
 	}
 	s.bare_uint64[element] = true
 	return nil
@@ -65,12 +60,32 @@ func (s *set) add_uint64(element uint64) error {
 func (s *set) add_string(element string) error {
 
 	if element == "" {
-		return errors.New("add_string: can not add empty string")
+		return errors.New("can not add empty string")
 	}
 	_, exists := s.bare_string[element]
 	if exists {
-		return errors.New("add_string: exists")
+		return errors.New("element exists")
 	}
 	s.bare_string[element] = true
 	return nil
+}
+
+func (s1 *set) equals(s2 *set) bool {
+
+	//  find a bool in set1 not in set2
+	for k1, _ := range s1.bare_bool {
+		_, exists := s2.bare_bool[k1]
+		if exists == false {
+			return false
+		}
+	}
+
+	//  find a bool in set2 not in set1
+	for k2, _ := range s2.bare_bool {
+		_, exists := s1.bare_bool[k2]
+		if exists == false {
+			return false
+		}
+	}
+	return true
 }
