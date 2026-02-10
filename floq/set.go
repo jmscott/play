@@ -87,5 +87,38 @@ func (s1 *set) equals(s2 *set) bool {
 			return false
 		}
 	}
+
+	//  find a uint64 in set1 not in set2
+	for k1, _ := range s1.bare_uint64 {
+		_, exists := s2.bare_uint64[k1]
+		if exists == false {
+			return false
+		}
+	}
+
+	//  find a uint64 in set2 not in set1
+	for k2, _ := range s2.bare_uint64 {
+		_, exists := s1.bare_uint64[k2]
+		if exists == false {
+			return false
+		}
+	}
+
+	//  find a string in set1 not in set2
+	for k1, _ := range s1.bare_string {
+		_, exists := s2.bare_string[k1]
+		if exists == false {
+			return false
+		}
+	}
+
+	//  find a string in set2 not in set1
+	for k2, _ := range s2.bare_string {
+		_, exists := s1.bare_string[k2]
+		if exists == false {
+			return false
+		}
+	}
+
 	return true
 }
