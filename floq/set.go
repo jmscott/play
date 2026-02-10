@@ -3,7 +3,12 @@ package main
 //  Note: no mutex arounf functions add_*()!!
 
 import (
+	"crypto/sha256"
+	"encoding/binary"
 	"errors"
+	"hash/crc64"
+	"slices"
+	"sort"
 )
 
 
@@ -21,7 +26,8 @@ type set struct {
 	 *		true, false,
 	 *		123, 456,
 	 *		"hello, world",
-	 *		"good bye, cruel world"
+	 *		"good bye, cruel world",
+	 *		{ 0, 1, 2}
 	 *	}
 	 */
 	bare_bool		map[bool]bool
@@ -72,53 +78,56 @@ func (s *set) add_string(element string) error {
 
 func (s1 *set) equals(s2 *set) bool {
 
-	//  find a bool in set1 not in set2
-	for k1, _ := range s1.bare_bool {
-		_, exists := s2.bare_bool[k1]
-		if exists == false {
-			return false
-		}
+	return s1.crc64() == s2.crc64()
+}
+
+func (s *set) sha256() []byte {
+
+	h := sha256.New()
+
+	//  add bools to sha245
+
+	if s.bare_bool[false] == true {
+		h.Write([]byte{0x0})
+	}
+	if s.bare_bool[true] == true {
+		h.Write([]byte{0x1})
 	}
 
-	//  find a bool in set2 not in set1
-	for k2, _ := range s2.bare_bool {
-		_, exists := s1.bare_bool[k2]
-		if exists == false {
-			return false
-		}
+	//  hash the untagged uint64s
+	ui64 := make([]uint64, len(s.bare_uint64))
+	i := 0
+	for k, _ := range s.bare_uint64 {
+		ui64[i] = k
+		i++
+	}
+	slices.Sort(ui64)
+	buf := make([]byte, 8)
+	for _, v := range ui64 {
+		binary.BigEndian.PutUint64(buf[:], uint64(v))
+		h.Write(buf[:8])
 	}
 
-	//  find a uint64 in set1 not in set2
-	for k1, _ := range s1.bare_uint64 {
-		_, exists := s2.bare_uint64[k1]
-		if exists == false {
-			return false
-		}
+	//  hash the untagged strings
+	strs := make([]string, len(s.bare_string))
+	i = 0
+	for k, _ := range s.bare_string {
+		strs[i] = k
+		i++
 	}
-
-	//  find a uint64 in set2 not in set1
-	for k2, _ := range s2.bare_uint64 {
-		_, exists := s1.bare_uint64[k2]
-		if exists == false {
-			return false
-		}
+	sort.Strings(strs)
+	for _, v := range strs {
+		h.Write([]byte(v))
 	}
+	return h.Sum(nil)
+}
 
-	//  find a string in set1 not in set2
-	for k1, _ := range s1.bare_string {
-		_, exists := s2.bare_string[k1]
-		if exists == false {
-			return false
-		}
-	}
+func (s *set) crc64() uint64 {
 
-	//  find a string in set2 not in set1
-	for k2, _ := range s2.bare_string {
-		_, exists := s1.bare_string[k2]
-		if exists == false {
-			return false
-		}
-	}
+	tab := crc64.MakeTable(crc64.ECMA)
+	h := crc64.New(tab)
 
-	return true
+	h.Write(s.sha256())
+
+	return h.Sum64()
 }
