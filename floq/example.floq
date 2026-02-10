@@ -1,40 +1,72 @@
-create Scanner of lines stdin {
-	Path:	"/dev/stdin"
+#!/usr/bin/env floq server
+
+define tuple blob_request_record as {
+	"abc",
+	abc:"123",
+	attributes: {
+		start_time: {
+			#  Note:  need string concatenation!
+			matches:
+	`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})`,
+			tsv_field: 2
+		},
+		transport: {
+			matches: `[a-z][a-z0-9_]{0,7}:[[:graph:]]{1,128}`
+		},
+		verb: {
+			matches: `get|put|give|take|wrap|roll|eat|cat`
+		},
+		udig: {
+			matches: `[a-z][a-z0-9]{0,7}:[[:graph:]]{32,128}`
+		},
+		chat_history: {
+			matches: `ok(,ok){0,2}`
+		},
+		blob_size: {
+			matches: `\d{1,19}`
+		},
+		wall_duration: {
+			matches:  `\d{1,10}([.]\d{1,10})?`
+		}
+	},
+	tsv_line: [
+		"start_time",
+		"transport",
+		"verb",
+		"udig",
+		"chat_history",
+		"blob_size",
+		"wall_duration"
+	]
 };
 
-create Tracer tty;
-
-create Command eat_blob {
-	path:	"blobio",
-	argv:	[
-			"eat",
-			"--service",
-			ExpandEnv "fs:$BLOBIO_ROOT",
-			"--udig"
-		],
-
-	env:	[
-			ExpandEnv "BLOBIO_ROOT=$BLOBIO_ROOT",
-			ExpandEnv "BLOBIO_SERVICE=$BLOBIO_SERVICE"
-		]
+define command tail_brr.blob_request_record as {
+	path:	"/opt/local/libexec/gnubin/head",
+	#args:	[ "tail" "--lines" "+0" "bio4d.brr" ]
+	args:	[ "-1", "bio4d.brr" ]
 };
 
-create Command hello {
-	path:	"echo",
-	argv:	[
-			"hello,",
-			"world"
-		]
+define command exit_x as {
+	path:	"./exit-x"
 };
 
-run
-hello
-(
-	"hello",
-	"world",
-	true or true
-) 
-  when
-  (true != false) or (false == false)
-  and (not true) != false
+define command write_tty as {
+	path:	"./write-tty"
+};
+
+run exit_x("5");
+run tail_brr();
+
+run write_tty(
+	#"tail_brr.transport", tail_brr.transport,
+	#"tail_brr.start_time", tail_brr.start_time,
+	"tail_brr$Stdout", tail_brr$Stdout::string, 
+	#"exit_x$pid", exit_x$pid::string,
+	"exit_x$exit_code", exit_x$exit_code::string
+  ) when
+  	tail_brr$pid  > 0
+	and
+	exit_x$exit_code == 5
+	and
+	tail_brr.chat_history != ""
 ;
