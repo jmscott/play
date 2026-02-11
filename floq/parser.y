@@ -2,6 +2,8 @@
  *  Synopsis:
  *	Build an abstract syntax tree for "floq" language.
  *  Note:
+ *	type yy_tok needs String()!  perhaps an ast.my_yy_tok?
+ *
  *	In "set" ast duplicates can exist!
  *
  *	Parser appears to be re-entrant.  However, only single static grammar
@@ -14,7 +16,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -140,12 +141,18 @@ constant:
 	|
 	  yy_TRUE
 	  {
-	  	$$ = yylex.(*yyLexState).ast(yy_TRUE)
+	  	a := yylex.(*yyLexState).ast(yy_TRUE)
+		a.bool = true
+
+		$$ = a
 	  }
 	|
 	  yy_FALSE
 	  {
-	  	$$ = yylex.(*yyLexState).ast(yy_FALSE)
+	  	a := yylex.(*yyLexState).ast(yy_FALSE)
+		a.bool = false
+
+	  	$$ = a
 	  }
 	;
 
@@ -395,11 +402,26 @@ element_list:
 set:
 	  '{'  element_list  '}'
 	  {
+	  	lex := yylex.(*yyLexState)
+
+		if lex.parse_set($2) == false {
+WTF("yy: set: parse_set is false: %s", $2)
+			return 0
+		}
 	  	$$ = $2
 	  }
 	;
 
 stmt:
+	  DEFINE  yy_SET  name  AS set
+	  {
+		lex := yylex.(*yyLexState)
+
+		define := lex.ast(DEFINE, $5)
+		define.left.name = $3
+	  	$$ = define
+	  }
+	|
 	  DEFINE  TUPLE  name  AS  set
 	  {
 	  	var err error
@@ -519,6 +541,7 @@ var keyword = map[string]int{
 	"null":			yy_NULL,
 	"or":			yy_OR,
 	"run":			RUN,
+	"set":			yy_SET,
 	"string":		yy_STRING,
 	"true":			yy_TRUE,
 	"tuple":		TUPLE,
@@ -1065,10 +1088,10 @@ LEX_ERROR:
 
 func (lex *yyLexState) mkerror(format string, args...interface{}) error {
 
-	return errors.New(fmt.Sprintf("%s, near line %d",
+	return fmt.Errorf("%s, near line %d",
 		fmt.Sprintf(format, args...),
 		lex.line_no,
-	))
+	)
 }
 
 func (lex *yyLexState) error(format string, args...interface{}) {
@@ -1190,37 +1213,25 @@ func (lex *yyLexState) project_osx_sys(name string, cmd *command) (*ast) {
 
 func (lex *yyLexState) project_osx_tuple(name string, cmd *command) (*ast) {
 
-	_e := func(format string, args...interface{}) (*ast) {
-
-		msg := fmt.Sprintf(format, args...)
-		lex.error("project_osx_tuple: %s.%s: %s", cmd.name, name, msg)
-		return nil
-	}
-
 	a := &ast{
 		name:	name,
 		yy_tok: PROJECT_OSX_TUPLE_TSV,
 		line_no:	lex.line_no,
 	}
-
-	tup := cmd.tuple_ref
-	if tup == nil {
-		a.corrupt("tuple_ref is nil")
-	}
-
-	if tup.tsv_line == nil {
-		return _e("tuple atrribute \"tsv_field\" not defined")
-	}
-
-	if tup.atts == nil {
-		return _e(
-			"no \"attributes\" object in define tuple: %s",
-			tup.name,
-		)
-	}
-	if tup.atts[name] == nil {
-		return _e("tuple %s: %s not an attribute", tup.name, name)
-	}
-	cmd.ref_count++
 	return a
+}
+
+func (lex *yyLexState) parse_set(a *ast) bool {
+
+	if set, err := a.parse_set();  err == nil {
+		a.set = set
+	} else {
+		format := fmt.Sprintf(
+				"parse_set(%s) failed: %%s",
+				yy_name(a.yy_tok),
+		)
+		lex.Error(fmt.Sprintf(format, err))
+		return false
+	}
+	return true
 }

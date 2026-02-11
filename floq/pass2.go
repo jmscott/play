@@ -200,14 +200,11 @@ func (p2 *pass2) xrun_att(a *ast) error {
 		return err
 	}
 
-	_e := func(format string, args...interface{}) error {
-		return a.error(format, args...)
-	}
-
 	if a.yy_tok == PROJECT_OSX_TUPLE_TSV {
 
+		/*
 		proj := a.proj_ref
-		cmd := a.command_ref
+		cmd := a.proj_ref.att_ref.command_ref
 
 		ar := p2.run_call[cmd]
 		if ar == nil {
@@ -228,6 +225,7 @@ func (p2 *pass2) xrun_att(a *ast) error {
 		//  references.
 		p2.run_proj[proj] = append(p2.run_proj[proj], a)
 		proj.call_order = uint8(len(p2.run_proj[proj]))
+		*/
 	}
 	return p2.xrun_att(a.next)
 }
@@ -269,15 +267,17 @@ func (p2 *pass2) run_depends(a *ast) error {
 		if proj == nil {
 			_c("proj_ref is nil")
 		}
-		_e("WTF: %#v", proj)
+		_e("%#v", proj)
 
 	case PROJECT_OSX_TUPLE_TSV:
+	/*
 		proj := a.proj_ref
 		if proj == nil {
 			_c("proj_ref is nil")
 		}
 
 		//p2.depends[run.name] = cmd.name
+	*/
 	}
 	if err := p2.run_depends(a.left);  err != nil {
 		return err
@@ -299,7 +299,7 @@ func (p2 *pass2) run_depends(a *ast) error {
 
 func (p2 *pass2) error(format string, args...interface{}) error {
 
-	return errors.New(fmt.Sprintf("pass2: " + format, args...)) 
+	return fmt.Errorf("pass2: " + format, args...)
 }
 
 //  find cyclic dependencies.
@@ -465,6 +465,50 @@ func (p2 *pass2) is_null(a *ast) {
 	p2.is_null(a.next)
 }
 
+func (p2 *pass2) parse_set(root *ast) error {
+
+	_c := func(format string, args...interface{}) {
+		root.corrupt("parse_set(): " + format, args...)
+	}
+
+	//  cheap sanity tests of tree
+	if root.left == nil {
+		_c("root.left==nil")
+	}
+
+	if root.left.yy_tok != STMT_LIST {
+		_c("root.left != STMT_LIST: %s", yy_name(root.left.yy_tok))
+	}
+	if root.left.left == nil {
+		_c("root.left.left is nil")
+	}
+		
+	for stmt := root.left.left;  stmt != nil;  stmt = stmt.next {
+		if stmt.yy_tok != DEFINE {
+			_c("stmt not DEFINE")
+		}
+
+		aset := stmt.left
+		if aset == nil {
+			_c("stmt.left==nil")
+		}
+
+		if aset.yy_tok != yy_SET {
+			continue
+		}
+		if aset.set == nil {
+			_c("aset.set==nil")
+		}
+WTF("p2.parse_set: stmt=%s", aset)
+	}
+	/*
+	if _, err := root.parse_set();  err != nil {
+		return err
+	}
+	*/
+	return nil;
+}
+
 //  frisk&optimize abstract syntax tree compiled by pass1 (yacc grammar)
 
 func xpass2(root *ast) error {
@@ -473,28 +517,24 @@ func xpass2(root *ast) error {
 		return errors.New("root is nil")
 	}
 
-	_c := func(format string, args...interface{}) {
-		root.corrupt("xpass2: " + format, args...)
-	}
-
 	if root.yy_tok != FLOW {
-		_c("root not yy FLOW")
+		root.corrupt("root not yy FLOW")
 	}
 	if root.parent != nil {
-		_c("parent of root not nil: %s", root.parent)
+		root.corrupt("parent of root not nil: %s", root.parent)
 	}
 	if root.left == nil {
 		return nil
 	}
 	if root.left.parent != root {
-		_c("left: parent not root: %s", root.left)
+		root.corrupt("left: parent not root: %s", root.left)
 	}
 	if root.left.yy_tok != STMT_LIST {
-		_c("left: not STMT_LIST: %s", root.left)
+		root.corrupt("left: not STMT_LIST: %s", root.left)
 	}
 
 	if root.right != nil {
-		_c("root.right not nil: %s", root.right)
+		root.corrupt("root.right not nil: %s", root.right)
 	}
 
 	p2 := &pass2{
@@ -508,8 +548,11 @@ func xpass2(root *ast) error {
 	p2.plumb(root.left)
 	p2.plumb(root.right)
 
-	p2.map_run()		//  build a map of "run <command" nodes
+	if err := p2.parse_set(root);  err != nil {
+		return err
+	}
 
+	p2.map_run()		//  build a map of "run <command" nodes
 
 	//  verify "run command only occurs once"
 	if err := p2.xrun(root);  err != nil {

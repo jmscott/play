@@ -1,6 +1,6 @@
 package main
 
-//  Note: no mutex arounf functions add_*()!!
+//  Note: no mutex around functions add_*()!!
 
 import (
 	"crypto/sha256"
@@ -9,8 +9,8 @@ import (
 	"hash/crc64"
 	"slices"
 	"sort"
+	"strconv"
 )
-
 
 /*
  *  Elements of a set may be bool, uint63, string, set and arrays of
@@ -33,6 +33,7 @@ type set struct {
 	bare_bool		map[bool]bool
 	bare_uint64		map[uint64]bool
 	bare_string		map[string]bool
+	bare_set		map[*set]bool
 }
 
 func new_set() *set {
@@ -40,6 +41,7 @@ func new_set() *set {
 			bare_bool:	make(map[bool]bool),
 			bare_uint64:	make(map[uint64]bool),
 			bare_string:	make(map[string]bool),
+			bare_set:	make(map[*set]bool),
 	}
 }
 
@@ -47,7 +49,7 @@ func (s *set) add_bool(element bool) error {
 
 	_, exists := s.bare_bool[element]
 	if exists {
-		return errors.New("element exists")
+		return errors.New("bool element exists")
 	}
 	s.bare_bool[element] = true
 	return nil
@@ -57,7 +59,7 @@ func (s *set) add_uint64(element uint64) error {
 
 	_, exists := s.bare_uint64[element]
 	if exists {
-		return errors.New("element exists")
+		return errors.New("uint64 element exists")
 	}
 	s.bare_uint64[element] = true
 	return nil
@@ -70,9 +72,21 @@ func (s *set) add_string(element string) error {
 	}
 	_, exists := s.bare_string[element]
 	if exists {
-		return errors.New("element exists")
+		return errors.New("string element exists")
 	}
 	s.bare_string[element] = true
+	return nil
+}
+
+func (s *set) add_set(element *set) error {
+
+WTF("add_set: element=%s", element)
+
+	_, exists := s.bare_set[element]
+	if exists {
+		return errors.New("set element exists")
+	}
+	s.bare_set[element] = true
 	return nil
 }
 
@@ -94,7 +108,10 @@ func (s *set) sha256() []byte {
 		h.Write([]byte{0x1})
 	}
 
-	//  hash the untagged uint64s
+	//  add untagged uint64 to sha256
+	//  build array, sort, then hashsum 8 bytes per uint64
+	//  in array order
+
 	ui64 := make([]uint64, len(s.bare_uint64))
 	i := 0
 	for k, _ := range s.bare_uint64 {
@@ -108,7 +125,10 @@ func (s *set) sha256() []byte {
 		h.Write(buf[:8])
 	}
 
-	//  hash the untagged strings
+	//  hash the untagged strings.
+	//  build array of strings, sort, then hashsum bytes of each string in
+	//  array order.
+
 	strs := make([]string, len(s.bare_string))
 	i = 0
 	for k, _ := range s.bare_string {
@@ -119,6 +139,21 @@ func (s *set) sha256() []byte {
 	for _, v := range strs {
 		h.Write([]byte(v))
 	}
+
+	//  hash crc64s of bare_set elements
+
+	crc := make([]uint64, len(s.bare_set))
+	i = 0
+	for k, _ := range s.bare_set {
+		crc[i] = k.crc64()
+		i++
+	}
+	slices.Sort(crc)
+	for _, v := range crc {
+		binary.BigEndian.PutUint64(buf[:], uint64(v))
+		h.Write(buf[:8])
+	}
+
 	return h.Sum(nil)
 }
 
@@ -130,4 +165,28 @@ func (s *set) crc64() uint64 {
 	h.Write(s.sha256())
 
 	return h.Sum64()
+}
+
+func (s *set) String() string {
+	
+	var str string
+
+	str = strconv.FormatUint(s.crc64(), 10)
+
+	l := len(s.bare_bool)
+	if l > 0 {
+		str += " bb=" + strconv.Itoa(l)
+	}
+
+	l = len(s.bare_uint64)
+	if l > 0 {
+		str += " bui=" + strconv.Itoa(l)
+	}
+
+	l = len(s.bare_string)
+	if l > 0 {
+		str += " bs=" + strconv.Itoa(l)
+	}
+
+	return str
 }

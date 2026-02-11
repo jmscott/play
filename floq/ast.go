@@ -28,8 +28,11 @@ type ast struct {
 	tuple_ref	*tuple
 	command_ref	*command
 	att_ref		*attribute
+
 	uint64
 	string
+	bool
+	*set
 }
 
 func (a *ast) yy_name() string {
@@ -93,14 +96,26 @@ func (a *ast) String() string {
 	case STMT_LIST:
 		what = fmt.Sprintf("STMT_LIST%s(cnt=%d)", colon, a.count)
 	case yy_SET:
+		crc64 := " set=nil"
+		if a.set != nil {
+			crc64 = fmt.Sprintf(" crc=%d", a.set.crc64())
+		}
 		if a.name == "" {
-			what = fmt.Sprintf("SET%s (cnt=%d)", colon, a.count)
+			what = fmt.Sprintf(
+					"SET%s@%p (cnt=%d%s)",
+						colon,
+						a.set,
+						a.count,
+						crc64,
+					)
 		} else {
 			what = fmt.Sprintf(
-					"SET%s%s (cnt=%d)",
+					"SET%s@%p %s (cnt=%d%s)",
 					colon,
+					a.set,
 					a.name,
 					a.count,
+					crc64,
 			)
 		}
 	case STRING:
@@ -130,10 +145,68 @@ func (a *ast) String() string {
 		what = "FALSE"
 	case yy_TRUE:
 		what = "TRUE"
+	case PROJECT_OSX_TUPLE_TSV:
+		what = a.proj_ref.String()
 	default:
 		what = fmt.Sprintf("%s%s%s", a.yy_name(), colon, a.name)
 	}
 	return what
+}
+
+//  convert an abstract syntax tree to a set
+
+func (aset *ast) parse_set() (*set, error) {
+
+	_e := func(format string, args...interface{}) (*set, error) {
+		return nil, fmt.Errorf("frisk_set: " + format, args...)
+	}
+
+	if aset.yy_tok != yy_SET {
+		return _e("root not a set: %s", yy_name(aset.yy_tok))
+	}
+
+	//  find duplicate elements starting at left branch
+
+	set := new_set()
+	for ele := aset.left;  ele != nil;  ele = ele.next {
+		switch ele.yy_tok {
+		case UINT64:
+			ui := ele.uint64
+			if err := set.add_uint64(ui);  err != nil {
+				return _e("add_uint64(%d) failed: %s", ui, err)
+			}
+		case yy_TRUE, yy_FALSE:
+			b := ele.bool
+			if err := set.add_bool(b);  err != nil {
+				return _e("add_bool(%t) failed: %s", b, err)
+			}
+		case STRING:
+			s := ele.string
+			if err := set.add_string(s);  err != nil {
+
+				//  trim string to 8 cha for error
+				max := 8
+				elipse := ""
+				if len(s) > max {
+					elipse = "..."
+					s = s[:max]
+				}
+				return _e(
+					"add_string(%s%s) failed: %s",
+					s, elipse,
+					err,
+				)
+			}
+		case yy_SET:
+			if _, err := ele.parse_set();  err != nil {
+				return nil, err
+			}
+		default:
+			aset.corrupt("impossible set element: %s", ele)
+		}
+	}
+	 
+	return set, nil
 }
 
 func (a *ast) walk_print(indent int, parent *ast) {
@@ -225,12 +298,8 @@ func (a *ast) error(format string, args...interface{}) error {
 		lno = fmt.Sprintf(" @%d", a.line_no)
 	}
 
-	return errors.New(
-		fmt.Sprintf("node %s%s: %s",
-			a.yy_name(),
-			lno,
-			fmt.Sprintf(format, args...),
-	))
+	format = fmt.Sprintf("node %s%s: %s", a.yy_name(), lno, format)
+	return fmt.Errorf(format, args...)
 }
 
 //  verify type of ast kids are in expected yy type set... and
