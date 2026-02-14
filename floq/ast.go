@@ -32,7 +32,7 @@ type ast struct {
 	uint64
 	string
 	bool
-	*set
+	set_ref		*set
 }
 
 func (a *ast) yy_name() string {
@@ -47,14 +47,22 @@ func (a *ast) String() string {
 	var what string
 
 	if a == nil {
-		return "(ast*)(nil)"
+		return "*ast=nil"
 	}
 
-	colon := ":"
-	if a.left == nil && a.right != nil {
-		colon = "\\"
-	} else if a.left != nil && a.right == nil {
-		colon = "/"
+	var colon string
+	if a.left == nil {
+		if a.right == nil {
+			colon = ": "
+		} else {
+			colon = "\\ "
+		}
+	} else {
+		if a.right != nil {
+			colon = "/\\ "
+		} else {
+			colon = "/ "
+		}
 	}
 
 	switch a.yy_tok {
@@ -96,26 +104,28 @@ func (a *ast) String() string {
 	case STMT_LIST:
 		what = fmt.Sprintf("STMT_LIST%s(cnt=%d)", colon, a.count)
 	case yy_SET:
-		crc64 := " set=nil"
-		if a.set != nil {
-			crc64 = fmt.Sprintf(" crc=%d", a.set.crc64())
+		var crc64 string
+		if a.set_ref != nil {
+			crc64 = fmt.Sprintf(
+					"ec=%d crc=%s",
+					a.set_ref.count(),
+					a.set_ref.crc64_brief(5, true),
+				)
 		}
 		if a.name == "" {
 			what = fmt.Sprintf(
-					"SET%s@%p (cnt=%d%s)",
+					"SET%s%s@%p",
 						colon,
-						a.set,
-						a.count,
 						crc64,
+						a.set_ref,
 					)
 		} else {
 			what = fmt.Sprintf(
-					"SET%s@%p %s (cnt=%d%s)",
+					"SET%s%s %s@%p",
 					colon,
-					a.set,
 					a.name,
-					a.count,
 					crc64,
+					a.set_ref,
 			)
 		}
 	case STRING:
@@ -184,7 +194,7 @@ func (aset *ast) parse_set() (*set, error) {
 			s := ele.string
 			if err := set.add_string(s);  err != nil {
 
-				//  trim string to 8 cha for error
+				//  trim string to 8 chars for error
 				max := 8
 				elipse := ""
 				if len(s) > max {
