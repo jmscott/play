@@ -386,11 +386,13 @@ element_list:
 	  /*  empty  */
 	  {
 	  	$$ = yylex.(*yyLexState).ast(yy_SET)
+		$$.set_ref = new_set()
 	  }
 	|
 	  element
 	  {
 	  	$$ = yylex.(*yyLexState).ast(yy_SET, $1)
+		$$.set_ref = new_set()
 	  }
 	|
 	  element_list  ','  element
@@ -402,12 +404,6 @@ element_list:
 set:
 	  '{'  element_list  '}'
 	  {
-	  	lex := yylex.(*yyLexState)
-
-		if lex.parse_set($2) == false {
-WTF("yy: set: parse_set is false: %s", $2)
-			return 0
-		}
 	  	$$ = $2
 	  }
 	;
@@ -1224,7 +1220,7 @@ func (lex *yyLexState) project_osx_tuple(name string, cmd *command) (*ast) {
 func (lex *yyLexState) parse_set(a *ast) bool {
 
 	if set, err := a.parse_set();  err == nil {
-		a.set = set
+		a.set_ref = set
 	} else {
 		format := fmt.Sprintf(
 				"parse_set(%s) failed: %%s",

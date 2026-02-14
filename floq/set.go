@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"hash/crc64"
 	"slices"
 	"sort"
@@ -33,7 +34,7 @@ type set struct {
 	bare_bool		map[bool]bool
 	bare_uint64		map[uint64]bool
 	bare_string		map[string]bool
-	bare_set		map[*set]bool
+	bare_set		map[uint64]bool
 }
 
 func new_set() *set {
@@ -41,52 +42,62 @@ func new_set() *set {
 			bare_bool:	make(map[bool]bool),
 			bare_uint64:	make(map[uint64]bool),
 			bare_string:	make(map[string]bool),
-			bare_set:	make(map[*set]bool),
+			bare_set:	make(map[uint64]bool),
 	}
 }
 
-func (s *set) add_bool(element bool) error {
+func (s *set) add_bool(ele bool) error {
 
-	_, exists := s.bare_bool[element]
+	_, exists := s.bare_bool[ele]
 	if exists {
-		return errors.New("bool element exists")
+		return fmt.Errorf("bool element (%t) already exists", ele)
 	}
-	s.bare_bool[element] = true
+	s.bare_bool[ele] = true
 	return nil
 }
 
-func (s *set) add_uint64(element uint64) error {
+func (s *set) add_uint64(ele uint64) error {
 
-	_, exists := s.bare_uint64[element]
+	_, exists := s.bare_uint64[ele]
 	if exists {
-		return errors.New("uint64 element exists")
+		return fmt.Errorf("uint64 (%d) element already exists", ele)
 	}
-	s.bare_uint64[element] = true
+	s.bare_uint64[ele] = true
 	return nil
 }
 
-func (s *set) add_string(element string) error {
+func (s *set) add_string(ele string) error {
 
-	if element == "" {
+	if ele == "" {
 		return errors.New("can not add empty string")
 	}
-	_, exists := s.bare_string[element]
+	_, exists := s.bare_string[ele]
 	if exists {
-		return errors.New("string element exists")
+		return fmt.Errorf(
+				"string element \"%s\" already exists",
+				string_brief(ele, 5, true),
+		)
 	}
-	s.bare_string[element] = true
+	s.bare_string[ele] = true
 	return nil
 }
 
-func (s *set) add_set(element *set) error {
+func (s *set) count() uint64 {
 
-WTF("add_set: element=%s", element)
+	return uint64(
+		len(s.bare_bool) +
+		len(s.bare_uint64) +
+		len(s.bare_string) +
+		len(s.bare_set))
+}
 
-	_, exists := s.bare_set[element]
+func (s *set) add_set(ele *set) error {
+
+	_, exists := s.bare_set[ele.crc64()]
 	if exists {
-		return errors.New("set element exists")
+		return errors.New("element already in set")
 	}
-	s.bare_set[element] = true
+	s.bare_set[ele.crc64()] = true
 	return nil
 }
 
@@ -145,7 +156,7 @@ func (s *set) sha256() []byte {
 	crc := make([]uint64, len(s.bare_set))
 	i = 0
 	for k, _ := range s.bare_set {
-		crc[i] = k.crc64()
+		crc[i] = k
 		i++
 	}
 	slices.Sort(crc)
@@ -155,6 +166,13 @@ func (s *set) sha256() []byte {
 	}
 
 	return h.Sum(nil)
+}
+
+//  write crc64 as string with trailing ellipse if truncated
+
+func (s *set) crc64_brief(clen int, ellipse bool) string {
+
+	return string_brief(strconv.FormatUint(s.crc64(), 10), clen, ellipse)
 }
 
 func (s *set) crc64() uint64 {
@@ -186,6 +204,11 @@ func (s *set) String() string {
 	l = len(s.bare_string)
 	if l > 0 {
 		str += " bs=" + strconv.Itoa(l)
+	}
+
+	l = len(s.bare_set)
+	if l > 0 {
+		str += " bset=" + strconv.Itoa(l)
 	}
 
 	return str

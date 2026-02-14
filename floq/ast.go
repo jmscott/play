@@ -4,6 +4,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
 )
 
 type ast struct {
@@ -73,7 +74,7 @@ func (a *ast) String() string {
 	case ARRAY:
 		if a.name == "" {
 			what = fmt.Sprintf(
-				"ARRAY%s (cnt=%d)",
+				"ARRAY%s(cnt=%d)",
 				colon,
 				a.count,
 			)
@@ -88,14 +89,14 @@ func (a *ast) String() string {
 
 	case DEFINE:
 		what = fmt.Sprintf(
-			"DEFINE%s (ord=%d, lno=%d)",
+			"DEFINE%s(ord=%d, lno=%d)",
 			colon,
 			a.order,
 			a.line_no,
 		)
 	case RUN:
 		what = fmt.Sprintf(
-				"RUN%s (ord=%d,lno=%d) ",
+				"RUN%s(ord=%d,lno=%d) ",
 				colon,
 				a.order,
 				a.line_no,
@@ -143,9 +144,9 @@ func (a *ast) String() string {
 		}
 	case UINT64:
 		if a.name == "" {
-			what = fmt.Sprintf("UINT64 (%d)", a.uint64)
+			what = fmt.Sprintf("UINT64 %d", a.uint64)
 		} else {
-			what = fmt.Sprintf("UINT64:%s (%d)", a.name, a.uint64)
+			what = fmt.Sprintf("UINT64:%s %d", a.name, a.uint64)
 		}
 	case yy_AND:
 		what = "AND"
@@ -235,17 +236,17 @@ func (a *ast) walk_print(indent int, parent *ast) {
 		)
 	}
 	if indent == 0 {
-		fmt.Println("")
+		os.Stderr.WriteString("")
 	} else {
 		if a.parent == nil {
 			a.corrupt("indent > 0: ast parent is nil")
 		}
 		for i := 0;  i < indent;  i++ {
-			fmt.Print("  ")
+			os.Stderr.WriteString("  ")
 		}
 	}
 
-	fmt.Println(a.String())
+	os.Stderr.WriteString(a.String() + "\n")
 
 	//  print kids
 

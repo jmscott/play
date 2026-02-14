@@ -465,15 +465,64 @@ func (p2 *pass2) is_null(a *ast) {
 	p2.is_null(a.next)
 }
 
-func (p2 *pass2) parse_set(root *ast) error {
+func (p2 *pass2) parse_set(a *ast) error {
+
+	if a == nil {
+		return nil
+	}
+	if a.parent == nil {
+		a.corrupt("a.parent is nil")
+	}
+
+	//  cheap sanity checks
+
+	if a.parent.yy_tok != DEFINE && a.parent.yy_tok != yy_SET {
+		a.corrupt("a.parent not DEFINE nor yy_SET")
+	}
+	s := a.set_ref
+	if s == nil {
+		a.corrupt("a.set_ref is nil")
+	}
+	for ele := a.left;  ele != nil;  ele = ele.next {
+
+		switch ele.yy_tok {
+		case yy_TRUE, yy_FALSE:
+			if err := s.add_bool(ele.bool);  err != nil {
+				return err
+			}
+		case UINT64:
+			if err := s.add_uint64(ele.uint64);  err != nil {
+				return err
+			}
+		case STRING:
+			if err := s.add_string(ele.string);  err != nil {
+				return  err
+			}
+		case yy_SET:
+			//  parse elements of set before this set
+			if err := p2.parse_set(ele);  err != nil {
+				return err
+			}
+			if err := s.add_set(ele.set_ref);  err != nil {
+				return  err
+			}
+		default:
+			ele.corrupt("unexpected element: %s", ele)
+		}
+	}
+
+	return nil
+}
+
+func (p2 *pass2) parse_sets(root *ast) error {
 
 	_c := func(format string, args...interface{}) {
-		root.corrupt("parse_set(): " + format, args...)
+		root.corrupt("parse_sets(): " + format, args...)
 	}
 
 	//  cheap sanity tests of tree
 	if root.left == nil {
-		_c("root.left==nil")
+		_c("root.left is nil")
 	}
 
 	if root.left.yy_tok != STMT_LIST {
@@ -485,27 +534,27 @@ func (p2 *pass2) parse_set(root *ast) error {
 		
 	for stmt := root.left.left;  stmt != nil;  stmt = stmt.next {
 		if stmt.yy_tok != DEFINE {
-			_c("stmt not DEFINE")
+			continue
 		}
+
+		//  parse the outer mst set of "define set <name> as {...}"
 
 		aset := stmt.left
 		if aset == nil {
-			_c("stmt.left==nil")
+			_c("stmt.left is nil")
 		}
 
 		if aset.yy_tok != yy_SET {
 			continue
 		}
-		if aset.set == nil {
-			_c("aset.set==nil")
+		if aset.set_ref == nil {
+			_c("stmt.set_reft is nil: %s", aset)
 		}
-WTF("p2.parse_set: stmt=%s", aset)
+
+		if err := p2.parse_set(aset);  err != nil {
+			return err
+		}
 	}
-	/*
-	if _, err := root.parse_set();  err != nil {
-		return err
-	}
-	*/
 	return nil;
 }
 
@@ -548,7 +597,7 @@ func xpass2(root *ast) error {
 	p2.plumb(root.left)
 	p2.plumb(root.right)
 
-	if err := p2.parse_set(root);  err != nil {
+	if err := p2.parse_sets(root);  err != nil {
 		return err
 	}
 

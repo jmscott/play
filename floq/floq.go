@@ -108,7 +108,21 @@ func corrupt(format string, args ...interface{}) {
 	panic(fmt.Sprintf("corrupt: " + format, args...))
 }
 
+//  truncate a string to slen chars and conditionally append an ellipse
+
+func string_brief(str string, clen int, ellipse bool) string {
+	slen := len(str)
+	if slen <= clen {
+		return str
+	}
+	str = str[:clen]
+	if ellipse == false {
+		return str
+	}
+	return str + "..."
+}
+
 func WTF(format string, args ...interface{}) {
 
-	os.Stderr.Write([]byte(fmt.Sprintf("WTF: " + format, args...) + "\n"))
+	os.Stderr.WriteString(fmt.Sprintf("WTF: " + format, args...) + "\n")
 }
