@@ -487,15 +487,15 @@ func (p2 *pass2) parse_set(a *ast) error {
 
 		switch ele.yy_tok {
 		case yy_TRUE, yy_FALSE:
-			if err := s.add_bool(ele.bool);  err != nil {
+			if err := s.add_bare_bool(ele.bool);  err != nil {
 				return err
 			}
 		case UINT64:
-			if err := s.add_uint64(ele.uint64);  err != nil {
+			if err := s.add_bare_uint64(ele.uint64);  err != nil {
 				return err
 			}
 		case STRING:
-			if err := s.add_string(ele.string);  err != nil {
+			if err := s.add_bare_string(ele.string);  err != nil {
 				return  err
 			}
 		case yy_SET:
@@ -503,7 +503,7 @@ func (p2 *pass2) parse_set(a *ast) error {
 			if err := p2.parse_set(ele);  err != nil {
 				return err
 			}
-			if err := s.add_set(ele.set_ref);  err != nil {
+			if err := s.add_bare_set(ele.set_ref);  err != nil {
 				return  err
 			}
 		default:

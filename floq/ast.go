@@ -181,19 +181,19 @@ func (aset *ast) parse_set() (*set, error) {
 	set := new_set()
 	for ele := aset.left;  ele != nil;  ele = ele.next {
 		switch ele.yy_tok {
-		case UINT64:
-			ui := ele.uint64
-			if err := set.add_uint64(ui);  err != nil {
-				return _e("add_uint64(%d) failed: %s", ui, err)
-			}
 		case yy_TRUE, yy_FALSE:
 			b := ele.bool
-			if err := set.add_bool(b);  err != nil {
+			if err := set.add_bare_bool(b);  err != nil {
 				return _e("add_bool(%t) failed: %s", b, err)
+			}
+		case UINT64:
+			ui := ele.uint64
+			if err := set.add_bare_uint64(ui);  err != nil {
+				return _e("add_uint64(%d) failed: %s", ui, err)
 			}
 		case STRING:
 			s := ele.string
-			if err := set.add_string(s);  err != nil {
+			if err := set.add_bare_string(s);  err != nil {
 
 				//  trim string to 8 chars for error
 				max := 8

@@ -35,6 +35,8 @@ type set struct {
 	bare_uint64		map[uint64]bool
 	bare_string		map[string]bool
 	bare_set		map[uint64]bool
+
+	name_bool		map[string](map[bool]bool)
 }
 
 func new_set() *set {
@@ -46,7 +48,7 @@ func new_set() *set {
 	}
 }
 
-func (s *set) add_bool(ele bool) error {
+func (s *set) add_bare_bool(ele bool) error {
 
 	_, exists := s.bare_bool[ele]
 	if exists {
@@ -56,7 +58,7 @@ func (s *set) add_bool(ele bool) error {
 	return nil
 }
 
-func (s *set) add_uint64(ele uint64) error {
+func (s *set) add_bare_uint64(ele uint64) error {
 
 	_, exists := s.bare_uint64[ele]
 	if exists {
@@ -66,7 +68,7 @@ func (s *set) add_uint64(ele uint64) error {
 	return nil
 }
 
-func (s *set) add_string(ele string) error {
+func (s *set) add_bare_string(ele string) error {
 
 	if ele == "" {
 		return errors.New("can not add empty string")
@@ -91,7 +93,7 @@ func (s *set) count() uint64 {
 		len(s.bare_set))
 }
 
-func (s *set) add_set(ele *set) error {
+func (s *set) add_bare_set(ele *set) error {
 
 	_, exists := s.bare_set[ele.crc64()]
 	if exists {
