@@ -1,14 +1,11 @@
 #!/usr/bin/env floq server
 
 define tuple blob_request_record as {
-	"abc",
-	abc:"123",
 	attributes: {
 		start_time: {
 			#  Note:  need string concatenation!
 			matches:
-	`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})`,
-			tsv_field: 2
+	`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})`
 		},
 		transport: {
 			matches: `[a-z][a-z0-9_]{0,7}:[[:graph:]]{1,128}`
@@ -64,9 +61,9 @@ run write_tty(
 	#"exit_x$pid", exit_x$pid::string,
 	"exit_x$exit_code", exit_x$exit_code::string
   ) when
-  	tail_brr$pid  > 0
-	and
+  	#tail_brr$pid  > 0
+	#and
 	exit_x$exit_code == 5
-	and
-	tail_brr.chat_history != ""
+	#and
+	#tail_brr.chat_history != ""
 ;

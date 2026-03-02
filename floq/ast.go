@@ -182,32 +182,8 @@ func (aset *ast) parse_set() (*set, error) {
 	for ele := aset.left;  ele != nil;  ele = ele.next {
 		switch ele.yy_tok {
 		case yy_TRUE, yy_FALSE:
-			b := ele.bool
-			if err := set.add_bare_bool(b);  err != nil {
-				return _e("add_bool(%t) failed: %s", b, err)
-			}
 		case UINT64:
-			ui := ele.uint64
-			if err := set.add_bare_uint64(ui);  err != nil {
-				return _e("add_uint64(%d) failed: %s", ui, err)
-			}
 		case STRING:
-			s := ele.string
-			if err := set.add_bare_string(s);  err != nil {
-
-				//  trim string to 8 chars for error
-				max := 8
-				elipse := ""
-				if len(s) > max {
-					elipse = "..."
-					s = s[:max]
-				}
-				return _e(
-					"add_string(%s%s) failed: %s",
-					s, elipse,
-					err,
-				)
-			}
 		case yy_SET:
 			if _, err := ele.parse_set();  err != nil {
 				return nil, err
@@ -449,20 +425,6 @@ func (set *ast) set_element(name string) *ast {
 	var kid *ast
 	for kid = set.left;  kid != nil;  kid = kid.next {
 		if kid.name == name && kid.yy_tok == yy_SET {
-			return kid
-		}
-	}
-	return nil
-}
-
-//  get a named array element from a set
-func (set *ast) array_element(name string) (kid *ast) {
-	if set.yy_tok != yy_SET {
-		set.corrupt("expected SET, got %s", set.yy_name())
-	}
-
-	for kid = set.left;  kid != nil;  kid = kid.next {
-		if kid.name == name && kid.yy_tok == ARRAY {
 			return kid
 		}
 	}

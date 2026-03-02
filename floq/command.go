@@ -199,6 +199,8 @@ func (flo *flow) osxw(
 	when bool_chan,
 ) (out osx_chan) {
 
+WTF("osxw: cmd=%s", cmd)
+
 	out = make(osx_chan)
 
 	null_osx := &osx_value{
@@ -210,6 +212,7 @@ func (flo *flow) osxw(
 			var bv *bool_value
 			var av *argv_value
 
+WTF("osxw: waiting for argv/when to finish...")
 			//  wait for both argv[] and when clause to finish
 			for bv == nil || av == nil {
 				select {
@@ -217,6 +220,7 @@ func (flo *flow) osxw(
 				case av = <-args:
 				}
 			}
+WTF("osxw: done: bv=%s, av=%s", bv, av)
 
 			//  Note:  when is argv null!
 

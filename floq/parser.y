@@ -4,11 +4,6 @@
  *  Note:
  *	type yy_tok needs String()!  perhaps an ast.my_yy_tok?
  *
- *	In "set" ast duplicates can exist!
- *
- *	Parser appears to be re-entrant.  However, only single static grammar
- *	per process.  for example, array yyToknames['] is global.  ughh.
- *
  *	func lookahead() ignores eof.  that is not correct.
  */
 
@@ -93,13 +88,14 @@ func init() {
 
 %type	<uint64>	UINT64		
 %type	<string>	STRING  name
+%type	<ast>		string
 %type	<ast>		flow
 %type	<ast>		arg_list
-%type	<ast>		element  element_list
-%type	<ast>		array_element  array_element_list
-%type	<ast>		set  array
+%type	<ast>		set  element  element_list
+%type	<ast>		array  component_list
 %type	<ast>		constant  expr  qualification
 %type	<ast>		stmt  stmt_list
+%type	<ast>		value
 %type	<command_ref>	COMMAND_REF
 %type	<tuple_ref>	TUPLE_REF
 
@@ -120,6 +116,20 @@ flow:
 	  }
 	;
 
+string:
+	  STRING
+	  {
+	  	$$ = yylex.(*yyLexState).ast(STRING)
+		$$.string = $1
+	  }
+	|
+	  EXPAND_ENV  string
+	  {
+		$2.string = os.ExpandEnv($2.string)
+		$$ = $2
+	  }
+	;
+
 constant:
 	  UINT64
 	  {
@@ -127,17 +137,7 @@ constant:
 		$$.uint64 = $1
 	  }
 	|
-	  STRING
-	  {
-	  	$$ = yylex.(*yyLexState).ast(STRING)
-	  	$$.string = $1
-	  }
-	|
-	  EXPAND_ENV   STRING
-	  {
-	  	$$ = yylex.(*yyLexState).ast(STRING)
-		$$.string = os.ExpandEnv($2)
-	  }
+	  string
 	|
 	  yy_TRUE
 	  {
@@ -185,10 +185,20 @@ expr:
 	  }  name {
 	  	lex := yylex.(*yyLexState)
 
-		a := lex.project_osx_tuple($4, $1)
-		if a == nil {
+		cmd := $1
+		tup := cmd.tuple_ref
+		if tup == nil {
+			lex.error("command %s has no tuple", cmd.name)
 			return 0
 		}
+
+		if tup.atts[$4] == nil {
+			lex.error("no attribute %s in tuple %s", $4, tup.name)
+			return 0
+		}
+
+		a := lex.ast(PROJECT_OSX_TUPLE_TSV)
+		a.att_ref = tup.atts[$4]
 		$$ = a
 	  }
 	|
@@ -339,41 +349,18 @@ name:
 	  }
 	;
 
-array_element:
+value:
 	  constant
 	|
-	  array
-	|
 	  set
-	;
-array:
-	  '['  array_element_list  ']'
-	  {
-		$$ = $2
-	  }
-	;
-
-array_element_list:
-	  /*  empty  */
-	  {
-	  	$$ = yylex.(*yyLexState).ast(ARRAY)
-	  }
 	|
-	  array_element
-	  {
-	  	$$ = yylex.(*yyLexState).ast(ARRAY, $1)
-	  }
-	|
-	  array_element_list  ','  array_element
-	  {
-		$1.push_left($3)
-	  }
+	  array
 	;
 
 element:
-	  array_element
+	  value
 	|
-	  name  ':'  array_element
+	  name  ':'  value
 	  {
 	  	$3.name = $1
 		$$ = $3
@@ -397,7 +384,34 @@ element_list:
 	|
 	  element_list  ','  element
 	  {
+	  	
 		$1.push_left($3)
+	  }
+	;
+
+//  only string vectors.
+
+component_list:
+	  /*  empty  */
+	  {
+	  	$$ = yylex.(*yyLexState).ast(ARRAY)
+	  }
+	|
+	  string
+	  {
+	  	$$ = yylex.(*yyLexState).ast(ARRAY, $1)
+	  }
+	|
+	  component_list  ','  string
+	  {
+		$1.push_left($3)
+	  }
+	;
+
+array:
+	  '['  component_list  ']'
+	  {
+	  	$$ = $2
 	  }
 	;
 
@@ -700,7 +714,9 @@ func (lex *yyLexState) skip_space() (c rune, eof bool, err error) {
 
 /*
  *  Very simple utf8 string scanning, with no proper escapes for characters.
- *  Expect this module to be replaced with correct text.Scanner.
+ *
+ *  Note:
+ *	replace with text.Scanner?
  */
 func (lex *yyLexState) scan_string(yylval *yySymType) (eof bool, err error) {
 	var c rune
@@ -1207,15 +1223,27 @@ func (lex *yyLexState) project_osx_sys(name string, cmd *command) (*ast) {
 	return a
 }
 
+/*
 func (lex *yyLexState) project_osx_tuple(name string, cmd *command) (*ast) {
 
+	tup := cmd.tuple_ref
+	if tuple_ref == nil {
+		croak("
+	//  find the tuple reference in "
 	a := &ast{
 		name:	name,
 		yy_tok: PROJECT_OSX_TUPLE_TSV,
 		line_no:	lex.line_no,
+		proj_ref:	&projection{
+					att_ref: &attribute{
+							name:	name,
+							command_ref: cmd,
+					},
+		},
 	}
 	return a
 }
+*/
 
 func (lex *yyLexState) parse_set(a *ast) bool {
 

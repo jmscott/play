@@ -5,38 +5,47 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/binary"
-	"errors"
+	//"errors"
 	"fmt"
 	"hash/crc64"
-	"slices"
-	"sort"
+	//"slices"
+	//"sort"
 	"strconv"
 )
 
+type crc_64 uint64
+
 /*
- *  Elements of a set may be bool, uint63, string, set and arrays of
- *  elements.  Naming an element creates another element that is distinct
- *  from the bare element.
+ *  Elements of a set may be named bool, uint63, string, set and arrays of
+ *  elements.  No two elements have the same name.  Two elements with different
+ *  name but same value are distinct.
+ *
+ *	{
+ *		a:"a",
+ *		b:"a"
+ *	}
+ *
+ *  the set contains two elements.
  */
 type set struct {
 
 	/*
-	 *  Bare elements like:
-	 *
-	 *	{
-	 *		true, false,
-	 *		123, 456,
-	 *		"hello, world",
-	 *		"good bye, cruel world",
-	 *		{ 0, 1, 2}
-	 *	}
+	 *  Map values into their existence
 	 */
 	bare_bool		map[bool]bool
 	bare_uint64		map[uint64]bool
 	bare_string		map[string]bool
-	bare_set		map[uint64]bool
+	bare_set		map[crc_64]bool
+	bare_array		map[crc_64]bool
 
-	name_bool		map[string](map[bool]bool)
+	/*
+	 *  Map named elements onto their values
+	 */
+	name_bool		map[string]bool
+	name_uint64		map[string]uint64
+	name_string		map[string]string
+	name_set		map[string]*set
+	name_array		map[string][]string
 }
 
 func new_set() *set {
@@ -44,17 +53,24 @@ func new_set() *set {
 			bare_bool:	make(map[bool]bool),
 			bare_uint64:	make(map[uint64]bool),
 			bare_string:	make(map[string]bool),
-			bare_set:	make(map[uint64]bool),
+			bare_set:	make(map[crc_64]bool),
+			bare_array:	make(map[crc_64]bool),
+
+			name_bool:	make(map[string]bool),
+			name_uint64:	make(map[string]uint64),
+			name_string:	make(map[string]string),
+			name_set:	make(map[string]*set),
+			name_array:	make(map[string][]string),
 	}
 }
 
-func (s *set) add_bare_bool(ele bool) error {
+func (s *set) add_name_uint64(name string, ele uint64) error {
 
-	_, exists := s.bare_bool[ele]
-	if exists {
-		return fmt.Errorf("bool element (%t) already exists", ele)
+	if s.has_name(name) {
+		return s.error("named element (%s) exists: %d", name, ele)
 	}
-	s.bare_bool[ele] = true
+
+	s.name_uint64[name] = ele
 	return nil
 }
 
@@ -62,45 +78,138 @@ func (s *set) add_bare_uint64(ele uint64) error {
 
 	_, exists := s.bare_uint64[ele]
 	if exists {
-		return fmt.Errorf("uint64 (%d) element already exists", ele)
+		return s.error("uint64: element exists: %d", ele)
 	}
 	s.bare_uint64[ele] = true
 	return nil
 }
 
+func (s *set) add_uint64(name string, ele uint64) error {
+
+	if name == "" {
+		return s.add_bare_uint64(ele)
+	}
+	return s.add_name_uint64(name, ele)
+}
+
+func (s *set) add_name_string(name string, ele string) error {
+
+	if s.has_name(name) {
+		return fmt.Errorf("string: named element exists: %s", name)
+	}
+
+	s.name_string[name] = ele
+	return nil
+}
+
+func (s *set) add_string(name, ele string) error {
+	
+	if name == "" {
+		return s.add_bare_string(ele)
+	}
+	return s.add_name_string(name, ele)
+}
+
+func (s *set) error(format string, args ...interface{}) error {
+
+	return fmt.Errorf("set: " + format, args...)  
+}
+
 func (s *set) add_bare_string(ele string) error {
 
-	if ele == "" {
-		return errors.New("can not add empty string")
-	}
 	_, exists := s.bare_string[ele]
 	if exists {
-		return fmt.Errorf(
-				"string element \"%s\" already exists",
-				string_brief(ele, 5, true),
-		)
+		return s.error("bare string element exists: %s", ele)
 	}
 	s.bare_string[ele] = true
 	return nil
 }
 
+func (s *set) add_name_set(name string, ele *set) error {
+
+	if s.has_name(name) {
+		return fmt.Errorf("set: named element exists: %s", name)
+	}
+
+	s.name_set[name] = ele
+	return nil
+}
+
+func (s *set) add_name_bool(name string, ele bool) error {
+
+	if s.has_name(name) {
+		return fmt.Errorf("bool: named element exists: %s", name)
+	}
+
+	s.name_bool[name] = ele
+	return nil
+}
+
+func (s *set) add_bare_bool(ele bool) error {
+
+	_, exists := s.bare_bool[ele]
+	if exists {
+		return s.error("named element exists: %t", ele)
+	}
+	s.bare_bool[ele] = true
+	return nil
+}
+
+func (s *set) add_bool(name string, ele bool) error {
+
+	if name == "" {
+		return s.add_bare_bool(ele)
+	}
+	return s.add_name_bool(name, ele)
+}
+
+func (s *set) add_name_array(name string, ele []string) error {
+	if s.has_name(name) {
+		return fmt.Errorf("array: named element exists: %s", name)
+	}
+	s.name_array[name] = ele
+	return nil
+}
+
+func (s *set) add_bare_array(ele []string) error {
+	crc := s.crc64_array(ele)
+	_, exists := s.bare_array[crc]
+	if exists {
+		return s.error("array element exists: %s", ele)
+	}
+	s.bare_array[crc] = true
+	return nil
+}
+
+func (s *set) add_array(name string, ele []string) error {
+
+	if name == "" {
+		return s.add_bare_array(ele)
+	}
+	return s.add_name_array(name, ele)
+}
+
+func (s *set) crc64_array(strings []string) crc_64 {
+	sha := sha256.New()
+
+        buf := make([]byte, 8)
+	for i, str := range strings {
+		binary.BigEndian.PutUint64(buf[:], uint64(i))
+		sha.Write(buf)
+		sha.Write([]byte(str))
+	}
+	return crc_64(
+		crc64.Checksum(sha.Sum(nil), crc64.MakeTable(crc64.ECMA)))
+}
+
 func (s *set) count() uint64 {
 
 	return uint64(
-		len(s.bare_bool) +
-		len(s.bare_uint64) +
-		len(s.bare_string) +
-		len(s.bare_set))
-}
-
-func (s *set) add_bare_set(ele *set) error {
-
-	_, exists := s.bare_set[ele.crc64()]
-	if exists {
-		return errors.New("element already in set")
-	}
-	s.bare_set[ele.crc64()] = true
-	return nil
+		len(s.name_bool) +
+		len(s.name_uint64) +
+		len(s.name_string) +
+		len(s.name_set) +
+		len(s.name_array))
 }
 
 func (s1 *set) equals(s2 *set) bool {
@@ -114,6 +223,7 @@ func (s *set) sha256() []byte {
 
 	//  add bools to sha245
 
+	/*
 	if s.bare_bool[false] == true {
 		h.Write([]byte{0x0})
 	}
@@ -155,17 +265,23 @@ func (s *set) sha256() []byte {
 
 	//  hash crc64s of bare_set elements
 
-	crc := make([]uint64, len(s.bare_set))
+	crc := make([]crc_64, len(s.bare_set))
 	i = 0
 	for k, _ := range s.bare_set {
 		crc[i] = k
 		i++
 	}
+
+	//  sorts crc of elemets
 	slices.Sort(crc)
 	for _, v := range crc {
 		binary.BigEndian.PutUint64(buf[:], uint64(v))
 		h.Write(buf[:8])
 	}
+
+	//  hash crc64 of bare array element
+	*/
+
 
 	return h.Sum(nil)
 }
@@ -174,44 +290,70 @@ func (s *set) sha256() []byte {
 
 func (s *set) crc64_brief(clen int, ellipse bool) string {
 
-	return string_brief(strconv.FormatUint(s.crc64(), 10), clen, ellipse)
+	return string_brief(
+		strconv.FormatUint(uint64(s.crc64()), 10), clen, ellipse)
 }
 
-func (s *set) crc64() uint64 {
+func (s *set) crc64() crc_64 {
 
 	tab := crc64.MakeTable(crc64.ECMA)
 	h := crc64.New(tab)
 
 	h.Write(s.sha256())
 
-	return h.Sum64()
+	return crc_64(h.Sum64())
 }
 
 func (s *set) String() string {
 	
 	var str string
 
-	str = strconv.FormatUint(s.crc64(), 10)
+	str = strconv.FormatUint(uint64(s.crc64()), 10)
 
-	l := len(s.bare_bool)
+	l := len(s.name_bool)
 	if l > 0 {
-		str += " bb=" + strconv.Itoa(l)
+		str += " b=" + strconv.Itoa(l)
 	}
 
-	l = len(s.bare_uint64)
+	l = len(s.name_uint64)
 	if l > 0 {
-		str += " bui=" + strconv.Itoa(l)
+		str += " ui=" + strconv.Itoa(l)
 	}
 
-	l = len(s.bare_string)
+	l = len(s.name_string)
 	if l > 0 {
-		str += " bs=" + strconv.Itoa(l)
+		str += " str=" + strconv.Itoa(l)
 	}
 
-	l = len(s.bare_set)
+	l = len(s.name_set)
 	if l > 0 {
-		str += " bset=" + strconv.Itoa(l)
+		str += " set=" + strconv.Itoa(l)
+	}
+
+	l = len(s.name_array)
+	if l > 0 {
+		str += " arr=" + strconv.Itoa(l)
 	}
 
 	return str
+}
+
+func (s *set) has_name(name string) bool {
+	
+	if _, ok := s.name_bool[name];  ok == true {
+		return true
+	}
+	if _, ok := s.name_uint64[name];  ok == true {
+		return true
+	}
+	if _, ok := s.name_string[name];  ok == true {
+		return true
+	}
+	if _, ok := s.name_set[name];  ok == true {
+		return true
+	}
+	if _, ok := s.name_array[name];  ok == true {
+		return true
+	}
+	return false
 }

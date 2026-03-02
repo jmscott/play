@@ -72,7 +72,7 @@ func (proj *projection) String() string {
 	} else if proj.sysatt_ref != nil {
 		what = proj.sysatt_ref.String()
 	} else {
-		what = "unknown att type"
+		what = "att/sys ref both nil"
 	}
 	return fmt.Sprintf(
 			"projection: %s (cord=%d): %s",

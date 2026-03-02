@@ -87,6 +87,10 @@ func (p2 *pass2) plumb(a *ast) {
 	}
 }
 
+func (p2 *pass2) frisk_name(a *ast) error {
+	return nil
+}
+
 //  build map of "run command(...)" nodes, indexed by command name.
 //  each command can have only one "run" command.
 
@@ -487,24 +491,42 @@ func (p2 *pass2) parse_set(a *ast) error {
 
 		switch ele.yy_tok {
 		case yy_TRUE, yy_FALSE:
-			if err := s.add_bare_bool(ele.bool);  err != nil {
+			err := s.add_bool(ele.name, ele.bool)
+			if err != nil {
 				return err
 			}
 		case UINT64:
-			if err := s.add_bare_uint64(ele.uint64);  err != nil {
+			err := s.add_uint64(ele.name, ele.uint64)
+			if err != nil {
 				return err
 			}
 		case STRING:
-			if err := s.add_bare_string(ele.string);  err != nil {
-				return  err
+			err := s.add_string(ele.name, ele.string)
+			if err != nil {
+				return err
+			}
+		case ARRAY:
+			arr := make([]string, ele.count)
+
+			//  build a slice of strings
+			//  walk through the components of the 
+			for com := ele.left;  com != nil;  com = com.next {
+				if com.yy_tok != STRING {
+					com.corrupt(
+						"unknown array component: %s",
+						com,
+					)
+				}
+				arr[com.order-1] = com.string
+			}
+			err := s.add_array(ele.name, arr)
+			if err != nil {
+				return err
 			}
 		case yy_SET:
 			//  parse elements of set before this set
 			if err := p2.parse_set(ele);  err != nil {
 				return err
-			}
-			if err := s.add_bare_set(ele.set_ref);  err != nil {
-				return  err
 			}
 		default:
 			ele.corrupt("unexpected element: %s", ele)
