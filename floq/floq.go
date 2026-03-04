@@ -140,6 +140,7 @@ AGAIN:
 		if period >= 0 && len(caller) > period {
 			caller = caller[period+1:]
 		}
+		//  go no more tha two call frames
 		if caller == "func1" || caller == "func2" {
 			level++
 			goto AGAIN
