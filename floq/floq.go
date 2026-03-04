@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
+	"strings"
 	"syscall"
 )
 
@@ -124,5 +126,19 @@ func string_brief(str string, clen int, ellipse bool) string {
 
 func WTF(format string, args ...interface{}) {
 
-	os.Stderr.WriteString(fmt.Sprintf("WTF: " + format, args...) + "\n")
+	//  get name of calling function
+	caller := "unknown"
+	pc, _, _, ok := runtime.Caller(1) // Skip 1 level to get the caller
+	if ok {
+		f := runtime.FuncForPC(pc)
+		if f != nil {
+			caller = f.Name()
+		}
+		period := strings.LastIndex(caller, ".")
+		if period >= 0 && len(caller) > period {
+			caller = caller[period+1:]
+		}
+	}
+	format = "WTF: " + caller + ": " + format
+	os.Stderr.WriteString(fmt.Sprintf(format, args...) + "\n")
 }
