@@ -128,7 +128,9 @@ func WTF(format string, args ...interface{}) {
 
 	//  get name of calling function
 	caller := "unknown"
-	pc, _, _, ok := runtime.Caller(1) // Skip 1 level to get the caller
+	level := 1
+AGAIN:
+	pc, _, _, ok := runtime.Caller(level)
 	if ok {
 		f := runtime.FuncForPC(pc)
 		if f != nil {
@@ -138,7 +140,13 @@ func WTF(format string, args ...interface{}) {
 		if period >= 0 && len(caller) > period {
 			caller = caller[period+1:]
 		}
+		if caller == "func1" || caller == "func2" {
+			level++
+			goto AGAIN
+		}
 	}
-	format = "WTF: " + caller + ": " + format
-	os.Stderr.WriteString(fmt.Sprintf(format, args...) + "\n")
+	if caller != "goexit" {
+		format = caller + ": " + format
+	}
+	os.Stderr.WriteString(fmt.Sprintf("WTF: " + format, args...) + "\n")
 }
