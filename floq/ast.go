@@ -96,12 +96,13 @@ func (a *ast) String() string {
 		)
 	case RUN:
 		what = fmt.Sprintf(
-				"RUN%s(ord=%d,lno=%d) ",
+				"RUN%s%s (ord=%d,lno=%d) ",
 				colon,
+				a.command_ref.name,
 				a.order,
 				a.line_no,
 			)
-		what += a.command_ref.string(2)
+		what += a.command_ref.detail(2)
 	case STMT_LIST:
 		what = fmt.Sprintf("STMT_LIST%s(cnt=%d)", colon, a.count)
 	case yy_SET:
@@ -156,6 +157,19 @@ func (a *ast) String() string {
 		what = "FALSE"
 	case yy_TRUE:
 		what = "TRUE"
+	case PROJECT_OSX_EXIT_CODE,
+	     PROJECT_OSX_PID,
+	     PROJECT_OSX_START_TIME,
+	     PROJECT_OSX_WALL_DURATION,
+	     PROJECT_OSX_USER_SEC,
+	     PROJECT_OSX_USER_USEC,
+	     PROJECT_OSX_SYS_SEC,
+	     PROJECT_OSX_SYS_USEC:
+		what = fmt.Sprintf(
+			"%s: %s",
+			a.yy_name(),
+			a.proj_ref,
+		)
 	case PROJECT_OSX_TUPLE_TSV:
 		what = a.proj_ref.String()
 	default:

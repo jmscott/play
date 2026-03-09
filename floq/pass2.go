@@ -23,7 +23,7 @@ type pass2 struct {
 	//
 	//  references can be in either the "when" clause or the argument
 	//  vector "run command(args...)"
-	run_proj	map[*projection][]*ast
+	run_proj	map[string][]*ast
 
 	//  "run <command>"  statements
 	run_call	map[*command]*ast
@@ -174,17 +174,15 @@ func (p2 *pass2) xrun_sysatt(a *ast) error {
 			return _e("run call after sysatt: %s", )
 		}
 
-		if len(p2.run_proj[proj]) == 255 {
-			return _e(
-				"too many sysatt ref to command: %s",
-				cmd.name,
-			)
+		pn := proj.String()
+		if len(p2.run_proj[pn]) == 255 {
+			return _e("too many sysatt ref: %s", pn)
 		}
 
 		//  append PROJECT_OSX... ast node to array of sysatt
 		//  references.
-		p2.run_proj[proj] = append(p2.run_proj[proj], a)
-		a.proj_ref.call_order = uint8(len(p2.run_proj[proj]))
+WTF("%s", pn)
+		p2.run_proj[pn] = append(p2.run_proj[pn], a)
 	}
 	return p2.xrun_sysatt(a.next)
 }
@@ -613,7 +611,7 @@ func xpass2(root *ast) error {
 		run:		make(map[string]*ast),
 		depends:	make(map[string]string),
 		run_call:	make(map[*command]*ast),
-		run_proj:	make(map[*projection][]*ast),
+		run_proj:	make(map[string][]*ast),
 	}
 
 	p2.plumb(root.left)

@@ -441,6 +441,7 @@ stmt:
 	  	define := lex.ast(DEFINE, lex.ast(TUPLE), $5)
 
 		tup := define.left
+		tup.name = $3
 		tup.tuple_ref, err = new_tuple($3, $5)
 		if err != nil {
 			lex.error("tuple %s: %s", $3, err)
@@ -1220,6 +1221,7 @@ func (lex *yyLexState) project_osx_sys(name string, cmd *command) (*ast) {
 		return nil
 	}
 	cmd.ref_count++
+	a.proj_ref.call_order = cmd.ref_count
 	return a
 }
 

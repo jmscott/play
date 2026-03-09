@@ -63,7 +63,7 @@ state 6
 state 7
 	stmt_list:  stmt ';'.    (50)
 
-	.  reduce 50 (src line 512)
+	.  reduce 50 (src line 513)
 
 
 state 8
@@ -101,7 +101,7 @@ state 11
 state 12
 	stmt_list:  stmt_list stmt ';'.    (51)
 
-	.  reduce 51 (src line 517)
+	.  reduce 51 (src line 518)
 
 
 state 13
@@ -145,7 +145,7 @@ state 17
 	yy_FALSE  shift 31
 	NOT  shift 26
 	'('  shift 27
-	.  reduce 52 (src line 524)
+	.  reduce 52 (src line 525)
 
 	string  goto 29
 	arg_list  goto 22
@@ -222,7 +222,7 @@ state 23
 	NOMATCH  shift 51
 	CONCAT  shift 52
 	yy_IS  shift 53
-	.  reduce 53 (src line 529)
+	.  reduce 53 (src line 530)
 
 
 state 24
@@ -351,7 +351,7 @@ state 36
 state 37
 	stmt:  DEFINE COMMAND name AS set.    (47)
 
-	.  reduce 47 (src line 454)
+	.  reduce 47 (src line 455)
 
 
 state 38
@@ -735,7 +735,7 @@ state 67
 state 68
 	stmt:  RUN COMMAND_REF '(' arg_list ')' qualification.    (49)
 
-	.  reduce 49 (src line 501)
+	.  reduce 49 (src line 502)
 
 
 state 69
@@ -785,7 +785,7 @@ state 70
 	NOMATCH  shift 51
 	CONCAT  shift 52
 	yy_IS  shift 53
-	.  reduce 54 (src line 534)
+	.  reduce 54 (src line 535)
 
 
 state 71
@@ -1149,7 +1149,7 @@ state 92
 state 93
 	stmt:  DEFINE COMMAND name '.' TUPLE_REF AS set.    (48)
 
-	.  reduce 48 (src line 477)
+	.  reduce 48 (src line 478)
 
 
 state 94
