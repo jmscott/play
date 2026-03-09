@@ -87,7 +87,7 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 			croak("osx_run(%s) failed: %s", cmd.name, err)
 		}
 	}
-	if out == nil {		//  caller does not want osx_val7ue
+	if out == nil {		//  caller does not want osx_value
 		return
 	}
 
@@ -199,8 +199,6 @@ func (flo *flow) osxw(
 	when bool_chan,
 ) (out osx_chan) {
 
-WTF("osxw: cmd=%s", cmd)
-
 	out = make(osx_chan)
 
 	null_osx := &osx_value{
@@ -212,7 +210,6 @@ WTF("osxw: cmd=%s", cmd)
 			var bv *bool_value
 			var av *argv_value
 
-WTF("osxw: waiting for argv/when to finish...")
 			//  wait for both argv[] and when clause to finish
 			for bv == nil || av == nil {
 				select {
@@ -220,7 +217,6 @@ WTF("osxw: waiting for argv/when to finish...")
 				case av = <-args:
 				}
 			}
-WTF("osxw: done: bv=%s, av=%s", bv, av)
 
 			//  Note:  when is argv null!
 
@@ -652,13 +648,15 @@ func (flo *flow) osx_fanout(in osx_chan, count uint8) (out []osx_chan) {
 	}()
 	return out
 }
-func (cmd *command) string(indent int) string {
+func (cmd *command) detail(indent int) string {
 
 	if cmd == nil {
 		return "nil command"
 	}
 	tab := strings.Repeat("\t", indent)
-	return fmt.Sprintf(`%s: {
+	return fmt.Sprintf(`{
+%s      name: %s
+%s     tuple: %s
 %s      path: %s
 %s look_path: %s
 %s      args: %s
@@ -666,7 +664,8 @@ func (cmd *command) string(indent int) string {
 %s ref_count: %d
 %s         @: %p
 %s}`,		
-		cmd.name,
+		tab, cmd.name,
+		tab, cmd.tuple_ref,
 		tab, cmd.path,
 		tab, cmd.look_path,
 		tab, strings.Join(cmd.args, ", "),
