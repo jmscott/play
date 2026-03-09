@@ -369,11 +369,13 @@ func (flo *flow) osx_proj_tuple_tsv(
 
 	out = make(string_chan)
 
+WTF("att=%s", att)
 	go func() {
 		xv := <- in
 		if xv == nil {
 			return
 		}
+
 
 		out <- &string_value{
 			string:		"osx_proj_tuple_tsv: " + att.String(),
@@ -654,6 +656,12 @@ func (cmd *command) detail(indent int) string {
 		return "nil command"
 	}
 	tab := strings.Repeat("\t", indent)
+	var tn string
+	if cmd.tuple_ref == nil {
+		tn = "<nil>"
+	} else {
+		tn = fmt.Sprintf("%s@%p", cmd.tuple_ref.name, cmd.tuple_ref)
+	}
 	return fmt.Sprintf(`{
 %s      name: %s
 %s     tuple: %s
@@ -665,7 +673,7 @@ func (cmd *command) detail(indent int) string {
 %s         @: %p
 %s}`,		
 		tab, cmd.name,
-		tab, cmd.tuple_ref,
+		tab, tn,
 		tab, cmd.path,
 		tab, cmd.look_path,
 		tab, strings.Join(cmd.args, ", "),
