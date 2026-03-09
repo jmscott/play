@@ -124,8 +124,13 @@ func string_brief(str string, clen int, ellipse bool) string {
 	return str + "..."
 }
 
+//  blatent debug with 
 func WTF(format string, args ...interface{}) {
 
+	if format == "" {
+		os.Stderr.WriteString("\n")
+		return
+	}
 	//  get name of calling function
 	caller := "unknown"
 	level := 1
