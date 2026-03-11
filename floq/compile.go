@@ -246,19 +246,19 @@ func (cmp *compilation) compile(a *ast) {
 		fo := cmd2fo[cmd]
 		a2str[a] = flo.osx_proj_Stderr(fo[proj.call_order-1])
 	case PROJECT_OSX_TUPLE_TSV:
+		cmd := a.command_ref
 		proj := a.proj_ref
-		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2fo[cmd]
 		a2str[a] = flo.osx_proj_tuple_tsv(
 				fo[proj.call_order-1],
 				proj.att_ref,
-			)
-	case IS_NULL_STRING:
-		a2bool[a] = flo.is_null_string(a2str[a.left])
+		)
 	case IS_NULL_UINT64:
 		a2bool[a] = flo.is_null_uint64(a2ui64[a.left])
 	case IS_NULL_BOOL:
 		a2bool[a] = flo.is_null_bool(a2bool[a.left])
+	case IS_NULL_STRING:
+		a2bool[a] = flo.is_null_string(a2str[a.left])
 	case IS_NOT_NULL_STRING:
 		a2bool[a] = flo.is_not_null_string(a2str[a.left])
 	case IS_NOT_NULL_UINT64:
