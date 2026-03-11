@@ -99,11 +99,10 @@ func init() {
 %type	<command_ref>	COMMAND_REF
 %type	<tuple_ref>	TUPLE_REF
 
-%nonassoc		yy_IS
 %left			yy_OR  yy_AND
 %left			EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
 %left			CONCAT
-%right			NOT  EXPAND_ENV  CAST
+%right			yy_IS  NOT  EXPAND_ENV  CAST
 
 %%
 
