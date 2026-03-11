@@ -186,7 +186,7 @@ func (p2 *pass2) xrun_sysatt(a *ast) error {
 	return p2.xrun_sysatt(a.next)
 }
 
-//  find all sysatt *ast nodes to "run <command>" statement
+//  find all att *ast nodes to "run <command>" statement
 
 func (p2 *pass2) xrun_att(a *ast) error {
 
@@ -203,30 +203,26 @@ func (p2 *pass2) xrun_att(a *ast) error {
 
 	if a.yy_tok == PROJECT_OSX_TUPLE_TSV {
 
-		/*
-		proj := a.proj_ref
-		cmd := a.proj_ref.att_ref.command_ref
+		att := a.att_ref
+		cmd := a.command_ref
 
 		ar := p2.run_call[cmd]
 		if ar == nil {
-			return _e("command for att never run: %s", cmd.name)
-		}
-		if ar.line_no >= a.line_no {
-			return _e("run call after att: %s", proj.name)
-		}
-
-		if len(p2.run_proj[proj]) == 255 {
-			return _e(
-				"too many att ref to command: %s",
-				cmd.name,
+			return fmt.Errorf(
+					"command for att never run: %s",
+					cmd.name,
 			)
 		}
+		pn := att.String()
+		if ar.line_no >= a.line_no {
+			return fmt.Errorf("run not after att: %s", pn)
+		}
 
-		//  append PROJECT_OSX... ast node to array of sysatt
-		//  references.
-		p2.run_proj[proj] = append(p2.run_proj[proj], a)
-		proj.call_order = uint8(len(p2.run_proj[proj]))
-		*/
+		if len(p2.run_proj[pn]) >= 255 {
+			return fmt.Errorf("too many attribute ref: %s", pn)
+		}
+
+		p2.run_proj[pn] = append(p2.run_proj[pn], a)
 	}
 	return p2.xrun_att(a.next)
 }

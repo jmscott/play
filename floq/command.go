@@ -386,6 +386,14 @@ func (flo *flow) osx_proj_tuple_tsv(
 		} else {
 			xv.is_null = true
 		}
+		if att.matches.MatchString(str) == false {
+			croak(
+				"%s: matches: %s !~ %s",
+				att.String(),
+				att.matches.String(),
+				str,
+			)
+		}
 
 		out <- &string_value{
 			string:		str,
