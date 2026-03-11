@@ -368,17 +368,27 @@ func (flo *flow) osx_proj_tuple_tsv(
   ) (out string_chan) { 
 
 	out = make(string_chan)
+	tsv_field := att.tsv_field
 
-WTF("att=%s", att)
 	go func() {
 		xv := <- in
 		if xv == nil {
 			return
 		}
 
+		// Note: ought to split once!!
+
+		fld := strings.Split(xv.Stdout, "\t")
+
+		var str string
+		if len(fld) > int(tsv_field) {
+			str = fld[tsv_field]
+		} else {
+			xv.is_null = true
+		}
 
 		out <- &string_value{
-			string:		"osx_proj_tuple_tsv: " + att.String(),
+			string:		str,
 			is_null:	xv.is_null,
 		}
 
@@ -659,12 +669,10 @@ func (cmd *command) detail(indent int) string {
 	var tn string
 	if cmd.tuple_ref == nil {
 		tn = "<nil>"
-	} else {
-		tn = fmt.Sprintf("%s@%p", cmd.tuple_ref.name, cmd.tuple_ref)
 	}
 	return fmt.Sprintf(`{
 %s      name: %s
-%s     tuple: %s
+%s     tuple: %s@%p
 %s      path: %s
 %s look_path: %s
 %s      args: %s
@@ -673,7 +681,7 @@ func (cmd *command) detail(indent int) string {
 %s         @: %p
 %s}`,		
 		tab, cmd.name,
-		tab, tn,
+		tab, tn, cmd.tuple_ref,
 		tab, cmd.path,
 		tab, cmd.look_path,
 		tab, strings.Join(cmd.args, ", "),
