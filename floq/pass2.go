@@ -181,7 +181,6 @@ func (p2 *pass2) xrun_sysatt(a *ast) error {
 
 		//  append PROJECT_OSX... ast node to array of sysatt
 		//  references.
-WTF("%s", pn)
 		p2.run_proj[pn] = append(p2.run_proj[pn], a)
 	}
 	return p2.xrun_sysatt(a.next)
