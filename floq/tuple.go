@@ -113,7 +113,7 @@ func new_tuple(name string, define *ast) (*tuple, error) {
 
 	//  find field offset for each tab separated attribute in the tuple
 
-	for a, i := atsv.left, 1;  a != nil;  a, i = a.next, i + 1 {
+	for a, i := atsv.left, 0;  a != nil;  a, i = a.next, i + 1 {
 		nm := a.string
 		at := tup.atts[nm]
 		if at == nil {
@@ -144,6 +144,7 @@ func (att *attribute) String() string {
 func (proj *projection) String() string {
 
 	var what string
+
 	if proj.att_ref != nil {
 		what = proj.att_ref.String()
 	} else if proj.sysatt_ref != nil {
