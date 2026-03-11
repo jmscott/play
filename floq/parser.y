@@ -185,20 +185,10 @@ expr:
 	  }  name {
 	  	lex := yylex.(*yyLexState)
 
-		cmd := $1
-		tup := cmd.tuple_ref
-		if tup == nil {
-			lex.error("command %s has no tuple", cmd.name)
+		a := lex.project_osx_tuple($4, $1)
+		if a == nil {
 			return 0
 		}
-
-		if tup.atts[$4] == nil {
-			lex.error("no attribute %s in tuple %s", $4, tup.name)
-			return 0
-		}
-
-		a := lex.ast(PROJECT_OSX_TUPLE_TSV)
-		a.att_ref = tup.atts[$4]
 		$$ = a
 	  }
 	|
@@ -1225,27 +1215,32 @@ func (lex *yyLexState) project_osx_sys(name string, cmd *command) (*ast) {
 	return a
 }
 
-/*
 func (lex *yyLexState) project_osx_tuple(name string, cmd *command) (*ast) {
 
 	tup := cmd.tuple_ref
-	if tuple_ref == nil {
-		croak("
-	//  find the tuple reference in "
+	if tup == nil {
+		lex.error("no tuple defined for command: %s", cmd.name)
+		return nil
+	}
+	att := tup.atts[name]
+	if att == nil {
+		lex.error("tuple %s: no attribute: %s", tup.name, name)
+		return nil
+	}
+	cmd.ref_count++
 	a := &ast{
 		name:	name,
 		yy_tok: PROJECT_OSX_TUPLE_TSV,
 		line_no:	lex.line_no,
+		command_ref:	cmd,
+		att_ref:	att,
 		proj_ref:	&projection{
-					att_ref: &attribute{
-							name:	name,
-							command_ref: cmd,
-					},
-		},
+					att_ref: att,
+					call_order:	cmd.ref_count,
+				},
 	}
 	return a
 }
-*/
 
 func (lex *yyLexState) parse_set(a *ast) bool {
 
