@@ -95,10 +95,15 @@ func (a *ast) String() string {
 			a.line_no,
 		)
 	case RUN:
+		nm := a.command_ref.name
+		tup := a.command_ref. tuple_ref
+		if tup != nil {
+			nm = fmt.Sprintf("%s.%s", nm, tup.name)
+		}
 		what = fmt.Sprintf(
 				"RUN%s%s (ord=%d,lno=%d) ",
 				colon,
-				a.command_ref.name,
+				nm,
 				a.order,
 				a.line_no,
 			)
@@ -171,7 +176,7 @@ func (a *ast) String() string {
 			a.proj_ref,
 		)
 	case PROJECT_OSX_TUPLE_TSV:
-		what = a.proj_ref.String()
+		what = "PROJECT_OSX_TUPLE_TSV: " + a.proj_ref.String()
 	default:
 		what = fmt.Sprintf("%s%s%s", a.yy_name(), colon, a.name)
 	}
