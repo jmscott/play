@@ -67,6 +67,7 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 	)
 	cx.Args = cmd.args
 	cx.Args = append(cx.Args, argv...)
+
 	cx.Env = cmd.env
 
 	var stdout, stderr strings.Builder
@@ -362,6 +363,11 @@ func (cmd *command) String() string {
 	return cmd.name
 }
 
+/*
+ *  project a particular field of a tab separated, new line terminated
+ *  set of tuples as osx tuples
+ */
+
 func (flo *flow) osx_proj_tuple_tsv(
 	in osx_chan,
 	att *attribute,
@@ -376,28 +382,35 @@ func (flo *flow) osx_proj_tuple_tsv(
 			return
 		}
 
-		// Note: ought to split once!!
-
-		fld := strings.Split(xv.Stdout, "\t")
-
-		var str string
-		if len(fld) > int(tsv_field) {
-			str = fld[tsv_field]
-		} else {
-			xv.is_null = true
-		}
-		if att.matches.MatchString(str) == false {
-			croak(
-				"%s: matches: %s !~ %s",
-				att.String(),
-				att.matches.String(),
-				str,
+		/*
+		 *  for each line in Stdout, write the particular field
+		 *  using the tsv offset specified in the attribute struct.
+		 */
+		for _, line := range strings.Split(xv.Stdout, "\n") {
+			strings.Split(xv.Stdout, "\t")
+			fld := strings.Split(
+					strings.TrimSuffix(line, "\n"),
+					"\t",
 			)
-		}
+			var str string
+			if len(fld) > int(tsv_field) {
+				str = fld[tsv_field]
+			} else {
+				xv.is_null = true
+			}
+			if att.matches.MatchString(str) == false {
+				croak(
+					"%s: matches: %s !~ %s",
+					att.String(),
+					att.matches.String(),
+					str,
+				)
+			}
 
-		out <- &string_value{
-			string:		str,
-			is_null:	xv.is_null,
+			out <- &string_value{
+				string:		str,
+				is_null:	xv.is_null,
+			}
 		}
 
 		flo = flo.get()
