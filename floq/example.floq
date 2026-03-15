@@ -5,25 +5,32 @@ define tuple blob_request_record as {
 		start_time: {
 			#  Note:  need string concatenation!
 			matches:
-	`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})`
+	`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})`,
+			tsv_field: 1
 		},
 		transport: {
-			matches: `[a-z][a-z0-9_]{0,7}:[[:graph:]]{1,128}`
+			matches: `[a-z][a-z0-9_]{0,7}:[[:graph:]]{1,128}`,
+			tsv_field: 2
 		},
 		verb: {
-			matches: `get|put|give|take|wrap|roll|eat|cat`
+			matches: `get|put|give|take|wrap|roll|eat|cat`,
+			tsv_field: 3
 		},
 		udig: {
-			matches: `[a-z][a-z0-9]{0,7}:[[:graph:]]{32,128}`
+			matches: `[a-z][a-z0-9]{0,7}:[[:graph:]]{32,128}`,
+			tsv_field: 4
 		},
 		chat_history: {
-			matches: `ok(,ok){0,2}`
+			matches: `ok(,ok){0,2}`,
+			tsv_field: 5
 		},
 		blob_size: {
-			matches: `\d{1,19}`
+			matches: `\d{1,19}`,
+			tsv_field: 6
 		},
 		wall_duration: {
-			matches:  `\d{1,10}([.]\d{1,10})?`
+			matches:  `\d{1,10}([.]\d{1,10})?`,
+			tsv_field: 7
 		}
 	},
 	tsv_line: [
