@@ -34,6 +34,7 @@ type ast struct {
 	string
 	bool
 	set_ref		*set
+	array_ref	[]string
 }
 
 func (a *ast) yy_name() string {
@@ -74,16 +75,22 @@ func (a *ast) String() string {
 	case ARRAY:
 		if a.name == "" {
 			what = fmt.Sprintf(
-				"ARRAY%s(cnt=%d)",
+				"ARRAY%s(cnt=%d) @%p",
 				colon,
 				a.count,
+				len(a.array_ref),
+				cap(a.array_ref),
+				a.array_ref,
 			)
 		} else {
 			what = fmt.Sprintf(
-				"ARRAY%s%s (cnt=%d)",
+				"ARRAY%s%s (cnt=%d) (len=%d,cap=%d) @%p",
 				colon,
 				a.name,
 				a.count,
+				len(a.array_ref),
+				cap(a.array_ref),
+				a.array_ref,
 			)
 		}
 

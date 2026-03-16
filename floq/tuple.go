@@ -18,7 +18,6 @@ type attribute struct {
 type tuple struct {
 	name		string
 	atts		map[string]*attribute
-	tsv_line	[]*attribute
 }
 
 type projection struct {
@@ -29,6 +28,8 @@ type projection struct {
 }
 
 //  build a tuple struct from a "DEFINE TUPLE" abstract syntax tree.
+//  the "set" has already been frisked by the ya
+//
 //  Note: no test for duplicate attributes in the define set!
 
 func new_tuple(name string, define *ast) (*tuple, error) {
@@ -41,37 +42,45 @@ func new_tuple(name string, define *ast) (*tuple, error) {
 		return nil, fmt.Errorf(format, args...)
 	}
 
-	//  errors for tsv_line element
-	_et := func(format string, args ...interface{}) (*tuple, error) {
-		return _e("element \"tsv_line\": " + format, args...)
-	}
-
 	tup.atts = make(map[string]*attribute)
 
 	//  find ast node "attributes"
 
-	var atts *ast
-	for a := define.left;  a != nil;  a = a.next {
-		if a.name == "attributes" {
-			atts = a
-			break
-		}
+	atts := define.left
+
+	//  Note: assume no empty set!
+	if atts.name != "attributes" {
+		return _e("unknown element: %s", define.left.name)
 	}
-	if atts == nil {
-		return _e("\"attributes\" not defined")
+	if atts.next != nil {
+		return _e("too many elements: %s", atts.next.name)
 	}
+
+	prev_fld := uint8(0)	// Note: variable disappears inside for{}!
 
 	//  build attribute set from element "attributes"
 
 	for as := atts.left;  as != nil;  as = as.next {
-		if tup.atts[as.name] != nil {
-			return _e("duplicate \"%s\"", as.name)
+
+		_et := func(fmt string, args ...interface{}) (*tuple, error) {
+			fmt = as.name + ": tsv_field: " + fmt
+			return _e(fmt, args...)
+		}
+
+		_em := func(fmt string, args ...interface{}) (*tuple, error) {
+			fmt = as.name + ": matches: " + fmt
+			return _e(fmt, args...)
 		}
 
 		at := &attribute{
 			name:		as.name,
 			tuple_ref:	tup,
 		}
+
+		has_tsv_field := false
+		has_matches := false
+
+		//  only elements named "matches" and "tsv_field" are valid
 		for a := as.left;  a != nil;  a = a.next {
 			var err error
 
@@ -80,51 +89,64 @@ func new_tuple(name string, define *ast) (*tuple, error) {
 
 				at.matches, err = regexp.Compile(a.string)
 				if err != nil {
-					return _e("\"matches\": %s", err)
+					return _em("%s", err)
 				}
+				has_matches = true
+			case "tsv_field":
+				if a.uint64 == 0 {
+					return _et("cannot be 0")
+				}
+				if a.uint64 > 255 {
+					return _et("%d > 255", a.uint64)
+				}
+				
+				//  Note:  tsv_field must be unique
+				fld := uint8(a.uint64)
+				for _, at2 := range tup.atts {
+					if at2.tsv_field == fld {
+						return _et(
+							"%s and %s: same %d",
+							at.name,
+							at2.name,
+							fld,
+						)
+					}
+				}
+
+				//  insure tsv_fields are sequential
+
+				if prev_fld == 0 {
+					if fld != 1 {
+						return _et(
+							"%s: must equal 1: %d",
+							at.name,
+							fld,
+						)
+					}
+				} else {
+					if fld != prev_fld + 1 {
+						return _et(
+							"%s: out of order: %d",
+							at.name,
+							fld,
+						)
+					}
+				}
+				at.tsv_field = fld
+				prev_fld = fld
+				has_tsv_field = true
 			default:
 				return _e("unknown element: \"%s\"", a.name)
 			}
 		}
+		if has_matches == false {
+			return _em("missing element")
+		}
+		if has_tsv_field == false {
+			return _et("missing element")
+		}
 		tup.atts[as.name] = at
 	}
-
-	//  assign order for tab separated tuple
-
-	var atsv *ast
-	for a := define.left;  a != nil;  a = a.next {
-		if a.name == "tsv_line" {
-			atsv = a
-			break
-		}
-	}
-	if atsv == nil {
-		return _et("not defined")
-	}
-	if atsv.yy_tok != ARRAY {
-		return _et("not array")
-	}
-	if int(atsv.count) < len(tup.atts) {
-		return _et("missing attrbutes")
-	}
-	if int(atsv.count) > len(tup.atts) {
-		return _et("too many attributes")
-	}
-
-	//  find field offset for each tab separated attribute in the tuple
-
-	for a, i := atsv.left, 0;  a != nil;  a, i = a.next, i + 1 {
-		nm := a.string
-		at := tup.atts[nm]
-		if at == nil {
-			return _et("unknown attribute: %s", nm)
-		}
-		if at.tsv_field > 0 {
-			return _et("duplicate attribute: %s", nm)
-		}
-		at.tsv_field = uint8(i)
-	}
-
 	return tup, nil
 }
 

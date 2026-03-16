@@ -32,16 +32,7 @@ define tuple blob_request_record as {
 			matches:  `\d{1,10}([.]\d{1,10})?`,
 			tsv_field: 7
 		}
-	},
-	tsv_line: [
-		"start_time",
-		"transport",
-		"verb",
-		"udig",
-		"chat_history",
-		"blob_size",
-		"wall_duration"
-	]
+	}
 };
 
 define command tail_brr.blob_request_record as {

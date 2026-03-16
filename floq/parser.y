@@ -347,10 +347,12 @@ value:
 	;
 
 element:
-	  value
-	|
 	  name  ':'  value
 	  {
+	  	lex := yylex.(*yyLexState)
+		if lex.add_name_element($1, $3) != nil {
+			return 0
+		}
 	  	$3.name = $1
 		$$ = $3
 	  }
@@ -359,12 +361,6 @@ element:
 //  Note: checking for duplicates?!!
 
 element_list:
-	  /*  empty  */
-	  {
-	  	$$ = yylex.(*yyLexState).ast(yy_SET)
-		$$.set_ref = new_set()
-	  }
-	|
 	  element
 	  {
 	  	$$ = yylex.(*yyLexState).ast(yy_SET, $1)
@@ -373,7 +369,6 @@ element_list:
 	|
 	  element_list  ','  element
 	  {
-	  	
 		$1.push_left($3)
 	  }
 	;
@@ -388,26 +383,47 @@ component_list:
 	|
 	  string
 	  {
+		lex := yylex.(*yyLexState)
+
+		lex.array_ref = make([]string, 1)
+		lex.array_ref[0] = $1.string
+
 	  	$$ = yylex.(*yyLexState).ast(ARRAY, $1)
+		$$.array_ref = lex.array_ref
 	  }
 	|
 	  component_list  ','  string
 	  {
+		lex := yylex.(*yyLexState)
+
+		lex.array_ref = append(lex.array_ref, $3.string)
+		lex.array_ref[len(lex.array_ref)-1] = $3.string
+
+		$$.array_ref = lex.array_ref
 		$1.push_left($3)
 	  }
 	;
 
 array:
-	  '['  component_list  ']'
+	  '['  {
+	  	yylex.(*yyLexState).array_ref = make([]string, 1)
+
+	  }  component_list  ']'
 	  {
-	  	$$ = $2
+	  	$$ = $3
 	  }
 	;
 
 set:
-	  '{'  element_list  '}'
+	  '{' {
+
+	  	yylex.(*yyLexState).push_set()
+
+	  }  element_list  '}'
 	  {
-	  	$$ = $2
+	  	yylex.(*yyLexState).pop_set()
+
+	  	$$ = $3
 	  }
 	;
 
@@ -559,6 +575,7 @@ type yyLexState struct {
 	name			string
 	string
 	uint64
+	array_ref		[]string
 
 	name2ast		map[string]*ast
 	name2cmd		map[string]*command
@@ -566,6 +583,7 @@ type yyLexState struct {
 	name2satt		map[string]*sysatt
 	name2run		map[string]*ast
 	depends			map[string]string
+	set_stack		[]*set
 
 	command_ref		*command
 	tuple_ref		*tuple
@@ -1254,4 +1272,49 @@ func (lex *yyLexState) parse_set(a *ast) bool {
 		return false
 	}
 	return true
+}
+
+func (lex *yyLexState) push_set() {
+
+	lex.set_stack = append(lex.set_stack, new_set())
+}
+
+func (lex *yyLexState) pop_set() {
+	lex.set_stack = lex.set_stack[:len(lex.set_stack)]
+}
+
+func (lex *yyLexState) set() *set {
+	slen := len(lex.set_stack) - 1
+
+	//  cheap sanity test
+	if slen < 0 {
+		panic("negative set stack")
+	}
+	return lex.set_stack[slen]
+}
+
+func (lex *yyLexState) add_name_element(name string, ele *ast) (err error) {
+
+	s := lex.set()
+
+	switch ele.yy_tok {
+	case yy_TRUE:
+		err = s.add_name_bool(name, true)
+	case yy_FALSE:
+		err = s.add_name_bool(name, false)
+	case UINT64:
+		err = s.add_name_uint64(name, ele.uint64)
+	case STRING:
+		err = s.add_name_string(name, ele.string)
+	case yy_SET:
+		err = s.add_name_set(name, ele.set_ref)
+	case ARRAY:
+		err = s.add_name_array(name, ele.array_ref)
+	default:
+		err = fmt.Errorf("can not add element: %s", yy_name(ele.yy_tok))
+	}
+	if err != nil {
+		lex.error("add_name_element: %s", err)
+	}
+	return err
 }
