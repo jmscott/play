@@ -237,14 +237,8 @@ func (flo *flow) osxw(
 
 func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 
-	//  track a received string and position in argv[]
-	type arg_value struct {
-		*string_value
-		position uint8
-	}
-
 	out = make(argv_chan)
-	argc := uint8(len(in_args))
+	argc := len(in_args)
 
 	//  called RUN has arguments, so wait on args via string channels
 	//  before sending assembled argv[]
@@ -253,91 +247,26 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 
 		defer close(out)
 
-		//  merge() output of string channels onto a single channel of
-		//  []string values.
+		var wg sync.WaitGroup
+		wg.Add(int(argc))
+		
+		argv := make([]string, argc)
 
-		merge := func() (mout chan arg_value) {
-
-			var wg sync.WaitGroup
-			mout = make(chan arg_value)
-
-			io := func(sc string_chan, p uint8) {
-				for sv := range sc {
-					mout <- arg_value{
-						string_value: sv,
-						position:     p,
-					}
-				}
+		for i := 0;  i < argc;  i++ {
+			go func(int) {
+				//  Note: not handling null!!
+				argv[i] = (<- in_args[i]).string
 				wg.Done()
-			}
-
-			wg.Add(len(in_args))
-			for i, sc := range in_args {
-				go io(sc, uint8(i))
-			}
-
-			//  Start a goroutine to close 'mout' channel
-			//  once all the output goroutines are done.
-
-			go func() {
-				wg.Wait()
-				close(mout)
-			}()
-			return mout
-		}()
-
-		for {
-
-			av := make([]string, argc)
-			ac := uint8(0)
-			is_null := false
-
-			//  read until we have an argv[] for which all elements
-			//  are also non-null.  any null argv[] element makes
-			//  the whole argv[] null
-
-			for ac < argc {
-
-				arg := <-merge
-
-				//  merge channel closed
-				//
-				//  Note: golang compile generates error for
-				//        arg_value{} without parens
-
-				if arg == (arg_value{}) {
-					return
-				}
-
-				sv := arg.string_value
-				pos := arg.position
-
-				//  any null element forces entire argv[]
-				//  to be null.  not sure this is reasonable.
-				//
-				//  Note: why, seems wrong!
-
-				sv.is_null = arg.is_null
-
-				//  cheap sanity test to insure we don't
-				//  see the same argument twice
-
-				if av[pos] != "" {
-					croak(
-						"argv[%d] element not empty: %s", pos, av[pos])
-				}
-				av[pos] = sv.string
-				ac++
-			}
-
-			out <- &argv_value{
-				argv:    av,
-				is_null: is_null,
-				flow:    flo,
-			}
-			
-			flo = flo.get()
+			}(i)
 		}
+		wg.Wait()
+
+		out <- &argv_value{
+			argv:    argv,
+			flow:    flo,
+		}
+		
+		flo = flo.get()
 	}()
 
 	return out
