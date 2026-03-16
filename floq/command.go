@@ -323,7 +323,8 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 				//  see the same argument twice
 
 				if av[pos] != "" {
-					croak("argv[%d] element not \"\"", pos)
+					croak(
+						"argv[%d] element not empty: %s", pos, av[pos])
 				}
 				av[pos] = sv.string
 				ac++
@@ -374,7 +375,7 @@ func (flo *flow) osx_proj_tuple_tsv(
   ) (out string_chan) { 
 
 	out = make(string_chan)
-	tsv_field := att.tsv_field
+	tsv_field := att.tsv_field-1
 
 	go func() {
 		xv := <- in
@@ -386,8 +387,8 @@ func (flo *flow) osx_proj_tuple_tsv(
 		 *  for each line in Stdout, write the particular field
 		 *  using the tsv offset specified in the attribute struct.
 		 */
-		for _, line := range strings.Split(xv.Stdout, "\n") {
-			strings.Split(xv.Stdout, "\t")
+		for line := range strings.Lines(xv.Stdout) {
+
 			fld := strings.Split(
 					strings.TrimSuffix(line, "\n"),
 					"\t",
