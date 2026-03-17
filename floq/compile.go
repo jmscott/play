@@ -168,15 +168,15 @@ func (cmp *compilation) compile(a *ast) {
 
 		if argv == nil {
 			if when == nil {
-				a2osx[a] = flo.osx0(cmd)
+				a2osx[a] = flo.osx_run_0(cmd)
 			} else {
-				a2osx[a] = flo.osx0w(cmd, a2bool[when])
+				a2osx[a] = flo.osx_run_w(cmd, a2bool[when])
 			}
 		} else {
 			if when == nil {
-				a2osx[a] = flo.osx(cmd, a2argv[argv])
+				a2osx[a] = flo.osx_run_a(cmd, a2argv[argv])
 			} else {
-				a2osx[a] = flo.osxw(
+				a2osx[a] = flo.osx_run_aw(
 						cmd,
 						a2argv[argv],
 						a2bool[when],

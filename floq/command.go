@@ -119,7 +119,7 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 
 //  run a process with no argv nor "when" predicate
 
-func (flo *flow) osx0(cmd *command) (out osx_chan) {
+func (flo *flow) osx_run_0(cmd *command) (out osx_chan) {
 
 	out = make(osx_chan)
 
@@ -135,7 +135,7 @@ func (flo *flow) osx0(cmd *command) (out osx_chan) {
 
 //  run a process with an argv and no "when" predicate
 
-func (flo *flow) osx(cmd *command, in argv_chan) (out osx_chan) {
+func (flo *flow) osx_run_a(cmd *command, in argv_chan) (out osx_chan) {
 
 	out = make(osx_chan)
 
@@ -165,10 +165,9 @@ func (flo *flow) osx(cmd *command, in argv_chan) (out osx_chan) {
 	return out
 }
 
-
 //  conditionally run a command process with no argv
 
-func (flo *flow) osx0w(cmd *command, when bool_chan) (out osx_chan) {
+func (flo *flow) osx_run_w(cmd *command, when bool_chan) (out osx_chan) {
 
 	out = make(osx_chan)
 
@@ -194,7 +193,7 @@ func (flo *flow) osx0w(cmd *command, when bool_chan) (out osx_chan) {
 
 //  run a command process with argv and "when" predicate
 
-func (flo *flow) osxw(
+func (flo *flow) osx_run_aw(
 	cmd *command,
 	args argv_chan,
 	when bool_chan,
