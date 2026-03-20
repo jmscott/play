@@ -246,9 +246,8 @@ func (cmp *compilation) compile(a *ast) {
 		fo := cmd2fo[cmd]
 		a2str[a] = flo.osx_proj_Stderr(fo[proj.call_order-1])
 	case PROJECT_OSX_TUPLE_TSV:
-		cmd := a.command_ref
 		proj := a.proj_ref
-		fo := cmd2fo[cmd]
+		fo := cmd2fo[a.command_ref]
 		a2str[a] = flo.osx_proj_tuple_tsv(
 				fo[proj.call_order-1],
 				proj.att_ref,
