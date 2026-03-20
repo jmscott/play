@@ -305,41 +305,40 @@ func (flo *flow) osx_proj_tuple_tsv(
 	out = make(string_chan)
 	tsv_field := att.tsv_field-1
 
+	_die := func (format string, args ...interface{}) {
+		fmt := fmt.Sprintf("%s#%d: xv.Stdout: ", att, att.tsv_field)
+		corrupt(fmt + format, args...)
+	}
+
 	go func() {
 		xv := <- in
 		if xv == nil {
 			return
 		}
+		var str string
+		
+		str = strings.TrimRight(xv.Stdout, "\n")
+		if strings.Count(str, "\n") > 0 {
+			_die("more than one newline")
+		}
 
-		/*
-		 *  for each line in Stdout, write the particular field
-		 *  using the tsv offset specified in the attribute struct.
-		 */
-		for line := range strings.Lines(xv.Stdout) {
+		fld := strings.Split(str, "\t")
+		if len(fld) != len(att.tuple_ref.atts) {
+			_die("not %d fields", len(att.tuple_ref.atts))
+		}
 
-			fld := strings.Split(
-					strings.TrimSuffix(line, "\n"),
-					"\t",
+		str = fld[tsv_field]
+		if att.matches.MatchString(str) == false {
+			_die(
+				"matches fails: %s !~ %s",
+				att.matches.String(),
+				str,
 			)
-			var str string
-			if len(fld) > int(tsv_field) {
-				str = fld[tsv_field]
-			} else {
-				xv.is_null = true
-			}
-			if att.matches.MatchString(str) == false {
-				croak(
-					"%s: matches: %s !~ %s",
-					att.String(),
-					att.matches.String(),
-					str,
-				)
-			}
+		}
 
-			out <- &string_value{
-				string:		str,
-				is_null:	xv.is_null,
-			}
+		out <- &string_value{
+			string:		str,
+			is_null:	xv.is_null,
 		}
 
 		flo = flo.get()
