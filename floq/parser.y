@@ -54,7 +54,7 @@ func init() {
 %token	PARSE_ERROR
 %token	ARGV
 %token	yy_SET  ARRAY  
-%token	RUN  START
+%token	RUN
 %token	COMMAND  COMMAND_REF
 %token	TUPLE  TUPLE_REF
 %token	DEFINE   AS
@@ -335,6 +335,18 @@ name:
 
 		lex.name_is_name = false
 	  	$$ = lex.name 
+	  }
+	|
+	  COMMAND_REF
+	  {
+	  	lex := yylex.(*yyLexState)
+		lex.error("unexpected command instead of name: %s", $1.name)
+	  }
+	|
+	  TUPLE_REF
+	  {
+	  	lex := yylex.(*yyLexState)
+		lex.error("unexpected tuple instead of name: %s", $1.name)
 	  }
 	;
 
