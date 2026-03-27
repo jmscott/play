@@ -74,8 +74,9 @@ GOSRCs="
 	parser.go
 	pass2.go
 	regexp.go
-	set.go
 	server.go
+	set.go
+	start.go
 	string.go
 	sysatt.go
 	tsort.go

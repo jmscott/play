@@ -12,6 +12,7 @@ type flow struct {
 
 func (flo *flow) get() *flow {
 
+	/*
         <-flo.resolved
 
         //  next active flow arrives on this channel
@@ -22,4 +23,9 @@ func (flo *flow) get() *flow {
 
         //  return next flow
         return <-reply
+	*/
+	return &flow{
+			resolved:       make(chan struct{}),
+			next:           make(chan flow_chan),
+	}
 }

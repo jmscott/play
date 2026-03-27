@@ -246,26 +246,27 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 
 		defer close(out)
 
-		var wg sync.WaitGroup
-		wg.Add(int(argc))
-		
-		argv := make([]string, argc)
+		for {
+			var wg sync.WaitGroup
+			wg.Add(int(argc))
+			
+			argv := make([]string, argc)
 
-		for i := 0;  i < argc;  i++ {
-			go func(int) {
-				//  Note: not handling null!!
-				argv[i] = (<- in_args[i]).string
-				wg.Done()
-			}(i)
-		}
-		wg.Wait()
+			for i := 0;  i < argc;  i++ {
+				go func(int) {
+					//  Note: not handling null!!
+					argv[i] = (<- in_args[i]).string
+					wg.Done()
+				}(i)
+			}
+			wg.Wait()
+			out <- &argv_value{
+				argv:    argv,
+				flow:    flo,		//  Note: no flow
+			}
 
-		out <- &argv_value{
-			argv:    argv,
-			flow:    flo,
+			flo = flo.get()
 		}
-		
-		flo = flo.get()
 	}()
 
 	return out
@@ -274,9 +275,11 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 func (flo *flow) osx_null(in osx_chan) {
 
 	go func() {
-		<- in
+		for {
+			<- in
 
-		flo = flo.get()
+			flo = flo.get()
+		}
 	}()
 }
 
@@ -311,37 +314,39 @@ func (flo *flow) osx_proj_tuple_tsv(
 	}
 
 	go func() {
-		xv := <- in
-		if xv == nil {
-			return
-		}
-		var str string
-		
-		str = strings.TrimRight(xv.Stdout, "\n")
-		if strings.Count(str, "\n") > 0 {
-			_die("more than one newline")
-		}
+		for {
+			xv := <- in
+			if xv == nil {
+				return
+			}
+			var str string
+			
+			str = strings.TrimRight(xv.Stdout, "\n")
+			if strings.Count(str, "\n") > 0 {
+				_die("more than one newline")
+			}
 
-		fld := strings.Split(str, "\t")
-		if len(fld) != len(att.tuple_ref.atts) {
-			_die("not %d fields", len(att.tuple_ref.atts))
-		}
+			fld := strings.Split(str, "\t")
+			if len(fld) != len(att.tuple_ref.atts) {
+				_die("not %d fields", len(att.tuple_ref.atts))
+			}
 
-		str = fld[tsv_field]
-		if att.matches.MatchString(str) == false {
-			_die(
-				"matches fails: %s !~ %s",
-				att.matches.String(),
-				str,
-			)
-		}
+			str = fld[tsv_field]
+			if att.matches.MatchString(str) == false {
+				_die(
+					"matches fails: %s !~ %s",
+					att.matches.String(),
+					str,
+				)
+			}
 
-		out <- &string_value{
-			string:		str,
-			is_null:	xv.is_null,
-		}
+			out <- &string_value{
+				string:		str,
+				is_null:	xv.is_null,
+			}
 
-		flo = flo.get()
+			flo = flo.get()
+		}
 	}()
 	return out
 }
@@ -353,17 +358,19 @@ func (flo *flow) osx_proj_exit_code(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
-		xv := <- in
-		if xv == nil {
-			return
-		}
+		for {
+			xv := <- in
+			if xv == nil {
+				return
+			}
 
-		out <- &uint64_value{
-			uint64:		uint64(xv.exit_code),
-			is_null:	xv.is_null,
-		}
+			out <- &uint64_value{
+				uint64:		uint64(xv.exit_code),
+				is_null:	xv.is_null,
+			}
 
-		flo = flo.get()
+			flo = flo.get()
+		}
 	}()
 
 	return out
@@ -376,17 +383,19 @@ func (flo *flow) osx_proj_Stdout(in osx_chan) (out string_chan) {
 	out = make(string_chan)
 
 	go func() {
-		xv := <- in
-		if xv == nil {
-			return
-		}
+		for {
+			xv := <- in
+			if xv == nil {
+				return
+			}
 
-		out <- &string_value{
-			string:		xv.Stdout,
-			is_null:	xv.is_null,
-		}
+			out <- &string_value{
+				string:		xv.Stdout,
+				is_null:	xv.is_null,
+			}
 
-		flo = flo.get()
+			flo = flo.get()
+		}
 	}()
 
 	return out
@@ -399,17 +408,19 @@ func (flo *flow) osx_proj_Stderr(in osx_chan) (out string_chan) {
 	out = make(string_chan)
 
 	go func() {
-		xv := <- in
-		if xv == nil {
-			return
-		}
+		for {
+			xv := <- in
+			if xv == nil {
+				return
+			}
 
-		out <- &string_value{
-			string:		xv.Stderr,
-			is_null:	xv.is_null,
-		}
+			out <- &string_value{
+				string:		xv.Stderr,
+				is_null:	xv.is_null,
+			}
 
-		flo = flo.get()
+			flo = flo.get()
+		}
 	}()
 
 	return out
@@ -422,17 +433,19 @@ func (flo *flow) osx_proj_pid(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
-		xv := <- in
-		if xv == nil {
-			return
-		}
+		for {
+			xv := <- in
+			if xv == nil {
+				return
+			}
 
-		out <- &uint64_value{
-			uint64:		uint64(xv.pid),
-			is_null:	xv.is_null,
-		}
+			out <- &uint64_value{
+				uint64:		uint64(xv.pid),
+				is_null:	xv.is_null,
+			}
 
-		flo = flo.get()
+			flo = flo.get()
+		}
 	}()
 
 	return out
@@ -443,19 +456,21 @@ func (flo *flow) osx_proj_start_time(in osx_chan) (out string_chan) {
 	out = make(string_chan)
 
 	go func() {
-		xv := <- in
-		if xv == nil {
-			return
-		}
+		for {
+			xv := <- in
+			if xv == nil {
+				return
+			}
 
-		out <- &string_value{
-			string:		xv.start_time.Format(
-						time.RFC3339Nano,
-					),
-			is_null:	xv.is_null,
-		}
+			out <- &string_value{
+				string:		xv.start_time.Format(
+							time.RFC3339Nano,
+						),
+				is_null:	xv.is_null,
+			}
 
-		flo = flo.get()
+			flo = flo.get()
+		}
 	}()
 
 	return out
@@ -468,17 +483,19 @@ func (flo *flow) osx_proj_wall_duration(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
-		xv := <- in
-		if xv == nil {
-			return
-		}
+		for {
+			xv := <- in
+			if xv == nil {
+				return
+			}
 
-		out <- &uint64_value{
-			uint64:		uint64(xv.wall_duration),
-			is_null:	xv.is_null,
-		}
+			out <- &uint64_value{
+				uint64:		uint64(xv.wall_duration),
+				is_null:	xv.is_null,
+			}
 
-		flo = flo.get()
+			flo = flo.get()
+		}
 	}()
 
 	return out
@@ -491,17 +508,19 @@ func (flo *flow) osx_proj_user_sec(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
-		xv := <- in
-		if xv == nil {
-			return
-		}
+		for {
+			xv := <- in
+			if xv == nil {
+				return
+			}
 
-		out <- &uint64_value{
-			uint64:		uint64(xv.user_sec),
-			is_null:	xv.is_null,
-		}
+			out <- &uint64_value{
+				uint64:		uint64(xv.user_sec),
+				is_null:	xv.is_null,
+			}
 
-		flo = flo.get()
+			flo = flo.get()
+		}
 	}()
 
 	return out
@@ -514,17 +533,19 @@ func (flo *flow) osx_proj_user_usec(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
-		xv := <- in
-		if xv == nil {
-			return
-		}
+		for {
+			xv := <- in
+			if xv == nil {
+				return
+			}
 
-		out <- &uint64_value{
-			uint64:		uint64(xv.user_usec),
-			is_null:	xv.is_null,
-		}
+			out <- &uint64_value{
+				uint64:		uint64(xv.user_usec),
+				is_null:	xv.is_null,
+			}
 
-		flo = flo.get()
+			flo = flo.get()
+		}
 	}()
 
 	return out
@@ -537,17 +558,19 @@ func (flo *flow) osx_proj_sys_usec(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
-		xv := <- in
-		if xv == nil {
-			return
-		}
+		for {
+			xv := <- in
+			if xv == nil {
+				return
+			}
 
-		out <- &uint64_value{
-			uint64:		uint64(xv.sys_usec),
-			is_null:	xv.is_null,
-		}
+			out <- &uint64_value{
+				uint64:		uint64(xv.sys_usec),
+				is_null:	xv.is_null,
+			}
 
-		flo = flo.get()
+			flo = flo.get()
+		}
 	}()
 
 	return out
@@ -560,17 +583,19 @@ func (flo *flow) osx_proj_sys_sec(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
-		xv := <- in
-		if xv == nil {
-			return
-		}
+		for {
+			xv := <- in
+			if xv == nil {
+				return
+			}
 
-		out <- &uint64_value{
-			uint64:		uint64(xv.sys_sec),
-			is_null:	xv.is_null,
-		}
+			out <- &uint64_value{
+				uint64:		uint64(xv.sys_sec),
+				is_null:	xv.is_null,
+			}
 
-		flo = flo.get()
+			flo = flo.get()
+		}
 	}()
 
 	return out
@@ -609,6 +634,7 @@ func (flo *flow) osx_fanout(in osx_chan, count uint8) (out []osx_chan) {
 	}()
 	return out
 }
+
 func (cmd *command) detail(indent int) string {
 
 	if cmd == nil {
@@ -639,4 +665,21 @@ func (cmd *command) detail(indent int) string {
 		tab, cmd,
 		strings.Repeat("\t", indent),
 	)
+}
+/*
+ *  start an os command process that runs forever.
+ */
+func (flo *flow) osx_start_0(cmd *command, argv []string, out osx_chan) {
+	cx := exec.Command(
+			cmd.look_path,
+	)
+	cx.Args = cmd.args
+	cx.Args = append(cx.Args, argv...)
+
+	cx.Env = cmd.env
+
+	err := cx.Start()
+	if err != nil {
+		croak("osx_start(%s) failed: %s", cmd, err)
+	}
 }

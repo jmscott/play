@@ -9,7 +9,7 @@ define tuple blob_request_record as {
 			tsv_field: 1
 		},
 		transport: {
-			matches: `[a-z][a-z0-9_]{0,7}:[[:graph:]]{1,128}`,
+			matches: `[a-z][a-z0-9_]{0,7}~[[:graph:]]{1,128}`,
 			tsv_field: 2
 		},
 		verb: {
@@ -36,32 +36,24 @@ define tuple blob_request_record as {
 };
 
 define command tail_brr.blob_request_record as {
-	path:	"/opt/local/libexec/gnubin/head",
-	#args:	[ "tail" "--lines" "+0" "bio4d.brr" ]
+	path:	"/opt/local/libexec/gnubin/tail",
 	args:	[ "-1", "bio4d.brr" ]
+	#args:	[ "--lines", "+1", "--follow", "bio4d.brr" ]
 };
 
-define command exit_x as {
-	path:	"./exit-x"
+define command merge_brr as {
+	path:	"/opt/local/libexec/gnubin/tail",
+	args:	[ "-1", "bio4d.brr" ]
+	#args:	[ "--lines", "+1", "--follow", "bio4d.brr" ]
 };
 
 define command write_tty as {
 	path:	"./write-tty"
 };
 
-run tail_brr("a");
-run exit_x("5");
+run tail_brr();
 
 run write_tty(
-	#"tail_brr.transport", tail_brr.transport,
-	#"tail_brr.start_time", tail_brr.start_time,
-	"tail_brr$Stdout", tail_brr$Stdout::string, 
-	#"exit_x$pid", exit_x$pid::string,
-	"exit_x$exit_code", exit_x$exit_code::string
-  ) when
-  	tail_brr$pid  > 0
-	#and
-	#exit_x$exit_code == 5
-	#and
-	#tail_brr.chat_history != ""
-;
+	tail_brr$pid::string,
+	tail_brr.transport
+);

@@ -17,9 +17,10 @@ type pass2 struct {
 	root	*ast
 
 	run		map[string]*ast
+
 	depends		map[string]string
 
-	//  track sysatts ast nodes referenced in "run <command>" statements.
+	//  track ast nodes referenced in "run <command>" statements.
 	//
 	//  references can be in either the "when" clause or the argument
 	//  vector "run command(args...)"
