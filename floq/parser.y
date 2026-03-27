@@ -517,6 +517,15 @@ stmt:
 		$$ = define
 	  }
 	|
+	  RUN  name
+	  {
+		lex := yylex.(*yyLexState)
+		lex.error("run: unknown command: %s", $2)
+		return 0
+
+		$$ = nil
+	  }
+	|
 	  RUN  COMMAND_REF  '('  arg_list  ')'  qualification  {
 	  	lex := yylex.(*yyLexState)
 
