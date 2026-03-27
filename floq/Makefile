@@ -55,7 +55,7 @@ export GO111MODULE := off
 all: floq floq-execv
 
 clean:
-	rm --force $(COMPILEs) y.output
+	rm --force $(COMPILEs) floq y.output
 
 parser.go: parser.y
 	$(GOYACC) -o parser.go parser.y
