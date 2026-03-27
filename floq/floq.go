@@ -124,35 +124,43 @@ func string_brief(str string, clen int, ellipse bool) string {
 	return str + "..."
 }
 
-//  blatent debug with 
+//  debug with attitude 
+
 func WTF(format string, args ...interface{}) {
 
 	if format == "" {
 		os.Stderr.WriteString("\n")
 		return
 	}
+	var caller string
+
 	//  get name of calling function
-	caller := "unknown"
-	level := 1
-AGAIN:
-	pc, _, _, ok := runtime.Caller(level)
+	pc, _, _, ok := runtime.Caller(1)
 	if ok {
+		fname := "unknown"
+
 		f := runtime.FuncForPC(pc)
 		if f != nil {
-			caller = f.Name()
+			fname = f.Name()
 		}
-		period := strings.LastIndex(caller, ".")
-		if period >= 0 && len(caller) > period {
-			caller = caller[period+1:]
+		caller = fname
+		fld := strings.Split(fname, ".")
+		flen := len(fld)
+		if flen > 1 {
+			caller = fld[flen-1]
+			switch caller {
+			case "func1", "func2", "func3", "func4":
+				caller = fld[flen-2] + "." + caller
+			}
+		} else if flen == 1 {
+			caller = fld[0]
+		} else {
+			caller = fname
 		}
-		//  go no more tha two call frames
-		if caller == "func1" || caller == "func2" {
-			level++
-			goto AGAIN
+		if caller == "1" {		//  nested anonymous goroutine
+			caller = fname
 		}
 	}
-	if caller != "goexit" {
-		format = caller + ": " + format
-	}
+	format = caller + ": " + format
 	os.Stderr.WriteString(fmt.Sprintf("WTF: " + format, args...) + "\n")
 }
