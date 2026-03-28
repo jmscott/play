@@ -296,14 +296,13 @@ func (cmd *command) String() string {
 }
 
 /*
- *  project a particular field of a tab separated, new line terminated
+ *  project a particular attribute of a tab separated, new line terminated
  *  set of tuples as osx tuples
  */
-
 func (flo *flow) osx_proj_tuple_tsv(
 	in osx_chan,
 	att *attribute,
-  ) (out string_chan) { 
+  ) (out string_chan) {
 
 	out = make(string_chan)
 	tsv_field := att.tsv_field-1
@@ -343,6 +342,53 @@ func (flo *flow) osx_proj_tuple_tsv(
 			out <- &string_value{
 				string:		str,
 				is_null:	xv.is_null,
+			}
+
+			flo = flo.get()
+		}
+	}()
+	return out
+}
+/*
+ *  project a particular field via offset of a tab separated, new line
+ *  terminated set of tuples as osx tuples
+ */
+func (flo *flow) osx_proj_tuple_tsv_n(
+	in osx_chan,
+	field uint8,
+  ) (out string_chan) {
+
+	out = make(string_chan)
+
+	go func() {
+		for {
+			xv := <- in
+			if xv == nil {
+				return
+			}
+
+			var str string
+			
+			is_null := xv.is_null
+			if xv.is_null == false {
+				fld := strings.Split(
+					strings.TrimRight(
+						xv.Stdout,
+						"\n",
+					),
+					"\t",
+				)
+				if int(field) <= len(fld) {
+					str = fld[field-1]
+					is_null = false
+				} else {
+					is_null = true
+				}
+			}
+
+			out <- &string_value{
+				string:		str,
+				is_null:	is_null,
 			}
 
 			flo = flo.get()

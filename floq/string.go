@@ -334,6 +334,7 @@ func (a *ast) is_string() bool {
 	     PROJECT_OSX_START_TIME,
 	     PROJECT_OSX_STDOUT,
 	     PROJECT_OSX_TUPLE_TSV,
+	     PROJECT_OSX_TUPLE_TSV_N,
 	     PROJECT_OSX_STDERR:
 		return true
 	case CAST, CAST_UINT64, CAST_BOOL, CAST_STRING:

@@ -184,6 +184,12 @@ func (a *ast) String() string {
 		)
 	case PROJECT_OSX_TUPLE_TSV:
 		what = "PROJECT_OSX_TUPLE_TSV: " + a.proj_ref.String()
+	case PROJECT_OSX_TUPLE_TSV_N:
+		what = fmt.Sprintf(
+				"PROJECT_OSX_TUPLE_TSV_N: %s[%d]",
+				a.command_ref,
+				a.proj_ref.field,
+			)
 	default:
 		what = fmt.Sprintf("%s%s%s", a.yy_name(), colon, a.name)
 	}

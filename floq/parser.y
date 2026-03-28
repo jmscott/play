@@ -79,7 +79,7 @@ func init() {
 %token	PROJECT_OSX_SYS_USEC  OSX_SYS_USEC
 %token	PROJECT_OSX_STDOUT  OSX_STDOUT
 %token	PROJECT_OSX_STDERR  OSX_STDERR
-%token	PROJECT_OSX_TUPLE_TSV
+%token	PROJECT_OSX_TUPLE_TSV  PROJECT_OSX_TUPLE_TSV_N
 
 %token	CAST_BOOL  CAST_UINT64  CAST_STRING
 %token	yy_IS  yy_NULL  IS_NULL
@@ -185,6 +185,17 @@ expr:
 	  	lex := yylex.(*yyLexState)
 
 		a := lex.project_osx_tuple($4, $1)
+		if a == nil {
+			return 0
+		}
+		$$ = a
+	  }
+	|
+	  COMMAND_REF  '['  UINT64  ']'
+	  {
+	  	lex := yylex.(*yyLexState)
+
+		a := lex.project_osx_tuple_n($3, $1)
 		if a == nil {
 			return 0
 		}
@@ -1278,6 +1289,31 @@ func (lex *yyLexState) project_osx_tuple(name string, cmd *command) (*ast) {
 				},
 	}
 	return a
+}
+
+func (lex *yyLexState) project_osx_tuple_n(field uint64, cmd *command) (*ast) {
+
+	if field == 0 {
+		lex.error("%s: #field can not  be 0", cmd)
+		return nil
+	}
+	if field > 255 {
+		lex.error("%s: #field > 255: %d", field)
+		return nil
+	}
+	cmd.ref_count++
+	return &ast{
+		name:	fmt.Sprintf("#%d", field),
+		yy_tok: PROJECT_OSX_TUPLE_TSV_N,
+		line_no:	lex.line_no,
+		command_ref:	cmd,
+		uint64:		field,
+		proj_ref:	&projection{
+					field:	uint8(field),
+					//att_ref: att,
+					call_order:	cmd.ref_count,
+				},
+	}
 }
 
 func (lex *yyLexState) parse_set(a *ast) bool {

@@ -23,6 +23,7 @@ type tuple struct {
 type projection struct {
 	att_ref		*attribute
 	sysatt_ref	*sysatt
+	field		uint8
 
 	call_order	uint8
 }

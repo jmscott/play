@@ -252,6 +252,13 @@ func (cmp *compilation) compile(a *ast) {
 				fo[proj.call_order-1],
 				proj.att_ref,
 		)
+	case PROJECT_OSX_TUPLE_TSV_N:
+		proj := a.proj_ref
+		fo := cmd2fo[a.command_ref]
+		a2str[a] = flo.osx_proj_tuple_tsv_n(
+				fo[proj.call_order-1],
+				uint8(a.uint64),
+		)
 	case IS_NULL_UINT64:
 		a2bool[a] = flo.is_null_uint64(a2ui64[a.left])
 	case IS_NULL_BOOL:
