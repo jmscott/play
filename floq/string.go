@@ -393,3 +393,14 @@ func (flo *flow) is_not_null_string(in string_chan) (out bool_chan) {
 
 	return out
 }
+
+func (sv *string_value) String() string {
+
+	if sv == nil {
+		return "string_value(nil)"
+	}
+	if sv.is_null {
+		return "NULL"
+	}
+	return sv.string
+}

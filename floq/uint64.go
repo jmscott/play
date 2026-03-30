@@ -460,3 +460,14 @@ func (a *ast) is_uint64() bool {
 	}
 	return false
 }
+
+func (uv *uint64_value) String() string {
+
+	if uv == nil {
+		return "uint64_value(nil)"
+	}
+	if uv.is_null {
+		return "NULL"
+	}
+	return strconv.FormatUint(uv.uint64, 10)
+}
