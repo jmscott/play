@@ -54,6 +54,8 @@
  *  	0	exit ok
  *  	1	exit error (written to standard error)
  *  Note:
+ *	a failed execv() after fork() needs to generate a FAULT record.
+ *
  *	Segregate stdout from stderr by having a count for each instead of a
  *	merged count.
  *	
@@ -248,6 +250,14 @@ fork_wait() {
 		_dup2(merge[1], 2);
 		_close(merge[1]);
 		execv(x_argv[0], x_argv);
+
+		/*
+		 *  Note:
+		 *	must write a FAULT xdr when execv() returns.
+		 *	posix says, for example, a corrupt executable
+		 *	could cause execv() to return (-1).  errno stores
+		 *	the error code, so must be incorr
+		 */
 		die3("execv(request) failed", strerror(errno), x_argv[0]);
 	}
 
