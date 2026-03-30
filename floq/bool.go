@@ -17,7 +17,7 @@ const (
 	//  end of stream
 	rum_NIL = rummy(0)
 
-	//  will eventually resolve to true, false or null
+	//  waiting for resolutipn to true, false or null
 	rum_WAIT = rummy(0x1)
 
 	//  known to be null in the sql sense
@@ -268,6 +268,20 @@ func (flo *flow) wait_bool2(
 		<-right
 	}
 	return next
+}
+
+func (bv *bool_value) String() string {
+
+	if bv == nil {
+		return "bool_value(nil)"
+	}
+	if bv.is_null {
+		return "NULL"
+	}
+	if bv.bool {
+		return "TRUE"
+	}
+	return "FALSE"
 }
 
 func (flo *flow) bool2(
