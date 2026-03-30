@@ -8,8 +8,7 @@
  *		echo /usr/bin/false | floq-execv
  *		echo /usr/bin/date | floq-execv
  *
- *	A single new-line tells floq to exit cleanly, eliminating the confusing
- *	"ERROR: unexpected read(request) of 0" in the examples above.
+ *	A single new-line tells floq to exit cleanly.
  *
  *		#  exit cleanly with no ERROR
  *
