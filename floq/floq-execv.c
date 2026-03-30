@@ -255,8 +255,9 @@ fork_wait() {
 		 *  Note:
 		 *	must write a FAULT xdr when execv() returns.
 		 *	posix says, for example, a corrupt executable
-		 *	could cause execv() to return (-1).  errno stores
-		 *	the error code, so must be incorr
+		 *	could cause execv() to return -1.  errno stores
+		 *	the error code, so must be including in xdr.
+		 *	posix is ambiguous about max sizeof errno.
 		 */
 		die3("execv(request) failed", strerror(errno), x_argv[0]);
 	}
