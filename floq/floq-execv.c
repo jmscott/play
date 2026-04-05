@@ -257,7 +257,9 @@ fork_wait() {
 		 *	posix says, for example, a corrupt executable
 		 *	could cause execv() to return -1.  errno stores
 		 *	the error code, so must be including in xdr.
-		 *	posix is ambiguous about max sizeof errno.
+		 *	posix is ambiguous about max sizeof errno.  the
+		 *	says errno is "int", so i (jmscott) would assume
+		 *	16 bits would suffice.
 		 */
 		die3("execv(request) failed", strerror(errno), x_argv[0]);
 	}

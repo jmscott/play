@@ -194,8 +194,6 @@ type bool_value struct {
 	
 	bool
 	is_null	bool
-	
-	*flow
 }
 
 type bool_chan chan *bool_value
@@ -299,7 +297,6 @@ func (flo *flow) bool2(
 
 			var b, is_null bool
 
-			//  Note: op can go away
 			rum := flo.wait_bool2(op, left, right)
 			switch rum {
 			case rum_NIL:
@@ -312,7 +309,6 @@ func (flo *flow) bool2(
 			out <- &bool_value{
 				bool:    b,
 				is_null: is_null,
-				flow:    flo,
 			}
 			flo = flo.get()
 		}
@@ -329,7 +325,6 @@ func (flo *flow) const_true() (out bool_chan) {
 		for {
 			out <- &bool_value{
 				bool:	true,
-				flow:	flo,
 			}
 			flo = flo.get()
 		}
@@ -346,7 +341,6 @@ func (flo *flow) const_false() (out bool_chan) {
 		for {
 			out <- &bool_value{
 				bool:	false,
-				flow:	flo,
 			}
 
 			flo = flo.get()
@@ -367,7 +361,6 @@ func (flo *flow) not(in bool_chan) (out bool_chan) {
 			out <- &bool_value{
 					bool:		!bv.bool,
 					is_null:	bv.is_null,
-					flow:		flo,
 			}
 			flo = flo.get()
 		}
@@ -446,7 +439,6 @@ func (flo *flow) eq_bool(left, right bool_chan) (out bool_chan) {
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
-				flow:		flo,
 			}
 			if !bv.is_null {
 				bv.bool = lv.bool == rv.bool
@@ -482,7 +474,6 @@ func (flo *flow) neq_bool(left, right bool_chan) (out bool_chan) {
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
-				flow:		flo,
 			}
 			if !bv.is_null {
 				bv.bool = lv.bool != rv.bool

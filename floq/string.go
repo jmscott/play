@@ -108,7 +108,6 @@ func (flo *flow) eq_string(left, right string_chan) (out bool_chan) {
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
-				flow:		flo,
 			}
 			if !bv.is_null {
 				bv.bool = lv.string == rv.string
@@ -145,7 +144,6 @@ func (flo *flow) neq_string(left, right string_chan) (out bool_chan) {
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
-				flow:		flo,
 			}
 			if !bv.is_null {
 				bv.bool = lv.string != rv.string
@@ -181,7 +179,6 @@ func (flo *flow) gt_string(left, right string_chan) (out bool_chan) {
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
-				flow:		flo,
 			}
 			if !bv.is_null {
 				bv.bool = lv.string > rv.string
@@ -218,7 +215,6 @@ func (flo *flow) gte_string(left, right string_chan) (out bool_chan) {
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
-				flow:		flo,
 			}
 			if !bv.is_null {
 				bv.bool = lv.string >= rv.string
@@ -255,7 +251,6 @@ func (flo *flow) lt_string(left, right string_chan) (out bool_chan) {
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
-				flow:		flo,
 			}
 			if !bv.is_null {
 				bv.bool = lv.string < rv.string
@@ -292,7 +287,6 @@ func (flo *flow) lte_string(left, right string_chan) (out bool_chan) {
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
-				flow:		flo,
 			}
 			if !bv.is_null {
 				bv.bool = lv.string <= rv.string
@@ -403,4 +397,56 @@ func (sv *string_value) String() string {
 		return "NULL"
 	}
 	return sv.string
+}
+
+//  write string value to null channel
+
+func (flo *flow) string_null(in string_chan) {
+
+	go func() {
+		for {
+			<- in
+
+			flo = flo.get()
+		}
+	}()
+}
+
+func (flo *flow) string_fanout(
+	in string_chan,
+	count uint8,
+  ) (out []string_chan) {
+
+	out = make([]string_chan, count)
+	for i := uint8(0); i < count; i++ {
+		out[i] = make(string_chan)
+	}
+
+	go func() {
+
+		defer func() {
+			for _, a := range out {
+				close(a)
+			}
+		}()
+
+		for {
+			sv := <-in
+
+			//  not corrct
+			if sv == nil {
+				return
+			}
+
+			//  broadcast to channels in output slice
+
+			for _, sc := range out {
+				go func() {
+					sc <- sv
+				}()
+			}
+			flo = flo.get()
+		}
+	}()
+	return out
 }

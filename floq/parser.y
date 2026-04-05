@@ -54,12 +54,12 @@ func init() {
 %token	PARSE_ERROR
 %token	ARGV
 %token	yy_SET  ARRAY  
-%token	RUN
+%token	RUN  FLOW  FLOQ
 %token	COMMAND  COMMAND_REF
 %token	TUPLE  TUPLE_REF
 %token	DEFINE   AS
 %token	EXPAND_ENV
-%token	FLOW  STMT_LIST
+%token	STMT_LIST
 %token	UINT64  STRING  NAME
 %token	yy_TRUE  yy_FALSE  yy_AND  yy_OR  NOT  yy_EMPTY
 %token	yy_STRING  CAST
@@ -537,6 +537,15 @@ stmt:
 		$$ = nil
 	  }
 	|
+	  FLOW  name
+	  {
+		lex := yylex.(*yyLexState)
+		lex.error("flow: unknown command: %s", $2)
+		return 0
+
+		$$ = nil
+	  }
+	|
 	  RUN  COMMAND_REF  '('  arg_list  ')'  qualification  {
 	  	lex := yylex.(*yyLexState)
 
@@ -544,6 +553,16 @@ stmt:
 		run.command_ref = $2
 		run.name = run.command_ref.name
 		$$ = run
+	  }
+	|
+	  FLOW  COMMAND_REF  '('  ')'  {
+	  	lex := yylex.(*yyLexState)
+
+		flow := lex.ast(FLOW)
+		flow.command_ref = $2
+		flow.name = $2.name
+
+		$$ = flow
 	  }
 	;
 
@@ -584,6 +603,7 @@ var keyword = map[string]int{
 	"define":		DEFINE,
 	"ExpandEnv":		EXPAND_ENV,
 	"false":		yy_FALSE,
+	"flow":			FLOW,
 	"is":			yy_IS,
 	"not":			NOT,
 	"null":			yy_NULL,
@@ -1169,7 +1189,7 @@ func parse(in io.RuneReader) (*ast, error) {
 		name2satt:	make(map[string]*sysatt),
 		depends:	make(map[string]string),
 		ast_root:	&ast{
-					yy_tok:		FLOW,
+					yy_tok:		FLOQ,
 					line_no:	1,
 				},
 	}
@@ -1222,6 +1242,7 @@ func yy_name2tok(name string) int {
 func (lex *yyLexState) project_osx_sys(name string, cmd *command) (*ast) {
 	a := &ast{
 		name:	name,
+		command_ref:	cmd,
 		proj_ref:	&projection{
 					sysatt_ref: &sysatt{
 						name: name,

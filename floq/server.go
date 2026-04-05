@@ -8,5 +8,5 @@ func server(root *ast) error {
 
 	<- make(chan bool)	//  wait forever	
 
-	return nil
+	return nil		//  not reached
 }

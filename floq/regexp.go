@@ -26,7 +26,6 @@ func (flo *flow) match(left string_chan, re *regexp.Regexp) (out bool_chan) {
 
 			bv := &bool_value {
 				is_null:	lv.is_null,
-				flow:		flo,
 			}
 			if bv.is_null == false {
 				bv.bool = re.MatchString(lv.string)
@@ -63,7 +62,6 @@ func (flo *flow) nomatch(left string_chan, re *regexp.Regexp) (out bool_chan) {
 
 			bv := &bool_value {
 				is_null:	lv.is_null,
-				flow:		flo,
 			}
 			if bv.is_null == false {
 				bv.bool = !re.MatchString(lv.string)

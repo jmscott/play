@@ -20,6 +20,12 @@ type tuple struct {
 	atts		map[string]*attribute
 }
 
+type tuple_tsv struct {
+
+	
+
+}
+
 type projection struct {
 	att_ref		*attribute
 	sysatt_ref	*sysatt

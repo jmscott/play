@@ -103,7 +103,7 @@ func (a *ast) String() string {
 		)
 	case RUN:
 		nm := a.command_ref.name
-		tup := a.command_ref. tuple_ref
+		tup := a.command_ref.tuple_ref
 		if tup != nil {
 			nm = fmt.Sprintf("%s.%s", nm, tup.name)
 		}
@@ -115,6 +115,16 @@ func (a *ast) String() string {
 				a.line_no,
 			)
 		what += a.command_ref.detail(2)
+	case FLOW:
+		cmd := a.command_ref
+		what = fmt.Sprintf(
+				"FLOW%s%s (ord=%d,lno=%d) ",
+				colon,
+				cmd.name,
+				a.order,
+				a.line_no,
+			)
+		what += cmd.detail(2)
 	case STMT_LIST:
 		what = fmt.Sprintf("STMT_LIST%s(cnt=%d)", colon, a.count)
 	case yy_SET:

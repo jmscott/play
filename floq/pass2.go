@@ -16,18 +16,25 @@ type pass2 struct {
 
 	root	*ast
 
-	run		map[string]*ast
+	osx		map[string]*ast		//  flow/fun statement
 
-	depends		map[string]string
+	depends		map[string]string	//  [thing] depend on thing
 
-	//  track ast nodes referenced in "run <command>" statements.
-	//
-	//  references can be in either the "when" clause or the argument
-	//  vector "run command(args...)"
-	run_proj	map[string][]*ast
+	/*
+	 *  track ast projection nodes referenced in
+	 *
+	 *	run <command>
+	 *	flow <command>
+	 *
+	 *  statements.
+	 *
+	 *  references can be in either the "when" clause or the argument
+	 *  vector "[run|flow] command(args...)".
+	 */
+	osx_proj	map[string][]*ast
 
-	//  "run <command>"  statements
-	run_call	map[*command]*ast
+	//  "[run|flow] <command>"  statements
+	osx_call	map[*command]*ast
 }
 
 //  depth first check of node pointers
@@ -88,69 +95,65 @@ func (p2 *pass2) plumb(a *ast) {
 	}
 }
 
-func (p2 *pass2) frisk_name(a *ast) error {
-	return nil
-}
+//  build map of "[flow|run] command(...)" nodes, indexed by command name.
+//  each command can have only one "flow|run" statement..
 
-//  build map of "run command(...)" nodes, indexed by command name.
-//  each command can have only one "run" command.
-
-func (p2 *pass2) map_run() {
+func (p2 *pass2) walk_osx() {
 	if p2.root.left == nil {
 		return
 	}
 
 	for stmt := p2.root.left.left;  stmt != nil;  stmt = stmt.next {
-		if stmt.yy_tok == RUN {
-			p2.run[stmt.command_ref.name] = stmt
+		if stmt.yy_tok == RUN || stmt.yy_tok == FLOW {
+			p2.osx[stmt.command_ref.name] = stmt
 		}
 	}
 }
 
-func (p2 *pass2) xrun(a *ast) error {
+func (p2 *pass2) map_osx(a *ast) error {
 	if a == nil {
 		return nil
 	}
-	if err := p2.xrun(a.left);  err != nil {
+	if err := p2.map_osx(a.left);  err != nil {
 		return err
 	}
-	if err := p2.xrun(a.right);  err != nil {
+	if err := p2.map_osx(a.right);  err != nil {
 		return err
 	}
 
-	if a.yy_tok == RUN {
+	if a.yy_tok == RUN || a.yy_tok == FLOW {
 		cmd := a.command_ref
 
 		if cmd == nil {
 			croak("command_ref is nil")
 		}
-		if p2.run_call[cmd] != nil {
-			return a.error("run more than once: %s", cmd.name)
+		if p2.osx_call[cmd] != nil {
+			return a.error("flow/run more than once: %s", cmd.name)
 		}
-		p2.run_call[cmd] = a
+		p2.osx_call[cmd] = a
 	}
 
-	return p2.xrun(a.next)
+	return p2.map_osx(a.next)
 }
 
 //  verify all projections of system attributes of a <command> occur
-//  after "run <command> ..."
+//  after "flow/run <command> ..."
 
-func (p2 *pass2) xrun_sysatt(a *ast) error {
+func (p2 *pass2) osx_sysatt(a *ast) error {
 
 	if a ==  nil {
 		return nil
 	}
 
-	if err := p2.xrun_sysatt(a.left);  err != nil {
+	if err := p2.osx_sysatt(a.left);  err != nil {
 		return err
 	}
-	if err := p2.xrun_sysatt(a.right);  err != nil {
+	if err := p2.osx_sysatt(a.right);  err != nil {
 		return err
 	}
 
 	_e := func(format string, args...interface{}) error {
-		return a.error("xrun_sysatt: " + format, args...)
+		return a.error("osx_sysatt: " + format, args...)
 	}
 
 	switch a.yy_tok {
@@ -167,38 +170,38 @@ func (p2 *pass2) xrun_sysatt(a *ast) error {
 		proj := a.proj_ref
 
 		cmd := proj.sysatt_ref.command_ref
-		ar := p2.run_call[cmd]
+		ar := p2.osx_call[cmd]
 		if ar == nil {
-			return _e("command for sysatt never run: %s", cmd.name)
+			return _e("sysatt command never called: %s", cmd.name)
 		}
 		if ar.line_no >= a.line_no {
-			return _e("run call after sysatt: %s", )
+			return _e("flow/run call after sysatt: %s", )
 		}
 
 		pn := proj.String()
-		if len(p2.run_proj[pn]) == 255 {
+		if len(p2.osx_proj[pn]) == 255 {
 			return _e("too many sysatt ref: %s", pn)
 		}
 
 		//  append PROJECT_OSX... ast node to array of sysatt
 		//  references.
-		p2.run_proj[pn] = append(p2.run_proj[pn], a)
+		p2.osx_proj[pn] = append(p2.osx_proj[pn], a)
 	}
-	return p2.xrun_sysatt(a.next)
+	return p2.osx_sysatt(a.next)
 }
 
-//  find all att *ast nodes to "run <command>" statement
+//  find all att *ast nodes to "flow/run <command>" statement
 
-func (p2 *pass2) xrun_att(a *ast) error {
+func (p2 *pass2) osx_att(a *ast) error {
 
 	if a ==  nil {
 		return nil
 	}
 
-	if err := p2.xrun_att(a.left);  err != nil {
+	if err := p2.osx_att(a.left);  err != nil {
 		return err
 	}
-	if err := p2.xrun_att(a.right);  err != nil {
+	if err := p2.osx_att(a.right);  err != nil {
 		return err
 	}
 
@@ -207,28 +210,25 @@ func (p2 *pass2) xrun_att(a *ast) error {
 		att := a.att_ref
 		cmd := a.command_ref
 
-		ar := p2.run_call[cmd]
+		ar := p2.osx_call[cmd]
 		if ar == nil {
-			return fmt.Errorf(
-					"command for att never run: %s",
-					cmd.name,
-			)
+			return fmt.Errorf("no flow/run for command: %s", cmd)
 		}
 		pn := att.String()
 		if ar.line_no >= a.line_no {
 			return fmt.Errorf("run not after att: %s", pn)
 		}
 
-		if len(p2.run_proj[pn]) >= 255 {
+		if len(p2.osx_proj[pn]) >= 255 {
 			return fmt.Errorf("too many attribute ref: %s", pn)
 		}
 
-		p2.run_proj[pn] = append(p2.run_proj[pn], a)
+		p2.osx_proj[pn] = append(p2.osx_proj[pn], a)
 	}
-	return p2.xrun_att(a.next)
+	return p2.osx_att(a.next)
 }
 
-func (p2 *pass2) run_depends(a *ast) error {
+func (p2 *pass2) osx_depends(a *ast) error {
 
 	if a == nil {
 		return nil
@@ -239,18 +239,13 @@ func (p2 *pass2) run_depends(a *ast) error {
 	}
 
 	_c := func(format string, args...interface{}) {
-		a.corrupt("run_depends: " + format, args...)
+		a.corrupt("osx_depends: " + format, args...)
 	}
 
 	switch a.yy_tok {
-	case RUN:
-		rn := p2.run[a.name]
-		if rn == nil {
-			_c("node is nil in map p2.run")
-		}
-		if rn != a {
-			_c("node in p2.run unexpected: %s", rn)
-		}
+
+	//  project <command>$<sysatt>
+
 	case PROJECT_OSX_EXIT_CODE,
 	     PROJECT_OSX_PID,
 	     PROJECT_OSX_START_TIME,
@@ -261,12 +256,32 @@ func (p2 *pass2) run_depends(a *ast) error {
 	     PROJECT_OSX_SYS_USEC,
 	     PROJECT_OSX_STDOUT,
 	     PROJECT_OSX_STDERR:
-		proj := a.proj_ref
-		if proj == nil {
-			_c("proj_ref is nil")
+	     	
+		stmt := a.yy_ancestor(FLOW)
+		if stmt == nil {
+			stmt = a.yy_ancestor(RUN)
 		}
-		_e("%#v", proj)
+		if stmt == nil {
+			_c("%s: can not find flow or run ancestor")
+		}
 
+		/*
+		 *  the command of the attribute must be called before
+		 *  reference to the attribute 
+		 *
+		 *  do not want
+		 *
+		 *	run efg() where abc$exit_code == 0
+		 *	run abc()
+		 *
+		 *  nor
+		 *
+		 *	run abc() where abc$exit_code == 0
+		 */
+		cmd := a.command_ref
+		if p2.osx_call[cmd] == nil {
+			return _e("command never called: %s", cmd)	
+		}
 	case PROJECT_OSX_TUPLE_TSV:
 	/*
 		proj := a.proj_ref
@@ -277,10 +292,10 @@ func (p2 *pass2) run_depends(a *ast) error {
 		//p2.depends[run.name] = cmd.name
 	*/
 	}
-	if err := p2.run_depends(a.left);  err != nil {
+	if err := p2.osx_depends(a.left);  err != nil {
 		return err
 	}
-	if err := p2.run_depends(a.right);  err != nil {
+	if err := p2.osx_depends(a.right);  err != nil {
 		return err
 	}
 	if a.prev != nil {	//  in middle of sibling list
@@ -288,7 +303,7 @@ func (p2 *pass2) run_depends(a *ast) error {
 	}
 
 	for sib := a.next;  sib != nil;  sib = sib.next {
-		if err := p2.run_depends(sib);  err != nil {
+		if err := p2.osx_depends(sib);  err != nil {
 			return err
 		}
 	}
@@ -306,15 +321,17 @@ func (p2 *pass2) cycle() error {
 
 	for stmt := p2.root.left.left;  stmt != nil;  stmt = stmt.next {
 		
-		if stmt.yy_tok != RUN {
+		if stmt.yy_tok != RUN || stmt.yy_tok != FLOW {
 			continue
 		}
 
-		if err := p2.run_depends(stmt.left);  err != nil {
+		//  check dependencies in argv
+		if err := p2.osx_depends(stmt.left);  err != nil {
 			return err
 		}
 
-		if err := p2.run_depends(stmt.right);  err != nil {
+		//  check dependencies inwhen clause
+		if err := p2.osx_depends(stmt.right);  err != nil {
 			return err
 		}
 	}
@@ -341,7 +358,7 @@ func (p2 *pass2) look_path(a *ast) error {
 	if err := p2.look_path(a.right);  err != nil {
 		return err
 	}
-	if a.yy_tok == RUN {
+	if a.yy_tok == RUN || a.yy_tok == FLOW {
 		cmd := a.command_ref
 		look_path, err := exec.LookPath(cmd.path)
 		if err != nil {
@@ -582,8 +599,8 @@ func xpass2(root *ast) error {
 		return errors.New("root is nil")
 	}
 
-	if root.yy_tok != FLOW {
-		root.corrupt("root not yy FLOW")
+	if root.yy_tok != FLOQ {
+		root.corrupt("root not yy FLOQ")
 	}
 	if root.parent != nil {
 		root.corrupt("parent of root not nil: %s", root.parent)
@@ -604,10 +621,10 @@ func xpass2(root *ast) error {
 
 	p2 := &pass2{
 		root:		root,
-		run:		make(map[string]*ast),
+		osx:		make(map[string]*ast),
 		depends:	make(map[string]string),
-		run_call:	make(map[*command]*ast),
-		run_proj:	make(map[string][]*ast),
+		osx_call:	make(map[*command]*ast),
+		osx_proj:	make(map[string][]*ast),
 	}
 
 	p2.plumb(root.left)
@@ -617,12 +634,9 @@ func xpass2(root *ast) error {
 		return err
 	}
 
-	p2.map_run()		//  build a map of "run <command" nodes
+	p2.map_osx(root)	//  build a map of "flow/run <command" nodes
 
-	//  verify "run command only occurs once"
-	if err := p2.xrun(root);  err != nil {
-		return err
-	}
+	p2.walk_osx()
 
 	p2.is_null(root)	// rewrite "IS NULL" ops
 
@@ -638,13 +652,13 @@ func xpass2(root *ast) error {
 
 	//  verify <command>$sysatt expressions after "run <command>"
 	//  statements.
-	if err := p2.xrun_sysatt(root);  err != nil {
+	if err := p2.osx_sysatt(root);  err != nil {
 		return err
 	}
 
-	//  verify <command>.attribute expressions after "run <command>"
+	//  verify <command>.attribute expressions after "flow|run <command>"
 	//  statements.
-	if err := p2.xrun_att(root);  err != nil {
+	if err := p2.osx_att(root);  err != nil {
 		return err
 	}
 

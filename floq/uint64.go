@@ -66,7 +66,6 @@ func (flo *flow) eq_ui64(left, right uint64_chan) (out bool_chan) {
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
-				flow:		flo,
 			}
 			if !bv.is_null {
 				bv.bool = lv.uint64 == rv.uint64
@@ -103,7 +102,6 @@ func (flo *flow) neq_ui64(left, right uint64_chan) (out bool_chan) {
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
-				flow:		flo,
 			}
 			if !bv.is_null {
 				bv.bool = lv.uint64 != rv.uint64
@@ -140,7 +138,6 @@ func (flo *flow) gt_ui64(left, right uint64_chan) (out bool_chan) {
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
-				flow:		flo,
 			}
 			if !bv.is_null {
 				bv.bool = lv.uint64 > rv.uint64
@@ -177,7 +174,6 @@ func (flo *flow) gte_ui64(left, right uint64_chan) (out bool_chan) {
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
-				flow:		flo,
 			}
 			if !bv.is_null {
 				bv.bool = lv.uint64 >= rv.uint64
@@ -214,7 +210,6 @@ func (flo *flow) lt_ui64(left, right uint64_chan) (out bool_chan) {
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
-				flow:		flo,
 			}
 			if !bv.is_null {
 				bv.bool = lv.uint64 < rv.uint64
@@ -251,7 +246,6 @@ func (flo *flow) lte_ui64(left, right uint64_chan) (out bool_chan) {
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
-				flow:		flo,
 			}
 			if bv.is_null == false {
 				bv.bool = lv.uint64 <= rv.uint64
@@ -296,7 +290,6 @@ func (flo *flow) add_ui64(left, right uint64_chan) (out uint64_chan) {
 
 			uiv := &uint64_value {
 				is_null:	lv.is_null || rv.is_null,
-				flow:		flo,
 			}
 			if !uiv.is_null {
 				uiv.uint64 = lv.uint64 + rv.uint64
@@ -329,7 +322,6 @@ func (flo *flow) mul_ui64(left, right uint64_chan) (out uint64_chan) {
 
 			uiv := &uint64_value {
 				is_null:	lv.is_null || rv.is_null,
-				flow:		flo,
 			}
 			if !uiv.is_null {
 				uiv.uint64 = lv.uint64 * rv.uint64
@@ -360,7 +352,6 @@ func (flo *flow) sub_ui64(left, right uint64_chan) (out uint64_chan) {
 
 			uiv := &uint64_value {
 				is_null:	lv.is_null || rv.is_null,
-				flow:		flo,
 			}
 			if !uiv.is_null {
 				uiv.uint64 = lv.uint64 - rv.uint64
@@ -382,7 +373,6 @@ func (flo *flow) const_ui64(u64 uint64) (out uint64_chan) {
 			out <- &uint64_value{
 				uint64:	u64,
 				is_null: false,
-				flow:	flo,
 			}
 			flo = flo.get()
 		}

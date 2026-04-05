@@ -76,7 +76,6 @@ GOSRCs="
 	regexp.go
 	server.go
 	set.go
-	start.go
 	string.go
 	sysatt.go
 	tsort.go

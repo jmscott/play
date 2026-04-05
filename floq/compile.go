@@ -18,17 +18,25 @@ type compilation struct {
 
 	//  variations of the "run <command(...)", with or without "when"
 	//  predicate, with or without (...) arguments.
+
 	a2osx		map[*ast]osx_chan
 
 	//  argument vector for "run <commmand>" statements  
 	a2argv		map[*ast]argv_chan
 
 	//  fanout targets for specific osx_chan records, like
-	//  PROJECT_OSX_EXIT_CODE
+	//  PROJECT_OSX_EXIT_CODE, e.g.)  <command>$exit_code
 	a2osxfo		map[*ast][]osx_chan		//  fanout osx records
-	
-	//  fanout targets for all projections/consumers
-	cmd2fo		map[*command][]osx_chan
+
+	a2strfo		map[*ast][]string_chan
+
+	//  fanout targets for all projections/consumers, like
+	//  <command>.chat_history from a run command
+	cmd2osxfo		map[*command][]osx_chan
+
+	//  fanout targets for all projections/consumers, like
+	//  from a flow command
+	cmd2strfo		map[*command][]string_chan
 }
 
 func compile(root *ast) (*flow) {
@@ -45,7 +53,9 @@ func compile(root *ast) (*flow) {
 			a2osx:		make(map[*ast]osx_chan),
 			a2argv:		make(map[*ast]argv_chan),
 			a2osxfo:	make(map[*ast][]osx_chan),
-			cmd2fo:		make(map[*command][]osx_chan),
+			a2strfo:	make(map[*ast][]string_chan),
+			cmd2osxfo:	make(map[*command][]osx_chan),
+			cmd2strfo:	make(map[*command][]string_chan),
 	}
 	cmp.compile(root)
 	return cmp.flo
@@ -100,7 +110,7 @@ func (cmp *compilation) compile(a *ast) {
 		return
 	}
 
-	_corrupt := func(format string, args...interface{}) {
+	_c := func(format string, args...interface{}) {
 		a.corrupt("compile: " + format, args...)
 	}
 
@@ -111,7 +121,9 @@ func (cmp *compilation) compile(a *ast) {
 	a2bool := cmp.a2bool
 	a2argv := cmp.a2argv
 	a2osxfo := cmp.a2osxfo
-	cmd2fo := cmp.cmd2fo
+	a2strfo := cmp.a2strfo
+	cmd2osxfo := cmp.cmd2osxfo
+	cmd2strfo := cmp.cmd2strfo
 
 	//  compile from leaves to root
 
@@ -187,74 +199,87 @@ func (cmp *compilation) compile(a *ast) {
 			flo.osx_null(a2osx[a])
 		} else {
 			//  map command to fanout 
-			if cmd2fo[cmd] != nil {
-				_corrupt("command %s: fanout exists", cmd.name)
+			if cmd2osxfo[cmd] != nil {
+				_c("command %s: fanout exists", cmd)
 			}
 
 			//  fanout osx record
 			a2osxfo[a] = flo.osx_fanout(a2osx[a], cmd.ref_count)
-			cmd2fo[cmd] = a2osxfo[a]
+			cmd2osxfo[cmd] = a2osxfo[a]
+		}
+	case FLOW:
+		cmd := a.command_ref
+		a2str[a] = flo.osx_flow_0(cmd)
+		if cmd.ref_count == 0 {
+			flo.string_null(a2str[a])
+		} else {
+			if cmd2strfo[cmd] != nil {
+				_c("command %s: fanout exists: %s", cmd)
+			}
+			a2strfo[a] = flo.string_fanout(a2str[a], cmd.ref_count)
+			cmd2strfo[cmd] = a2strfo[a]
 		}
 	case PROJECT_OSX_EXIT_CODE:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
-		fo := cmd2fo[cmd]
+		fo := cmd2osxfo[cmd]
 		a2ui64[a] = flo.osx_proj_exit_code(fo[proj.call_order-1])
 	case PROJECT_OSX_PID:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
-		fo := cmd2fo[cmd]
+		fo := cmd2osxfo[cmd]
 		a2ui64[a] = flo.osx_proj_pid(fo[proj.call_order-1])
 	case PROJECT_OSX_USER_SEC:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
-		fo := cmd2fo[cmd]
+		fo := cmd2osxfo[cmd]
 		a2ui64[a] = flo.osx_proj_user_sec(fo[proj.call_order-1])
 	case PROJECT_OSX_USER_USEC:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
-		fo := cmd2fo[cmd]
+		fo := cmd2osxfo[cmd]
 		a2ui64[a] = flo.osx_proj_user_usec(fo[proj.call_order-1])
 	case PROJECT_OSX_SYS_SEC:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
-		fo := cmd2fo[cmd]
+		fo := cmd2osxfo[cmd]
 		a2ui64[a] = flo.osx_proj_sys_sec(fo[proj.call_order-1])
 	case PROJECT_OSX_SYS_USEC:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
-		fo := cmd2fo[cmd]
+		fo := cmd2osxfo[cmd]
 		a2ui64[a] = flo.osx_proj_sys_usec(fo[proj.call_order-1])
 	case PROJECT_OSX_START_TIME:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
-		fo := cmd2fo[cmd]
+		fo := cmd2osxfo[cmd]
 		a2str[a] = flo.osx_proj_start_time(fo[proj.call_order-1])
 	case PROJECT_OSX_WALL_DURATION:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
-		fo := cmd2fo[cmd]
+		fo := cmd2osxfo[cmd]
 		a2ui64[a] = flo.osx_proj_wall_duration(fo[proj.call_order-1])
 	case PROJECT_OSX_STDOUT:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
-		fo := cmd2fo[cmd]
+		fo := cmd2osxfo[cmd]
 		a2str[a] = flo.osx_proj_Stdout(fo[proj.call_order-1])
 	case PROJECT_OSX_STDERR:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
-		fo := cmd2fo[cmd]
+		fo := cmd2osxfo[cmd]
 		a2str[a] = flo.osx_proj_Stderr(fo[proj.call_order-1])
 	case PROJECT_OSX_TUPLE_TSV:
 		proj := a.proj_ref
-		fo := cmd2fo[a.command_ref]
+		fo := cmd2osxfo[a.command_ref]
 		a2str[a] = flo.osx_proj_tuple_tsv(
 				fo[proj.call_order-1],
+				a.command_ref,
 				proj.att_ref,
 		)
 	case PROJECT_OSX_TUPLE_TSV_N:
 		proj := a.proj_ref
-		fo := cmd2fo[a.command_ref]
+		fo:= cmd2osxfo[a.command_ref]
 		a2str[a] = flo.osx_proj_tuple_tsv_n(
 				fo[proj.call_order-1],
 				uint8(a.uint64),
@@ -271,9 +296,9 @@ func (cmp *compilation) compile(a *ast) {
 		a2bool[a] = flo.is_not_null_uint64(a2ui64[a.left])
 	case IS_NOT_NULL_BOOL:
 		a2bool[a] = flo.is_not_null_bool(a2bool[a.left])
-	case FLOW, STMT_LIST, DEFINE:
+	case FLOQ, STMT_LIST, DEFINE:
 	default:
-		_corrupt("can not compile ast")
+		_c("can not compile ast")
 	}
 	cmp.compile(a.next)
 }

@@ -17,6 +17,7 @@ type command struct {
 	look_path	string
 	args		[]string
 	env		[]string
+	osxref_count	uint8
 	ref_count	uint8
 	tuple_ref	*tuple
 }
@@ -46,8 +47,6 @@ type osx_chan chan *osx_value
 type argv_value struct {
 	argv    []string
 	is_null bool
-
-	*flow
 }
 
 //  argv_chan is channel of *argv_values;  nil indicates closure
@@ -63,7 +62,7 @@ type argv_chan chan *argv_value
  */
 func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 	cx := exec.Command(
-			cmd.look_path,
+			cmd.path,
 	)
 	cx.Args = cmd.args
 	cx.Args = append(cx.Args, argv...)
@@ -262,7 +261,6 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 			wg.Wait()
 			out <- &argv_value{
 				argv:    argv,
-				flow:    flo,		//  Note: no flow
 			}
 
 			flo = flo.get()
@@ -301,6 +299,7 @@ func (cmd *command) String() string {
  */
 func (flo *flow) osx_proj_tuple_tsv(
 	in osx_chan,
+	cmd *command,
 	att *attribute,
   ) (out string_chan) {
 
@@ -308,7 +307,12 @@ func (flo *flow) osx_proj_tuple_tsv(
 	tsv_field := att.tsv_field-1
 
 	_die := func (format string, args ...interface{}) {
-		fmt := fmt.Sprintf("%s#%d: xv.Stdout: ", att, att.tsv_field)
+		fmt := fmt.Sprintf(
+				"%s: %s#%d: xv.Stdout: ",
+				cmd,
+				att,
+				att.tsv_field,
+			)
 		corrupt(fmt + format, args...)
 	}
 
@@ -695,10 +699,9 @@ func (cmd *command) detail(indent int) string {
 %s      name: %s
 %s     tuple: %s@%p
 %s      path: %s
-%s look_path: %s
 %s      args: %s
+%s look_path: %s
 %s       env: %s
-%s ref_count: %d
 %s         @: %p
 %s}`,		
 		tab, cmd.name,
@@ -707,25 +710,7 @@ func (cmd *command) detail(indent int) string {
 		tab, cmd.look_path,
 		tab, strings.Join(cmd.args, ", "),
 		tab, strings.Join(cmd.env, ", "),
-		tab, cmd.ref_count,
 		tab, cmd,
 		strings.Repeat("\t", indent),
 	)
-}
-/*
- *  start an os command process that runs forever.
- */
-func (flo *flow) osx_start_0(cmd *command, argv []string, out osx_chan) {
-	cx := exec.Command(
-			cmd.look_path,
-	)
-	cx.Args = cmd.args
-	cx.Args = append(cx.Args, argv...)
-
-	cx.Env = cmd.env
-
-	err := cx.Start()
-	if err != nil {
-		croak("osx_start(%s) failed: %s", cmd, err)
-	}
 }
