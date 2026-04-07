@@ -261,6 +261,8 @@ func (s1 *set) equals(s2 *set) bool {
 	return s1.crc64() == s2.crc64()
 }
 
+//  sha256 of bare and named bools
+
 func (s *set) sum_bool(h hash.Hash) {
 
 	//  write the bare bools, false, then true
@@ -301,6 +303,8 @@ func (s *set) sum_bool(h hash.Hash) {
 		}
 	}
 }
+
+//  sha256 of bare and named uint64
 
 func (s *set) sum_uint64(h hash.Hash) {
 
@@ -352,6 +356,8 @@ func (s *set) sum_uint64(h hash.Hash) {
 	}
 }
 
+//  sha256 of bare and named strings
+
 func (s *set) sum_string(h hash.Hash) {
 
 	//  hash the bare strings.
@@ -399,6 +405,8 @@ func (s *set) sum_string(h hash.Hash) {
 		h.Write([]byte(ss[i].Value))
 	}
 }
+
+//  sha256 sum of bare and named sets using crc64 signature
 
 func (s *set) sum_set(h hash.Hash) {
 
@@ -466,13 +474,16 @@ func (s *set) sha256() []byte {
 	return h.Sum(nil)
 }
 
-//  write crc64 as string with trailing ellipse if truncated
+//  format crc64 as string with trailing ellipse if truncated
 
 func (s *set) crc64_brief(clen int, ellipse bool) string {
 
 	return string_brief(
 		strconv.FormatUint(uint64(s.crc64()), 10), clen, ellipse)
 }
+
+//  make a crc64 of set by sum of sha256 sums of elements:
+//  crc64(sha256(elements))
 
 func (s *set) crc64() crc_64 {
 
@@ -483,6 +494,8 @@ func (s *set) crc64() crc_64 {
 
 	return crc_64(h.Sum64())
 }
+
+//  Note: too complex.  ought to just be name{element_count}!
 
 func (s *set) String() string {
 	
@@ -517,6 +530,8 @@ func (s *set) String() string {
 
 	return str
 }
+
+//  does the set contain this named element?
 
 func (s *set) has_name(name string) bool {
 	
