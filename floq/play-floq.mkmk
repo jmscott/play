@@ -81,7 +81,6 @@ GOSRCs="
 	tsort.go
 	tuple.go
 	uint64.go
-	value.go
 "
 
 SRCs="
