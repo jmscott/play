@@ -3,17 +3,15 @@ package main
 //  Note: no mutex around functions add_*()!!
 
 import (
+	"hash"
+	"sort"
+	"slices"
 	"crypto/sha256"
 	"encoding/binary"
-	//"errors"
 	"fmt"
 	"hash/crc64"
-	//"slices"
-	//"sort"
 	"strconv"
 )
-
-type crc_64 uint64
 
 /*
  *  Elements of a set may be named bool, uint63, string, set and arrays of
@@ -48,6 +46,10 @@ type set struct {
 	name_array		map[string][]string
 }
 
+//  crc of sets and arrays for equality op
+
+type crc_64 uint64
+
 func new_set() *set {
 	return &set{
 			bare_bool:	make(map[bool]bool),
@@ -64,6 +66,8 @@ func new_set() *set {
 	}
 }
 
+//  add a named uint64 element to a set, erroring if element already exists
+
 func (s *set) add_name_uint64(name string, ele uint64) error {
 
 	if s.has_name(name) {
@@ -73,6 +77,8 @@ func (s *set) add_name_uint64(name string, ele uint64) error {
 	s.name_uint64[name] = ele
 	return nil
 }
+
+//  add a uint64 element to a set, erroring if element already exists
 
 func (s *set) add_bare_uint64(ele uint64) error {
 
@@ -84,6 +90,8 @@ func (s *set) add_bare_uint64(ele uint64) error {
 	return nil
 }
 
+//  add a uint64 element to a set, erroring if element already exists
+
 func (s *set) add_uint64(name string, ele uint64) error {
 
 	if name == "" {
@@ -91,6 +99,8 @@ func (s *set) add_uint64(name string, ele uint64) error {
 	}
 	return s.add_name_uint64(name, ele)
 }
+
+//  add a named string element to a set, erroring if element already exists
 
 func (s *set) add_name_string(name string, ele string) error {
 
@@ -110,10 +120,14 @@ func (s *set) add_string(name, ele string) error {
 	return s.add_name_string(name, ele)
 }
 
+//  make an error associated with a particlar set
+
 func (s *set) error(format string, args ...interface{}) error {
 
 	return fmt.Errorf("set: " + format, args...)  
 }
+
+//  add a string element to a set, error if element already exists
 
 func (s *set) add_bare_string(ele string) error {
 
@@ -125,6 +139,8 @@ func (s *set) add_bare_string(ele string) error {
 	return nil
 }
 
+//  add a named set element to a set, error if element already exists
+
 func (s *set) add_name_set(name string, ele *set) error {
 
 	if s.has_name(name) {
@@ -134,6 +150,8 @@ func (s *set) add_name_set(name string, ele *set) error {
 	s.name_set[name] = ele
 	return nil
 }
+
+//  add a named bool element to a set, error if bool already exists
 
 func (s *set) add_name_bool(name string, ele bool) error {
 
@@ -145,6 +163,8 @@ func (s *set) add_name_bool(name string, ele bool) error {
 	return nil
 }
 
+//  add a bool element to a set, error if bool already exists
+
 func (s *set) add_bare_bool(ele bool) error {
 
 	_, exists := s.bare_bool[ele]
@@ -155,6 +175,8 @@ func (s *set) add_bare_bool(ele bool) error {
 	return nil
 }
 
+//  add a named bool element to a set, error if bool already exists
+
 func (s *set) add_bool(name string, ele bool) error {
 
 	if name == "" {
@@ -163,6 +185,8 @@ func (s *set) add_bool(name string, ele bool) error {
 	return s.add_name_bool(name, ele)
 }
 
+//  added a named array []string element to a set, error if array already exists
+
 func (s *set) add_name_array(name string, ele []string) error {
 	if s.has_name(name) {
 		return fmt.Errorf("array: named element exists: %s", name)
@@ -170,6 +194,8 @@ func (s *set) add_name_array(name string, ele []string) error {
 	s.name_array[name] = ele
 	return nil
 }
+
+//  add an array []string element to a set, error if array already exists
 
 func (s *set) add_bare_array(ele []string) error {
 	crc := s.crc64_array(ele)
@@ -181,6 +207,8 @@ func (s *set) add_bare_array(ele []string) error {
 	return nil
 }
 
+//  add a named or bare array[]string element to a set, error if already exists.
+
 func (s *set) add_array(name string, ele []string) error {
 
 	if name == "" {
@@ -188,6 +216,8 @@ func (s *set) add_array(name string, ele []string) error {
 	}
 	return s.add_name_array(name, ele)
 }
+
+//  crc64 checksum of an array []string used inequality
 
 func (s *set) crc64_array(strings []string) crc_64 {
 	sha := sha256.New()
@@ -199,12 +229,24 @@ func (s *set) crc64_array(strings []string) crc_64 {
 		sha.Write([]byte(str))
 	}
 	return crc_64(
-		crc64.Checksum(sha.Sum(nil), crc64.MakeTable(crc64.ECMA)))
+		crc64.Checksum(
+			sha.Sum(nil),
+			crc64.MakeTable(crc64.ECMA),
+		),
+	)
 }
+
+//  count of elements in set.  no recursive descent.
 
 func (s *set) count() uint64 {
 
 	return uint64(
+		len(s.bare_bool) +
+		len(s.bare_uint64) +
+		len(s.bare_string) +
+		len(s.bare_set) +
+		len(s.bare_array) +
+
 		len(s.name_bool) +
 		len(s.name_uint64) +
 		len(s.name_string) +
@@ -212,24 +254,55 @@ func (s *set) count() uint64 {
 		len(s.name_array))
 }
 
+//  is set s1 equal to set s2
+
 func (s1 *set) equals(s2 *set) bool {
 
 	return s1.crc64() == s2.crc64()
 }
 
-func (s *set) sha256() []byte {
+func (s *set) sum_bool(h hash.Hash) {
 
-	h := sha256.New()
+	//  write the bare bools, false, then true
 
-	//  add bools to sha245
-
-	/*
 	if s.bare_bool[false] == true {
 		h.Write([]byte{0x0})
 	}
 	if s.bare_bool[true] == true {
 		h.Write([]byte{0x1})
 	}
+
+	//  write the named bools in lexical order of name
+
+	type nv struct {
+		Name   string
+		Value bool
+	}
+
+	var ss []nv
+	for n, v := range s.name_bool {
+		ss = append(ss, nv{n, v})
+	}
+	sort.Slice(ss, func(i, j int) bool {
+		return ss[i].Name < ss[j].Name
+	})
+
+	for i := 0;  i < len(ss);  i++ {
+		var buf [8]byte
+
+		binary.BigEndian.PutUint64(buf[:], uint64(i))
+		h.Write(buf[:8])
+
+		h.Write([]byte(ss[i].Name))
+		if ss[i].Value == true {
+			h.Write([]byte{0x1})
+		} else {
+			h.Write([]byte{0x0})
+		}
+	}
+}
+
+func (s *set) sum_uint64(h hash.Hash) {
 
 	//  add untagged uint64 to sha256
 	//  build array, sort, then hashsum 8 bytes per uint64
@@ -243,45 +316,152 @@ func (s *set) sha256() []byte {
 	}
 	slices.Sort(ui64)
 	buf := make([]byte, 8)
-	for _, v := range ui64 {
+	for i, v := range ui64 {
+		binary.BigEndian.PutUint64(buf[:], uint64(i))
+		h.Write(buf[:8])
+
 		binary.BigEndian.PutUint64(buf[:], uint64(v))
 		h.Write(buf[:8])
 	}
 
-	//  hash the untagged strings.
+	//  write the named uint64 in lexical order of name
+
+	type nv struct {
+		Name	string
+		Value	uint64
+	}
+
+	var ss []nv
+	for n, v := range s.name_uint64 {
+		ss = append(ss, nv{n, v})
+	}
+	sort.Slice(ss, func(i, j int) bool {
+		return ss[i].Name < ss[j].Name
+	})
+
+	for i := 0;  i < len(ss);  i++ {
+		var buf [8]byte
+
+		binary.BigEndian.PutUint64(buf[:], uint64(i))
+		h.Write(buf[:8])
+		
+		h.Write([]byte(ss[i].Name))
+
+		binary.BigEndian.PutUint64(buf[:], uint64(ss[i].Value))
+		h.Write(buf[:8])
+	}
+}
+
+func (s *set) sum_string(h hash.Hash) {
+
+	//  hash the bare strings.
 	//  build array of strings, sort, then hashsum bytes of each string in
 	//  array order.
 
 	strs := make([]string, len(s.bare_string))
-	i = 0
+	i := 0
 	for k, _ := range s.bare_string {
 		strs[i] = k
 		i++
 	}
 	sort.Strings(strs)
-	for _, v := range strs {
+	for i, v := range strs {
+		var buf [8]byte
+
+		binary.BigEndian.PutUint64(buf[:], uint64(i))
+		h.Write(buf[:8])
+
 		h.Write([]byte(v))
 	}
+
+	//  write the named strings in lexical order of name
+
+	type nv struct {
+		Name	string
+		Value	string
+	}
+
+	var ss []nv
+	for n, v := range s.name_string {
+		ss = append(ss, nv{n, v})
+	}
+	sort.Slice(ss, func(i, j int) bool {
+		return ss[i].Name < ss[j].Name
+	})
+
+	for i := 0;  i < len(ss);  i++ {
+		var buf [8]byte
+
+		binary.BigEndian.PutUint64(buf[:], uint64(i))
+		h.Write(buf[:8])
+		
+		h.Write([]byte(ss[i].Name))
+		h.Write([]byte(ss[i].Value))
+	}
+}
+
+func (s *set) sum_set(h hash.Hash) {
 
 	//  hash crc64s of bare_set elements
 
 	crc := make([]crc_64, len(s.bare_set))
-	i = 0
-	for k, _ := range s.bare_set {
-		crc[i] = k
+	i := 0
+	for c64, _  := range s.bare_set {
+		crc[i] = c64
 		i++
 	}
 
-	//  sorts crc of elemets
+	//  sum crcs of elements in sorted order
+
 	slices.Sort(crc)
-	for _, v := range crc {
+	for i, v := range crc {
+		var buf [8]byte
+
+		binary.BigEndian.PutUint64(buf[:], uint64(i))
+		h.Write(buf[:])
+
 		binary.BigEndian.PutUint64(buf[:], uint64(v))
-		h.Write(buf[:8])
+		h.Write(buf[:])
 	}
 
-	//  hash crc64 of bare array element
-	*/
+	//  sum crc64 of named sets
 
+	type nv struct {
+		Name	string
+		Value	crc_64
+	}
+
+	var ss []nv
+	for n, v := range s.name_set {
+		ss = append(ss, nv{n, v.crc64()})
+	}
+	sort.Slice(ss, func(i, j int) bool {
+		return ss[i].Name < ss[j].Name
+	})
+
+	for i := 0;  i < len(ss);  i++ {
+		var buf [8]byte
+
+		binary.BigEndian.PutUint64(buf[:], uint64(i))
+		h.Write(buf[:])
+		
+		h.Write([]byte(ss[i].Name))
+		binary.BigEndian.PutUint64(buf[:], uint64(ss[i].Value))
+		h.Write(buf[:])
+	}
+}
+
+//  calculate sha256 of set
+
+func (s *set) sha256() []byte {
+
+	h := sha256.New()
+
+	//  sum bare and named elements of sets
+	s.sum_bool(h)
+	s.sum_uint64(h)
+	s.sum_string(h)
+	s.sum_set(h)
 
 	return h.Sum(nil)
 }
