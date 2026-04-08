@@ -2,13 +2,19 @@ package main
 
 import "strings"
 
+//  string values used by flow operations
+
 type string_value struct {
 	string
 
 	is_null		bool
 }
 
+//  let the strings flow
+
 type string_chan chan *string_value
+
+//  table of boolean, relational operations on strings
 
 type relop_str_func func (*flow, string_chan, string_chan) bool_chan
 var relop_string = map[int]relop_str_func{
@@ -22,7 +28,7 @@ var relop_string = map[int]relop_str_func{
 
 //  wait for left and right hand strings of any binary operator
 //
-//  Note: how does passing *string_value compare to string_value?
+//  Note: how does performance of passing *string_value compare to string_value?
 
 func (left string_chan) wait2(right string_chan) (
 	lv, rv *string_value, closed bool,
@@ -44,21 +50,11 @@ func (left string_chan) wait2(right string_chan) (
 	return
 }
 
-//  cheap sanity test
-
-func (out string_chan) frisk(left, right string_chan) {
-	if left == nil {
-		corrupt("left string_chan is nil")
-	}
-	if right == nil {
-		corrupt("right string_chan is nil")
-	}
-}
+//  op: "left" || "right"
 
 func (flo *flow) concat(left, right string_chan) (out string_chan) {
 
 	out = make(string_chan)
-	out.frisk(left, right)
 
 	go func() {
 
@@ -88,13 +84,11 @@ func (flo *flow) concat(left, right string_chan) (out string_chan) {
 	return out
 }
 
-
-//  compare two strings for equality
+//  op: "left" == "right"
 
 func (flo *flow) eq_string(left, right string_chan) (out bool_chan) {
 
 	out = make(bool_chan)
-	out.frisk_str(left, right)
 
 	go func() {
 
@@ -125,12 +119,11 @@ func eq_string(flo *flow, left, right string_chan) (out bool_chan) {
 	return flo.eq_string(left, right)
 }
 
-//  compare two strings for equality
+//  op: "left" != "right"
 
 func (flo *flow) neq_string(left, right string_chan) (out bool_chan) {
 
 	out = make(bool_chan)
-	out.frisk_str(left, right)
 
 	go func() {
 
@@ -160,12 +153,11 @@ func neq_string(flo *flow, left, right string_chan) (out bool_chan) {
 	return flo.neq_string(left, right)
 }
 
-//  compare two strings for left lexically greater than right
+//  op: "left" > "right"
 
 func (flo *flow) gt_string(left, right string_chan) (out bool_chan) {
 
 	out = make(bool_chan)
-	out.frisk_str(left, right)
 
 	go func() {
 
@@ -196,12 +188,11 @@ func gt_string(flo *flow, left, right string_chan) (out bool_chan) {
 	return flo.gt_string(left, right)
 }
 
-//  compare two strings for left lexically greater than or equal to right
+//  op: "left" >= "right"
 
 func (flo *flow) gte_string(left, right string_chan) (out bool_chan) {
 
 	out = make(bool_chan)
-	out.frisk_str(left, right)
 
 	go func() {
 
@@ -232,12 +223,11 @@ func gte_string(flo *flow, left, right string_chan) (out bool_chan) {
 	return flo.gte_string(left, right)
 }
 
-//  compare two strings for left lexically less than right
+//  op: "left" < "right"
 
 func (flo *flow) lt_string(left, right string_chan) (out bool_chan) {
 
 	out = make(bool_chan)
-	out.frisk_str(left, right)
 
 	go func() {
 
@@ -268,12 +258,11 @@ func lt_string(flo *flow, left, right string_chan) (out bool_chan) {
 	return flo.lt_string(left, right)
 }
 
-//  compare two strings for left lexically less than or equal to right
+//  op: "left" <= "right"
 
 func (flo *flow) lte_string(left, right string_chan) (out bool_chan) {
 
 	out = make(bool_chan)
-	out.frisk_str(left, right)
 
 	go func() {
 
@@ -304,6 +293,8 @@ func lte_string(flo *flow, left, right string_chan) (out bool_chan) {
 	return flo.lte_string(left, right)
 }
 
+//  op: send constant string value, never null
+
 func (flo *flow) const_string(s string) (out string_chan) {
 
 	out = make(string_chan)
@@ -320,6 +311,8 @@ func (flo *flow) const_string(s string) (out string_chan) {
 
 	return out
 }
+
+//  is the ast node a string value?
 
 func (a *ast) is_string() bool {
 
@@ -339,10 +332,10 @@ func (a *ast) is_string() bool {
 	return false
 }
 
-/*
- *  Note:
- *	cast string to string ... a no-op till better tree manipulation
- */
+//  no-op to cast a string to same string.
+//
+//  Note: too lazy to optimize out this cast, in pass2.
+
 func (flo *flow) cast_string(in string_chan) (out string_chan) {
 
 	out = make(string_chan)
@@ -355,6 +348,8 @@ func (flo *flow) cast_string(in string_chan) (out string_chan) {
 	}()
 	return out
 }
+
+//  op: is a string value null?
 
 func (flo *flow) is_null_string(in string_chan) (out bool_chan) {
 
@@ -372,6 +367,8 @@ func (flo *flow) is_null_string(in string_chan) (out bool_chan) {
 	return out
 }
 
+//  op: is a string value not null?
+
 func (flo *flow) is_not_null_string(in string_chan) (out bool_chan) {
 
 	out = make(bool_chan)
@@ -388,6 +385,8 @@ func (flo *flow) is_not_null_string(in string_chan) (out bool_chan) {
 	return out
 }
 
+//  Stringifier that handles nill and null.
+
 func (sv *string_value) String() string {
 
 	if sv == nil {
@@ -399,7 +398,7 @@ func (sv *string_value) String() string {
 	return sv.string
 }
 
-//  write string value to null channel
+//  op: write string value to null channel
 
 func (flo *flow) string_null(in string_chan) {
 
@@ -411,6 +410,8 @@ func (flo *flow) string_null(in string_chan) {
 		}
 	}()
 }
+
+//  op: fannout single string value to multiple channels
 
 func (flo *flow) string_fanout(
 	in string_chan,

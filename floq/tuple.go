@@ -20,13 +20,10 @@ type tuple struct {
 	atts		map[string]*attribute
 }
 
-type tuple_tsv struct {
-
-	
-
-}
+//  project value of a particular command
 
 type projection struct {
+	command_ref	*command
 	att_ref		*attribute
 	sysatt_ref	*sysatt
 	field		uint8
@@ -35,7 +32,7 @@ type projection struct {
 }
 
 //  build a tuple struct from a "DEFINE TUPLE" abstract syntax tree.
-//  the "set" has already been frisked by the ya
+//  the "set" has already been frisked.
 //
 //  Note: no test for duplicate attributes in the define set!
 

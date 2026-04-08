@@ -499,15 +499,6 @@ func (out bool_chan) frisk_str(left, right string_chan) {
 	}
 }
 
-func (out bool_chan) frisk_ui64(left, right uint64_chan) {
-	if left == nil {
-		corrupt("left uint64 chan is nil")
-	}
-	if right == nil {
-		corrupt("right uint64 chan is nil")
-	}
-}
-
 func (flo *flow) cast_bool(in bool_chan) (out string_chan) {
 
 	out = make(string_chan)

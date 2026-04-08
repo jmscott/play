@@ -17,6 +17,7 @@ type flow struct {
 	next chan	flow_chan
 }
 
+//  start an os process as part of the "flow <command>" statement
 type osx_start struct {
 
 	*command
@@ -47,6 +48,9 @@ func (flo *flow) get() *flow {
 	}
 }
 
+//  start a process that runs perpetually.
+//  fatal error is process exits.
+
 func (flo *flow) start(cmd *command) (pro *osx_start) {
 
 	var err error
@@ -56,13 +60,9 @@ func (flo *flow) start(cmd *command) (pro *osx_start) {
 	}
 
 	cx := exec.Command(cmd.look_path)
-	path, err := exec.LookPath(cmd.path)
-	if err != nil {
-		corrupt("%s: LookPath(%s) failed: %s", cmd, path, err)
-	}
 	name := cmd.name
 
-	cx.Path = path
+	cx.Path = cmd.look_path
 	cx.Args = cmd.args
 	cx.Env = cmd.env
 
@@ -91,6 +91,8 @@ func (flo *flow) start(cmd *command) (pro *osx_start) {
 	}
 	pro.process = cx.Process
 
+	//  Wait() on a process that should never terminate
+
 	go func() {
 		err := cx.Wait()
 		if err == nil {
@@ -102,6 +104,9 @@ func (flo *flow) start(cmd *command) (pro *osx_start) {
 
 	return pro
 }
+
+//  execute the statement "flow <command>();", no arguments, not when condition.
+//  feed a single line of text per flow to down stream.
 
 func (flo *flow) osx_flow_0(cmd *command) (out string_chan) {
 

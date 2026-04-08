@@ -14,11 +14,23 @@ type command struct {
 	name		string
 	cmd		*exec.Cmd
 	path		string
+	
+	//  the resolved executable pa
 	look_path	string
+
+	//  static array of strings, prepended before dynamic argv[] in call
 	args		[]string
+
+	//  array of env vars defined in "env" attribute of set
 	env		[]string
-	osxref_count	uint8
+
+	//  references to system "$<attribute>"
+	sref_count	uint8
+
+	//  references to defined ".<attribuet>"
 	ref_count	uint8
+
+	//  possible tuple bound to command
 	tuple_ref	*tuple
 }
 

@@ -6,15 +6,19 @@ import (
 	"strconv"
 )
 
+//  uint64 value passed between flow operators
+
 type uint64_value struct {
 	uint64
 
 	is_null		bool
-
-	*flow
 }
 
+//  a river of uint64s
+
 type uint64_chan chan *uint64_value
+
+//  table of boolean, relational operations on uint64
 
 type relop_uint64_func func (*flow, uint64_chan, uint64_chan) bool_chan
 var relop_uint64 = map[int]relop_uint64_func{
@@ -27,7 +31,8 @@ var relop_uint64 = map[int]relop_uint64_func{
 	}
 
 
-//  wait for left and right hand uint64 of any binary operator
+//  wait for both left and right hand alues uint64 of any binary operator,
+//  indicating when either channels closes.
 
 func (left uint64_chan) wait2(right uint64_chan) (
 	lv, rv *uint64_value, closed bool,
@@ -49,10 +54,11 @@ func (left uint64_chan) wait2(right uint64_chan) (
 	return
 }
 
+//  op: left_ui64 == right_ui64
+
 func (flo *flow) eq_ui64(left, right uint64_chan) (out bool_chan) {
 
 	out = make(bool_chan)
-	out.frisk_ui64(left, right)
 
 	go func() {
 
@@ -79,16 +85,17 @@ func (flo *flow) eq_ui64(left, right uint64_chan) (out bool_chan) {
 	return out
 }
 
+//  unbound version of flo.eq_ui64(), in operator table
+
 func eq_ui64(flo *flow, left, right uint64_chan) (out bool_chan) {
 	return flo.eq_ui64(left, right)
 }
 
-//  compare two uint64 for inequality
+//  op: left_ui64 != right_ui64
 
 func (flo *flow) neq_ui64(left, right uint64_chan) (out bool_chan) {
 
 	out = make(bool_chan)
-	out.frisk_ui64(left, right)
 
 	go func() {
 
@@ -115,16 +122,17 @@ func (flo *flow) neq_ui64(left, right uint64_chan) (out bool_chan) {
 	return out
 }
 
+//  unbound version of flo.neq_ui64(), in operator table
+
 func neq_ui64(flo *flow, left, right uint64_chan) (out bool_chan) {
 	return flo.neq_ui64(left, right)
 }
 
-//  compare two uint64s for left numerically greater than right
+//  op: left_ui64 > right_ui64
 
 func (flo *flow) gt_ui64(left, right uint64_chan) (out bool_chan) {
 
 	out = make(bool_chan)
-	out.frisk_ui64(left, right)
 
 	go func() {
 
@@ -151,16 +159,17 @@ func (flo *flow) gt_ui64(left, right uint64_chan) (out bool_chan) {
 	return out
 }
 
+//  unbound version of flo.gt_ui64(), in operator table
+
 func gt_ui64(flo *flow, left, right uint64_chan) (out bool_chan) {
 	return flo.gt_ui64(left, right)
 }
 
-//  compare two uint64s for left greater than or equal to right
+//  op: left_ui64 >= right_ui64
 
 func (flo *flow) gte_ui64(left, right uint64_chan) (out bool_chan) {
 
 	out = make(bool_chan)
-	out.frisk_ui64(left, right)
 
 	go func() {
 
@@ -187,16 +196,17 @@ func (flo *flow) gte_ui64(left, right uint64_chan) (out bool_chan) {
 	return out
 }
 
+//  unbound version of flo.gte_ui64(), in operator table
+
 func gte_ui64(flo *flow, left, right uint64_chan) (out bool_chan) {
 	return flo.gte_ui64(left, right)
 }
 
-//  compare two uint64s for left numerically less than right
+//  op: left_ui64 < right_ui64
 
 func (flo *flow) lt_ui64(left, right uint64_chan) (out bool_chan) {
 
 	out = make(bool_chan)
-	out.frisk_ui64(left, right)
 
 	go func() {
 
@@ -223,16 +233,17 @@ func (flo *flow) lt_ui64(left, right uint64_chan) (out bool_chan) {
 	return out
 }
 
+//  unbound version of flo.lt_ui64(), in operator table
+
 func lt_ui64(flo *flow, left, right uint64_chan) (out bool_chan) {
 	return flo.lt_ui64(left, right)
 }
 
-//  compare two uint64s for left numerically less than or equal to right
+//  op: left_ui64 <= fight_ui64
 
 func (flo *flow) lte_ui64(left, right uint64_chan) (out bool_chan) {
 
 	out = make(bool_chan)
-	out.frisk_ui64(left, right)
 
 	go func() {
 
@@ -258,23 +269,20 @@ func (flo *flow) lte_ui64(left, right uint64_chan) (out bool_chan) {
 
 	return out
 }
+
+//  unbound version of flo.lte_ui64(), in operator table
+
 func lte_ui64(flo *flow, left, right uint64_chan) (out bool_chan) {
 	return flo.lte_ui64(left, right)
 }
 
-func (out uint64_chan) frisk(left, right uint64_chan) {
-	if left == nil {
-		corrupt("left uint64 chan is nil")
-	}
-	if right == nil {
-		corrupt("eight uint64 chan is nil")
-	}
-}
+//  op: left_ui64 + right_ui64
+//
+//  Note: no overflow!
 
 func (flo *flow) add_ui64(left, right uint64_chan) (out uint64_chan) {
 
 	out = make(uint64_chan)
-	out.frisk(left, right)
 
 	go func() {
 
@@ -303,10 +311,12 @@ func (flo *flow) add_ui64(left, right uint64_chan) (out uint64_chan) {
 	return out
 }
 
+//  op: left_ui64 * right_ui64
+//  Note: no overflow!
+
 func (flo *flow) mul_ui64(left, right uint64_chan) (out uint64_chan) {
 
 	out = make(uint64_chan)
-	out.frisk(left, right)
 
 	go func() {
 
@@ -335,10 +345,12 @@ func (flo *flow) mul_ui64(left, right uint64_chan) (out uint64_chan) {
 	return out
 }
 
+//  op: left_ui64 - right_ui64
+//  Note: no underflow!  should l <= r be enforced!
+
 func (flo *flow) sub_ui64(left, right uint64_chan) (out uint64_chan) {
 
 	out = make(uint64_chan)
-	out.frisk(left, right)
 
 	go func() {
 
@@ -365,6 +377,8 @@ func (flo *flow) sub_ui64(left, right uint64_chan) (out uint64_chan) {
 	return out
 }
 
+//  op: send constant ui64
+
 func (flo *flow) const_ui64(u64 uint64) (out uint64_chan) {
 
 	out = make(uint64_chan)
@@ -380,6 +394,8 @@ func (flo *flow) const_ui64(u64 uint64) (out uint64_chan) {
 
 	return out
 }
+
+//  op: cast ui64 to string
 
 func (flo *flow) cast_uint64(in uint64_chan) (out string_chan) {
 
@@ -403,6 +419,8 @@ func (flo *flow) cast_uint64(in uint64_chan) (out string_chan) {
 	return out
 }
 
+//  op: is a ui64 value null?
+
 func (flo *flow) is_null_uint64(in uint64_chan) (out bool_chan) {
 
 	out = make(bool_chan)
@@ -418,6 +436,8 @@ func (flo *flow) is_null_uint64(in uint64_chan) (out bool_chan) {
 
 	return out
 }
+
+//  op: is ui64 value not null?
 
 func (flo *flow) is_not_null_uint64(in uint64_chan) (out bool_chan) {
 
@@ -435,6 +455,8 @@ func (flo *flow) is_not_null_uint64(in uint64_chan) (out bool_chan) {
 	return out
 }
 
+//  is a ast node ui64 value?
+
 func (a *ast) is_uint64() bool {
 
 	switch a.yy_tok {
@@ -450,6 +472,8 @@ func (a *ast) is_uint64() bool {
 	}
 	return false
 }
+
+//  Stringfy a ui64 value, possibly null
 
 func (uv *uint64_value) String() string {
 

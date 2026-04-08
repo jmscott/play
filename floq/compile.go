@@ -4,6 +4,7 @@ type compilation struct {
 
 	root	*ast
 
+	//  the first flow
 	flo		*flow
 
 	//  boolean logical comparison, constants and the "when" predicate.
@@ -18,7 +19,6 @@ type compilation struct {
 
 	//  variations of the "run <command(...)", with or without "when"
 	//  predicate, with or without (...) arguments.
-
 	a2osx		map[*ast]osx_chan
 
 	//  argument vector for "run <commmand>" statements  
@@ -28,6 +28,7 @@ type compilation struct {
 	//  PROJECT_OSX_EXIT_CODE, e.g.)  <command>$exit_code
 	a2osxfo		map[*ast][]osx_chan		//  fanout osx records
 
+	//  fanout string values from <command>.<att>
 	a2strfo		map[*ast][]string_chan
 
 	//  fanout targets for all projections/consumers, like
@@ -60,6 +61,13 @@ func compile(root *ast) (*flow) {
 	cmp.compile(root)
 	return cmp.flo
 }
+
+//  compile an binary, boolean relational operator over two strings, uint64s
+//  or bools, e.g.)
+//
+//	NEQ/\
+//		PROJECT_OSX_TUPLE_TSV: blob_request_record.blob:
+//		STRING ""	
 
 func (cmp *compilation) relop(a *ast) {
 
@@ -105,6 +113,7 @@ func (cmp *compilation) compile(a *ast) {
 	}
 
 	//  skip "define command/tuple" statements.
+
 	if a.yy_tok == DEFINE {
 		cmp.compile(a.next)
 		return
@@ -271,7 +280,7 @@ func (cmp *compilation) compile(a *ast) {
 		a2str[a] = flo.osx_proj_Stderr(fo[proj.call_order-1])
 	case PROJECT_OSX_TUPLE_TSV:
 		proj := a.proj_ref
-		fo := cmd2osxfo[a.command_ref]
+		fo := cmd2osxfo[proj.command_ref]
 		a2str[a] = flo.osx_proj_tuple_tsv(
 				fo[proj.call_order-1],
 				a.command_ref,
@@ -279,7 +288,7 @@ func (cmp *compilation) compile(a *ast) {
 		)
 	case PROJECT_OSX_TUPLE_TSV_N:
 		proj := a.proj_ref
-		fo:= cmd2osxfo[a.command_ref]
+		fo := cmd2osxfo[proj.command_ref]
 		a2str[a] = flo.osx_proj_tuple_tsv_n(
 				fo[proj.call_order-1],
 				uint8(a.uint64),

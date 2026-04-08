@@ -1239,6 +1239,8 @@ func yy_name2tok(name string) int {
 	return __MIN_YYTOK - 2	// == "error" in yyToknames
 }
 
+//  project a system attribute like <command>$exit_code
+
 func (lex *yyLexState) project_osx_sys(name string, cmd *command) (*ast) {
 	a := &ast{
 		name:	name,
@@ -1280,8 +1282,8 @@ func (lex *yyLexState) project_osx_sys(name string, cmd *command) (*ast) {
 		)
 		return nil
 	}
-	cmd.ref_count++
-	a.proj_ref.call_order = cmd.ref_count
+	cmd.sref_count++
+	a.proj_ref.call_order = cmd.sref_count
 	return a
 }
 
@@ -1305,6 +1307,7 @@ func (lex *yyLexState) project_osx_tuple(name string, cmd *command) (*ast) {
 		command_ref:	cmd,
 		att_ref:	att,
 		proj_ref:	&projection{
+					command_ref: cmd,
 					att_ref: att,
 					call_order:	cmd.ref_count,
 				},
