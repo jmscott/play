@@ -663,6 +663,8 @@ func (flo *flow) osx_proj_sys_sec(in osx_chan) (out uint64_chan) {
 	return out
 }
 
+//  fanout an osx_value to listeners
+
 func (flo *flow) osx_fanout(in osx_chan, count uint8) (out []osx_chan) {
 
 	out = make([]osx_chan, count)
