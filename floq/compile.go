@@ -31,8 +31,7 @@ type compilation struct {
 	//  fanout string values from <command>.<att>
 	a2strfo		map[*ast][]string_chan
 
-	//  fanout targets for all projections/consumers, like
-	//  <command>.chat_history from a run command
+	//  fanout targets of run command.
 	cmd2osxfo		map[*command][]osx_chan
 
 	//  fanout targets for all projections/consumers, like
@@ -204,7 +203,11 @@ func (cmp *compilation) compile(a *ast) {
 					)
 			}
 		}
-		if cmd.ref_count == 0 {
+
+		//  fanout the results of a "run command(" statement
+
+		rc := cmd.sref_count + cmd.ref_count
+		if rc == 0 {
 			flo.osx_null(a2osx[a])
 		} else {
 			//  map command to fanout 
@@ -213,7 +216,7 @@ func (cmp *compilation) compile(a *ast) {
 			}
 
 			//  fanout osx record
-			a2osxfo[a] = flo.osx_fanout(a2osx[a], cmd.ref_count)
+			a2osxfo[a] = flo.osx_fanout(a2osx[a], rc)
 			cmd2osxfo[cmd] = a2osxfo[a]
 		}
 	case FLOW:
