@@ -96,7 +96,7 @@ func (flo *flow) start(cmd *command) (pro *osx_start) {
 	go func() {
 		err := cx.Wait()
 		if err == nil {
-			corrupt("Wait(%s) returned", cmd)
+			corrupt("Wait(%s) exit (no error)", cmd)
 		} else {
 			corrupt("Wait(%s) failed: %s", cmd, err)
 		}
@@ -105,8 +105,8 @@ func (flo *flow) start(cmd *command) (pro *osx_start) {
 	return pro
 }
 
-//  execute the statement "flow <command>();", no arguments, not when condition.
-//  feed a single line of text per flow to down stream.
+//  execute the statement "flow <command>();", no arguments, no when condition.
+//  feed a single line of text per flow down stream.
 
 func (flo *flow) osx_flow_0(cmd *command) (out string_chan) {
 
@@ -122,8 +122,9 @@ func (flo *flow) osx_flow_0(cmd *command) (out string_chan) {
 				croak("%s: Read(stdout) failed: %s", cmd, err)
 			}
 			out <- &string_value{
-				string:	str,
+				string:		str,
 			}
+
 			flo = flo.get()
 		}
 	}()

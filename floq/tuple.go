@@ -160,6 +160,12 @@ func (tup *tuple) String() string {
 }
 
 func (att *attribute) String() string {
+	if att == nil {
+		return "<nil attribute>"
+	}
+	if att.tuple_ref == nil {
+		return fmt.Sprintf("%s (nil tuple)", att.name)
+	}
 	return fmt.Sprintf(
 		"%s.%s",
 		att.tuple_ref.name,

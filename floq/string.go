@@ -322,7 +322,8 @@ func (a *ast) is_string() bool {
 	     PROJECT_OSX_STDOUT,
 	     PROJECT_OSX_TUPLE_TSV,
 	     PROJECT_OSX_TUPLE_TSV_N,
-	     PROJECT_OSX_STDERR:
+	     PROJECT_OSX_STDERR,
+	     PROJECT_TSV:
 		return true
 	case CAST, CAST_UINT64, CAST_BOOL, CAST_STRING:
 		if a.right.yy_tok == yy_STRING {
@@ -411,7 +412,53 @@ func (flo *flow) string_null(in string_chan) {
 	}()
 }
 
-//  op: fannout single string value to multiple channels
+//  project a string in tab separated line of fields
+
+func (flo *flow) project_tsv(in string_chan, field uint8) (out string_chan) {
+	
+	out = make(string_chan)
+
+	go func() {
+		defer func() {
+			close(out)
+		}()
+
+		for {
+			sv := <- in
+			if sv == nil {
+				return
+			}
+
+			var str string
+
+			is_null := sv.is_null
+			if is_null == false {
+				fld := strings.Split(
+						strings.Trim(
+							sv.string,
+							"\n"),
+						"\t",
+					)
+				if int(field) <= len(fld) {
+					str = fld[field-1]
+				} else {
+					is_null = true
+				}
+			}
+
+			out <- &string_value{
+				string:		str,
+				is_null:	is_null,
+			}
+
+			flo = flo.get()
+				
+		}
+	}()
+	return out
+}
+
+//  op: fanout single string value to multiple channels
 
 func (flo *flow) string_fanout(
 	in string_chan,
@@ -424,7 +471,6 @@ func (flo *flow) string_fanout(
 	}
 
 	go func() {
-
 		defer func() {
 			for _, a := range out {
 				close(a)

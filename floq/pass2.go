@@ -124,9 +124,6 @@ func (p2 *pass2) map_osx(a *ast) error {
 	if a.yy_tok == RUN || a.yy_tok == FLOW {
 		cmd := a.command_ref
 
-		if cmd == nil {
-			croak("command_ref is nil")
-		}
 		if p2.osx_call[cmd] != nil {
 			return a.error("flow/run more than once: %s", cmd.name)
 		}
@@ -159,6 +156,7 @@ func (p2 *pass2) osx_sysatt(a *ast) error {
 	switch a.yy_tok {
 
 	//  add projection to list of what references this "run".
+
 	case PROJECT_OSX_EXIT_CODE,
 	     PROJECT_OSX_PID,
 	     PROJECT_OSX_START_TIME,
@@ -174,11 +172,15 @@ func (p2 *pass2) osx_sysatt(a *ast) error {
 		if ar == nil {
 			return _e("sysatt command never called: %s", cmd.name)
 		}
-		if ar.line_no >= a.line_no {
-			return _e("flow/run call after sysatt: %s", )
+		pn := proj.String()
+		if ar.yy_tok == FLOW {
+			return _e("sysatt needs \"run\" not \"flow\": %s", pn)
 		}
 
-		pn := proj.String()
+		if ar.line_no >= a.line_no {
+			return _e("\"run\" call after sysatt: %s", pn)
+		}
+
 		if len(p2.osx_proj[pn]) == 255 {
 			return _e("too many sysatt ref: %s", pn)
 		}
@@ -420,6 +422,7 @@ func (p2 *pass2) argv_is_string(a *ast) error {
 }
 
 //  rewrite "::<type>" nodes to particular type: bool, uint64, string
+
 func (p2 *pass2) cast(a *ast) error {
 
 	if a == nil {
@@ -448,6 +451,7 @@ func (p2 *pass2) cast(a *ast) error {
 }
 
 //  rewrite "IS NULL" nodes for particular type: string, uint64, bool
+
 func (p2 *pass2) is_null(a *ast) {
 
 	if a == nil {
@@ -634,7 +638,11 @@ func xpass2(root *ast) error {
 		return err
 	}
 
-	p2.map_osx(root)	//  build a map of "flow/run <command" nodes
+	//  build a map of "flow/run <command" nodes
+
+	if err := p2.map_osx(root);  err != nil {
+		return err
+	}
 
 	p2.walk_osx()
 
@@ -652,12 +660,14 @@ func xpass2(root *ast) error {
 
 	//  verify <command>$sysatt expressions after "run <command>"
 	//  statements.
+
 	if err := p2.osx_sysatt(root);  err != nil {
 		return err
 	}
 
 	//  verify <command>.attribute expressions after "flow|run <command>"
 	//  statements.
+
 	if err := p2.osx_att(root);  err != nil {
 		return err
 	}

@@ -80,6 +80,7 @@ func init() {
 %token	PROJECT_OSX_STDOUT  OSX_STDOUT
 %token	PROJECT_OSX_STDERR  OSX_STDERR
 %token	PROJECT_OSX_TUPLE_TSV  PROJECT_OSX_TUPLE_TSV_N
+%token	PROJECT_TSV
 
 %token	CAST_BOOL  CAST_UINT64  CAST_STRING
 %token	yy_IS  yy_NULL  IS_NULL
@@ -184,7 +185,7 @@ expr:
 	  }  name {
 	  	lex := yylex.(*yyLexState)
 
-		a := lex.project_osx_tuple($4, $1)
+		a := lex.project_tuple($1, $4)
 		if a == nil {
 			return 0
 		}
@@ -549,19 +550,20 @@ stmt:
 	  RUN  COMMAND_REF  '('  arg_list  ')'  qualification  {
 	  	lex := yylex.(*yyLexState)
 
-		run := lex.ast(RUN, $4, $6)
-		run.command_ref = $2
-		run.name = run.command_ref.name
+		run := lex.run($2, $4, $6)
+		if run == nil {
+			return 0
+		}
 		$$ = run
 	  }
 	|
-	  FLOW  COMMAND_REF  '('  ')'  {
+	  FLOW  COMMAND_REF  '('  arg_list ')'  qualification {
 	  	lex := yylex.(*yyLexState)
 
-		flow := lex.ast(FLOW)
-		flow.command_ref = $2
-		flow.name = $2.name
-
+		flow := lex.flow($2, $4, $6)
+		if flow == nil {
+			return 0
+		}
 		$$ = flow
 	  }
 	;
@@ -640,6 +642,9 @@ type yyLexState struct {
 	command_ref		*command
 	tuple_ref		*tuple
 	name_is_name		bool
+
+	cmd2run			map[*command]*ast
+	cmd2flow		map[*command]*ast
 }
 
 func (lex *yyLexState) pushback(c rune) {
@@ -651,6 +656,40 @@ func (lex *yyLexState) pushback(c rune) {
 	if c == '\n' {
 		lex.line_no--
 	}
+}
+
+// compile a "run <command>(argv) [when qual]"
+
+func (lex *yyLexState) run(cmd *command, argv, when *ast) (run *ast) {
+
+	run = lex.ast(RUN, argv, when) 
+
+	if lex.cmd2run == nil {
+		lex.cmd2run = make(map[*command]*ast)
+	}
+
+	lex.cmd2run[cmd] = run
+	run.command_ref = cmd
+	run.name = cmd.name
+
+	return
+}
+
+// compile a "flow <command>(argv) [when qual]"
+
+func (lex *yyLexState) flow(cmd *command, argv, when *ast) (flow *ast) {
+
+	flow = lex.ast(FLOW, argv, when) 
+
+	if lex.cmd2flow == nil {
+		lex.cmd2flow = make(map[*command]*ast)
+	}
+
+	lex.cmd2flow[cmd] = flow
+	flow.command_ref = cmd
+	flow.name = cmd.name
+
+	return
 }
 
 func (lex *yyLexState) ast(yy_tok int, args...*ast) *ast {
@@ -1287,6 +1326,44 @@ func (lex *yyLexState) project_osx_sys(name string, cmd *command) (*ast) {
 	return a
 }
 
+func (lex *yyLexState) project_tuple(cmd *command, name string) (a *ast) {
+
+	var yy_tok int
+
+	tup := cmd.tuple_ref
+	if tup == nil {
+		lex.error("no tuple defined for command: %s", cmd)
+		return nil
+	}
+	att := tup.atts[name]
+	if att == nil {
+		lex.error("unknown attribute: %s.%s", cmd, name)
+		return nil
+	}
+	switch {
+		case lex.cmd2run[cmd] != nil:
+			yy_tok = PROJECT_OSX_TUPLE_TSV
+		case lex.cmd2flow[cmd] != nil:
+			yy_tok = PROJECT_TSV
+		default:
+			lex.error("no run/flow before command: %s", cmd)
+			return nil
+	}
+	a = lex.ast(yy_tok)
+	a.command_ref = cmd
+	a.tuple_ref = tup
+	a.att_ref = att
+	a.name = fmt.Sprintf("%s.%s", cmd.name, name)
+	cmd.ref_count++
+	a.proj_ref = &projection{
+				command_ref: cmd,
+				att_ref: att,
+				call_order:	cmd.ref_count,
+				field:		att.tsv_field,
+			}
+	return
+}
+
 func (lex *yyLexState) project_osx_tuple(name string, cmd *command) (*ast) {
 
 	tup := cmd.tuple_ref
@@ -1306,6 +1383,7 @@ func (lex *yyLexState) project_osx_tuple(name string, cmd *command) (*ast) {
 		line_no:	lex.line_no,
 		command_ref:	cmd,
 		att_ref:	att,
+		tuple_ref:	tup,
 		proj_ref:	&projection{
 					command_ref: cmd,
 					att_ref: att,

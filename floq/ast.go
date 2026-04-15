@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 )
@@ -351,14 +352,11 @@ func (a *ast) in_tok_set(expect ...int) bool {
 
 func (a *ast) error(format string, args...interface{}) error {
 
-	var lno string
-
-	if a.line_no > 0 {
-		lno = fmt.Sprintf(" @%d", a.line_no)
+	emsg := fmt.Sprintf(format, args...)
+	if a.line_no == 0 {
+		return errors.New(emsg)
 	}
-
-	format = fmt.Sprintf("node %s%s: %s", a.yy_name(), lno, format)
-	return fmt.Errorf(format, args...)
+	return fmt.Errorf("%s, near line %d", emsg, a.line_no)
 }
 
 //  recursively count ast nodes of particular types in
