@@ -1,20 +1,25 @@
 package main
 
 import (
-	"os/exec"
 	"bufio"
 	"io"
 	"os"
+	"os/exec"
+	"sync"
 )
 
 //  a river to my people ...
 type flow_chan chan *flow
 
+//  number of "run <command>" statements.
+//
+//  Note: why global?  can not be scoped to "flow
+
+var run_count	uint8
+
 type flow struct {
 
-        resolved	chan struct{}
-
-	next chan	flow_chan
+	run_group	sync.WaitGroup		
 }
 
 //  start an os process as part of the "flow <command>" statement
@@ -31,21 +36,13 @@ type osx_start struct {
 
 func (flo *flow) get() *flow {
 
-        <-flo.resolved
+	flo.run_group.Wait()
 
-        //  next active flow arrives on this channel
-        reply := make(flow_chan)
+	f := &flow{}
+	f.run_group.Add(int(run_count))
+WTF("run_count=%d", run_count)
 
-        //  request another flow, sending reply channel to mother
-        flo.next <- reply
-
-        //  return next flow
-        return <-reply
-
-	return &flow{
-			resolved:       make(chan struct{}),
-			next:           make(chan flow_chan),
-	}
+	return f
 }
 
 //  start a process that runs perpetually.
@@ -121,11 +118,14 @@ func (flo *flow) osx_flow_0(cmd *command) (out string_chan) {
 			if err != nil {
 				croak("%s: Read(stdout) failed: %s", cmd, err)
 			}
+WTF("str=%s", str)
 			out <- &string_value{
 				string:		str,
 			}
+WTF("read: pre: flow=%#v", flo)
 
 			flo = flo.get()
+WTF("read: post: flow=%#v", flo)
 		}
 	}()
 	return

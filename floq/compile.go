@@ -42,10 +42,7 @@ func compile(root *ast) (*flow) {
 
 	cmp := &compilation{
 			root:	root,
-			flo:	&flow{
-				resolved:       make(chan struct{}),
-				next:           make(chan flow_chan),
-			},
+			flo:	&flow{},
 			a2bool:		make(map[*ast]bool_chan),
 			a2str:		make(map[*ast]string_chan),
 			a2ui64:		make(map[*ast]uint64_chan),
@@ -57,6 +54,7 @@ func compile(root *ast) (*flow) {
 			cmd2strfo:	make(map[*command][]string_chan),
 	}
 	cmp.compile(root)
+
 	return cmp.flo
 }
 
@@ -181,6 +179,8 @@ func (cmp *compilation) compile(a *ast) {
 	case WHEN:
 		a2bool[a] = a2bool[a.left]
 	case RUN:
+		run_count++		//  global not good
+
 		argv := a.left
 		when := a.right
 		cmd := a.command_ref

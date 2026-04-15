@@ -87,7 +87,13 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 	cx.Stderr = &stderr
 
 	start_time := time.Now()
+
+WTF("Run(%s)", cmd)
 	err := cx.Run()
+WTF("Run(%s) exit: %#v", cmd, err)
+	flo.run_group.Done()
+WTF("run group ok")
+
 	wall_duration  := time.Since(start_time)
 
 	/*

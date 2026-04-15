@@ -4,9 +4,12 @@ func server(root *ast) error {
 
 	flo := compile(root) 
 
-	close(flo.resolved)	//  fire the first flow
+	flo.run_group.Add(int(run_count))
 
-	<- make(chan bool)	//  wait forever	
+	//  fire the first "run"
+	flo.get()
+
+	<- make(chan bool)      //  wait forever
 
 	return nil		//  not reached
 }
