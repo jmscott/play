@@ -12,6 +12,8 @@ import (
 
 var usage = "usage: floq [pass1|pass2|compile|frisk|server] path/to/prog.floq\n"
 
+var caught_sig os.Signal
+
 func exit(status int) {
 	os.Exit(status)
 }
@@ -27,6 +29,20 @@ func croak(format string, args ...interface{}) {
 	)
 	fmt.Fprintf(os.Stderr, usage)
 	exit(16)
+}
+
+//  write stack trace of all running goroutines into file floq.trace
+
+func tracedump() {
+	buf := make([]byte, 1<<20)
+	len := runtime.Stack(buf, true)
+
+	fmt.Fprintf(os.Stderr, "\ntrace in floq.trace\n")
+	os.WriteFile(
+		"floq.trace",
+		[]byte(fmt.Sprintf("\n=== Stack Trace ===\n%s\n", buf[:len])),
+		0640,
+	)
 }
 
 func main() {
@@ -71,13 +87,10 @@ func main() {
 			syscall.SIGQUIT,
 			syscall.SIGINT,
 		)
-		s := <-c
-		if s == syscall.SIGQUIT {
-			buf := make([]byte, 1<<20)
-			len := runtime.Stack(buf, true)
-			fmt.Printf("\n=== Stack Trace ===\n%s\n", buf[:len])
+		caught_sig = <-c
+		if caught_sig == syscall.SIGQUIT {
+			tracedump()
 		}
-		fmt.Fprintf(os.Stderr, "\nfloq: caught signal: %s\n", s)
 		os.Exit(0)
 	}()
 
