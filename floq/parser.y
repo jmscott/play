@@ -557,10 +557,10 @@ stmt:
 		$$ = run
 	  }
 	|
-	  FLOW  COMMAND_REF  '('  arg_list ')'  qualification {
+	  FLOW  COMMAND_REF  '('  ')' {
 	  	lex := yylex.(*yyLexState)
 
-		flow := lex.flow($2, $4, $6)
+		flow := lex.flow($2)
 		if flow == nil {
 			return 0
 		}
@@ -677,9 +677,9 @@ func (lex *yyLexState) run(cmd *command, argv, when *ast) (run *ast) {
 
 // compile a "flow <command>(argv) [when qual]"
 
-func (lex *yyLexState) flow(cmd *command, argv, when *ast) (flow *ast) {
+func (lex *yyLexState) flow(cmd *command) (flow *ast) {
 
-	flow = lex.ast(FLOW, argv, when) 
+	flow = lex.ast(FLOW)
 
 	if lex.cmd2flow == nil {
 		lex.cmd2flow = make(map[*command]*ast)
