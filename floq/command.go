@@ -88,11 +88,7 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 
 	start_time := time.Now()
 
-WTF("Run(%s)", cmd)
 	err := cx.Run()
-WTF("Run(%s) exit: %#v", cmd, err)
-	flo.run_group.Done()
-WTF("run group ok")
 
 	wall_duration  := time.Since(start_time)
 
@@ -102,7 +98,7 @@ WTF("run group ok")
 	 */
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "exit status ") == false {
-			croak("osx_run(%s) failed: %s", cmd.name, err)
+			croak("Run(%s) failed: %s", cmd.name, err)
 		}
 	}
 	if out == nil {		//  caller does not want osx_value
@@ -156,10 +152,6 @@ func (flo *flow) osx_run_a(cmd *command, in argv_chan) (out osx_chan) {
 
 	out = make(osx_chan)
 
-	null_osx := &osx_value{
-			is_null:	true,
-			command:	cmd,
-	}
 	go func() {
 		for {
 			av := <-in
@@ -167,13 +159,13 @@ func (flo *flow) osx_run_a(cmd *command, in argv_chan) (out osx_chan) {
 				return
 			}
 
-			//  Note: huh.  when is argv[] null?
-
-			if av.is_null == false {
-				flo.osx_run(cmd, av.argv, out)
-			} else {
-				out <- null_osx
+			//  sanity test
+			if av.is_null {
+				corrupt("argv is is_null")
 			}
+
+			flo.osx_run(cmd, av.argv, out)
+			flo.run_group.Done()
 
 			flo = flo.get()
 		}

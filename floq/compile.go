@@ -222,7 +222,7 @@ func (cmp *compilation) compile(a *ast) {
 		}
 	case FLOW:
 		cmd := a.command_ref
-		a2str[a] = flo.osx_flow_0(cmd)
+		a2str[a] = flo.osx_flow(cmd)
 		rc := cmd.sref_count + cmd.ref_count
 		if rc == 0 {
 			flo.string_null(a2str[a])
