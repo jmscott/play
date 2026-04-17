@@ -72,6 +72,11 @@ func main() {
 			syscall.SIGINT,
 		)
 		s := <-c
+		if s == syscall.SIGQUIT {
+			buf := make([]byte, 1<<20)
+			len := runtime.Stack(buf, true)
+			fmt.Printf("=== Stack Trace ===\n%s\n", buf[:len])
+		}
 		fmt.Fprintf(os.Stderr, "\nfloq: caught signal: %s\n", s)
 		os.Exit(0)
 	}()
