@@ -142,9 +142,15 @@ func string_brief(str string, clen int, ellipse bool) string {
 	return str + "..."
 }
 
+var WTF_pause bool = true	//  true pauses output
+
 //  debug with attitude 
 
 func WTF(format string, args ...interface{}) {
+
+	if WTF_pause {
+		return
+	}
 
 	if format == "" {
 		os.Stderr.WriteString("\n")
