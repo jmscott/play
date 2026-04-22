@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sync"
 	"bufio"
 	"fmt"
 	"os"
@@ -31,6 +32,16 @@ func croak(format string, args ...interface{}) {
 	exit(16)
 }
 
+func rcaller(frame int) string {
+
+	pc, _, _, ok := runtime.Caller(frame)
+	if !ok {
+		die("runtime.Caller(%d) failed", frame)
+	}
+	return runtime.FuncForPC(pc).Name()
+	
+}
+
 //  write stack trace of all running goroutines into file floq.trace
 
 func tracedump() {
@@ -50,7 +61,7 @@ func main() {
 	argv := os.Args[1:]
 	argc := len(argv)
 	if argc != 2 {
-		croak("wrong number of arguments: expected 2, got %d", argc)
+		croak("wrong number of cli args: expected 2, got %d", argc)
 	}
 	action := argv[0]
 
@@ -91,7 +102,7 @@ func main() {
 		if caught_sig == syscall.SIGQUIT {
 			tracedump()
 		}
-		os.Exit(0)
+		exit(0)
 	}()
 
 	switch action {
@@ -124,8 +135,12 @@ func main() {
 	exit(0)
 }
 
-func corrupt(format string, args ...interface{}) {
-	panic(fmt.Sprintf("corrupt: " + format, args...))
+var die_mux sync.Mutex
+
+func die(format string, args ...interface{}) {
+	die_mux.Lock()
+	os.Stderr.Write([]byte("\ngood bye, cruel world\n"))
+	panic(fmt.Sprintf(format, args...))
 }
 
 //  truncate a string to slen chars and conditionally append an ellipse
@@ -142,15 +157,9 @@ func string_brief(str string, clen int, ellipse bool) string {
 	return str + "..."
 }
 
-var WTF_pause bool = true	//  true pauses output
-
 //  debug with attitude 
 
 func WTF(format string, args ...interface{}) {
-
-	if WTF_pause {
-		return
-	}
 
 	if format == "" {
 		os.Stderr.WriteString("\n")
