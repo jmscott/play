@@ -36,13 +36,20 @@ type compilation struct {
 
 	//  string fanout targets of flow command
 	cmd2strfo		map[*command][]string_chan
+
+	//  number of operators running concurently in a single "flow"
+	concurrent_count	uint8
 }
 
-func compile(root *ast) (*flow) {
+//  block operators from flowing while compiling.
+var compiling = make(chan(bool))
+
+func compile(root *ast) (*flow, uint8) {
 
 	cmp := &compilation{
-			root:	root,
-			flo:	&flow{},
+			root:		root,
+			flo:		(*flow)(nil).new(uint64(0)),
+
 			a2bool:		make(map[*ast]bool_chan),
 			a2str:		make(map[*ast]string_chan),
 			a2ui64:		make(map[*ast]uint64_chan),
@@ -55,7 +62,7 @@ func compile(root *ast) (*flow) {
 	}
 	cmp.compile(root)
 
-	return cmp.flo
+	return cmp.flo, cmp.concurrent_count
 }
 
 //  compile an binary, boolean relational operator over two strings, uint64s
@@ -96,7 +103,7 @@ func (cmp *compilation) relop(a *ast) {
 		)
 	default:
 		nm := a.yy_name()
-		a.corrupt("relop: %s: can not compile %s %s %s", nm, l, nm, r)
+		a.corrupt(" %s: can not compile %s %s %s", nm, l, nm, r)
 	}
 }
 
@@ -147,13 +154,20 @@ func (cmp *compilation) compile(a *ast) {
 	case yy_FALSE:
 		a2bool[a] = flo.const_false()
 	case yy_STRING:
-		//  in a CAST ::string
+		//  in a CAST::string
+		if cmp.concurrent_count == 0 {
+			a.corrupt("yy_STRING: concurrent_count == 0")
+		}
+
+		//  compensate for default increment at end of switch
+		cmp.concurrent_count--
 	case STRING:
 		a2str[a] = flo.const_string(a.string)
 	case UINT64:
 		a2ui64[a] = flo.const_ui64(a.uint64)
 	case ARGV:
 		in := make([]string_chan, a.count)
+
 		for n := a.left;  n != nil;  n = n.next {
 			in[n.order-1] = a2str[n]
 		}
@@ -179,11 +193,11 @@ func (cmp *compilation) compile(a *ast) {
 	case WHEN:
 		a2bool[a] = a2bool[a.left]
 	case RUN:
-		run_count++		//  global not good
-
 		argv := a.left
 		when := a.right
 		cmd := a.command_ref
+
+		//  set up argv for statement "run <command>(...)"
 
 		if argv == nil {
 			if when == nil {
@@ -203,7 +217,7 @@ func (cmp *compilation) compile(a *ast) {
 			}
 		}
 
-		//  fanout the results of a "run command(" statement
+		//  fanout the results of a "run <command>(" statement
 
 		rc := cmd.sref_count + cmd.ref_count
 		if rc == 0 {
@@ -217,9 +231,12 @@ func (cmp *compilation) compile(a *ast) {
 
 			//  fanout osx record
 
-			a2osxfo[a] = flo.osx_fanout(a2osx[a], rc)
+			a2osxfo[a] = flo.osx_fo(a2osx[a], rc)
 			cmd2osxfo[cmd] = a2osxfo[a]
 		}
+
+		//  extra concurrent for fanout
+		cmp.concurrent_count++
 	case FLOW:
 		cmd := a.command_ref
 		a2str[a] = flo.osx_flow(cmd)
@@ -230,7 +247,7 @@ func (cmp *compilation) compile(a *ast) {
 			if cmd2strfo[cmd] != nil {
 				_c("flow: cmd string fanout exists: %s", cmd)
 			}
-			a2strfo[a] = flo.string_fanout(a2str[a], rc)
+			a2strfo[a] = flo.string_fo(a2str[a], rc)
 			cmd2strfo[cmd] = a2strfo[a]
 		}
 	case PROJECT_OSX_EXIT_CODE:
@@ -320,8 +337,10 @@ func (cmp *compilation) compile(a *ast) {
 	case IS_NOT_NULL_BOOL:
 		a2bool[a] = flo.is_not_null_bool(a2bool[a.left])
 	case FLOQ, STMT_LIST, DEFINE:
+		cmp.concurrent_count--
 	default:
 		_c("can not compile ast")
 	}
+	cmp.concurrent_count++
 	cmp.compile(a.next)
 }

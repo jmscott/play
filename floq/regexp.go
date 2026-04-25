@@ -2,27 +2,19 @@ package main
 
 import "regexp"
 
-//  match string against compiled regular expression
-//
-//	"abc" =~ "[b]"
+//  Match a string against a compiled regular expression: "abc" =~ "[b]"
 
 func (flo *flow) match(left string_chan, re *regexp.Regexp) (out bool_chan) {
 
 	out = make(bool_chan)
 
 	go func() {
+		<-compiling
 
 		for {
-			defer close(out)
-
-			var lv *string_value
-
 			// wait for left and right values to arrive
 
-			lv = <- left
-			if lv == nil {
-				return
-			}
+			lv := <- left
 
 			bv := &bool_value {
 				is_null:	lv.is_null,
@@ -31,7 +23,8 @@ func (flo *flow) match(left string_chan, re *regexp.Regexp) (out bool_chan) {
 				bv.bool = re.MatchString(lv.string)
 			}
 			out <- bv
-			flo = flo.get()
+
+			flo = flo.next()
 		}
 	}()
 
@@ -47,18 +40,12 @@ func (flo *flow) nomatch(left string_chan, re *regexp.Regexp) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
+		<-compiling
 
 		for {
-			defer close(out)
+			// wait for left hand string to arrive
 
-			var lv *string_value
-
-			// wait for left and right values to arrive
-
-			lv = <- left
-			if lv == nil {
-				return
-			}
+			lv := <- left
 
 			bv := &bool_value {
 				is_null:	lv.is_null,
@@ -68,7 +55,7 @@ func (flo *flow) nomatch(left string_chan, re *regexp.Regexp) (out bool_chan) {
 			}
 			out <- bv
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 

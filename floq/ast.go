@@ -332,7 +332,7 @@ func (a *ast) print() {
 func (a *ast) corrupt(format string, args...interface{}) {
 
 	msg := fmt.Sprintf(format, args...)
-	corrupt("%s: node \"%s\", near line %d", msg, a.yy_name(), a.line_no)
+	die("%s: node \"%s\", near line %d", msg, a.yy_name(), a.line_no)
 	//  NOTREACHED*/
 }
 

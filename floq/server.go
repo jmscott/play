@@ -2,14 +2,17 @@ package main
 
 func server(root *ast) error {
 
-	flo := compile(root) 
+	flo, concurrent_count := compile(root) 
 
-	flo.run_group.Add(int(run_count))
+	con_group.gmux.Add(int(concurrent_count))
 
-	//  fire the first "run"
-	flo.get()
+	go flo.cop(concurrent_count)
 
-	<- make(chan bool)      //  wait forever
+	// wake up all flow operators wired during compilation
+	close(compiling)	//  wake upflow operators
+
+	//  wait forever
+	<- make(chan interface{})
 
 	return nil		//  not reached
 }

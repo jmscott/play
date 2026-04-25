@@ -1,6 +1,9 @@
 package main
 
-import "strings"
+import (
+	"strings"
+	"sync"
+)
 
 //  string values used by flow operations
 
@@ -30,21 +33,11 @@ var relop_string = map[int]relop_str_func{
 //
 //  Note: how does performance of passing *string_value compare to string_value?
 
-func (left string_chan) wait2(right string_chan) (
-	lv, rv *string_value, closed bool,
-) {
+func (left string_chan) wait2(right string_chan) (lv, rv *string_value) {
 	for lv == nil || rv == nil {
 		select {
-		case lv = <- left:
-			closed = lv == nil
-			if closed {
-				return
-			}
-		case rv = <- right:
-			closed = rv == nil
-			if rv == nil {
-				return
-			}
+			case lv = <- left:
+			case rv = <- right:
 		}
 	}
 	return
@@ -57,14 +50,10 @@ func (flo *flow) concat(left, right string_chan) (out string_chan) {
 	out = make(string_chan)
 
 	go func() {
+		<-compiling
 
 		for {
-			defer close(out)
-
-			lv, rv, done := left.wait2(right)
-			if done {
-				return
-			}
+			lv, rv := left.wait2(right)
 
 			sv := &string_value {
 				is_null:	lv.is_null || rv.is_null,
@@ -77,7 +66,8 @@ func (flo *flow) concat(left, right string_chan) (out string_chan) {
 				sv.string = b.String()
 			}
 			out <- sv
-			flo = flo.get()
+
+			flo = flo.next()
 		}
 	}()
 
@@ -91,14 +81,10 @@ func (flo *flow) eq_string(left, right string_chan) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
+		<-compiling
 
 		for {
-			defer close(out)
-
-			lv, rv, done := left.wait2(right)
-			if done {
-				return
-			}
+			lv, rv := left.wait2(right)
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
@@ -108,12 +94,14 @@ func (flo *flow) eq_string(left, right string_chan) (out bool_chan) {
 			}
 			out <- bv
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
 	return out
 }
+
+//  unbound version of flow.eq_string() for global init table
 
 func eq_string(flo *flow, left, right string_chan) (out bool_chan) {
 	return flo.eq_string(left, right)
@@ -126,14 +114,10 @@ func (flo *flow) neq_string(left, right string_chan) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
+		<-compiling
 
 		for {
-			defer close(out)
-
-			lv, rv, done := left.wait2(right)
-			if done {
-				return
-			}
+			lv, rv := left.wait2(right)
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
@@ -142,32 +126,30 @@ func (flo *flow) neq_string(left, right string_chan) (out bool_chan) {
 				bv.bool = lv.string != rv.string
 			}
 			out <- bv
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
 	return out
 }
 
+//  neq_string() is an unbound version of flow.neq_string(),
+//  for global table.  see init()
 func neq_string(flo *flow, left, right string_chan) (out bool_chan) {
 	return flo.neq_string(left, right)
 }
 
-//  op: "left" > "right"
+//  op: "left" > "right", lexically
 
 func (flo *flow) gt_string(left, right string_chan) (out bool_chan) {
 
 	out = make(bool_chan)
 
 	go func() {
+		<-compiling
 
 		for {
-			defer close(out)
-
-			lv, rv, done := left.wait2(right)
-			if done {
-				return
-			}
+			lv, rv := left.wait2(right)
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
@@ -177,7 +159,7 @@ func (flo *flow) gt_string(left, right string_chan) (out bool_chan) {
 			}
 			out <- bv
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -195,14 +177,10 @@ func (flo *flow) gte_string(left, right string_chan) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
+		<-compiling
 
 		for {
-			defer close(out)
-
-			lv, rv, done := left.wait2(right)
-			if done {
-				return
-			}
+			lv, rv := left.wait2(right)
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
@@ -212,7 +190,7 @@ func (flo *flow) gte_string(left, right string_chan) (out bool_chan) {
 			}
 			out <- bv
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -230,14 +208,10 @@ func (flo *flow) lt_string(left, right string_chan) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
+		<-compiling
 
 		for {
-			defer close(out)
-
-			lv, rv, done := left.wait2(right)
-			if done {
-				return
-			}
+			lv, rv := left.wait2(right)
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
@@ -247,7 +221,7 @@ func (flo *flow) lt_string(left, right string_chan) (out bool_chan) {
 			}
 			out <- bv
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -265,14 +239,10 @@ func (flo *flow) lte_string(left, right string_chan) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
+		<-compiling
 
 		for {
-			defer close(out)
-
-			lv, rv, done := left.wait2(right)
-			if done {
-				return
-			}
+			lv, rv := left.wait2(right)
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
@@ -282,7 +252,7 @@ func (flo *flow) lte_string(left, right string_chan) (out bool_chan) {
 			}
 			out <- bv
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -300,12 +270,14 @@ func (flo *flow) const_string(s string) (out string_chan) {
 	out = make(string_chan)
 
 	go func() {
+		<-compiling
+
 		for {
 			out <- &string_value{
 				string:	s,
 				is_null: false,
 			}
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -333,18 +305,20 @@ func (a *ast) is_string() bool {
 	return false
 }
 
-//  no-op to cast a string to same string.
+//  no-op to cast a string to itself.
 //
-//  Note: too lazy to optimize out this cast, in pass2.
+//  Note: eventually will optimize out this cast, in pass2.
 
 func (flo *flow) cast_string(in string_chan) (out string_chan) {
 
 	out = make(string_chan)
 
 	go func() {
+		<-compiling
+
 		for {
 			out <-<-in
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 	return out
@@ -356,12 +330,14 @@ func (flo *flow) is_null_string(in string_chan) (out bool_chan) {
 
 	out = make(bool_chan)
 	go func() {
+		<-compiling
+
 		for {
 			out <- &bool_value{
 				bool:	(<-in).is_null,
 			}
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -374,12 +350,14 @@ func (flo *flow) is_not_null_string(in string_chan) (out bool_chan) {
 
 	out = make(bool_chan)
 	go func() {
+		<-compiling
+
 		for {
 			out <- &bool_value{
 				bool:	(<-in).is_null == false,
 			}
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -404,30 +382,29 @@ func (sv *string_value) String() string {
 func (flo *flow) string_null(in string_chan) {
 
 	go func() {
+		<-compiling
+
 		for {
 			<- in
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 }
 
-//  project a string in tab separated line of fields
+//  Project a string inside tab separated line of fields.
+//  The field is referenced by field number, offset from 1.
+//  A field out of bounds send a null string.
 
 func (flo *flow) project_tsv(in string_chan, field uint8) (out string_chan) {
 	
 	out = make(string_chan)
 
 	go func() {
-		defer func() {
-			close(out)
-		}()
+		<-compiling
 
 		for {
 			sv := <- in
-			if sv == nil {
-				return
-			}
 
 			var str string
 
@@ -445,25 +422,20 @@ func (flo *flow) project_tsv(in string_chan, field uint8) (out string_chan) {
 					is_null = true
 				}
 			}
-
 			out <- &string_value{
 				string:		str,
 				is_null:	is_null,
 			}
 
-			flo = flo.get()
-				
+			flo = flo.next()
 		}
 	}()
 	return out
 }
 
-//  op: fanout single string value to multiple channels
+//  op: fanout a single string value to multiple channels
 
-func (flo *flow) string_fanout(
-	in string_chan,
-	count uint8,
-  ) (out []string_chan) {
+func (flo *flow) string_fo(in string_chan, count uint8) (out []string_chan) {
 
 	out = make([]string_chan, count)
 	for i := uint8(0); i < count; i++ {
@@ -471,28 +443,25 @@ func (flo *flow) string_fanout(
 	}
 
 	go func() {
-		defer func() {
-			for _, a := range out {
-				close(a)
-			}
-		}()
+		<-compiling
 
 		for {
 			sv := <-in
 
-			//  not corrct
-			if sv == nil {
-				return
-			}
-
 			//  broadcast to channels in output slice
 
+			var wg sync.WaitGroup
+
+			wg.Add(int(count))
 			for _, sc := range out {
 				go func() {
 					sc <- sv
+					wg.Done()
 				}()
 			}
-			flo = flo.get()
+			wg.Wait()
+
+			flo = flo.next()
 		}
 	}()
 	return out

@@ -38,17 +38,21 @@ func rcaller(frame int) string {
 	if !ok {
 		die("runtime.Caller(%d) failed", frame)
 	}
-	return runtime.FuncForPC(pc).Name()
+	cn := runtime.FuncForPC(pc).Name()
+	if strings.HasPrefix(cn, "main.(*flow).") == true {
+		cn = cn[13:]
+	}
+	return cn
 	
 }
 
 //  write stack trace of all running goroutines into file floq.trace
 
-func tracedump() {
+func stacktrace() {
 	buf := make([]byte, 1<<20)
 	len := runtime.Stack(buf, true)
 
-	fmt.Fprintf(os.Stderr, "\ntrace in floq.trace\n")
+	fmt.Fprintf(os.Stderr, "\nstack trace in floq.trace\n")
 	os.WriteFile(
 		"floq.trace",
 		[]byte(fmt.Sprintf("\n=== Stack Trace ===\n%s\n", buf[:len])),
@@ -100,7 +104,7 @@ func main() {
 		)
 		caught_sig = <-c
 		if caught_sig == syscall.SIGQUIT {
-			tracedump()
+			stacktrace()
 		}
 		exit(0)
 	}()
@@ -139,7 +143,7 @@ var die_mux sync.Mutex
 
 func die(format string, args ...interface{}) {
 	die_mux.Lock()
-	os.Stderr.Write([]byte("\ngood bye, cruel world\n"))
+	os.Stderr.Write([]byte("\nfloq: good bye, cruel world\n"))
 	panic(fmt.Sprintf(format, args...))
 }
 

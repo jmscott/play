@@ -60,7 +60,7 @@ func init() {
 	const lf = rummy(rum_FALSE << 4)
 	const lt = rummy(rum_TRUE << 4)
 
-	//  PostgrSQL logical 'and' semantics for discovered values,
+	//  SQL logical 'and' semantics for discovered values,
 	//  applied sequentially
 	//
 	//  false and *	=>	false
@@ -125,7 +125,7 @@ func init() {
 	and[ln|rum_WAIT] = rum_WAIT
 	and[lw|rum_WAIT] = rum_WAIT
 
-	//  PostgrSQL logical 'or' semantics for discovered values,
+	//  SQL logical 'or' semantics for discovered values,
 	//  applied sequentially
 	//
 	//  true or *	=>	true
@@ -217,44 +217,24 @@ func (bv *bool_value) rummy() rummy {
         return rum_FALSE
 }
 
-func (flo *flow) wait_bool2(
-	op [137]rummy,
-	left, right bool_chan,
-) (
-	next rummy,
-) {
+// 
+func (flo *flow) wait_bool2(op [137]rummy, left, right bool_chan) (next rummy) {
 	var lv, rv *bool_value
 
 	next = rum_WAIT
+
+	//  read left or right bools until not waiting state
 	for next == rum_WAIT {
-
 		select {
-		case l := <-left:
-			if l == nil {
-				return rum_NIL
-			}
-
-			// cheap sanity test.  will go away soon
-			if lv != nil {
-				corrupt("left hand value out of sync")
-			}
-			lv = l
-
-		case r := <-right:
-			if r == nil {
-				return rum_NIL
-			}
-
-			// cheap sanity test.  will go away soon
-			if rv != nil {
-				corrupt("right hand value out of sync")
-			}
-			rv = r
+			case lv = <-left:
+			case rv = <-right:
 		}
+
+		//  build a rummy.  nil ok
 		next = op[(lv.rummy()<<4)|rv.rummy()]
 	}
 
-	//  drain unread channel.
+	//  drain unread left or right channel.
 	//
 	//  Note: reading in the background causes a multiple read of
 	//        same left/right hand side.  Why?  Shouldn't the flow
@@ -290,8 +270,7 @@ func (flo *flow) bool2(
 	out = make(bool_chan)
 
 	go func() {
-
-		defer close(out)
+		<-compiling
 
 		for {
 
@@ -310,51 +289,62 @@ func (flo *flow) bool2(
 				bool:    b,
 				is_null: is_null,
 			}
-			flo = flo.get()
+
+			flo = flo.next()
 		}
 	}()
 
 	return
 }
 
+//  send a constant "true" value
 func (flo *flow) const_true() (out bool_chan) {
 
 	out = make(bool_chan)
 
 	go func() {
+		<-compiling
+
 		for {
 			out <- &bool_value{
 				bool:	true,
 			}
-			flo = flo.get()
+
+			flo = flo.next()
 		}
 	}()
 
 	return out
 }
 
+//  send a constant "null" value
 func (flo *flow) const_false() (out bool_chan) {
 
 	out = make(bool_chan)
 
 	go func() {
+		<-compiling
+
 		for {
 			out <- &bool_value{
 				bool:	false,
 			}
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
 	return out
 }
 
+//  Negate a read boolean value
 func (flo *flow) not(in bool_chan) (out bool_chan) {
 
 	out = make(bool_chan)
 
 	go func() {
+		<-compiling
+
 		for {
 			bv := <- in
 
@@ -362,7 +352,8 @@ func (flo *flow) not(in bool_chan) (out bool_chan) {
 					bool:		!bv.bool,
 					is_null:	bv.is_null,
 			}
-			flo = flo.get()
+
+			flo = flo.next()
 		}
 	}()
 
@@ -387,37 +378,16 @@ func (a *ast) is_bool() bool {
 	return false
 }
 
-//  wait for left and right hand bools of any binary operator
-//
-//  Note: how does passing *bool_value compare to bool_value?
+//  Wait for both left and right hand bools of any binary operator
 
-func (left bool_chan) wait2(right bool_chan) (
-	lv, rv *bool_value, closed bool,
-) {
+func (left bool_chan) wait2(right bool_chan) (lv, rv *bool_value) {
 	for lv == nil || rv == nil {
 		select {
-		case lv = <- left:
-			closed = lv == nil
-			if closed {
-				return
-			}
-		case rv = <- right:
-			closed = rv == nil
-			if rv == nil {
-				return
-			}
+			case lv = <- left:
+			case rv = <- right:
 		}
 	}
 	return
-}
-
-func (out bool_chan) frisk(left, right bool_chan) {
-	if left == nil {
-		corrupt("left bool chan is nil")
-	}
-	if right == nil {
-		corrupt("right bool chan is nil")
-	}
 }
 
 //  compare two bools for equality
@@ -425,17 +395,12 @@ func (out bool_chan) frisk(left, right bool_chan) {
 func (flo *flow) eq_bool(left, right bool_chan) (out bool_chan) {
 
 	out = make(bool_chan)
-	out.frisk(left, right)
 
 	go func() {
+		<-compiling
 
 		for {
-			defer close(out)
-
-			lv, rv, done := left.wait2(right)
-			if done {
-				return
-			}
+			lv, rv := left.wait2(right)
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
@@ -444,7 +409,7 @@ func (flo *flow) eq_bool(left, right bool_chan) (out bool_chan) {
 				bv.bool = lv.bool == rv.bool
 			}
 			out <- bv
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -460,17 +425,12 @@ func eq_bool(flo *flow, left, right bool_chan) (out bool_chan) {
 func (flo *flow) neq_bool(left, right bool_chan) (out bool_chan) {
 
 	out = make(bool_chan)
-	out.frisk(left, right)
 
 	go func() {
+		<-compiling
 
 		for {
-			defer close(out)
-
-			lv, rv, done := left.wait2(right)
-			if done {
-				return
-			}
+			lv, rv := left.wait2(right)
 
 			bv := &bool_value {
 				is_null:	lv.is_null || rv.is_null,
@@ -479,7 +439,7 @@ func (flo *flow) neq_bool(left, right bool_chan) (out bool_chan) {
 				bv.bool = lv.bool != rv.bool
 			}
 			out <- bv
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -490,20 +450,14 @@ func neq_bool(flo *flow, left, right bool_chan) (out bool_chan) {
 	return flo.neq_bool(left, right)
 }
 
-func (out bool_chan) frisk_str(left, right string_chan) {
-	if left == nil {
-		corrupt("left string chan is nil")
-	}
-	if right == nil {
-		corrupt("right string chan is nil")
-	}
-}
-
+//  Cast a read boolean value to a string: "true" or "false"
 func (flo *flow) cast_bool(in bool_chan) (out string_chan) {
 
 	out = make(string_chan)
 
 	go func() {
+		<-compiling
+
 		for {
 			bv := <-in
 			
@@ -519,38 +473,46 @@ func (flo *flow) cast_bool(in bool_chan) (out string_chan) {
 			}
 			out <-sv
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 	return out
 }
 
+//  Is a boolean value null in an sql sense?
 func (flo *flow) is_null_bool(in bool_chan) (out bool_chan) {
 
 	out = make(bool_chan)
+
 	go func() {
+		<-compiling
+
 		for {
 			out <- &bool_value{
 				bool:	(<-in).is_null,
 			}
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
 	return out
 }
 
+//  Is a boolean value not null in an sql sense?
 func (flo *flow) is_not_null_bool(in bool_chan) (out bool_chan) {
 
 	out = make(bool_chan)
+
 	go func() {
+		<-compiling
+
 		for {
 			out <- &bool_value{
 				bool:	(<-in).is_null == false,
 			}
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 

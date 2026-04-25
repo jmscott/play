@@ -98,7 +98,7 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 	 */
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "exit status ") == false {
-			croak("Run(%s) failed: %s", cmd.name, err)
+			die("Run(%s) failed: %s", cmd.name, err)
 		}
 	}
 	if out == nil {		//  caller does not want osx_value
@@ -114,7 +114,7 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 
 	ps := cx.ProcessState
 	if ps == nil {
-		croak("osx_run: %s: process state is null", cmd.name)
+		die("process state is null: %s", cmd.name)
 	}
 
 	val.exit_code = ps.ExitCode()
@@ -137,9 +137,11 @@ func (flo *flow) osx_run_0(cmd *command) (out osx_chan) {
 	out = make(osx_chan)
 
 	go func() {
+		<-compiling
+
 		for {
 			flo.osx_run(cmd, nil, out)
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -153,21 +155,12 @@ func (flo *flow) osx_run_a(cmd *command, in argv_chan) (out osx_chan) {
 	out = make(osx_chan)
 
 	go func() {
+		<-compiling
+
 		for {
-			av := <-in
-			if av == nil {
-				return
-			}
+			flo.osx_run(cmd, (<-in).argv, out)
 
-			//  sanity test
-			if av.is_null {
-				corrupt("argv is is_null")
-			}
-
-			flo.osx_run(cmd, av.argv, out)
-			flo.run_group.Done()
-
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -185,6 +178,8 @@ func (flo *flow) osx_run_w(cmd *command, when bool_chan) (out osx_chan) {
 			command:	cmd,
 	}
 	go func() {
+		<-compiling
+
 		for {
 			bv := <- when
 			if bv.bool {
@@ -193,7 +188,7 @@ func (flo *flow) osx_run_w(cmd *command, when bool_chan) (out osx_chan) {
 				out <- null_osx
 			}
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -215,35 +210,52 @@ func (flo *flow) osx_run_aw(
 			command: cmd,
 		    }
 	go func() {
+		<-compiling
+
 		for {
 			var bv *bool_value
 			var av *argv_value
 
-			//  wait for both argv[] and when clause to finish
+			//  wait for both "when" clause (bv) and "argv (av)"
+			//  to finish.  also do cheap sanity tests
 			for bv == nil || av == nil {
 				select {
-				case bv = <-when:
-				case av = <-args:
+
+					//  wait for "when" expression
+					case bv = <-when:
+						//  cheap sanity test
+						if bv != nil {
+							die("bv seen twice")
+						}
+					//  wait for "argv" expression
+					case av = <-args:
+						//  cheap sanity test
+						if av != nil {
+							die("av seen twice")
+						}
 				}
 			}
 
-			//  Note:  when is argv null!
-
-			if bv.bool == true && av.is_null == false {
+			//  "when" clause is true, so run command.
+			//  osx_run send value
+			if bv.bool == true {
 				flo.osx_run(cmd, av.argv, out)
 			} else {
 				out <- null_osx
 			}
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
 	return out
 }
 
-//  read strings from multiple input channels and write assembled argv[]
+//  Read strings from multiple input channels to assemble an []string
+//  argv to pass to process execnd via ("run <command>(argv)"
+//  null strings are passed as ""
 
 func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
+
 
 	out = make(argv_chan)
 	argc := len(in_args)
@@ -252,18 +264,18 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 	//  before sending assembled argv[]
 
 	go func() {
-
-		defer close(out)
+		<-compiling
 
 		for {
 			var wg sync.WaitGroup
+
 			wg.Add(int(argc))
 			
 			argv := make([]string, argc)
 
+			//  wait for string arguments.  null values are
 			for i := 0;  i < argc;  i++ {
 				go func(int) {
-					//  Note: not handling null!!
 					argv[i] = (<- in_args[i]).string
 					wg.Done()
 				}(i)
@@ -273,20 +285,23 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 				argv:    argv,
 			}
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
 	return out
 }
 
+//  drain an osx record
 func (flo *flow) osx_null(in osx_chan) {
 
 	go func() {
+		<-compiling
+
 		for {
 			<- in
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 }
@@ -323,15 +338,15 @@ func (flo *flow) osx_proj_tuple_tsv(
 				att,
 				att.tsv_field,
 			)
-		corrupt(fmt + format, args...)
+		die(fmt + format, args...)
 	}
 
 	go func() {
+		<-compiling
+
 		for {
 			xv := <- in
-			if xv == nil {
-				return
-			}
+
 			var str string
 			
 			str = strings.TrimRight(xv.Stdout, "\n")
@@ -358,7 +373,7 @@ func (flo *flow) osx_proj_tuple_tsv(
 				is_null:	xv.is_null,
 			}
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 	return out
@@ -375,11 +390,10 @@ func (flo *flow) osx_proj_tuple_tsv_n(
 	out = make(string_chan)
 
 	go func() {
+		<-compiling
+
 		for {
 			xv := <- in
-			if xv == nil {
-				return
-			}
 
 			var str string
 			
@@ -405,7 +419,7 @@ func (flo *flow) osx_proj_tuple_tsv_n(
 				is_null:	is_null,
 			}
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 	return out
@@ -418,18 +432,17 @@ func (flo *flow) osx_proj_exit_code(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
+		<-compiling
+
 		for {
 			xv := <- in
-			if xv == nil {
-				return
-			}
 
 			out <- &uint64_value{
 				uint64:		uint64(xv.exit_code),
 				is_null:	xv.is_null,
 			}
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -443,18 +456,17 @@ func (flo *flow) osx_proj_Stdout(in osx_chan) (out string_chan) {
 	out = make(string_chan)
 
 	go func() {
+		<-compiling
+
 		for {
 			xv := <- in
-			if xv == nil {
-				return
-			}
 
 			out <- &string_value{
 				string:		xv.Stdout,
 				is_null:	xv.is_null,
 			}
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -468,18 +480,17 @@ func (flo *flow) osx_proj_Stderr(in osx_chan) (out string_chan) {
 	out = make(string_chan)
 
 	go func() {
+		<-compiling
+
 		for {
 			xv := <- in
-			if xv == nil {
-				return
-			}
 
 			out <- &string_value{
 				string:		xv.Stderr,
 				is_null:	xv.is_null,
 			}
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -493,18 +504,17 @@ func (flo *flow) osx_proj_pid(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
+		<-compiling
+
 		for {
 			xv := <- in
-			if xv == nil {
-				return
-			}
 
 			out <- &uint64_value{
 				uint64:		uint64(xv.pid),
 				is_null:	xv.is_null,
 			}
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -516,11 +526,10 @@ func (flo *flow) osx_proj_start_time(in osx_chan) (out string_chan) {
 	out = make(string_chan)
 
 	go func() {
+		<-compiling
+
 		for {
 			xv := <- in
-			if xv == nil {
-				return
-			}
 
 			out <- &string_value{
 				string:		xv.start_time.Format(
@@ -529,7 +538,7 @@ func (flo *flow) osx_proj_start_time(in osx_chan) (out string_chan) {
 				is_null:	xv.is_null,
 			}
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -543,18 +552,17 @@ func (flo *flow) osx_proj_wall_duration(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
+		<-compiling
+
 		for {
 			xv := <- in
-			if xv == nil {
-				return
-			}
 
 			out <- &uint64_value{
 				uint64:		uint64(xv.wall_duration),
 				is_null:	xv.is_null,
 			}
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -568,18 +576,17 @@ func (flo *flow) osx_proj_user_sec(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
+		<-compiling
+
 		for {
 			xv := <- in
-			if xv == nil {
-				return
-			}
 
 			out <- &uint64_value{
 				uint64:		uint64(xv.user_sec),
 				is_null:	xv.is_null,
 			}
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -593,18 +600,17 @@ func (flo *flow) osx_proj_user_usec(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
+		<-compiling
+
 		for {
 			xv := <- in
-			if xv == nil {
-				return
-			}
 
 			out <- &uint64_value{
 				uint64:		uint64(xv.user_usec),
 				is_null:	xv.is_null,
 			}
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -618,18 +624,17 @@ func (flo *flow) osx_proj_sys_usec(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
+		<-compiling
+
 		for {
 			xv := <- in
-			if xv == nil {
-				return
-			}
 
 			out <- &uint64_value{
 				uint64:		uint64(xv.sys_usec),
 				is_null:	xv.is_null,
 			}
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -643,18 +648,17 @@ func (flo *flow) osx_proj_sys_sec(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
+		<-compiling
+
 		for {
 			xv := <- in
-			if xv == nil {
-				return
-			}
 
 			out <- &uint64_value{
 				uint64:		uint64(xv.sys_sec),
 				is_null:	xv.is_null,
 			}
 
-			flo = flo.get()
+			flo = flo.next()
 		}
 	}()
 
@@ -663,7 +667,7 @@ func (flo *flow) osx_proj_sys_sec(in osx_chan) (out uint64_chan) {
 
 //  fanout an osx_value to listeners
 
-func (flo *flow) osx_fanout(in osx_chan, count uint8) (out []osx_chan) {
+func (flo *flow) osx_fo(in osx_chan, count uint8) (out []osx_chan) {
 
 	out = make([]osx_chan, count)
 	for i := uint8(0); i < count; i++ {
@@ -671,27 +675,25 @@ func (flo *flow) osx_fanout(in osx_chan, count uint8) (out []osx_chan) {
 	}
 
 	go func() {
-
-		defer func() {
-			for _, a := range out {
-				close(a)
-			}
-		}()
+		<-compiling
 
 		for {
 			xv := <-in
-			if xv == nil {
-				return
-			}
 
 			//  broadcast to channels in output slice
 
+			var wg sync.WaitGroup
+
+			wg.Add(int(count))
 			for _, xc := range out {
 				go func() {
 					xc <- xv
+					wg.Done()
 				}()
 			}
-			flo = flo.get()
+			wg.Wait()
+
+			flo = flo.next()
 		}
 	}()
 	return out

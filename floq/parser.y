@@ -24,12 +24,12 @@ func init() {
 
 	//  sanity test for mapping yy tokens to name
 	if yyToknames[3] != "__MIN_YYTOK" {
-		corrupt("yyToknames[3]!=__MIN_YYTOK: correct yacc command?")
+		die("yyToknames[3]!=__MIN_YYTOK: correct yacc command?")
 	}
 	//  simple sanity test
 	for i, nm := range yyToknames[4:] {
 		if yy_name(yy_name2tok(nm)) != nm {
-			corrupt("yy_name != yy_tok: %s@%d", nm, i + 4)
+			die("yy_name != yy_tok: %s@%d", nm, i + 4)
 		}
 	}
 
@@ -649,8 +649,9 @@ type yyLexState struct {
 
 func (lex *yyLexState) pushback(c rune) {
 
+	//  cheap sanity test
 	if lex.peek != 0 {
-		corrupt("pushback(): push before peek")
+		die("pushback(): push before peek")
 	}
 	lex.peek = c
 	if c == '\n' {
@@ -1036,10 +1037,9 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 			return nil
 		}
 	case IS_NULL, IS_NOT_NULL:
+		lex.line_no = left.line_no
 	default:
-		msg := fmt.Sprintf("new_rel_op:  yy token: %s", yy_name(tok))
-		corrupt(msg)
-		return nil	//  NOTREACHED
+		die("new_rel_op: yy token: %s", yy_name(tok))
 	}
 
 	a = &ast{
