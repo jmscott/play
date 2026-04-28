@@ -29,7 +29,8 @@ type compilation struct {
 	a2osxfo		map[*ast][]osx_chan		//  fanout osx records
 
 	//  fanout string values from <command>.<att>
-	a2strfo		map[*ast][]string_chan
+	a2strfo         map[*ast][]string_chan
+
 
 	//  fanout targets of run command.
 	cmd2osxfo		map[*command][]osx_chan
@@ -38,17 +39,17 @@ type compilation struct {
 	cmd2strfo		map[*command][]string_chan
 
 	//  number of operators running concurently in a single "flow"
-	concurrent_count	uint8
+	op_count	uint8
 }
 
 //  block operators from flowing while compiling.
 var compiling = make(chan(bool))
 
-func compile(root *ast) (*flow, uint8) {
+func compile(root *ast) *flow {
 
 	cmp := &compilation{
 			root:		root,
-			flo:		(*flow)(nil).new(uint64(0)),
+			flo:		(*flow)(nil).new(uint8(0)),
 
 			a2bool:		make(map[*ast]bool_chan),
 			a2str:		make(map[*ast]string_chan),
@@ -56,13 +57,12 @@ func compile(root *ast) (*flow, uint8) {
 			a2osx:		make(map[*ast]osx_chan),
 			a2argv:		make(map[*ast]argv_chan),
 			a2osxfo:	make(map[*ast][]osx_chan),
-			a2strfo:	make(map[*ast][]string_chan),
+			a2strfo:        make(map[*ast][]string_chan),
 			cmd2osxfo:	make(map[*command][]osx_chan),
 			cmd2strfo:	make(map[*command][]string_chan),
 	}
 	cmp.compile(root)
-
-	return cmp.flo, cmp.concurrent_count
+	return cmp.flo
 }
 
 //  compile an binary, boolean relational operator over two strings, uint64s
@@ -154,13 +154,8 @@ func (cmp *compilation) compile(a *ast) {
 	case yy_FALSE:
 		a2bool[a] = flo.const_false()
 	case yy_STRING:
-		//  in a CAST::string
-		if cmp.concurrent_count == 0 {
-			a.corrupt("yy_STRING: concurrent_count == 0")
-		}
-
 		//  compensate for default increment at end of switch
-		cmp.concurrent_count--
+		flo.decr()
 	case STRING:
 		a2str[a] = flo.const_string(a.string)
 	case UINT64:
@@ -168,6 +163,7 @@ func (cmp *compilation) compile(a *ast) {
 	case ARGV:
 		in := make([]string_chan, a.count)
 
+		///  argv for command is always strings
 		for n := a.left;  n != nil;  n = n.next {
 			in[n.order-1] = a2str[n]
 		}
@@ -235,8 +231,8 @@ func (cmp *compilation) compile(a *ast) {
 			cmd2osxfo[cmd] = a2osxfo[a]
 		}
 
-		//  extra concurrent for fanout
-		cmp.concurrent_count++
+		//  extra op  for fanout
+		flo.inc()
 	case FLOW:
 		cmd := a.command_ref
 		a2str[a] = flo.osx_flow(cmd)
@@ -337,10 +333,11 @@ func (cmp *compilation) compile(a *ast) {
 	case IS_NOT_NULL_BOOL:
 		a2bool[a] = flo.is_not_null_bool(a2bool[a.left])
 	case FLOQ, STMT_LIST, DEFINE:
-		cmp.concurrent_count--
+		//  compensate for default incr() at end of switch
+		flo.decr()
 	default:
 		_c("can not compile ast")
 	}
-	cmp.concurrent_count++
+	flo.inc()
 	cmp.compile(a.next)
 }

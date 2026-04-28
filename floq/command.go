@@ -292,7 +292,7 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 	return out
 }
 
-//  drain an osx record
+//  drain an osx record, for when "run <command>" has no target
 func (flo *flow) osx_null(in osx_chan) {
 
 	go func() {

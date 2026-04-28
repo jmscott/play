@@ -1,100 +1,78 @@
 package main
 
 import (
-	"sync"
-	"sync/atomic"
 	"bufio"
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"strings"
+	"sync"
 	"time"
 )
-
-//  a river to my people ...
-type flow_chan chan *flow
-
-type concurrent_group struct {
-
-	//  number of active waiters
-	waiter_count	int64
-
-	//  number of exited done
-	done_count	int64
-
-	flow_seq	uint64
-
-	//  lock for updating counts
-	mux		sync.Mutex
-
-	//  the wait group tracking concurrent operator goroutines.
-	gmux		sync.WaitGroup
-}
-
-var con_group concurrent_group
-
-func (cg *concurrent_group) next(count uint8) *flow {
-	cg.mux.Lock()
-	defer cg.mux.Unlock()
-
-	//  cheap sanity test to insure all waiters done
-	c := atomic.LoadInt64(&cg.waiter_count)
-	if c != 0  {
-		die("wait count not 0, %d instead", c)
-	}
-
-	cg.gmux.Add(int(count))
-	f := (*flow)(nil).new(atomic.AddUint64(&cg.flow_seq, 1))
-	return f
-}
-
-func (flo *flow) new(seq uint64) *flow {
-
-	return &flow{
-		seq:		seq,
-		start_time:	time.Now(),
-		done:		make(chan bool),
-	}
-}
-
-func (cg *concurrent_group) wait(caller string) {
-
-	//  increase waiter count and do cheap sanity test.
-	if atomic.AddInt64(&cg.waiter_count, 1) < 1 {
-		die("enter: waiter_count < 1: %s", caller)
-	}
-	cg.gmux.Wait()
-
-	//  decrement waiter count and do cheap sanity test
-	if atomic.AddInt64(&cg.waiter_count, -1) < 0 {
-		die("exit: waiter_count < 0: %s", caller)
-	}
-}
-
-func (cg *concurrent_group) done() {
-	cg.mux.Lock()
-	defer cg.mux.Unlock()
-
-	cg.gmux.Done()
-	atomic.AddInt64(&cg.done_count, -1)
-}
-
-func (cg *concurrent_group) wait_count() uint8 {
-
-	return uint8(atomic.LoadInt64(&cg.waiter_count))
-}
-
-var flow_cop_get	chan flow_chan
 
 type flow struct {
 	//  flow sequence, unique while floq running
 	seq		uint64
 
-	//  when flow started
+	//  when particular flow started
 	start_time	time.Time
 
-	//  wait for all op routies to finish
-	done		chan(bool)
+	//  synchronize all oproutines in this flow
+	wg_op		*sync.WaitGroup
+
+	//  number of operators in a single flow
+	//
+	//  Note:  is this not global, like rest of next_* variables?
+	op_count	uint8
+}
+
+//  a river to my people ...
+type flow_chan chan *flow
+
+func (flo *flow) new(op_count uint8) *flow {
+
+	var seq uint64
+
+	if flo != nil {
+		seq = flo.seq + 1
+	}
+
+	f := &flow{
+		seq:		seq,
+		start_time:	time.Now(),
+		op_count:	op_count,
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(int(op_count))
+	f.wg_op = &wg
+
+	return f
+}
+
+//   increment operator count for a flow by 1
+func (flo *flow) inc() {
+	flo.wg_op.Add(1)
+	flo.op_count++
+}
+
+//   decrement operator count for a flow by 1
+func (flo *flow) decr() {
+	
+	//  cheap sanity test
+	if flo.op_count < 1 {
+		die("op_count < 1")
+	}
+	flo.wg_op.Add(-1)
+	flo.op_count--
+}
+
+//   add opcounts
+func (flo *flow) add(delta uint8) {
+
+	
+	flo.wg_op.Add(int(delta))
+	flo.op_count += delta
 }
 
 //  start an os process as part of the "flow <command>" statement
@@ -110,35 +88,61 @@ type osx_start struct {
 	process		*os.Process
 }
 
+var next_mux sync.Mutex
+var next_flow *flow
+
+var next_lead_op_seen bool
+
+//  number of oproutines seen in current flow
+var next_op_count uint8
+
+//  get the next flow for an operator to crunch
 func (flo *flow) next() *flow {
+
 	caller := rcaller(2)
-
-
-	con_group.done()
-
-	//  wait for other oproutines to finish
-	<-flo.done
-
-
-	var f *flow
-
-	//  request the new active flow by sending channel
-	fc := make(flow_chan)
-	flow_cop_get <- fc
-
-	//  read the new flow
-	f = <- fc
-
-	//  cheap sanity tests
-	switch {
-	case f == nil:
-		die("next flow == <nil>: %s", caller)
-
-	case f == flo:
-		die("next flow == current flow: %s", caller)
+	if strings.HasSuffix(caller, ".func1") {
+		slen := len(caller)
+		caller = caller[:slen-6]
 	}
 
-	return f
+/*
+_wtf := func(format string, args ...interface{}) {
+
+	p := fmt.Sprintf("%p", flo)
+	p = p[len(p)-4:]
+
+	format = fmt.Sprintf("%s#%d@...%s: %s", caller, flo.seq, p, format)
+	WTF2(format, args...)
+}
+*/
+	flo.wg_op.Done()
+
+	//  wait for all operators in this flow to finish
+	flo.wg_op.Wait()
+
+	next_mux.Lock()
+	defer func() {
+		next_mux.Unlock()
+	}()
+
+	//  count the number of operators processed
+	next_op_count++
+
+	if next_lead_op_seen == false {
+		next_flow = flo.new(flo.op_count)
+		next_lead_op_seen = true
+	}
+	if next_op_count == flo.op_count {
+		next_op_count = 0
+		next_lead_op_seen = false
+	}
+
+	//  cheap sanity test
+	if next_flow == flo {
+		die("%s#%d: next_flow==flo: %p", caller, flo.seq,  flo)
+	}
+
+	return next_flow
 }
 
 //  start a process that runs perpetually.
@@ -204,33 +208,15 @@ func (flo *flow) start(cmd *command) (pro *osx_start) {
 	return pro
 }
 
-// The traffic cop goroutine who coordinates flow of operators.
-
-func (flo *flow) cop(goroutine_count uint8) {
-
-	active_flow := flo
-
-	flow_cop_get = make(chan flow_chan)
-
-	for {
-		if con_group.wait_count() == 0 {
-			done := active_flow.done
-			active_flow = con_group.next(goroutine_count)
-			close(done)
-		}
-
-		fc := <-flow_cop_get
-		fc <- active_flow
-	}
-}
-
-//  execute the statement "flow <command>();"
-
+//  start the comand in a "flow <command>();" and perptually feed the single
+//  output to a string channel.
 func (flo *flow) osx_flow(cmd *command) (out string_chan) {
 
 	out = make(string_chan)
 
 	go func() {
+		<-compiling
+
 		stdout := flo.start(cmd).stdout
 
 		for {
@@ -245,9 +231,4 @@ func (flo *flow) osx_flow(cmd *command) (out string_chan) {
 		}
 	}()
 	return
-}
-
-func (flo *flow) String() string {
-
-	return fmt.Sprintf("%p", flo)
 }
