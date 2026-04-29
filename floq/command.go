@@ -220,19 +220,20 @@ func (flo *flow) osx_run_aw(
 			//  to finish.  also do cheap sanity tests
 			for bv == nil || av == nil {
 				select {
-
-					//  wait for "when" expression
-					case bv = <-when:
-						//  cheap sanity test
-						if bv != nil {
-							die("bv seen twice")
-						}
-					//  wait for "argv" expression
-					case av = <-args:
-						//  cheap sanity test
-						if av != nil {
-							die("av seen twice")
-						}
+				//  wait for "when" expression
+				case b := <-when:
+					//  cheap sanity test
+					if bv != nil {
+						die("bv seen twice")
+					}
+					bv = b
+				//  wait for "argv" expression
+				case a := <-args:
+					//  cheap sanity test
+					if av != nil {
+						die("av seen twice")
+					}
+					av = a
 				}
 			}
 

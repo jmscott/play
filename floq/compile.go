@@ -188,6 +188,7 @@ func (cmp *compilation) compile(a *ast) {
 		a2str[a] = flo.concat(a2str[a.left], a2str[a.right])
 	case WHEN:
 		a2bool[a] = a2bool[a.left]
+		flo.decr()
 	case RUN:
 		argv := a.left
 		when := a.right
@@ -339,5 +340,6 @@ func (cmp *compilation) compile(a *ast) {
 		_c("can not compile ast")
 	}
 	flo.inc()
+WTF("%s: op_count: %d", yy_name(a.yy_tok), flo.op_count)
 	cmp.compile(a.next)
 }
