@@ -115,6 +115,7 @@ _wtf := func(format string, args ...interface{}) {
 	WTF2(format, args...)
 }
 */
+
 	flo.wg_op.Done()
 
 	//  wait for all operators in this flow to finish
@@ -128,10 +129,13 @@ _wtf := func(format string, args ...interface{}) {
 	//  count the number of operators processed
 	next_op_count++
 
+	//  begining of new flow
 	if next_lead_op_seen == false {
 		next_flow = flo.new(flo.op_count)
 		next_lead_op_seen = true
 	}
+
+	//  on final op of this flow
 	if next_op_count == flo.op_count {
 		next_op_count = 0
 		next_lead_op_seen = false

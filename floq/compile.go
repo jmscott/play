@@ -1,5 +1,7 @@
 package main
 
+import "regexp"
+
 type compilation struct {
 
 	root	*ast
@@ -320,7 +322,23 @@ func (cmp *compilation) compile(a *ast) {
 				fo[proj.call_order-1],
 				proj.field,
 		)
+	case MATCH:
+		re, err := regexp.Compile(a.right.string)
+		if err != nil {
+			_c("can not compile re: %s", a.right.string)
+		}
+		a2bool[a] = flo.match(a2str[a.left], re)
 
+		// Note: i have no idea why this decr() works!  
+		flo.decr()
+	case NOMATCH:
+		re, err := regexp.Compile(a.right.string)
+		if err != nil {
+			_c("can not compile re: %s", a.right.string)
+		}
+		a2bool[a] = flo.nomatch(a2str[a.left], re)
+		// Note: i have no idea why this decr() works!  
+		flo.decr()
 	case IS_NULL_UINT64:
 		a2bool[a] = flo.is_null_uint64(a2ui64[a.left])
 	case IS_NULL_BOOL:
@@ -340,6 +358,5 @@ func (cmp *compilation) compile(a *ast) {
 		_c("can not compile ast")
 	}
 	flo.inc()
-WTF("%s: op_count: %d", yy_name(a.yy_tok), flo.op_count)
 	cmp.compile(a.next)
 }
