@@ -4,17 +4,16 @@ import "regexp"
 
 //  Match a string against a compiled regular expression: "abc" =~ "[b]"
 
-func (flo *flow) match(left string_chan, re *regexp.Regexp) (out bool_chan) {
-
+func (flo *flow) match(in string_chan, re *regexp.Regexp) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
 		<-compiling
 
 		for {
-			// wait for left and right values to arrive
+			// wait for source string from left channel
 
-			lv := <- left
+			lv := <- in
 
 			bv := &bool_value {
 				is_null:	lv.is_null,
