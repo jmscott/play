@@ -208,3 +208,21 @@ func WTF(format string, args ...interface{}) {
 	format = caller + ": " + format
 	os.Stderr.WriteString(fmt.Sprintf("WTF: " + format, args...) + "\n")
 }
+
+//  project the flow sequence number
+func (flo *flow) proj_flow_seq() (out uint64_chan) {
+
+	out = make(uint64_chan)
+
+	go func() {
+		<-compiling
+
+		for {
+			out <- &uint64_value{
+				uint64:		flo.seq,
+			}
+			flo = flo.next()
+		}
+	}()
+	return
+}

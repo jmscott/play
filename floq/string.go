@@ -396,7 +396,7 @@ func (flo *flow) string_null(in string_chan) {
 //  The field is referenced by field number, offset from 1.
 //  A field out of bounds send a null string.
 
-func (flo *flow) project_tsv(in string_chan, field uint8) (out string_chan) {
+func (flo *flow) proj_tsv(in string_chan, field uint8) (out string_chan) {
 	
 	out = make(string_chan)
 

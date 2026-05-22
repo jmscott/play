@@ -426,7 +426,8 @@ func (a *ast) is_uint64() bool {
 		PROJECT_OSX_USER_SEC,
 		PROJECT_OSX_USER_USEC,
 		PROJECT_OSX_SYS_SEC,
-		PROJECT_OSX_SYS_USEC:
+		PROJECT_OSX_SYS_USEC,
+		PROJECT_FLOQ_FLOW_SEQ:
 		return true
 	}
 	return false

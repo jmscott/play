@@ -51,6 +51,7 @@ func init() {
 //  lowest numbered yytoken.  must be first in list.
 %token	__MIN_YYTOK
 
+%token	FLOQ  PROJECT_FLOQ_FLOW_SEQ
 %token	PARSE_ERROR
 %token	ARGV
 %token	yy_SET  ARRAY  
@@ -178,6 +179,20 @@ expr:
 			return 0
 		}
 		$$ = a
+	  }
+	|
+	  FLOQ  '$'  {
+	  	yylex.(*yyLexState).name_is_name = true
+	  }  name {
+	  	lex := yylex.(*yyLexState)
+
+		name := $4
+		if name != "flow_seq" {
+			lex.error("floq: unknown attribute: %s", name)
+			return 0
+		}
+
+		$$ = lex.ast(PROJECT_FLOQ_FLOW_SEQ)
 	  }
 	|
 	  COMMAND_REF  '.'  {
@@ -605,6 +620,7 @@ var keyword = map[string]int{
 	"define":		DEFINE,
 	"ExpandEnv":		EXPAND_ENV,
 	"false":		yy_FALSE,
+	"floq":			FLOQ,
 	"flow":			FLOW,
 	"is":			yy_IS,
 	"not":			NOT,

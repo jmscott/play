@@ -308,6 +308,8 @@ func (cmp *compilation) compile(a *ast) {
 				cmd,
 				proj.att_ref,
 		)
+	case PROJECT_FLOQ_FLOW_SEQ:
+		a2ui64[a] = flo.proj_flow_seq()
 	case PROJECT_OSX_TUPLE_TSV_N:
 		proj := a.proj_ref
 		fo := cmd2osxfo[proj.command_ref]
@@ -318,7 +320,7 @@ func (cmp *compilation) compile(a *ast) {
 	case PROJECT_TSV:
 		proj := a.proj_ref
 		fo := cmd2strfo[proj.command_ref]
-		a2str[a] = flo.project_tsv(
+		a2str[a] = flo.proj_tsv(
 				fo[proj.call_order-1],
 				proj.field,
 		)

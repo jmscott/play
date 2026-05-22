@@ -105,17 +105,6 @@ func (flo *flow) next() *flow {
 		caller = caller[:slen-6]
 	}
 
-/*
-_wtf := func(format string, args ...interface{}) {
-
-	p := fmt.Sprintf("%p", flo)
-	p = p[len(p)-4:]
-
-	format = fmt.Sprintf("%s#%d@...%s: %s", caller, flo.seq, p, format)
-	WTF2(format, args...)
-}
-*/
-
 	flo.wg_op.Done()
 
 	//  wait for all operators in this flow to finish
