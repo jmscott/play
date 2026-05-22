@@ -69,5 +69,6 @@ run say(tail.salutation, tail.who)
 ;
 END
 
+#  now run the script
 $ floq server echo.floq
 ```
