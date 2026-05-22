@@ -9,6 +9,8 @@
 #	Modern golang distribution.
 #	C compiler.  Both clang and gcc ok.
 #  Note:
+#	Add instructions on how to install goyacc!
+#
 #	Is GODIST relavent for modern golang?  Can we derive all from
 #	output of "$(GODIST)/bin/go environment" ?
 #
@@ -32,6 +34,7 @@ INSTALL_USER?=$(USER)
 INSTALL_GROUP?=$(USER)
 
 #
-#   Location of go executable.
+#   Location of go executable and yacc.
 #
-GO=/usr/local/go/bin/go
+#GOEXE=/usr/bin/go
+#GOYACC=/root/go/bin/goyacc
