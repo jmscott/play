@@ -5,7 +5,7 @@
 The program `floq` is a simple interpreter for coordinating the execution of
 unix processes by qualifying on the standard output, error and exit status
 of those processes.  The output of the processes - UTF8 only - can be
-`tuplified` and qualfied i n a pidgin query language.
+`tuplified` and qualfied in a pidgin query language.
 
 # Hello, World
 
