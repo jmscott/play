@@ -1,6 +1,6 @@
 # What is `floq`?
 
-`floq` stands for "Flow Query".
+`floq` abbreviates "Flow Query".
 
 The program `floq` is a simple interpreter that coordinates the execution of
 unix processes by qualifying on the output and exit status
