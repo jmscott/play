@@ -1,51 +1,41 @@
 include local.mk
 include play.mk
 
-DIST=./jmscott-play.dist
+MKMK=./jmscott-play.mkmk
 
-BINs := $(shell (. $(DIST) && echo $$BINs))
-SRCs := $(shell (. $(DIST) && echo $$SRCs))
-LIBs := $(shell (. $(DIST) && echo $$LIBs))
-COMPILED := $(shell (. $(DIST) && echo $$COMPILED))
+BINs := $(shell (. $(MKMK) && echo $$BINs))
+SRCs := $(shell (. $(MKMK) && echo $$SRCs))
+COMPILEs := $(shell (. $(MKMK) && echo $$COMPILEs))
 
-all: $(COMPILED)
+all: $(COMPILEs)
 
 clean:
-	rm -f $(COMPILED)
+	rm -f $(COMPILEs)
 
-install: all
+install-dirs:
 	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=rx	\
 		-d $(PLAY_PREFIX)
 	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=rx	\
 		-d $(PLAY_PREFIX)/bin
 	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=rx	\
 		-d $(PLAY_PREFIX)/src
-	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=rx	\
-		-d $(PLAY_PREFIX)/lib
 
+install: install-dirs all
 	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m ugo=xr	\
-		$(COMPILED)						\
+		$(COMPILEs)						\
 		$(PLAY_PREFIX)/bin
 	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=rx	\
 		$(SRCs)							\
 		$(PLAY_PREFIX)/src
-	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m ugo=r		\
-		$(LIBs)							\
-		$(PLAY_PREFIX)/lib
 
 utf8-frisk: utf8-frisk.c
 	cc -Wall -Wextra -o utf8-frisk utf8-frisk.c
 
-dist: all
-	make-dist $(DIST)
+tar: all
+	make-make tar $(MKMK)
 
 distclean:
 	rm -rf $(PLAY_PREFIX)/bin
-	rm -rf $(PLAY_PREFIX)/lib
 	rm -rf $(PLAY_PREFIX)/src
 
-world:
-	$(MAKE) $(MFLAGS) clean
-	$(MAKE) $(MFLAGS) all
-	$(MAKE) $(MFLAGS) distclean
-	$(MAKE) $(MFLAGS) install
+world: clean all distclean install
