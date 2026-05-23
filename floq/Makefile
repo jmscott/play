@@ -24,17 +24,17 @@
 include ../local.mk
 include ../play.mk
 
-_MAKE=$(MAKE) $(MFLAGS)
-
-MKMK=play-floq.mkmk
+MKMK=jmscott-play-floq.mkmk
 
 SRCs := $(shell  (. ./$(MKMK) && echo $$SRCs))
 BINs := $(shell  (. ./$(MKMK) && echo $$BINs))
 SBINs := $(shell  (. ./$(MKMK) && echo $$SBINs))
 LIBs := $(shell  (. ./$(MKMK) && echo $$LIBs))
+LIBEXECs := $(shell  (. ./$(MKMK) && echo $$LIBEXECs))
 COMPILEs := $(shell  (. ./$(MKMK) && echo $$COMPILEs))
 GOSRCs := $(shell  (. ./$(MKMK) && echo $$GOSRCs))
 
+#  one day i (jmscott) will grok golang modules
 export GO111MODULE := off
 
 #
@@ -79,6 +79,46 @@ frisk:
 	make-make tar $(MKMK)
 	@rm --force --verbose play-floq-20*.tar.bz2
 	@echo;  echo;  echo OK frisk passed
+install-dirs:
+	cd .. && $(_MAKE) install-dirs
+
+	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=rx	\
+		-d $(PLAY_PREFIX)/bin
+	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=rx	\
+		-d $(PLAY_PREFIX)/lib
+	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=rx	\
+		-d $(PLAY_PREFIX)/libexec
+	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=rx	\
+		-d $(PLAY_PREFIX)/src
+	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=rx	\
+		-d $(PLAY_PREFIX)/src/floq
+
+install: install-dirs all
+	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=rx	\
+		$(BINs)							\
+		$(PLAY_PREFIX)/bin
+
+	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=rx	\
+		$(LIBs)							\
+		$(PLAY_PREFIX)/lib
+
+	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=rx	\
+		$(LIBEXECs)						\
+		$(PLAY_PREFIX)/libexec
+
+	install -g $(INSTALL_GROUP) -o $(INSTALL_USER) -m u=rwx,go=rx	\
+		$(SRCs)							\
+		$(PLAY_PREFIX)/src/floq
 world:
-	$(MAKE) $(MFLAGS) clean
-	$(MAKE) $(MFLAGS) all
+	$(_MAKE) clean
+	$(_MAKE) all
+	$(_MAKE) distclean
+	$(_MAKE) install
+distclean:
+	test ! -d $(PLAY_PREFIX)/bin || (				\
+		cd $(PLAY_PREFIX)/bin && rm --force --verbose $(BINs))
+	test ! -d $(PLAY_PREFIX)/lib || (				\
+		cd $(PLAY_PREFIX)/lib && rm --force --verbose $(LIBs))
+	test ! -d $(PLAY_PREFIX)/libexec || (				\
+		cd $(PLAY_PREFIX)/libexec && rm --force --verbose $(LIBEXECs))
+	rm --force --verbose $((PLAY_PREFIX)/src/floq
