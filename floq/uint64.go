@@ -429,6 +429,8 @@ func (a *ast) is_uint64() bool {
 		PROJECT_OSX_SYS_USEC,
 		PROJECT_FLOQ_FLOW_SEQ:
 		return true
+	case CONDITIONAL:
+		return a.right.next.is_uint64()
 	}
 	return false
 }
@@ -444,4 +446,46 @@ func (uv *uint64_value) String() string {
 		return "NULL"
 	}
 	return strconv.FormatUint(uv.uint64, 10)
+}
+
+//  ternary conditional operator (bool ? uint64: uint64)
+func (flo *flow) cond3_uint64(
+	in_test bool_chan,
+	in_if_true,
+	in_if_false uint64_chan,
+) (out uint64_chan) {
+
+	out = make(uint64_chan)
+
+	go func() {
+		<- compiling
+
+		for {
+			var bv *bool_value
+			var uv_t, uv_f *uint64_value
+
+			//  wait for test, if true and if false values
+			for bv == nil || uv_t == nil || uv_f == nil {
+				select {
+					case bv = <- in_test:
+					case uv_t = <- in_if_true:
+					case uv_f = <- in_if_false:
+				}
+			}
+
+			//  if test is null then ?: expression is null
+			//  otherwise send true or false uint64.
+			if bv.is_null {
+				out <- &uint64_value{is_null:true}
+			} else {
+				if bv.bool {
+					out <- uv_t
+				} else {
+					out <- uv_f
+				}
+			}
+			flo = flo.next()
+		}
+	}()
+	return out
 }

@@ -374,6 +374,8 @@ func (a *ast) is_bool() bool {
 	       IS_NOT_NULL_BOOL, IS_NOT_NULL_UINT64, IS_NOT_NULL_STRING,
 	     MATCH, NOMATCH:
 		return true
+	case CONDITIONAL:
+		return a.right.next.is_bool()
 	}
 	return false
 }
@@ -516,5 +518,44 @@ func (flo *flow) is_not_null_bool(in bool_chan) (out bool_chan) {
 		}
 	}()
 
+	return out
+}
+//  ternary conditional operator (bool ? bool: bool)
+func (flo *flow) cond3_bool(
+	in_test, in_if_true, in_if_false bool_chan,
+) (out bool_chan) {
+
+	out = make(bool_chan)
+
+	go func() {
+		<- compiling
+
+		for {
+			var bv *bool_value
+			var bv_t, bv_f *bool_value
+
+			//  wait for test, if true and if false values
+			for bv == nil || bv_t == nil || bv_f == nil {
+				select {
+					case bv = <- in_test:
+					case bv_t = <- in_if_true:
+					case bv_f = <- in_if_false:
+				}
+			}
+
+			//  if test is null then ?: expression is null;
+			//  otherwise send true or false bool.
+			if bv.is_null {
+				out <- &bool_value{is_null:true}
+			} else {
+				if bv.bool {
+					out <- bv_t
+				} else {
+					out <- bv_f
+				}
+			}
+			flo = flo.next()
+		}
+	}()
 	return out
 }

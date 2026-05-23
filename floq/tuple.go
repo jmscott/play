@@ -11,7 +11,9 @@ import (
 type attribute struct {
 	name		string
 	matches		*regexp.Regexp
-	tsv_field	uint8			//  field offset in tsv row
+
+	//  Note: is "tab_offset" a better name?
+	tab_field	uint8			//  field offset in tsv row
 	tuple_ref	*tuple			//  points to "define tuple"
 }
 
@@ -67,7 +69,7 @@ func new_tuple(name string, define *ast) (*tuple, error) {
 	for as := atts.left;  as != nil;  as = as.next {
 
 		_et := func(fmt string, args ...interface{}) (*tuple, error) {
-			fmt = as.name + ": tsv_field: " + fmt
+			fmt = as.name + ": tab_field: " + fmt
 			return _e(fmt, args...)
 		}
 
@@ -81,10 +83,10 @@ func new_tuple(name string, define *ast) (*tuple, error) {
 			tuple_ref:	tup,
 		}
 
-		has_tsv_field := false
+		has_tab_field := false
 		has_matches := false
 
-		//  only elements named "matches" and "tsv_field" are valid
+		//  only elements named "matches" and "tab_field" are valid
 		for a := as.left;  a != nil;  a = a.next {
 			var err error
 
@@ -96,7 +98,7 @@ func new_tuple(name string, define *ast) (*tuple, error) {
 					return _em("%s", err)
 				}
 				has_matches = true
-			case "tsv_field":
+			case "tab_field":
 				if a.uint64 == 0 {
 					return _et("cannot be 0")
 				}
@@ -104,10 +106,10 @@ func new_tuple(name string, define *ast) (*tuple, error) {
 					return _et("%d > 255", a.uint64)
 				}
 				
-				//  Note:  tsv_field must be unique
+				//  Note:  tab_field must be unique
 				fld := uint8(a.uint64)
 				for _, at2 := range tup.atts {
-					if at2.tsv_field == fld {
+					if at2.tab_field == fld {
 						return _et(
 							"%s and %s: same %d",
 							at.name,
@@ -117,7 +119,7 @@ func new_tuple(name string, define *ast) (*tuple, error) {
 					}
 				}
 
-				//  insure tsv_fields are sequential
+				//  insure tab_fields are sequential
 
 				if prev_fld == 0 {
 					if fld != 1 {
@@ -136,9 +138,9 @@ func new_tuple(name string, define *ast) (*tuple, error) {
 						)
 					}
 				}
-				at.tsv_field = fld
+				at.tab_field = fld
 				prev_fld = fld
-				has_tsv_field = true
+				has_tab_field = true
 			default:
 				return _e("unknown element: \"%s\"", a.name)
 			}
@@ -146,7 +148,7 @@ func new_tuple(name string, define *ast) (*tuple, error) {
 		if has_matches == false {
 			return _em("missing element")
 		}
-		if has_tsv_field == false {
+		if has_tab_field == false {
 			return _et("missing element")
 		}
 		tup.atts[as.name] = at

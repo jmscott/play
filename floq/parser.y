@@ -2,6 +2,10 @@
  *  Synopsis:
  *	Build an abstract syntax tree for "floq" language.
  *  Note:
+ *	Consider defining multiple commands with single define!
+ *
+ *		define commands (name, name2) as {...
+ *
  *	type yy_tok needs String()!  perhaps an ast.my_yy_tok?
  *
  *	func lookahead() ignores eof.  that is not correct.
@@ -67,6 +71,7 @@ func init() {
 %token	EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
 %token	CONCAT
 %token	WHEN
+%token  CONDITIONAL
 
 //  project the rusage variables <commamd>$<var>
 
@@ -101,6 +106,7 @@ func init() {
 %type	<command_ref>	COMMAND_REF
 %type	<tuple_ref>	TUPLE_REF
 
+%right			'?'  ':'
 %left			yy_OR  yy_AND
 %left			EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
 %left			CONCAT
@@ -282,6 +288,7 @@ expr:
 		}
 	  }
 	|
+	  //  =~ regex operator
 	  expr  MATCH  expr
 	  {
 		$$ = yylex.(*yyLexState).new_rel_op(MATCH, $1, $3)
@@ -290,6 +297,7 @@ expr:
 		}
 	  }
 	|
+	  //  !~ regex operator
 	  expr  NOMATCH  expr
 	  {
 		$$ = yylex.(*yyLexState).new_rel_op(NOMATCH, $1, $3)
@@ -333,6 +341,39 @@ expr:
 	  '('  expr  ')'
 	  {
 	  	$$ = $2
+	  }
+	|
+	  expr  '?'  expr  ':'  expr
+	  {
+	  	lex := yylex.(*yyLexState)
+
+		test := $1
+		if_true := $3
+		if_false := $5
+
+		if test.is_bool() == false {
+WTF("test=%s", test)
+			lex.error("test in terney ?: is not bool")
+			return 0
+		}
+		//  result conditions must be same data type
+		switch {
+
+		case if_true.is_bool() && if_false.is_bool():
+		case if_true.is_uint64() && if_false.is_uint64():
+		case if_true.is_string() && if_false.is_string():
+
+		default:
+			lex.error("conditional ?: if true/false types not same")
+			return 0
+		}
+
+		cond := lex.ast(CONDITIONAL)
+		cond.push_left(test)
+		cond.push_right(if_true)
+		cond.push_right(if_false)
+		
+		$$ = cond
 	  }
 	;
 
@@ -476,6 +517,7 @@ stmt:
 	  	$$ = define
 	  }
 	|
+	  //  Note: consider option to disallow null tuples.
 	  DEFINE  TUPLE  name  AS  set
 	  {
 	  	var err error
@@ -723,7 +765,7 @@ func (lex *yyLexState) ast(yy_tok int, args...*ast) *ast {
 		} else if i == 1 {
 			an.push_right(a)
 		} else {
-			an.corrupt("ast: args range > 1: %d", i)
+			an.corrupt("ast: more than two args")
 		}
 	}
 	return an
@@ -1375,7 +1417,7 @@ func (lex *yyLexState) project_tuple(cmd *command, name string) (a *ast) {
 				command_ref: cmd,
 				att_ref: att,
 				call_order:	cmd.ref_count,
-				field:		att.tsv_field,
+				field:		att.tab_field,
 			}
 	return
 }

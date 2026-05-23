@@ -330,14 +330,14 @@ func (flo *flow) osx_proj_tuple_tsv(
   ) (out string_chan) {
 
 	out = make(string_chan)
-	tsv_field := att.tsv_field-1
+	tab_field := att.tab_field-1
 
 	_die := func (format string, args ...interface{}) {
 		fmt := fmt.Sprintf(
 				"%s: %s#%d: xv.Stdout: ",
 				cmd,
 				att,
-				att.tsv_field,
+				att.tab_field,
 			)
 		die(fmt + format, args...)
 	}
@@ -360,7 +360,7 @@ func (flo *flow) osx_proj_tuple_tsv(
 				_die("not %d fields", len(att.tuple_ref.atts))
 			}
 
-			str = fld[tsv_field]
+			str = fld[tab_field]
 			if att.matches.MatchString(str) == false {
 				_die(
 					"matches fails: %s !~ %s",

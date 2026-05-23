@@ -301,6 +301,8 @@ func (a *ast) is_string() bool {
 		if a.right.yy_tok == yy_STRING {
 			return true
 		}
+	case CONDITIONAL:
+		return a.right.next.is_string()
 	}
 	return false
 }
@@ -392,9 +394,15 @@ func (flo *flow) string_null(in string_chan) {
 	}()
 }
 
-//  Project a string inside tab separated line of fields.
-//  The field is referenced by field number, offset from 1.
-//  A field out of bounds send a null string.
+/*
+ *  Project a string inside tab separated line of fields.
+ *  The field is referenced by field number, offset from 1.
+ *  A field out of bounds send a null string.
+ *
+ *  Note:
+ *	Consider an option in tuple to disallow nulls!
+ */
+
 
 func (flo *flow) proj_tsv(in string_chan, field uint8) (out string_chan) {
 	
@@ -461,6 +469,48 @@ func (flo *flow) string_fo(in string_chan, count uint8) (out []string_chan) {
 			}
 			wg.Wait()
 
+			flo = flo.next()
+		}
+	}()
+	return out
+}
+
+//  ternary conditional operator (bool ? string: string)
+func (flo *flow) cond3_string(
+	in_test bool_chan,
+	in_if_true,
+	in_if_false string_chan,
+) (out string_chan) {
+
+	out = make(string_chan)
+
+	go func() {
+		<- compiling
+
+		for {
+			var bv *bool_value
+			var sv_t, sv_f *string_value
+
+			//  wait for test, if true and if false values
+			for bv == nil || sv_t == nil || sv_f == nil {
+				select {
+					case bv = <- in_test:
+					case sv_t = <- in_if_true:
+					case sv_f = <- in_if_false:
+				}
+			}
+
+			//  if test is null then ?: expression is null;
+			//  otherwise send true or false strings.
+			if bv.is_null {
+				out <- &string_value{is_null:true}
+			} else {
+				if bv.bool {
+					out <- sv_t
+				} else {
+					out <- sv_f
+				}
+			}
 			flo = flo.next()
 		}
 	}()

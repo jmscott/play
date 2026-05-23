@@ -356,6 +356,17 @@ func (cmp *compilation) compile(a *ast) {
 	case FLOQ, STMT_LIST, DEFINE:
 		//  compensate for default incr() at end of switch
 		flo.decr()
+	case CONDITIONAL:
+		switch {
+		case a.is_string():
+			a2str[a] = flo.cond3_string(
+					a2bool[a.left],
+					a2str[a.right],
+					a2str[a.right.next],
+			)
+		default:
+			_c("type not string/uint64/bool")
+		}
 	default:
 		_c("can not compile ast")
 	}
