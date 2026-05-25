@@ -40,6 +40,7 @@ state 4
 	stmt:  DEFINE.yy_SET name AS set 
 	stmt:  DEFINE.TUPLE name AS set 
 	stmt:  DEFINE.COMMAND name AS set 
+	stmt:  DEFINE.COMMAND name '.' name 
 	stmt:  DEFINE.COMMAND name '.' TUPLE_REF AS set 
 
 	yy_SET  shift 9
@@ -78,9 +79,9 @@ state 7
 
 
 state 8
-	stmt_list:  stmt ';'.    (59)
+	stmt_list:  stmt ';'.    (60)
 
-	.  reduce 59 (src line 628)
+	.  reduce 60 (src line 632)
 
 
 state 9
@@ -105,6 +106,7 @@ state 10
 
 state 11
 	stmt:  DEFINE COMMAND.name AS set 
+	stmt:  DEFINE COMMAND.name '.' name 
 	stmt:  DEFINE COMMAND.name '.' TUPLE_REF AS set 
 
 	COMMAND_REF  shift 20
@@ -115,9 +117,9 @@ state 11
 	name  goto 22
 
 state 12
-	stmt:  RUN name.    (55)
+	stmt:  RUN name.    (56)
 
-	.  reduce 55 (src line 588)
+	.  reduce 56 (src line 592)
 
 
 state 13
@@ -125,25 +127,25 @@ state 13
 	stmt:  RUN COMMAND_REF.'(' arg_list ')' qualification 
 
 	'('  shift 23
-	.  reduce 36 (src line 407)
+	.  reduce 36 (src line 406)
 
 
 state 14
 	name:  NAME.    (35)
 
-	.  reduce 35 (src line 399)
+	.  reduce 35 (src line 398)
 
 
 state 15
 	name:  TUPLE_REF.    (37)
 
-	.  reduce 37 (src line 413)
+	.  reduce 37 (src line 412)
 
 
 state 16
-	stmt:  FLOW name.    (56)
+	stmt:  FLOW name.    (57)
 
-	.  reduce 56 (src line 597)
+	.  reduce 57 (src line 601)
 
 
 state 17
@@ -151,13 +153,13 @@ state 17
 	stmt:  FLOW COMMAND_REF.'(' ')' 
 
 	'('  shift 24
-	.  reduce 36 (src line 407)
+	.  reduce 36 (src line 406)
 
 
 state 18
-	stmt_list:  stmt_list stmt ';'.    (60)
+	stmt_list:  stmt_list stmt ';'.    (61)
 
-	.  reduce 60 (src line 633)
+	.  reduce 61 (src line 637)
 
 
 state 19
@@ -170,7 +172,7 @@ state 19
 state 20
 	name:  COMMAND_REF.    (36)
 
-	.  reduce 36 (src line 407)
+	.  reduce 36 (src line 406)
 
 
 state 21
@@ -182,6 +184,7 @@ state 21
 
 state 22
 	stmt:  DEFINE COMMAND name.AS set 
+	stmt:  DEFINE COMMAND name.'.' name 
 	stmt:  DEFINE COMMAND name.'.' TUPLE_REF AS set 
 
 	AS  shift 27
@@ -191,7 +194,7 @@ state 22
 
 state 23
 	stmt:  RUN COMMAND_REF '('.arg_list ')' qualification 
-	arg_list: .    (61)
+	arg_list: .    (62)
 
 	FLOQ  shift 33
 	COMMAND_REF  shift 32
@@ -202,7 +205,7 @@ state 23
 	yy_FALSE  shift 39
 	NOT  shift 34
 	'('  shift 35
-	.  reduce 61 (src line 640)
+	.  reduce 62 (src line 644)
 
 	string  goto 37
 	arg_list  goto 29
@@ -241,18 +244,22 @@ state 27
 	set  goto 46
 
 state 28
+	stmt:  DEFINE COMMAND name '.'.name 
 	stmt:  DEFINE COMMAND name '.'.TUPLE_REF AS set 
 
-	TUPLE_REF  shift 47
+	COMMAND_REF  shift 20
+	TUPLE_REF  shift 48
+	NAME  shift 14
 	.  error
 
+	name  goto 47
 
 state 29
 	stmt:  RUN COMMAND_REF '(' arg_list.')' qualification 
 	arg_list:  arg_list.',' expr 
 
-	')'  shift 48
-	','  shift 49
+	')'  shift 49
+	','  shift 50
 	.  error
 
 
@@ -272,23 +279,23 @@ state 30
 	expr:  expr.yy_IS yy_NULL 
 	expr:  expr.yy_IS NOT yy_NULL 
 	expr:  expr.'?' expr ':' expr 
-	arg_list:  expr.    (62)
+	arg_list:  expr.    (63)
 
-	yy_AND  shift 51
-	yy_OR  shift 52
-	CAST  shift 50
-	EQ  shift 55
-	NEQ  shift 56
-	GT  shift 58
-	GTE  shift 57
-	LT  shift 53
-	LTE  shift 54
-	MATCH  shift 59
-	NOMATCH  shift 60
-	CONCAT  shift 61
-	yy_IS  shift 62
-	'?'  shift 63
-	.  reduce 62 (src line 645)
+	yy_AND  shift 52
+	yy_OR  shift 53
+	CAST  shift 51
+	EQ  shift 56
+	NEQ  shift 57
+	GT  shift 59
+	GTE  shift 58
+	LT  shift 54
+	LTE  shift 55
+	MATCH  shift 60
+	NOMATCH  shift 61
+	CONCAT  shift 62
+	yy_IS  shift 63
+	'?'  shift 64
+	.  reduce 63 (src line 649)
 
 
 state 31
@@ -302,16 +309,16 @@ state 32
 	expr:  COMMAND_REF.'.' $$14 name 
 	expr:  COMMAND_REF.'[' UINT64 ']' 
 
-	'$'  shift 64
-	'.'  shift 65
-	'['  shift 66
+	'$'  shift 65
+	'.'  shift 66
+	'['  shift 67
 	.  error
 
 
 state 33
 	expr:  FLOQ.'$' $$12 name 
 
-	'$'  shift 67
+	'$'  shift 68
 	.  error
 
 
@@ -331,7 +338,7 @@ state 34
 
 	string  goto 37
 	constant  goto 31
-	expr  goto 68
+	expr  goto 69
 
 state 35
 	expr:  '('.expr ')' 
@@ -349,7 +356,7 @@ state 35
 
 	string  goto 37
 	constant  goto 31
-	expr  goto 69
+	expr  goto 70
 
 state 36
 	constant:  UINT64.    (4)
@@ -388,57 +395,64 @@ state 41
 	STRING  shift 40
 	.  error
 
-	string  goto 70
+	string  goto 71
 
 state 42
-	stmt:  FLOW COMMAND_REF '(' ')'.    (58)
+	stmt:  FLOW COMMAND_REF '(' ')'.    (59)
 
-	.  reduce 58 (src line 616)
+	.  reduce 59 (src line 620)
 
 
 state 43
 	stmt:  DEFINE yy_SET name AS set.    (51)
 
-	.  reduce 51 (src line 510)
+	.  reduce 51 (src line 509)
 
 
 state 44
 	set:  '{'.$$49 element_list '}' 
 	$$49: .    (49)
 
-	.  reduce 49 (src line 497)
+	.  reduce 49 (src line 496)
 
-	$$49  goto 71
+	$$49  goto 72
 
 state 45
 	stmt:  DEFINE TUPLE name AS set.    (52)
 
-	.  reduce 52 (src line 519)
+	.  reduce 52 (src line 518)
 
 
 state 46
 	stmt:  DEFINE COMMAND name AS set.    (53)
 
-	.  reduce 53 (src line 541)
+	.  reduce 53 (src line 540)
 
 
 state 47
-	stmt:  DEFINE COMMAND name '.' TUPLE_REF.AS set 
+	stmt:  DEFINE COMMAND name '.' name.    (54)
 
-	AS  shift 72
-	.  error
+	.  reduce 54 (src line 563)
 
 
 state 48
+	name:  TUPLE_REF.    (37)
+	stmt:  DEFINE COMMAND name '.' TUPLE_REF.AS set 
+
+	AS  shift 73
+	.  reduce 37 (src line 412)
+
+
+state 49
 	stmt:  RUN COMMAND_REF '(' arg_list ')'.qualification 
 	qualification: .    (33)
 
-	WHEN  shift 74
-	.  reduce 33 (src line 380)
+	WHEN  shift 75
+	.  reduce 33 (src line 379)
 
-	qualification  goto 73
+	qualification  goto 74
 
-state 49
+state 50
 	arg_list:  arg_list ','.expr 
 
 	FLOQ  shift 33
@@ -454,35 +468,17 @@ state 49
 
 	string  goto 37
 	constant  goto 31
-	expr  goto 75
-
-state 50
-	expr:  expr CAST.yy_STRING 
-
-	yy_STRING  shift 76
-	.  error
-
+	expr  goto 76
 
 state 51
-	expr:  expr yy_AND.expr 
+	expr:  expr CAST.yy_STRING 
 
-	FLOQ  shift 33
-	COMMAND_REF  shift 32
-	EXPAND_ENV  shift 41
-	UINT64  shift 36
-	STRING  shift 40
-	yy_TRUE  shift 38
-	yy_FALSE  shift 39
-	NOT  shift 34
-	'('  shift 35
+	yy_STRING  shift 77
 	.  error
 
-	string  goto 37
-	constant  goto 31
-	expr  goto 77
 
 state 52
-	expr:  expr yy_OR.expr 
+	expr:  expr yy_AND.expr 
 
 	FLOQ  shift 33
 	COMMAND_REF  shift 32
@@ -500,7 +496,7 @@ state 52
 	expr  goto 78
 
 state 53
-	expr:  expr LT.expr 
+	expr:  expr yy_OR.expr 
 
 	FLOQ  shift 33
 	COMMAND_REF  shift 32
@@ -518,7 +514,7 @@ state 53
 	expr  goto 79
 
 state 54
-	expr:  expr LTE.expr 
+	expr:  expr LT.expr 
 
 	FLOQ  shift 33
 	COMMAND_REF  shift 32
@@ -536,7 +532,7 @@ state 54
 	expr  goto 80
 
 state 55
-	expr:  expr EQ.expr 
+	expr:  expr LTE.expr 
 
 	FLOQ  shift 33
 	COMMAND_REF  shift 32
@@ -554,7 +550,7 @@ state 55
 	expr  goto 81
 
 state 56
-	expr:  expr NEQ.expr 
+	expr:  expr EQ.expr 
 
 	FLOQ  shift 33
 	COMMAND_REF  shift 32
@@ -572,7 +568,7 @@ state 56
 	expr  goto 82
 
 state 57
-	expr:  expr GTE.expr 
+	expr:  expr NEQ.expr 
 
 	FLOQ  shift 33
 	COMMAND_REF  shift 32
@@ -590,7 +586,7 @@ state 57
 	expr  goto 83
 
 state 58
-	expr:  expr GT.expr 
+	expr:  expr GTE.expr 
 
 	FLOQ  shift 33
 	COMMAND_REF  shift 32
@@ -608,7 +604,7 @@ state 58
 	expr  goto 84
 
 state 59
-	expr:  expr MATCH.expr 
+	expr:  expr GT.expr 
 
 	FLOQ  shift 33
 	COMMAND_REF  shift 32
@@ -626,7 +622,7 @@ state 59
 	expr  goto 85
 
 state 60
-	expr:  expr NOMATCH.expr 
+	expr:  expr MATCH.expr 
 
 	FLOQ  shift 33
 	COMMAND_REF  shift 32
@@ -644,7 +640,7 @@ state 60
 	expr  goto 86
 
 state 61
-	expr:  expr CONCAT.expr 
+	expr:  expr NOMATCH.expr 
 
 	FLOQ  shift 33
 	COMMAND_REF  shift 32
@@ -662,15 +658,33 @@ state 61
 	expr  goto 87
 
 state 62
+	expr:  expr CONCAT.expr 
+
+	FLOQ  shift 33
+	COMMAND_REF  shift 32
+	EXPAND_ENV  shift 41
+	UINT64  shift 36
+	STRING  shift 40
+	yy_TRUE  shift 38
+	yy_FALSE  shift 39
+	NOT  shift 34
+	'('  shift 35
+	.  error
+
+	string  goto 37
+	constant  goto 31
+	expr  goto 88
+
+state 63
 	expr:  expr yy_IS.yy_NULL 
 	expr:  expr yy_IS.NOT yy_NULL 
 
-	NOT  shift 89
-	yy_NULL  shift 88
+	NOT  shift 90
+	yy_NULL  shift 89
 	.  error
 
 
-state 63
+state 64
 	expr:  expr '?'.expr ':' expr 
 
 	FLOQ  shift 33
@@ -686,40 +700,40 @@ state 63
 
 	string  goto 37
 	constant  goto 31
-	expr  goto 90
+	expr  goto 91
 
-state 64
+state 65
 	expr:  COMMAND_REF '$'.$$10 name 
 	$$10: .    (10)
 
 	.  reduce 10 (src line 177)
 
-	$$10  goto 91
+	$$10  goto 92
 
-state 65
+state 66
 	expr:  COMMAND_REF '.'.$$14 name 
 	$$14: .    (14)
 
 	.  reduce 14 (src line 203)
 
-	$$14  goto 92
+	$$14  goto 93
 
-state 66
+state 67
 	expr:  COMMAND_REF '['.UINT64 ']' 
 
-	UINT64  shift 93
+	UINT64  shift 94
 	.  error
 
 
-state 67
+state 68
 	expr:  FLOQ '$'.$$12 name 
 	$$12: .    (12)
 
 	.  reduce 12 (src line 189)
 
-	$$12  goto 94
+	$$12  goto 95
 
-state 68
+state 69
 	expr:  expr.CAST yy_STRING 
 	expr:  expr.yy_AND expr 
 	expr:  expr.yy_OR expr 
@@ -737,12 +751,12 @@ state 68
 	expr:  expr.yy_IS NOT yy_NULL 
 	expr:  expr.'?' expr ':' expr 
 
-	CAST  shift 50
-	yy_IS  shift 62
+	CAST  shift 51
+	yy_IS  shift 63
 	.  reduce 28 (src line 316)
 
 
-state 69
+state 70
 	expr:  expr.CAST yy_STRING 
 	expr:  expr.yy_AND expr 
 	expr:  expr.yy_OR expr 
@@ -760,31 +774,31 @@ state 69
 	expr:  '(' expr.')' 
 	expr:  expr.'?' expr ':' expr 
 
-	yy_AND  shift 51
-	yy_OR  shift 52
-	CAST  shift 50
-	EQ  shift 55
-	NEQ  shift 56
-	GT  shift 58
-	GTE  shift 57
-	LT  shift 53
-	LTE  shift 54
-	MATCH  shift 59
-	NOMATCH  shift 60
-	CONCAT  shift 61
-	yy_IS  shift 62
-	'?'  shift 63
-	')'  shift 95
+	yy_AND  shift 52
+	yy_OR  shift 53
+	CAST  shift 51
+	EQ  shift 56
+	NEQ  shift 57
+	GT  shift 59
+	GTE  shift 58
+	LT  shift 54
+	LTE  shift 55
+	MATCH  shift 60
+	NOMATCH  shift 61
+	CONCAT  shift 62
+	yy_IS  shift 63
+	'?'  shift 64
+	')'  shift 96
 	.  error
 
 
-state 70
+state 71
 	string:  EXPAND_ENV string.    (3)
 
 	.  reduce 3 (src line 132)
 
 
-state 71
+state 72
 	set:  '{' $$49.element_list '}' 
 
 	COMMAND_REF  shift 20
@@ -792,25 +806,25 @@ state 71
 	NAME  shift 14
 	.  error
 
-	name  goto 98
-	element  goto 97
-	element_list  goto 96
+	name  goto 99
+	element  goto 98
+	element_list  goto 97
 
-state 72
+state 73
 	stmt:  DEFINE COMMAND name '.' TUPLE_REF AS.set 
 
 	'{'  shift 44
 	.  error
 
-	set  goto 99
-
-state 73
-	stmt:  RUN COMMAND_REF '(' arg_list ')' qualification.    (57)
-
-	.  reduce 57 (src line 606)
-
+	set  goto 100
 
 state 74
+	stmt:  RUN COMMAND_REF '(' arg_list ')' qualification.    (58)
+
+	.  reduce 58 (src line 610)
+
+
+state 75
 	qualification:  WHEN.expr 
 
 	FLOQ  shift 33
@@ -826,9 +840,9 @@ state 74
 
 	string  goto 37
 	constant  goto 31
-	expr  goto 100
+	expr  goto 101
 
-state 75
+state 76
 	expr:  expr.CAST yy_STRING 
 	expr:  expr.yy_AND expr 
 	expr:  expr.yy_OR expr 
@@ -844,32 +858,32 @@ state 75
 	expr:  expr.yy_IS yy_NULL 
 	expr:  expr.yy_IS NOT yy_NULL 
 	expr:  expr.'?' expr ':' expr 
-	arg_list:  arg_list ',' expr.    (63)
+	arg_list:  arg_list ',' expr.    (64)
 
-	yy_AND  shift 51
-	yy_OR  shift 52
-	CAST  shift 50
-	EQ  shift 55
-	NEQ  shift 56
-	GT  shift 58
-	GTE  shift 57
-	LT  shift 53
-	LTE  shift 54
-	MATCH  shift 59
-	NOMATCH  shift 60
-	CONCAT  shift 61
-	yy_IS  shift 62
-	'?'  shift 63
-	.  reduce 63 (src line 650)
+	yy_AND  shift 52
+	yy_OR  shift 53
+	CAST  shift 51
+	EQ  shift 56
+	NEQ  shift 57
+	GT  shift 59
+	GTE  shift 58
+	LT  shift 54
+	LTE  shift 55
+	MATCH  shift 60
+	NOMATCH  shift 61
+	CONCAT  shift 62
+	yy_IS  shift 63
+	'?'  shift 64
+	.  reduce 64 (src line 654)
 
 
-state 76
+state 77
 	expr:  expr CAST yy_STRING.    (9)
 
 	.  reduce 9 (src line 168)
 
 
-state 77
+state 78
 	expr:  expr.CAST yy_STRING 
 	expr:  expr.yy_AND expr 
 	expr:  expr yy_AND expr.    (17)
@@ -887,21 +901,21 @@ state 77
 	expr:  expr.yy_IS NOT yy_NULL 
 	expr:  expr.'?' expr ':' expr 
 
-	CAST  shift 50
-	EQ  shift 55
-	NEQ  shift 56
-	GT  shift 58
-	GTE  shift 57
-	LT  shift 53
-	LTE  shift 54
-	MATCH  shift 59
-	NOMATCH  shift 60
-	CONCAT  shift 61
-	yy_IS  shift 62
+	CAST  shift 51
+	EQ  shift 56
+	NEQ  shift 57
+	GT  shift 59
+	GTE  shift 58
+	LT  shift 54
+	LTE  shift 55
+	MATCH  shift 60
+	NOMATCH  shift 61
+	CONCAT  shift 62
+	yy_IS  shift 63
 	.  reduce 17 (src line 226)
 
 
-state 78
+state 79
 	expr:  expr.CAST yy_STRING 
 	expr:  expr.yy_AND expr 
 	expr:  expr.yy_OR expr 
@@ -919,21 +933,21 @@ state 78
 	expr:  expr.yy_IS NOT yy_NULL 
 	expr:  expr.'?' expr ':' expr 
 
-	CAST  shift 50
-	EQ  shift 55
-	NEQ  shift 56
-	GT  shift 58
-	GTE  shift 57
-	LT  shift 53
-	LTE  shift 54
-	MATCH  shift 59
-	NOMATCH  shift 60
-	CONCAT  shift 61
-	yy_IS  shift 62
+	CAST  shift 51
+	EQ  shift 56
+	NEQ  shift 57
+	GT  shift 59
+	GTE  shift 58
+	LT  shift 54
+	LTE  shift 55
+	MATCH  shift 60
+	NOMATCH  shift 61
+	CONCAT  shift 62
+	yy_IS  shift 63
 	.  reduce 18 (src line 234)
 
 
-state 79
+state 80
 	expr:  expr.CAST yy_STRING 
 	expr:  expr.yy_AND expr 
 	expr:  expr.yy_OR expr 
@@ -951,13 +965,13 @@ state 79
 	expr:  expr.yy_IS NOT yy_NULL 
 	expr:  expr.'?' expr ':' expr 
 
-	CAST  shift 50
-	CONCAT  shift 61
-	yy_IS  shift 62
+	CAST  shift 51
+	CONCAT  shift 62
+	yy_IS  shift 63
 	.  reduce 19 (src line 242)
 
 
-state 80
+state 81
 	expr:  expr.CAST yy_STRING 
 	expr:  expr.yy_AND expr 
 	expr:  expr.yy_OR expr 
@@ -975,13 +989,13 @@ state 80
 	expr:  expr.yy_IS NOT yy_NULL 
 	expr:  expr.'?' expr ':' expr 
 
-	CAST  shift 50
-	CONCAT  shift 61
-	yy_IS  shift 62
+	CAST  shift 51
+	CONCAT  shift 62
+	yy_IS  shift 63
 	.  reduce 20 (src line 250)
 
 
-state 81
+state 82
 	expr:  expr.CAST yy_STRING 
 	expr:  expr.yy_AND expr 
 	expr:  expr.yy_OR expr 
@@ -999,13 +1013,13 @@ state 81
 	expr:  expr.yy_IS NOT yy_NULL 
 	expr:  expr.'?' expr ':' expr 
 
-	CAST  shift 50
-	CONCAT  shift 61
-	yy_IS  shift 62
+	CAST  shift 51
+	CONCAT  shift 62
+	yy_IS  shift 63
 	.  reduce 21 (src line 258)
 
 
-state 82
+state 83
 	expr:  expr.CAST yy_STRING 
 	expr:  expr.yy_AND expr 
 	expr:  expr.yy_OR expr 
@@ -1023,13 +1037,13 @@ state 82
 	expr:  expr.yy_IS NOT yy_NULL 
 	expr:  expr.'?' expr ':' expr 
 
-	CAST  shift 50
-	CONCAT  shift 61
-	yy_IS  shift 62
+	CAST  shift 51
+	CONCAT  shift 62
+	yy_IS  shift 63
 	.  reduce 22 (src line 266)
 
 
-state 83
+state 84
 	expr:  expr.CAST yy_STRING 
 	expr:  expr.yy_AND expr 
 	expr:  expr.yy_OR expr 
@@ -1047,13 +1061,13 @@ state 83
 	expr:  expr.yy_IS NOT yy_NULL 
 	expr:  expr.'?' expr ':' expr 
 
-	CAST  shift 50
-	CONCAT  shift 61
-	yy_IS  shift 62
+	CAST  shift 51
+	CONCAT  shift 62
+	yy_IS  shift 63
 	.  reduce 23 (src line 274)
 
 
-state 84
+state 85
 	expr:  expr.CAST yy_STRING 
 	expr:  expr.yy_AND expr 
 	expr:  expr.yy_OR expr 
@@ -1071,13 +1085,13 @@ state 84
 	expr:  expr.yy_IS NOT yy_NULL 
 	expr:  expr.'?' expr ':' expr 
 
-	CAST  shift 50
-	CONCAT  shift 61
-	yy_IS  shift 62
+	CAST  shift 51
+	CONCAT  shift 62
+	yy_IS  shift 63
 	.  reduce 24 (src line 282)
 
 
-state 85
+state 86
 	expr:  expr.CAST yy_STRING 
 	expr:  expr.yy_AND expr 
 	expr:  expr.yy_OR expr 
@@ -1095,13 +1109,13 @@ state 85
 	expr:  expr.yy_IS NOT yy_NULL 
 	expr:  expr.'?' expr ':' expr 
 
-	CAST  shift 50
-	CONCAT  shift 61
-	yy_IS  shift 62
+	CAST  shift 51
+	CONCAT  shift 62
+	yy_IS  shift 63
 	.  reduce 25 (src line 290)
 
 
-state 86
+state 87
 	expr:  expr.CAST yy_STRING 
 	expr:  expr.yy_AND expr 
 	expr:  expr.yy_OR expr 
@@ -1119,13 +1133,13 @@ state 86
 	expr:  expr.yy_IS NOT yy_NULL 
 	expr:  expr.'?' expr ':' expr 
 
-	CAST  shift 50
-	CONCAT  shift 61
-	yy_IS  shift 62
+	CAST  shift 51
+	CONCAT  shift 62
+	yy_IS  shift 63
 	.  reduce 26 (src line 299)
 
 
-state 87
+state 88
 	expr:  expr.CAST yy_STRING 
 	expr:  expr.yy_AND expr 
 	expr:  expr.yy_OR expr 
@@ -1143,25 +1157,25 @@ state 87
 	expr:  expr.yy_IS NOT yy_NULL 
 	expr:  expr.'?' expr ':' expr 
 
-	CAST  shift 50
-	yy_IS  shift 62
+	CAST  shift 51
+	yy_IS  shift 63
 	.  reduce 27 (src line 308)
 
 
-state 88
+state 89
 	expr:  expr yy_IS yy_NULL.    (29)
 
 	.  reduce 29 (src line 324)
 
 
-state 89
+state 90
 	expr:  expr yy_IS NOT.yy_NULL 
 
-	yy_NULL  shift 101
+	yy_NULL  shift 102
 	.  error
 
 
-state 90
+state 91
 	expr:  expr.CAST yy_STRING 
 	expr:  expr.yy_AND expr 
 	expr:  expr.yy_OR expr 
@@ -1179,36 +1193,26 @@ state 90
 	expr:  expr.'?' expr ':' expr 
 	expr:  expr '?' expr.':' expr 
 
-	yy_AND  shift 51
-	yy_OR  shift 52
-	CAST  shift 50
-	EQ  shift 55
-	NEQ  shift 56
-	GT  shift 58
-	GTE  shift 57
-	LT  shift 53
-	LTE  shift 54
-	MATCH  shift 59
-	NOMATCH  shift 60
-	CONCAT  shift 61
-	yy_IS  shift 62
-	'?'  shift 63
-	':'  shift 102
+	yy_AND  shift 52
+	yy_OR  shift 53
+	CAST  shift 51
+	EQ  shift 56
+	NEQ  shift 57
+	GT  shift 59
+	GTE  shift 58
+	LT  shift 54
+	LTE  shift 55
+	MATCH  shift 60
+	NOMATCH  shift 61
+	CONCAT  shift 62
+	yy_IS  shift 63
+	'?'  shift 64
+	':'  shift 103
 	.  error
 
-
-state 91
-	expr:  COMMAND_REF '$' $$10.name 
-
-	COMMAND_REF  shift 20
-	TUPLE_REF  shift 15
-	NAME  shift 14
-	.  error
-
-	name  goto 103
 
 state 92
-	expr:  COMMAND_REF '.' $$14.name 
+	expr:  COMMAND_REF '$' $$10.name 
 
 	COMMAND_REF  shift 20
 	TUPLE_REF  shift 15
@@ -1218,13 +1222,23 @@ state 92
 	name  goto 104
 
 state 93
+	expr:  COMMAND_REF '.' $$14.name 
+
+	COMMAND_REF  shift 20
+	TUPLE_REF  shift 15
+	NAME  shift 14
+	.  error
+
+	name  goto 105
+
+state 94
 	expr:  COMMAND_REF '[' UINT64.']' 
 
-	']'  shift 105
+	']'  shift 106
 	.  error
 
 
-state 94
+state 95
 	expr:  FLOQ '$' $$12.name 
 
 	COMMAND_REF  shift 20
@@ -1232,43 +1246,43 @@ state 94
 	NAME  shift 14
 	.  error
 
-	name  goto 106
+	name  goto 107
 
-state 95
+state 96
 	expr:  '(' expr ')'.    (31)
 
 	.  reduce 31 (src line 340)
 
 
-state 96
+state 97
 	element_list:  element_list.',' element 
 	set:  '{' $$49 element_list.'}' 
 
-	','  shift 107
-	'}'  shift 108
+	','  shift 108
+	'}'  shift 109
 	.  error
-
-
-state 97
-	element_list:  element.    (42)
-
-	.  reduce 42 (src line 443)
 
 
 state 98
-	element:  name.':' value 
+	element_list:  element.    (42)
 
-	':'  shift 109
-	.  error
+	.  reduce 42 (src line 442)
 
 
 state 99
-	stmt:  DEFINE COMMAND name '.' TUPLE_REF AS set.    (54)
+	element:  name.':' value 
 
-	.  reduce 54 (src line 564)
+	':'  shift 110
+	.  error
 
 
 state 100
+	stmt:  DEFINE COMMAND name '.' TUPLE_REF AS set.    (55)
+
+	.  reduce 55 (src line 568)
+
+
+state 101
 	expr:  expr.CAST yy_STRING 
 	expr:  expr.yy_AND expr 
 	expr:  expr.yy_OR expr 
@@ -1286,30 +1300,30 @@ state 100
 	expr:  expr.'?' expr ':' expr 
 	qualification:  WHEN expr.    (34)
 
-	yy_AND  shift 51
-	yy_OR  shift 52
-	CAST  shift 50
-	EQ  shift 55
-	NEQ  shift 56
-	GT  shift 58
-	GTE  shift 57
-	LT  shift 53
-	LTE  shift 54
-	MATCH  shift 59
-	NOMATCH  shift 60
-	CONCAT  shift 61
-	yy_IS  shift 62
-	'?'  shift 63
-	.  reduce 34 (src line 385)
+	yy_AND  shift 52
+	yy_OR  shift 53
+	CAST  shift 51
+	EQ  shift 56
+	NEQ  shift 57
+	GT  shift 59
+	GTE  shift 58
+	LT  shift 54
+	LTE  shift 55
+	MATCH  shift 60
+	NOMATCH  shift 61
+	CONCAT  shift 62
+	yy_IS  shift 63
+	'?'  shift 64
+	.  reduce 34 (src line 384)
 
 
-state 101
+state 102
 	expr:  expr yy_IS NOT yy_NULL.    (30)
 
 	.  reduce 30 (src line 332)
 
 
-state 102
+state 103
 	expr:  expr '?' expr ':'.expr 
 
 	FLOQ  shift 33
@@ -1325,33 +1339,33 @@ state 102
 
 	string  goto 37
 	constant  goto 31
-	expr  goto 110
+	expr  goto 111
 
-state 103
+state 104
 	expr:  COMMAND_REF '$' $$10 name.    (11)
 
 	.  reduce 11 (src line 180)
 
 
-state 104
+state 105
 	expr:  COMMAND_REF '.' $$14 name.    (15)
 
 	.  reduce 15 (src line 206)
 
 
-state 105
+state 106
 	expr:  COMMAND_REF '[' UINT64 ']'.    (16)
 
 	.  reduce 16 (src line 215)
 
 
-state 106
+state 107
 	expr:  FLOQ '$' $$12 name.    (13)
 
 	.  reduce 13 (src line 192)
 
 
-state 107
+state 108
 	element_list:  element_list ','.element 
 
 	COMMAND_REF  shift 20
@@ -1359,16 +1373,16 @@ state 107
 	NAME  shift 14
 	.  error
 
-	name  goto 98
-	element  goto 111
-
-state 108
-	set:  '{' $$49 element_list '}'.    (50)
-
-	.  reduce 50 (src line 502)
-
+	name  goto 99
+	element  goto 112
 
 state 109
+	set:  '{' $$49 element_list '}'.    (50)
+
+	.  reduce 50 (src line 501)
+
+
+state 110
 	element:  name ':'.value 
 
 	EXPAND_ENV  shift 41
@@ -1376,17 +1390,17 @@ state 109
 	STRING  shift 40
 	yy_TRUE  shift 38
 	yy_FALSE  shift 39
-	'['  shift 116
+	'['  shift 117
 	'{'  shift 44
 	.  error
 
 	string  goto 37
-	set  goto 114
-	array  goto 115
-	constant  goto 113
-	value  goto 112
+	set  goto 115
+	array  goto 116
+	constant  goto 114
+	value  goto 113
 
-state 110
+state 111
 	expr:  expr.CAST yy_STRING 
 	expr:  expr.yy_AND expr 
 	expr:  expr.yy_OR expr 
@@ -1404,117 +1418,117 @@ state 110
 	expr:  expr.'?' expr ':' expr 
 	expr:  expr '?' expr ':' expr.    (32)
 
-	yy_AND  shift 51
-	yy_OR  shift 52
-	CAST  shift 50
-	EQ  shift 55
-	NEQ  shift 56
-	GT  shift 58
-	GTE  shift 57
-	LT  shift 53
-	LTE  shift 54
-	MATCH  shift 59
-	NOMATCH  shift 60
-	CONCAT  shift 61
-	yy_IS  shift 62
-	'?'  shift 63
+	yy_AND  shift 52
+	yy_OR  shift 53
+	CAST  shift 51
+	EQ  shift 56
+	NEQ  shift 57
+	GT  shift 59
+	GTE  shift 58
+	LT  shift 54
+	LTE  shift 55
+	MATCH  shift 60
+	NOMATCH  shift 61
+	CONCAT  shift 62
+	yy_IS  shift 63
+	'?'  shift 64
 	.  reduce 32 (src line 345)
 
 
-state 111
+state 112
 	element_list:  element_list ',' element.    (43)
 
-	.  reduce 43 (src line 449)
-
-
-state 112
-	element:  name ':' value.    (41)
-
-	.  reduce 41 (src line 429)
+	.  reduce 43 (src line 448)
 
 
 state 113
-	value:  constant.    (38)
+	element:  name ':' value.    (41)
 
-	.  reduce 38 (src line 421)
+	.  reduce 41 (src line 428)
 
 
 state 114
-	value:  set.    (39)
+	value:  constant.    (38)
 
-	.  reduce 39 (src line 423)
+	.  reduce 38 (src line 420)
 
 
 state 115
-	value:  array.    (40)
+	value:  set.    (39)
 
-	.  reduce 40 (src line 425)
+	.  reduce 39 (src line 422)
 
 
 state 116
+	value:  array.    (40)
+
+	.  reduce 40 (src line 424)
+
+
+state 117
 	array:  '['.$$47 component_list ']' 
 	$$47: .    (47)
 
-	.  reduce 47 (src line 487)
+	.  reduce 47 (src line 486)
 
-	$$47  goto 117
+	$$47  goto 118
 
-state 117
+state 118
 	array:  '[' $$47.component_list ']' 
 	component_list: .    (44)
 
 	EXPAND_ENV  shift 41
 	STRING  shift 40
-	.  reduce 44 (src line 458)
+	.  reduce 44 (src line 457)
 
-	string  goto 119
-	component_list  goto 118
+	string  goto 120
+	component_list  goto 119
 
-state 118
+state 119
 	component_list:  component_list.',' string 
 	array:  '[' $$47 component_list.']' 
 
-	']'  shift 121
-	','  shift 120
+	']'  shift 122
+	','  shift 121
 	.  error
 
 
-state 119
+state 120
 	component_list:  string.    (45)
 
-	.  reduce 45 (src line 463)
+	.  reduce 45 (src line 462)
 
 
-state 120
+state 121
 	component_list:  component_list ','.string 
 
 	EXPAND_ENV  shift 41
 	STRING  shift 40
 	.  error
 
-	string  goto 122
-
-state 121
-	array:  '[' $$47 component_list ']'.    (48)
-
-	.  reduce 48 (src line 491)
-
+	string  goto 123
 
 state 122
+	array:  '[' $$47 component_list ']'.    (48)
+
+	.  reduce 48 (src line 490)
+
+
+state 123
 	component_list:  component_list ',' string.    (46)
 
-	.  reduce 46 (src line 474)
+	.  reduce 46 (src line 473)
 
 
 90 terminals, 21 nonterminals
-64 grammar rules, 123/16000 states
+65 grammar rules, 124/16000 states
 0 shift/reduce, 0 reduce/reduce conflicts reported
 70 working sets used
-memory: parser 99/240000
-67 extra closures
-383 shift entries, 1 exceptions
-55 goto entries
+memory: parser 100/240000
+66 extra closures
+385 shift entries, 1 exceptions
+56 goto entries
 36 entries saved by goto default
-Optimizer space used: output 198/240000
-198 table entries, 20 zero
-maximum spread: 90, maximum offset: 120
+Optimizer space used: output 199/240000
+199 table entries, 18 zero
+maximum spread: 90, maximum offset: 121
