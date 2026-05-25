@@ -274,7 +274,7 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 			
 			argv := make([]string, argc)
 
-			//  wait for string arguments.  null values are
+			//  wait for string arguments.
 			for i := 0;  i < argc;  i++ {
 				go func(int) {
 					argv[i] = (<- in_args[i]).string
