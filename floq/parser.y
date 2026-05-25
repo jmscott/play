@@ -963,6 +963,20 @@ func (lex *yyLexState) scan_quote_string(yylval *yySymType) (eof bool, err error
 		case '\'':
 			yylval.string = s
 			return false, nil
+
+		//  backslash rune
+		case rune(0x5c):
+
+			//  is next char a quote?
+			tok, err := lex.lookahead('\'', '\'', 0)
+			if err != nil {
+				return false, err
+			}
+			//  next char not a quote, so abort
+			if tok == 0 {
+				return false, fmt.Errorf("unknown escape")
+			}
+			c = rune(tok)
 		}
 		s += string(c)
 	}
