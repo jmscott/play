@@ -352,7 +352,6 @@ expr:
 		if_false := $5
 
 		if test.is_bool() == false {
-WTF("test=%s", test)
 			lex.error("test in terney ?: is not bool")
 			return 0
 		}
@@ -560,6 +559,11 @@ stmt:
 		lex.name2ast[name] = cmd
 
 		$$ = define
+	  }
+	|
+	  DEFINE  COMMAND  name  '.'  name
+	  {
+	  	yylex.(*yyLexState).error("unknown tuple in define: \"%s\"", $5)
 	  }
 	|
 	  DEFINE  COMMAND  name  '.'  TUPLE_REF  AS  set
@@ -937,6 +941,38 @@ func (lex *yyLexState) scan_raw_string(yylval *yySymType) (eof bool, err error) 
 }
 
 /*
+ *  Scan quoted string that is the same as a raw string but escaped new-line.
+ */
+func (lex *yyLexState) scan_quote_string(yylval *yySymType) (eof bool, err error) {
+	var c rune
+	s := ""
+
+	/*
+	 *  Scan a raw string of unicode letters, accepting all but `
+	 */
+	for c, eof, err = lex.get();
+	    !eof && err == nil;
+	    c, eof, err = lex.get() {
+		
+		switch c {
+		case '\r':
+			continue
+		case '\n':
+			//  why does go skip carriage return?  raw is not so raw
+			continue
+		case '\'':
+			yylval.string = s
+			return false, nil
+		}
+		s += string(c)
+	}
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+/*
  *  Scan a word consisting of a sequence of unicode Letters, Numbers and '_'
  *  characters.
  */
@@ -1243,6 +1279,19 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 		if eof {
 			lex.line_no = lno
 			err = lex.mkerror("end of file in raw string")
+			goto LEX_ERROR
+		}
+		return STRING
+	case c == '\'':
+		lno := lex.line_no	// reset line number on error
+
+		eof, err = lex.scan_quote_string(yylval)
+		if err != nil {
+			goto LEX_ERROR
+		}
+		if eof {
+			lex.line_no = lno
+			err = lex.mkerror("end of file in quote string")
 			goto LEX_ERROR
 		}
 		return STRING
