@@ -1,0 +1,25 @@
+
+#  always write to /dev/tty instead of stdout
+
+define command say as {
+	path:	"/bin/sh",
+	args:	["-c", "echo $0 $1 >/dev/tty"]
+};
+
+define command tail as {
+	path: "/usr/bin/tail",
+	args: ["-F", "./phrases.txt"]
+};
+
+#  start the flow by tailing file `phrases.txt` 
+flow tail();
+
+#  for each tuple
+run say(
+	'
+string1
+ line 1
+ line 2
+', "seq: " || floq$flow_seq::string
+
+);
