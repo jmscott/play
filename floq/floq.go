@@ -1,13 +1,13 @@
 package main
 
 import (
-	"sync"
 	"bufio"
 	"fmt"
 	"os"
 	"os/signal"
 	"runtime"
 	"strings"
+	"sync"
 	"syscall"
 )
 
