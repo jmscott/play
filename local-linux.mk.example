@@ -36,5 +36,7 @@ INSTALL_GROUP?=$(USER)
 #
 #   Location of go executable and yacc.
 #
-#GOEXE=/usr/bin/go
-#GOYACC=/root/go/bin/goyacc
+GOEXE=/usr/bin/go
+GOYACC=/root/go/bin/goyacc
+CGO_ENABLED=0
+  Du Error Path: $DU_ERR

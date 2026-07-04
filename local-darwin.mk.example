@@ -39,3 +39,4 @@ INSTALL_GROUP?=staff
 #
 GOEXE=/opt/local/bin/go
 GOYACC=/var/root/go/bin/goyacc
+CGO_ENABLED=0
