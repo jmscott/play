@@ -403,7 +403,6 @@ func (flo *flow) string_null(in string_chan) {
  *	Consider an option in tuple to disallow nulls!
  */
 
-
 func (flo *flow) proj_tsv(in string_chan, field uint8) (out string_chan) {
 	
 	out = make(string_chan)
