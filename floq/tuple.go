@@ -178,17 +178,18 @@ func (att *attribute) String() string {
 func (proj *projection) String() string {
 
 	if proj == nil {
-		return "nil(*projection)"
+		return "(*projection)(nil)"
 	}
 	var what string
 
-	if proj.att_ref != nil {
+	switch {
+	case proj.att_ref != nil:
 		what = proj.att_ref.String()
-	} else if proj.sysatt_ref != nil {
+	case proj.sysatt_ref != nil:
 		what = proj.sysatt_ref.String()
-	} else if proj.command_ref != nil {
+	case proj.command_ref != nil:
 		what = proj.command_ref.String()
-	} else {
+	default:
 		what = "att and sys refs both nil"
 	}
 	return fmt.Sprintf(
