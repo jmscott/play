@@ -291,11 +291,9 @@ func (a *ast) is_string() bool {
 	switch a.yy_tok {
 	case STRING, CONCAT, EXPAND_ENV,
 	     PROJECT_OSX_START_TIME,
-	     PROJECT_OSX_STDOUT,
-	     PROJECT_OSX_TUPLE_TSV,
-	     PROJECT_OSX_TUPLE_TSV_N,
 	     PROJECT_OSX_STDERR,
-	     PROJECT_TSV:
+	     PROJECT_OSX_STDOUT,
+	     PROJECT_FLOW_TSV_N:
 		return true
 	case CAST, CAST_UINT64, CAST_BOOL, CAST_STRING:
 		if a.right.yy_tok == yy_STRING {
@@ -444,6 +442,7 @@ func (flo *flow) proj_tsv(in string_chan, field uint8) (out string_chan) {
 
 func (flo *flow) string_fo(in string_chan, count uint8) (out []string_chan) {
 
+
 	out = make([]string_chan, count)
 	for i := uint8(0); i < count; i++ {
 		out[i] = make(string_chan)
@@ -453,6 +452,7 @@ func (flo *flow) string_fo(in string_chan, count uint8) (out []string_chan) {
 		<-compiling
 
 		for {
+
 			sv := <-in
 
 			//  broadcast to channels in output slice

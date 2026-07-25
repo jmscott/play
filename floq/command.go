@@ -380,8 +380,11 @@ func (flo *flow) osx_proj_tuple_tsv(
 	return out
 }
 /*
- *  project a particular field via offset of a tab separated, new line
- *  terminated set of tuples as osx tuples
+ *  project a particular field of osx_value.Stdout, assuming tab separated
+ *  fields.
+ *
+ *  Note:
+ *	func TrimRight() may remove more than one newline!!!
  */
 func (flo *flow) osx_proj_tuple_tsv_n(
 	in osx_chan,
@@ -400,6 +403,11 @@ func (flo *flow) osx_proj_tuple_tsv_n(
 			
 			is_null := xv.is_null
 			if xv.is_null == false {
+
+				/*
+				 *  Note:
+				 *	Bug.  TrimRight() more than one newline!
+				 */	
 				fld := strings.Split(
 					strings.TrimRight(
 						xv.Stdout,

@@ -2,19 +2,22 @@
  *  Synopsis:
  *	Build an abstract syntax tree for "floq" language.
  *  Note:
- *	Consider defining multiple commands with single define!
+ *	- only constants in <command>[uint64] expressions!  need uint64 express
+ *
+ *	- Consider defining multiple commands with single define!
  *
  *		define commands (name, name2) as {...
  *
- *	type yy_tok needs String()!  perhaps an ast.my_yy_tok?
+ *	- type yy_tok needs String()!  perhaps an ast.my_yy_tok?
  *
- *	func lookahead() ignores eof.  that is not correct.
+ *	- func lookahead() ignores eof.  that is not correct.
  */
 
 %{
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -55,12 +58,12 @@ func init() {
 //  lowest numbered yytoken.  must be first in list.
 %token	__MIN_YYTOK
 
-%token	FLOQ  PROJECT_FLOQ_FLOW_SEQ
+%token	FLOQ
 %token	PARSE_ERROR
 %token	ARGV
 %token	yy_SET  ARRAY  
-%token	RUN  FLOW  FLOQ
-%token	COMMAND  COMMAND_REF
+%token	RUN  FLOW
+%token	COMMAND  COMMAND_REF  FLOW_REF
 %token	TUPLE  TUPLE_REF
 %token	DEFINE   AS
 %token	EXPAND_ENV
@@ -72,21 +75,24 @@ func init() {
 %token	CONCAT
 %token	WHEN
 %token  CONDITIONAL
+%token	PROJECT_FLOW_TUPLE_TSV_N
+%token	MOD
 
 //  project the rusage variables <commamd>$<var>
 
-%token	PROJECT_OSX_EXIT_CODE  OSX_EXIT_CODE 
-%token	PROJECT_OSX_PID   OSX_PID
-%token	PROJECT_OSX_START_TIME  OSX_START_TIME 
-%token	PROJECT_OSX_WALL_DURATION   OSX_WALL_DURATION
-%token	PROJECT_OSX_USER_SEC  OSX_USER_SEC
-%token	PROJECT_OSX_USER_USEC  OSX_USER_USEC
-%token	PROJECT_OSX_SYS_SEC  OSX_SYS_SEC
-%token	PROJECT_OSX_SYS_USEC  OSX_SYS_USEC
-%token	PROJECT_OSX_STDOUT  OSX_STDOUT
-%token	PROJECT_OSX_STDERR  OSX_STDERR
-%token	PROJECT_OSX_TUPLE_TSV  PROJECT_OSX_TUPLE_TSV_N
-%token	PROJECT_TSV
+%token	PROJECT_OSX_EXIT_CODE
+%token	PROJECT_OSX_PID
+%token	PROJECT_OSX_START_TIME
+%token	PROJECT_OSX_WALL_DURATION
+%token	PROJECT_OSX_USER_SEC
+%token	PROJECT_OSX_USER_USEC
+%token	PROJECT_OSX_SYS_SEC
+%token	PROJECT_OSX_SYS_USEC
+%token	PROJECT_OSX_STDOUT
+%token	PROJECT_OSX_STDERR
+%token	PROJECT_OSX_TSV PROJECT_OSX_TSV_N
+%token	PROJECT_FLOW_TSV_N
+%token	PROJECT_FLOW_SEQ
 
 %token	CAST_BOOL  CAST_UINT64  CAST_STRING
 %token	yy_IS  yy_NULL  IS_NULL
@@ -103,13 +109,13 @@ func init() {
 %type	<ast>		constant  expr  qualification
 %type	<ast>		stmt  stmt_list
 %type	<ast>		value
-%type	<command_ref>	COMMAND_REF
+%type	<command_ref>	COMMAND_REF  FLOW_REF
 %type	<tuple_ref>	TUPLE_REF
 
 %right			'?'  ':'
 %left			yy_OR  yy_AND
 %left			EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
-%left			CONCAT
+%left			CONCAT  MOD
 %right			yy_IS  NOT  EXPAND_ENV  CAST
 
 %%
@@ -175,9 +181,14 @@ expr:
 	  	$$ = lex.ast(CAST, expr, lex.ast(yy_STRING))
 	  }
 	|
+	  /*
+	   *  Project a system attribute associated with a "run <comman>("
+	   *  invocation.  For example, abc$exit_code.
+	   */
 	  COMMAND_REF  '$'  {
 	  	yylex.(*yyLexState).name_is_name = true
 	  }  name {
+		/*
 	  	lex := yylex.(*yyLexState)
 
 		a := lex.project_osx_sys($4, $1)
@@ -185,43 +196,66 @@ expr:
 			return 0
 		}
 		$$ = a
-	  }
-	|
-	  FLOQ  '$'  {
-	  	yylex.(*yyLexState).name_is_name = true
-	  }  name {
-	  	lex := yylex.(*yyLexState)
-
-		name := $4
-		if name != "flow_seq" {
-			lex.error("floq: unknown attribute: %s", name)
-			return 0
-		}
-
-		$$ = lex.ast(PROJECT_FLOQ_FLOW_SEQ)
+		*/
+		$$ = nil
 	  }
 	|
 	  COMMAND_REF  '.'  {
 	  	yylex.(*yyLexState).name_is_name = true
 	  }  name {
+		/*
 	  	lex := yylex.(*yyLexState)
 
-		a := lex.project_tuple($1, $4)
+		a := lex.project_osx($1, $4)
 		if a == nil {
 			return 0
 		}
+		$$ = a
+		*/
+		$$ = nil
+	  }
+	/*
+	|
+	  COMMAND_REF  '['  expr  ']'
+	  {
+	  	lex := yylex.(*yyLexState)
+	  	if $3.is_uint64() == false {
+			lex.error("%s[]: index is not uint64", $1)
+			return 0
+		}
+
+		$$ = lex.ast(PROJECT_OSX_STDOUT_TSV_N, $3)
+		$$.command_ref = $1
+	  }
+	  */
+	|
+	  FLOW_REF  '['  expr  ']'
+	  {
+	  	lex := yylex.(*yyLexState)
+		cmd := $1
+
+		cmd.ref_count++
+		a := lex.ast(PROJECT_FLOW_TSV_N, $3)
+		a.proj_ref = &projection{
+			command_ref:	cmd,
+			call_order: cmd.ref_count,
+		}
+		a.command_ref = cmd
 		$$ = a
 	  }
 	|
-	  COMMAND_REF  '['  UINT64  ']'
-	  {
+	  FLOW_REF  '$'  {
+	  	yylex.(*yyLexState).name_is_name = true
+	  }  name  {
 	  	lex := yylex.(*yyLexState)
+		lex.name_is_name = false
+		cmd := $1
+		att := $4
 
-		a := lex.project_osx_tuple_n($3, $1)
-		if a == nil {
-			return 0
+		if att != "flow_seq" {
+			lex.error("%s$: unknown attribute: %s", cmd , att)
 		}
-		$$ = a
+		$$ = lex.ast(PROJECT_FLOW_SEQ);
 	  }
 	|
 	  expr  yy_AND  expr
@@ -309,6 +343,14 @@ expr:
 	  expr  CONCAT  expr
 	  {
 		$$ = yylex.(*yyLexState).new_rel_op(CONCAT, $1, $3)
+		if $$ == nil {
+			return 0
+		}
+	  }
+	|
+	  expr  MOD  expr
+	  {
+		$$ = yylex.(*yyLexState).new_rel_op(MOD, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -666,7 +708,6 @@ var keyword = map[string]int{
 	"define":		DEFINE,
 	"ExpandEnv":		EXPAND_ENV,
 	"false":		yy_FALSE,
-	"floq":			FLOQ,
 	"flow":			FLOW,
 	"is":			yy_IS,
 	"not":			NOT,
@@ -696,8 +737,6 @@ type yyLexState struct {
 	name2ast		map[string]*ast
 	name2cmd		map[string]*command
 	name2tuple		map[string]*tuple
-	name2satt		map[string]*sysatt
-	name2run		map[string]*ast
 	depends			map[string]string
 	set_stack		[]*set
 
@@ -705,8 +744,10 @@ type yyLexState struct {
 	tuple_ref		*tuple
 	name_is_name		bool
 
-	cmd2run			map[*command]*ast
-	cmd2flow		map[*command]*ast
+	//  map "run <command>(..." ast nodes
+	cmd2RUN			map[*command]*ast
+
+	flow_cmd		*command
 }
 
 func (lex *yyLexState) pushback(c rune) {
@@ -725,13 +766,20 @@ func (lex *yyLexState) pushback(c rune) {
 
 func (lex *yyLexState) run(cmd *command, argv, when *ast) (run *ast) {
 
+	if lex.flow_cmd == cmd {
+		lex.error("command used in flow statement: %s", cmd)
+		return nil
+	}
 	run = lex.ast(RUN, argv, when) 
 
-	if lex.cmd2run == nil {
-		lex.cmd2run = make(map[*command]*ast)
+	if lex.cmd2RUN == nil {
+		lex.cmd2RUN = make(map[*command]*ast)
+	} else if lex.cmd2RUN[cmd] != nil {
+		lex.error("command already run: %s", cmd)
+		return nil
 	}
 
-	lex.cmd2run[cmd] = run
+	lex.cmd2RUN[cmd] = run
 	run.command_ref = cmd
 	run.name = cmd.name
 
@@ -742,13 +790,17 @@ func (lex *yyLexState) run(cmd *command, argv, when *ast) (run *ast) {
 
 func (lex *yyLexState) flow(cmd *command) (flow *ast) {
 
+	if cmd == lex.flow_cmd {
+		lex.error("command already used in flow: %s", cmd)
+		return nil
+	}
+	if lex.cmd2RUN[cmd] != nil {
+		lex.error("flow command already uesed in run: %s", cmd)
+		return nil
+	}
 	flow = lex.ast(FLOW)
 
-	if lex.cmd2flow == nil {
-		lex.cmd2flow = make(map[*command]*ast)
-	}
-
-	lex.cmd2flow[cmd] = flow
+	lex.flow_cmd = cmd
 	flow.command_ref = cmd
 	flow.name = cmd.name
 
@@ -926,7 +978,7 @@ func (lex *yyLexState) scan_raw_string(yylval *yySymType) (eof bool, err error) 
 		
 		switch c {
 		case '\r':
-			//  why does go skip carriage return?  raw is not so raw
+			//  why does golang skip carriage return in `` strings?
 			continue
 		case '`':
 			yylval.string = s
@@ -1032,8 +1084,13 @@ func (lex *yyLexState) scan_word(
 	lex.name = w
 	yylval.name = w
 
-	//  COMMAND_REF?
+	//  FLOW_REF
+	if lex.flow_cmd != nil && lex.flow_cmd.name == w {
+		yylval.command_ref = lex.flow_cmd
+		return FLOW_REF, nil
+	}
 
+	//  COMMAND_REF?
 	if lex.name2cmd[w] != nil {
 		lex.command_ref = lex.name2cmd[w]
 		yylval.command_ref = lex.command_ref
@@ -1142,6 +1199,21 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 		if right.is_string() == false {
 			lex.line_no = right.line_no
 			lex.error("%s: right is not string", right.yy_name())
+			return nil
+		}
+	case MOD:
+		if left.is_uint64() == false {
+			lex.line_no = left.line_no
+			lex.error("MOD: %s: left is not uint64", left.yy_name())
+			return nil
+		}
+		if right.is_uint64() == false {
+			lex.line_no = right.line_no
+			lex.error(
+				"%s: %s: right is not uint64",
+				yy_name(tok),
+				right.yy_name(),
+			)
 			return nil
 		}
 	case IS_NULL, IS_NOT_NULL:
@@ -1254,6 +1326,8 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 			goto LEX_ERROR
 		}
 		return tok
+	case c == '%':
+		return MOD
 
 	case unicode.IsLetter(c) || c == '_':
 		tok, err = lex.scan_word(yylval, c)
@@ -1320,10 +1394,11 @@ LEX_ERROR:
 
 func (lex *yyLexState) mkerror(format string, args...interface{}) error {
 
-	return fmt.Errorf("%s, near line %d",
-		fmt.Sprintf(format, args...),
-		lex.line_no,
-	)
+	msg := fmt.Sprintf(format, args...)
+	if lex.line_no == 0 {
+		return errors.New(msg)
+	}
+	return fmt.Errorf("%s, near line %d", msg, lex.line_no)
 }
 
 func (lex *yyLexState) error(format string, args...interface{}) {
@@ -1346,7 +1421,6 @@ func parse(in io.RuneReader) (*ast, error) {
 		name2ast:	make(map[string]*ast),
 		name2cmd:	make(map[string]*command),
 		name2tuple:	make(map[string]*tuple),
-		name2satt:	make(map[string]*sysatt),
 		depends:	make(map[string]string),
 		ast_root:	&ast{
 					yy_tok:		FLOQ,
@@ -1354,6 +1428,11 @@ func parse(in io.RuneReader) (*ast, error) {
 				},
 	}
 	yyParse(lex)
+
+	if lex.flow_cmd == nil {
+		lex.line_no = 0
+		return nil, lex.mkerror("no flow <command> statement")
+	}
 
 	//  check for cyclic dependencies
 	var depends []string
@@ -1447,7 +1526,16 @@ func (lex *yyLexState) project_osx_sys(name string, cmd *command) (*ast) {
 	return a
 }
 
-func (lex *yyLexState) project_tuple(cmd *command, name string) (a *ast) {
+/*
+ *  Project the "i'th" tab separated field of <command>$Stdout.
+ *
+ *	<command>[i]
+ */
+
+func (lex *yyLexState) project_osx_Stdout_tsv(
+	cmd *command,
+	name string,
+  ) (a *ast) {
 
 	var yy_tok int
 
@@ -1461,14 +1549,12 @@ func (lex *yyLexState) project_tuple(cmd *command, name string) (a *ast) {
 		lex.error("unknown attribute: %s.%s", cmd, name)
 		return nil
 	}
-	switch {
-		case lex.cmd2run[cmd] != nil:
-			yy_tok = PROJECT_OSX_TUPLE_TSV
-		case lex.cmd2flow[cmd] != nil:
-			yy_tok = PROJECT_TSV
-		default:
-			lex.error("no run/flow before command: %s", cmd)
-			return nil
+
+	//  "run command(...)" must occur before reference of attribute
+	//  value <command>$
+	if lex.cmd2RUN[cmd] == nil {
+		lex.error("no run before command reference: %s", cmd)
+		return nil
 	}
 	a = lex.ast(yy_tok)
 	a.command_ref = cmd
@@ -1485,7 +1571,7 @@ func (lex *yyLexState) project_tuple(cmd *command, name string) (a *ast) {
 	return
 }
 
-func (lex *yyLexState) project_osx_tuple(name string, cmd *command) (*ast) {
+func (lex *yyLexState) project_osx(name string, cmd *command) (*ast) {
 
 	tup := cmd.tuple_ref
 	if tup == nil {
@@ -1498,9 +1584,9 @@ func (lex *yyLexState) project_osx_tuple(name string, cmd *command) (*ast) {
 		return nil
 	}
 	cmd.ref_count++
-	a := &ast{
+	return &ast{
 		name:	name,
-		yy_tok: PROJECT_OSX_TUPLE_TSV,
+		yy_tok:	PROJECT_OSX_TSV,
 		line_no:	lex.line_no,
 		command_ref:	cmd,
 		att_ref:	att,
@@ -1508,32 +1594,6 @@ func (lex *yyLexState) project_osx_tuple(name string, cmd *command) (*ast) {
 		proj_ref:	&projection{
 					command_ref: cmd,
 					att_ref: att,
-					call_order:	cmd.ref_count,
-				},
-	}
-	return a
-}
-
-func (lex *yyLexState) project_osx_tuple_n(field uint64, cmd *command) (*ast) {
-
-	if field == 0 {
-		lex.error("%s: #field can not  be 0", cmd)
-		return nil
-	}
-	if field > 255 {
-		lex.error("%s: #field > 255: %d", field)
-		return nil
-	}
-	cmd.ref_count++
-	return &ast{
-		name:	fmt.Sprintf("#%d", field),
-		yy_tok: PROJECT_OSX_TUPLE_TSV_N,
-		line_no:	lex.line_no,
-		command_ref:	cmd,
-		uint64:		field,
-		proj_ref:	&projection{
-					field:	uint8(field),
-					//att_ref: att,
 					call_order:	cmd.ref_count,
 				},
 	}
@@ -1597,4 +1657,7 @@ func (lex *yyLexState) add_name_element(name string, ele *ast) (err error) {
 		lex.error("add_name_element: %s", err)
 	}
 	return err
+}
+func (lex *yyLexState) project_flow_tsv_n() (a *ast) {
+	return nil
 }

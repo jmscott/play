@@ -207,7 +207,7 @@ func (p2 *pass2) osx_att(a *ast) error {
 		return err
 	}
 
-	if a.yy_tok == PROJECT_OSX_TUPLE_TSV {
+	if a.yy_tok == PROJECT_OSX_TSV {
 
 		att := a.att_ref
 		cmd := a.command_ref
@@ -284,7 +284,7 @@ func (p2 *pass2) osx_depends(a *ast) error {
 		if p2.osx_call[cmd] == nil {
 			return _e("command never called: %s", cmd)	
 		}
-	case PROJECT_OSX_TUPLE_TSV:
+	case PROJECT_OSX_TSV:
 	/*
 		proj := a.proj_ref
 		if proj == nil {

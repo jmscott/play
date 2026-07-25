@@ -31,7 +31,7 @@ type flow_chan chan *flow
 
 func (flo *flow) new(op_count uint8) *flow {
 
-	var seq uint64
+	seq := uint64(1)
 
 	if flo != nil {
 		seq = flo.seq + 1
@@ -97,7 +97,10 @@ var next_lead_op_seen bool
 var next_op_count uint8
 
 //  get the next flow for an operator to crunch
+
 func (flo *flow) next() *flow {
+
+	//  help trace a panic: how expensive??
 
 	caller := rcaller(2)
 	if strings.HasSuffix(caller, ".func1") {
@@ -191,11 +194,10 @@ func (flo *flow) start(cmd *command) (pro *osx_start) {
 			return
 		}
 
-		if err == nil {
-			die("Wait(%s) exit (no error)", cmd)
-		} else {
+		if err != nil {
 			die("Wait(%s) failed: %s", cmd, err)
 		}
+		die("Wait(%s) exit (no error)", cmd)
 	}()
 
 	return pro
@@ -223,5 +225,94 @@ func (flo *flow) osx_flow(cmd *command) (out string_chan) {
 			}
 		}
 	}()
+	return out
+}
+
+/*
+ *  Project the idx'th field of a tab separated record from a flow process.
+ *
+ *  Note:
+ *	why is this specific to a flow() statement?
+ */
+func (flo *flow) project_flow_tsv_n(
+	cmd *command,
+	in_str string_chan,
+	in_idx uint64_chan,
+  ) (out string_chan) {
+	out = make(string_chan)
+
+	go func() {
+		<-compiling
+
+		for {
+			var sv *string_value
+			var iv *uint64_value
+
+
+			//  wait for both string to project and the field index
+			for sv == nil || iv == nil {
+				select {
+				case s := <-in_str:
+					if sv != nil {
+						die("input out of sync: string")
+					}
+					sv = s
+				case i := <- in_idx:
+					if iv != nil {
+						die("input out of sync: index")
+					}
+					if i.is_null == false {
+						if i.uint64 == 0 {
+							die("tsv field is 0")
+						}
+						//  why limit to 255?
+						if i.uint64 > 255 {
+							die("tsv field > 255")
+						}
+					}
+					iv = i
+				}
+			}
+
+
+			//  the projected i'th tsv field
+			fv := &string_value{
+				is_null: sv.is_null || iv.is_null,
+			}
+
+			if fv.is_null == false {
+				idx := int(iv.uint64) - 1
+
+				fld := strings.Split(sv.string, "\t")
+				if len(fld) <= idx {
+					fv.string = fld[idx]
+				} else {
+					fv.is_null = true
+				}
+			}
+			out <- fv
+		}
+	}()
 	return
+}
+
+func (flo *flow) project_flow_seq() (out uint64_chan) {
+
+	out = make(uint64_chan)
+
+	go func() {
+
+		<-compiling
+
+		for {
+			out <- &uint64_value{
+					uint64: flo.seq,
+			}
+
+			flo = flo.next()
+		}
+	}()
+
+
+	return out
 }

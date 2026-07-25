@@ -71,7 +71,7 @@ func compile(root *ast) *flow {
 //  or bools, e.g.)
 //
 //	NEQ/\
-//		PROJECT_OSX_TUPLE_TSV: blob_request_record.blob:
+//		PROJECT_OSX_TSV: blob_request_record.blob:
 //		STRING ""	
 
 func (cmp *compilation) relop(a *ast) {
@@ -188,6 +188,8 @@ func (cmp *compilation) compile(a *ast) {
 		a2bool[a] = flo.not(a2bool[a.left])
 	case CONCAT:
 		a2str[a] = flo.concat(a2str[a.left], a2str[a.right])
+	case MOD:
+		a2ui64[a] = flo.mod_ui64(a2ui64[a.left], a2ui64[a.right])
 	case WHEN:
 		a2bool[a] = a2bool[a.left]
 		flo.decr()
@@ -233,9 +235,12 @@ func (cmp *compilation) compile(a *ast) {
 			a2osxfo[a] = flo.osx_fo(a2osx[a], rc)
 			cmd2osxfo[cmd] = a2osxfo[a]
 		}
-
-		//  extra op  for fanout
+		//  extra op for fanout
 		flo.inc()
+
+	/*
+	 *  A flow only fans out strings
+	 */
 	case FLOW:
 		cmd := a.command_ref
 		a2str[a] = flo.osx_flow(cmd)
@@ -243,7 +248,7 @@ func (cmp *compilation) compile(a *ast) {
 		if rc == 0 {
 			flo.string_null(a2str[a])
 		} else {
-			if cmd2strfo[cmd] != nil {
+			if cmd2osxfo[cmd] != nil {
 				_c("flow: cmd string fanout exists: %s", cmd)
 			}
 			a2strfo[a] = flo.string_fo(a2str[a], rc)
@@ -299,7 +304,7 @@ func (cmp *compilation) compile(a *ast) {
 		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2osxfo[cmd]
 		a2str[a] = flo.osx_proj_Stderr(fo[proj.call_order-1])
-	case PROJECT_OSX_TUPLE_TSV:
+	case PROJECT_OSX_TSV:
 		proj := a.proj_ref
 		cmd := proj.command_ref
 		fo := cmd2osxfo[cmd]
@@ -307,22 +312,6 @@ func (cmp *compilation) compile(a *ast) {
 				fo[proj.call_order-1],
 				cmd,
 				proj.att_ref,
-		)
-	case PROJECT_FLOQ_FLOW_SEQ:
-		a2ui64[a] = flo.proj_flow_seq()
-	case PROJECT_OSX_TUPLE_TSV_N:
-		proj := a.proj_ref
-		fo := cmd2osxfo[proj.command_ref]
-		a2str[a] = flo.osx_proj_tuple_tsv_n(
-				fo[proj.call_order-1],
-				uint8(a.uint64),
-		)
-	case PROJECT_TSV:
-		proj := a.proj_ref
-		fo := cmd2strfo[proj.command_ref]
-		a2str[a] = flo.proj_tsv(
-				fo[proj.call_order-1],
-				proj.field,
 		)
 	case MATCH:
 		re, err := regexp.Compile(a.right.string)
@@ -339,6 +328,7 @@ func (cmp *compilation) compile(a *ast) {
 			_c("can not compile re: %s", a.right.string)
 		}
 		a2bool[a] = flo.nomatch(a2str[a.left], re)
+
 		// Note: i have no idea why this decr() works!  
 		flo.decr()
 	case IS_NULL_UINT64:
@@ -367,9 +357,26 @@ func (cmp *compilation) compile(a *ast) {
 		default:
 			_c("type not string/uint64/bool")
 		}
+	case PROJECT_FLOW_TSV_N:
+		cmd := a.command_ref
+		proj := a.proj_ref
+		fo := cmd2strfo[cmd]
+
+		a2str[a] = flo.project_flow_tsv_n(
+				cmd,
+				fo[proj.call_order-1],
+				a2ui64[a.left],
+			)
+	case PROJECT_FLOW_SEQ:
+		a2ui64[a] = flo.project_flow_seq()
 	default:
 		_c("can not compile ast")
 	}
 	flo.inc()
+
+	//  Note: time to make table of op codes ...
+	if a.yy_tok == FLOW {
+		flo.decr()
+	}
 	cmp.compile(a.next)
 }

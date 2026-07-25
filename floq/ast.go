@@ -23,8 +23,8 @@ type ast struct {
 
 	name		string
 
-	//  parsing order of individual ast nodes of particular list structure,
-	//  like statements or call argument vector
+	//  parsing order of various ast nodes of particular structure,
+	//  like statements or call argument vector or command rferences.
 
 	order		uint32
 	
@@ -227,11 +227,11 @@ func (a *ast) String() string {
 			a.yy_name(),
 			a.proj_ref,
 		)
-	case PROJECT_OSX_TUPLE_TSV:
-		what = "PROJECT_OSX_TUPLE_TSV: " + a.proj_ref.String()
-	case PROJECT_OSX_TUPLE_TSV_N:
+	case PROJECT_OSX_TSV:
+		what = "PROJECT_OSX_TSV: " + a.proj_ref.String()
+	case PROJECT_OSX_TSV_N:
 		what = fmt.Sprintf(
-				"PROJECT_OSX_TUPLE_TSV_N: %s[%d]",
+				"PROJECT_OSX_TSV_N: %s[%d]",
 				a.command_ref,
 				a.proj_ref.field,
 			)

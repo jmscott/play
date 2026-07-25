@@ -28,7 +28,7 @@ type projection struct {
 	command_ref	*command
 	att_ref		*attribute
 	sysatt_ref	*sysatt
-	field		uint8
+	field		uint8		//  obsoluted by index channel?
 
 	call_order	uint8
 }
@@ -177,14 +177,19 @@ func (att *attribute) String() string {
 
 func (proj *projection) String() string {
 
+	if proj == nil {
+		return "nil(*projection)"
+	}
 	var what string
 
 	if proj.att_ref != nil {
 		what = proj.att_ref.String()
 	} else if proj.sysatt_ref != nil {
 		what = proj.sysatt_ref.String()
+	} else if proj.command_ref != nil {
+		what = proj.command_ref.String()
 	} else {
-		what = "att/sys ref both nil"
+		what = "att and sys refs both nil"
 	}
 	return fmt.Sprintf(
 			"%s: (cord=%d)",

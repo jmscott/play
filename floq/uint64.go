@@ -30,6 +30,9 @@ var relop_uint64 = map[int]relop_uint64_func{
 		LT:			lt_ui64,
 	}
 
+type binop_uint64_func func (*flow, uint64_chan, uint64_chan) uint64_chan
+var binop_uint64 = map[int]binop_uint64_func{
+	}
 
 //  Wait for both left and right hand uint64_value of any binary operator
 
@@ -41,6 +44,33 @@ func (left uint64_chan) wait2(right uint64_chan) (lv, rv *uint64_value) {
 		}
 	}
 	return
+}
+
+//  op: left_ui64 % right_ui64
+
+func (flo *flow) mod_ui64(left, right uint64_chan) (out uint64_chan) {
+
+	out = make(uint64_chan)
+
+	go func() {
+		<-compiling
+
+		for {
+			lv, rv := left.wait2(right)
+
+			uv := &uint64_value {
+				is_null:	lv.is_null || rv.is_null,
+			}
+			if !uv.is_null {
+				uv.uint64 = lv.uint64 % rv.uint64
+			}
+			out <- uv
+
+			flo = flo.next()
+		}
+	}()
+
+	return out
 }
 
 //  op: left_ui64 == right_ui64
@@ -208,7 +238,7 @@ func lt_ui64(flo *flow, left, right uint64_chan) (out bool_chan) {
 	return flo.lt_ui64(left, right)
 }
 
-//  op: left_ui64 <= fight_ui64
+//  op: left_ui64 <= right_ui64
 
 func (flo *flow) lte_ui64(left, right uint64_chan) (out bool_chan) {
 
@@ -420,14 +450,14 @@ func (a *ast) is_uint64() bool {
 
 	switch a.yy_tok {
 	case UINT64,
+		PROJECT_FLOW_SEQ,
 		PROJECT_OSX_EXIT_CODE,
 		PROJECT_OSX_PID,
 		PROJECT_OSX_WALL_DURATION,
 		PROJECT_OSX_USER_SEC,
 		PROJECT_OSX_USER_USEC,
 		PROJECT_OSX_SYS_SEC,
-		PROJECT_OSX_SYS_USEC,
-		PROJECT_FLOQ_FLOW_SEQ:
+		PROJECT_OSX_SYS_USEC:
 		return true
 	case CONDITIONAL:
 		return a.right.next.is_uint64()
