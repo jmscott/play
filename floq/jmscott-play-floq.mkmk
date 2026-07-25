@@ -72,6 +72,7 @@ GOSRCs="
 	command.go
 	compile.go
 	flow.go
+	help.go
 	parser.go
 	pass2.go
 	regexp.go

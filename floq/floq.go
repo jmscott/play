@@ -64,6 +64,12 @@ func main() {
 
 	argv := os.Args[1:]
 	argc := len(argv)
+
+	if argc >= 1 && (argv[0] == "help" || argv[0] == "--help") {
+		argc--
+		help(argc, argv[1:])
+	}
+
 	if argc != 2 {
 		croak("wrong number of cli args: expected 2, got %d", argc)
 	}
