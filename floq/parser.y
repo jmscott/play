@@ -100,7 +100,7 @@ func init() {
 %token	IS_NOT_NULL  IS_NOT_NULL_UINT64  IS_NOT_NULL_STRING  IS_NOT_NULL_BOOL
 
 %type	<uint64>	UINT64		
-%type	<string>	STRING  name
+%type	<string>	STRING  NAME  name
 %type	<ast>		string
 %type	<ast>		flow
 %type	<ast>		arg_list
@@ -450,6 +450,12 @@ name:
 		lex.error("unexpected command instead of name: %s", $1.name)
 	  }
 	|
+	  FLOW_REF
+	  {
+	  	lex := yylex.(*yyLexState)
+		lex.error("unexpected flow instead of name: %s", $1.name)
+	  }
+	|
 	  TUPLE_REF
 	  {
 	  	lex := yylex.(*yyLexState)
@@ -630,7 +636,7 @@ stmt:
 		$$ = define
 	  }
 	|
-	  RUN  name
+	  RUN  NAME
 	  {
 		lex := yylex.(*yyLexState)
 		lex.error("run: unknown command: %s", $2)
@@ -639,7 +645,7 @@ stmt:
 		$$ = nil
 	  }
 	|
-	  FLOW  name
+	  FLOW  NAME
 	  {
 		lex := yylex.(*yyLexState)
 		lex.error("flow: unknown command: %s", $2)
@@ -1426,6 +1432,10 @@ func parse(in io.RuneReader) (*ast, error) {
 				},
 	}
 	yyParse(lex)
+
+	if lex.err != nil {
+		return nil, lex.err
+	}
 
 	if lex.flow_cmd == nil {
 		lex.line_no = 0
