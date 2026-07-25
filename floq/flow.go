@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -24,17 +25,21 @@ type flow struct {
 	//
 	//  Note:  is this not global, like rest of next_* variables?
 	op_count	uint8
+
+	next_flow		*flow
 }
 
 //  a river to my people ...
 type flow_chan chan *flow
 
-func (flo *flow) new(op_count uint8) *flow {
+func (flo *flow) new() *flow {
 
 	seq := uint64(1)
+	op_count := uint8(0)		//  compile incremenets firt flow 
 
 	if flo != nil {
 		seq = flo.seq + 1
+		op_count = flo.op_count
 	}
 
 	f := &flow{
@@ -67,14 +72,6 @@ func (flo *flow) decr() {
 	flo.op_count--
 }
 
-//   add opcounts
-func (flo *flow) add(delta uint8) {
-
-	
-	flo.wg_op.Add(int(delta))
-	flo.op_count += delta
-}
-
 //  start an os process as part of the "flow <command>" statement
 
 type osx_start struct {
@@ -88,57 +85,39 @@ type osx_start struct {
 	process		*os.Process
 }
 
+//  Note: why global?
+
 var next_mux sync.Mutex
 var next_flow *flow
 
-var next_lead_op_seen bool
-
-//  number of oproutines seen in current flow
-var next_op_count uint8
-
-//  get the next flow for an operator to crunch
-
 func (flo *flow) next() *flow {
-
-	//  help trace a panic: how expensive??
-
-	caller := rcaller(2)
-	if strings.HasSuffix(caller, ".func1") {
-		slen := len(caller)
-		caller = caller[:slen-6]
-	}
 
 	flo.wg_op.Done()
 
 	//  wait for all operators in this flow to finish
+
 	flo.wg_op.Wait()
+
+	//  allocate a new flow ... only once.
 
 	next_mux.Lock()
 	defer func() {
 		next_mux.Unlock()
 	}()
-
-	//  count the number of operators processed
-	next_op_count++
-
-	//  begining of new flow
-	if next_lead_op_seen == false {
-		next_flow = flo.new(flo.op_count)
-		next_lead_op_seen = true
+	
+	if flo.next_flow == nil {
+		flo.next_flow = flo.new()
 	}
 
-	//  on final op of this flow
-	if next_op_count == flo.op_count {
-		next_op_count = 0
-		next_lead_op_seen = false
-	}
+	return flo.next_flow
+}
 
-	//  cheap sanity test
-	if next_flow == flo {
-		die("%s#%d: next_flow==flo: %p", caller, flo.seq,  flo)
-	}
+func (flo *flow) String() string {
 
-	return next_flow
+	if flo == nil {
+		return "(*flow)(nil)"
+	}
+	return fmt.Sprintf("flow#%d", flo.seq)
 }
 
 //  start a process that runs perpetually.
@@ -248,7 +227,6 @@ func (flo *flow) project_flow_tsv_n(
 			var sv *string_value
 			var iv *uint64_value
 
-
 			//  wait for both string to project and the field index
 			for sv == nil || iv == nil {
 				select {
@@ -261,14 +239,8 @@ func (flo *flow) project_flow_tsv_n(
 					if iv != nil {
 						die("input out of sync: index")
 					}
-					if i.is_null == false {
-						if i.uint64 == 0 {
-							die("tsv field is 0")
-						}
-						//  why limit to 255?
-						if i.uint64 > 255 {
-							die("tsv field > 255")
-						}
+					if i.is_null == false && i.uint64 == 0 {
+						die("tsv field is 0")
 					}
 					iv = i
 				}
@@ -284,13 +256,15 @@ func (flo *flow) project_flow_tsv_n(
 				idx := int(iv.uint64) - 1
 
 				fld := strings.Split(sv.string, "\t")
-				if len(fld) <= idx {
+				if idx < len(fld) {
 					fv.string = fld[idx]
 				} else {
 					fv.is_null = true
 				}
 			}
 			out <- fv
+
+			flo = flo.next()
 		}
 	}()
 	return

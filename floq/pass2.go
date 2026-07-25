@@ -285,14 +285,12 @@ func (p2 *pass2) osx_depends(a *ast) error {
 			return _e("command never called: %s", cmd)	
 		}
 	case PROJECT_OSX_TSV:
-	/*
 		proj := a.proj_ref
 		if proj == nil {
 			_c("proj_ref is nil")
 		}
 
 		//p2.depends[run.name] = cmd.name
-	*/
 	}
 	if err := p2.osx_depends(a.left);  err != nil {
 		return err
@@ -332,7 +330,7 @@ func (p2 *pass2) cycle() error {
 			return err
 		}
 
-		//  check dependencies inwhen clause
+		//  check dependencies in when clause
 		if err := p2.osx_depends(stmt.right);  err != nil {
 			return err
 		}

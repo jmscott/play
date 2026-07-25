@@ -199,11 +199,11 @@ expr:
 		*/
 		$$ = nil
 	  }
+	/*
 	|
 	  COMMAND_REF  '.'  {
 	  	yylex.(*yyLexState).name_is_name = true
 	  }  name {
-		/*
 	  	lex := yylex.(*yyLexState)
 
 		a := lex.project_osx($1, $4)
@@ -211,10 +211,8 @@ expr:
 			return 0
 		}
 		$$ = a
-		*/
 		$$ = nil
 	  }
-	/*
 	|
 	  COMMAND_REF  '['  expr  ']'
 	  {

@@ -51,7 +51,7 @@ func compile(root *ast) *flow {
 
 	cmp := &compilation{
 			root:		root,
-			flo:		(*flow)(nil).new(uint8(0)),
+			flo:		(*flow)(nil).new(),
 
 			a2bool:		make(map[*ast]bool_chan),
 			a2str:		make(map[*ast]string_chan),
@@ -165,7 +165,7 @@ func (cmp *compilation) compile(a *ast) {
 	case ARGV:
 		in := make([]string_chan, a.count)
 
-		///  argv for command is always strings
+		///  pass2 insures argv for command is always strings
 		for n := a.left;  n != nil;  n = n.next {
 			in[n.order-1] = a2str[n]
 		}
@@ -192,7 +192,6 @@ func (cmp *compilation) compile(a *ast) {
 		a2ui64[a] = flo.mod_ui64(a2ui64[a.left], a2ui64[a.right])
 	case WHEN:
 		a2bool[a] = a2bool[a.left]
-		flo.decr()
 	case RUN:
 		argv := a.left
 		when := a.right
@@ -235,8 +234,7 @@ func (cmp *compilation) compile(a *ast) {
 			a2osxfo[a] = flo.osx_fo(a2osx[a], rc)
 			cmd2osxfo[cmd] = a2osxfo[a]
 		}
-		//  extra op for fanout
-		flo.inc()
+		flo.inc()	//  for downstream fanout osx
 
 	/*
 	 *  A flow only fans out strings
@@ -319,18 +317,12 @@ func (cmp *compilation) compile(a *ast) {
 			_c("can not compile re: %s", a.right.string)
 		}
 		a2bool[a] = flo.match(a2str[a.left], re)
-
-		// Note: i have no idea why this decr() works!  
-		flo.decr()
 	case NOMATCH:
 		re, err := regexp.Compile(a.right.string)
 		if err != nil {
 			_c("can not compile re: %s", a.right.string)
 		}
 		a2bool[a] = flo.nomatch(a2str[a.left], re)
-
-		// Note: i have no idea why this decr() works!  
-		flo.decr()
 	case IS_NULL_UINT64:
 		a2bool[a] = flo.is_null_uint64(a2ui64[a.left])
 	case IS_NULL_BOOL:
@@ -343,9 +335,6 @@ func (cmp *compilation) compile(a *ast) {
 		a2bool[a] = flo.is_not_null_uint64(a2ui64[a.left])
 	case IS_NOT_NULL_BOOL:
 		a2bool[a] = flo.is_not_null_bool(a2bool[a.left])
-	case FLOQ, STMT_LIST, DEFINE:
-		//  compensate for default incr() at end of switch
-		flo.decr()
 	case CONDITIONAL:
 		switch {
 		case a.is_string():
@@ -369,14 +358,17 @@ func (cmp *compilation) compile(a *ast) {
 			)
 	case PROJECT_FLOW_SEQ:
 		a2ui64[a] = flo.project_flow_seq()
+	case FLOQ, STMT_LIST, DEFINE:
 	default:
 		_c("can not compile ast")
 	}
-	flo.inc()
 
-	//  Note: time to make table of op codes ...
-	if a.yy_tok == FLOW {
-		flo.decr()
+	switch a.yy_tok {
+	case FLOQ:
+	case WHEN, STMT_LIST, DEFINE:
+	default:
+		flo.inc()
 	}
+
 	cmp.compile(a.next)
 }
