@@ -130,7 +130,7 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 	out <- val
 }
 
-//  run a process with no argv nor "when" predicate
+//  run a process with neither argv[] nor "when" predicate
 
 func (flo *flow) osx_run_0(cmd *command) (out osx_chan) {
 
@@ -724,6 +724,8 @@ func (cmd *command) detail(indent int) string {
 %s      path: %s
 %s      args: %s
 %s look_path: %s
+%s ref_count: %d
+%ssref_count: %d
 %s       env: %s
 %s         @: %p
 %s}`,		
@@ -732,6 +734,8 @@ func (cmd *command) detail(indent int) string {
 		tab, cmd.path,
 		tab, cmd.look_path,
 		tab, strings.Join(cmd.args, ", "),
+		tab, cmd.ref_count,
+		tab, cmd.sref_count,
 		tab, strings.Join(cmd.env, ", "),
 		tab, cmd,
 		strings.Repeat("\t", indent),
