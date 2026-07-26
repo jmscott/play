@@ -141,6 +141,7 @@ func (flo *flow) osx_run_0(cmd *command) (out osx_chan) {
 
 		for {
 			flo.osx_run(cmd, nil, out)
+
 			flo = flo.next()
 		}
 	}()
