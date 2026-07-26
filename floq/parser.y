@@ -738,7 +738,6 @@ type yyLexState struct {
 	name2ast		map[string]*ast
 	name2cmd		map[string]*command
 	name2tuple		map[string]*tuple
-	depends			map[string]string
 	set_stack		[]*set
 
 	command_ref		*command
@@ -1422,7 +1421,6 @@ func parse(in io.RuneReader) (*ast, error) {
 		name2ast:	make(map[string]*ast),
 		name2cmd:	make(map[string]*command),
 		name2tuple:	make(map[string]*tuple),
-		depends:	make(map[string]string),
 		ast_root:	&ast{
 					yy_tok:		FLOQ,
 					line_no:	1,
@@ -1439,14 +1437,6 @@ func parse(in io.RuneReader) (*ast, error) {
 		return nil, lex.mkerror("no flow <command> statement")
 	}
 
-	//  check for cyclic dependencies
-	var depends []string
-	for key, val := range lex.depends {
-		depends = append(depends, key + " " + val)
-	}
-	if len(depends) > 0 && tsort(depends) == nil {
-		return nil, lex.mkerror("cyclic dependncy")
-	}
 	return lex.ast_root, lex.err
 }
 
