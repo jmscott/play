@@ -188,7 +188,6 @@ expr:
 	  COMMAND_REF  '$'  {
 	  	yylex.(*yyLexState).name_is_name = true
 	  }  name {
-		/*
 	  	lex := yylex.(*yyLexState)
 
 		a := lex.project_osx_sys($4, $1)
@@ -196,8 +195,6 @@ expr:
 			return 0
 		}
 		$$ = a
-		*/
-		$$ = nil
 	  }
 	/*
 	|
@@ -1665,7 +1662,4 @@ func (lex *yyLexState) add_name_element(name string, ele *ast) (err error) {
 		lex.error("add_name_element: %s", err)
 	}
 	return err
-}
-func (lex *yyLexState) project_flow_tsv_n() (a *ast) {
-	return nil
 }
