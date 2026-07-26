@@ -177,8 +177,9 @@ func (p2 *pass2) osx_sysatt(a *ast) error {
 			return _e("sysatt needs \"run\" not \"flow\": %s", pn)
 		}
 
+		//  Note: using line number doesn't seem correct!
 		if ar.line_no >= a.line_no {
-			return _e("\"run\" call after sysatt: %s", pn)
+			return _e("sysatt called before run: %s", pn)
 		}
 
 		if len(p2.osx_proj[pn]) == 255 {
