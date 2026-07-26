@@ -5,13 +5,13 @@
 //  the graph is a list of arc pairs.  the two nodes in the arc are separated by
 //  a single space character.
 //
-//  upon failure, we eventually need to return a example cycle, to aid debuging.
+//  Note: upon failure, need to return an example cycle, to aid debuging.
 
 package main
 
 import "strings"
 
-func tsort(graph []string) (order []string) {
+func tsort(arc []string) (order []string) {
 
 	edge := make(map[string][]string)
 	node := make(map[string]bool)
@@ -20,7 +20,7 @@ func tsort(graph []string) (order []string) {
 
 	//  build the node{}, edge{}, and inbound{} maps of graph
 
-	for _, e := range graph {
+	for _, e := range arc {
 
 		pair := strings.Split(e, " ")
 
