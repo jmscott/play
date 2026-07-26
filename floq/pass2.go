@@ -230,7 +230,9 @@ func (p2 *pass2) osx_att(a *ast) error {
 	return p2.osx_att(a.next)
 }
 
-func (p2 *pass2) osx_depends(a *ast) error {
+//  references to "<command>$" must occur after "run <command>(..."
+
+func (p2 *pass2) osx_run_before(a *ast) error {
 
 	if a == nil {
 		return nil
@@ -241,7 +243,7 @@ func (p2 *pass2) osx_depends(a *ast) error {
 	}
 
 	_c := func(format string, args...interface{}) {
-		a.corrupt("osx_depends: " + format, args...)
+		a.corrupt("osx_run_before: " + format, args...)
 	}
 
 	switch a.yy_tok {
@@ -284,18 +286,11 @@ func (p2 *pass2) osx_depends(a *ast) error {
 		if p2.osx_call[cmd] == nil {
 			return _e("command never called: %s", cmd)	
 		}
-	case PROJECT_OSX_TSV:
-		proj := a.proj_ref
-		if proj == nil {
-			_c("proj_ref is nil")
-		}
-
-		//p2.depends[run.name] = cmd.name
 	}
-	if err := p2.osx_depends(a.left);  err != nil {
+	if err := p2.osx_run_before(a.left);  err != nil {
 		return err
 	}
-	if err := p2.osx_depends(a.right);  err != nil {
+	if err := p2.osx_run_before(a.right);  err != nil {
 		return err
 	}
 	if a.prev != nil {	//  in middle of sibling list
@@ -303,7 +298,7 @@ func (p2 *pass2) osx_depends(a *ast) error {
 	}
 
 	for sib := a.next;  sib != nil;  sib = sib.next {
-		if err := p2.osx_depends(sib);  err != nil {
+		if err := p2.osx_run_before(sib);  err != nil {
 			return err
 		}
 	}
@@ -325,13 +320,15 @@ func (p2 *pass2) cycle() error {
 			continue
 		}
 
-		//  check dependencies in argv
-		if err := p2.osx_depends(stmt.left);  err != nil {
+		//  check dependencies in (argv[])
+
+		if err := p2.osx_run_before(stmt.left);  err != nil {
 			return err
 		}
 
-		//  check dependencies in when clause
-		if err := p2.osx_depends(stmt.right);  err != nil {
+		//  check dependencies in "when" clause
+
+		if err := p2.osx_run_before(stmt.right);  err != nil {
 			return err
 		}
 	}
