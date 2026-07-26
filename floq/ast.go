@@ -469,7 +469,7 @@ func (set *ast) array_string_element(name string) []string {
 
 //  find first ancestor of particular type
 
-func (a *ast) yy_ancestor(yy_tok int) *ast {
+func (a *ast) ancestor(yy_tok int) *ast {
 
 	if a == nil {
 		return nil
@@ -480,5 +480,5 @@ func (a *ast) yy_ancestor(yy_tok int) *ast {
 	if a.parent == nil {
 		return nil
 	}
-	return a.parent.yy_ancestor(yy_tok)
+	return a.parent.ancestor(yy_tok)
 }

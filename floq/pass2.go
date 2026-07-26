@@ -261,9 +261,9 @@ func (p2 *pass2) osx_run_before(a *ast) error {
 	     PROJECT_OSX_STDOUT,
 	     PROJECT_OSX_STDERR:
 	     	
-		stmt := a.yy_ancestor(FLOW)
+		stmt := a.ancestor(FLOW)
 		if stmt == nil {
-			stmt = a.yy_ancestor(RUN)
+			stmt = a.ancestor(RUN)
 		}
 		if stmt == nil {
 			_c("%s: can not find flow or run ancestor")
