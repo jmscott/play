@@ -2,6 +2,11 @@
  *  Synopsis:
  *	Build an abstract syntax tree for "floq" language.
  *  Note:
+ *	- define one command in terms of another command:
+ *
+ *		define command2 using command1;
+ *		define command2 as SET using command1;
+ *
  *	- only constants in <command>[uint64] expressions!  need uint64 express
  *
  *	- Consider defining multiple commands with single define!
