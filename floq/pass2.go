@@ -18,8 +18,6 @@ type pass2 struct {
 
 	osx		map[string]*ast		//  flow/fun statement
 
-	depends		map[string]string	//  [thing] depend on thing
-
 	/*
 	 *  track ast projection nodes referenced in
 	 *
@@ -313,7 +311,7 @@ func (p2 *pass2) error(format string, args...interface{}) error {
 
 //  find cyclic dependencies.
 
-func (p2 *pass2) cycle() error {
+func (p2 *pass2) stmt_cycle() error {
 
 	for stmt := p2.root.left.left;  stmt != nil;  stmt = stmt.next {
 		
@@ -334,14 +332,6 @@ func (p2 *pass2) cycle() error {
 		}
 	}
 
-	//  check for cyclic dependencies
-	var depends []string
-	for key, val := range p2.depends {
-		depends = append(depends, key + " " + val)
-	}
-	if len(depends) > 0 && tsort(depends) == nil {
-		return p2.error("cyclic dependncy")
-	}
 	return nil
 }
 
@@ -591,6 +581,95 @@ func (p2 *pass2) parse_sets(root *ast) error {
 	return nil;
 }
 
+//  Note:  move func back to inside p2.flow_depends()!
+
+func (p2 *pass2) is_PROJECT(a *ast) bool {
+	switch a.yy_tok {
+	case
+		PROJECT_FLOW_SEQ,
+		PROJECT_FLOW_TSV_N,
+		PROJECT_FLOW_TUPLE_TSV_N,
+		PROJECT_OSX_EXIT_CODE,
+		PROJECT_OSX_PID,
+		PROJECT_OSX_START_TIME,
+		PROJECT_OSX_STDERR,
+		PROJECT_OSX_STDOUT_TSV_N,
+		PROJECT_OSX_STDOUT,
+		PROJECT_OSX_SYS_SEC,
+		PROJECT_OSX_SYS_USEC,
+		PROJECT_OSX_TSV_N,
+		PROJECT_OSX_TSV,
+		PROJECT_OSX_USER_SEC,
+		PROJECT_OSX_USER_USEC,
+		PROJECT_OSX_WALL_DURATION:
+		return true
+	}
+	return false
+}
+
+//  insure every command_ref depends on "flow command()"
+func (p2 *pass2) flow_depends(root *ast) error {
+	
+	depends := make(rel2_strXstr) 
+
+	flow_name := ""
+
+	//  build dependency relation between command projections.
+
+	var cmd_depends func(*ast)
+	cmd_depends = func(a *ast) {
+		if a == nil {
+			return
+		}
+		if a.yy_tok == FLOW {
+			flow_name = a.name
+		} else if p2.is_PROJECT(a) {
+			depends.add(a.ancestor(RUN).name, a.command_ref.name)
+		}
+		cmd_depends(a.left)
+		cmd_depends(a.right)
+		cmd_depends(a.next)
+	}
+
+	cmd_depends(root)
+
+	if depends.is_dag() == false {
+		return errors.New("cycles in run command processes")
+	}
+
+	depends.add(flow_name, flow_name)
+
+	var run2flow func(*ast) error
+
+	//  is every projection dependent on the flow
+
+	run2flow = func(a *ast) error {
+
+		if a == nil {
+			return nil
+		}
+		if a.yy_tok == RUN && !depends.reaches(a.name, flow_name) {
+			return fmt.Errorf(
+				"command %s can not reach flow %s",
+				a.name,
+				flow_name,
+			)
+		}
+		if err := run2flow(a.left);  err != nil {
+			return err
+		}
+		if err := run2flow(a.right);  err != nil {
+			return err
+		}
+		if err := run2flow(a.next);  err != nil {
+			return err
+		}
+		return nil
+	}
+
+	return run2flow(root)
+}
+
 //  frisk&optimize abstract syntax tree compiled by pass1 (yacc grammar)
 
 func xpass2(root *ast) error {
@@ -622,7 +701,6 @@ func xpass2(root *ast) error {
 	p2 := &pass2{
 		root:		root,
 		osx:		make(map[string]*ast),
-		depends:	make(map[string]string),
 		osx_call:	make(map[*command]*ast),
 		osx_proj:	make(map[string][]*ast),
 	}
@@ -644,7 +722,7 @@ func xpass2(root *ast) error {
 
 	p2.is_null(root)	// rewrite "IS NULL" ops
 
-	if err := p2.cycle();  err != nil {	//  find cyclic dependencies
+	if err := p2.stmt_cycle();  err != nil {
 		return err
 	}
 
@@ -674,6 +752,12 @@ func xpass2(root *ast) error {
 
 	//  all arguments to argv must be a string
 	if err := p2.argv_is_string(root);  err != nil {
+		return err
+	}
+
+	//  every command or flow reference traces back to statement
+	//  "flow <command();"
+	if err := p2.flow_depends(root);  err != nil {
 		return err
 	}
 

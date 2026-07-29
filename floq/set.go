@@ -3,14 +3,16 @@ package main
 //  Note: no mutex around functions add_*()!!
 
 import (
-	"hash"
-	"sort"
-	"slices"
 	"crypto/sha256"
 	"encoding/binary"
+	"errors"
 	"fmt"
+	"hash"
 	"hash/crc64"
+	"slices"
+	"sort"
 	"strconv"
+	"strings"
 )
 
 /*
@@ -49,6 +51,10 @@ type set struct {
 //  crc of sets and arrays for equality op
 
 type crc_64 uint64
+
+//  two dimensional relation over string X string
+
+type rel2_strXstr map[string]map[string]bool
 
 func new_set() *set {
 	return &set{
@@ -551,4 +557,97 @@ func (s *set) has_name(name string) bool {
 		return true
 	}
 	return false
+}
+
+
+func (r2 rel2_strXstr) add(a, b string) error {
+
+	switch {
+	case a == "":
+		return errors.New("element a string is empty")
+	case b == "":
+		return errors.New("element b string is empty")
+	case strings.ContainsRune(a, '\t'):
+		return errors.New("element in \"a\" contains tab")
+	case strings.ContainsRune(a, '\n'):
+		return errors.New("element in \"a\" contains newline")
+	case strings.ContainsRune(b, '\t'):
+		return errors.New("element in \"b\" contains tab")
+	case strings.ContainsRune(b, '\n'):
+		return errors.New("element in \"b\" contains newline")
+	}
+
+	if r2[a] == nil {
+		r2[a] = make(map[string]bool)
+	}
+	r2[a][b] = true
+
+	return nil
+}
+
+func (r2 rel2_strXstr) delete(a, b string) {
+	
+	delete(r2[a], b)
+	if len(r2[a]) == 0 {	//  Note: delete does not free map bound to a
+		r2[a] = nil
+	}
+}
+
+func (r2 rel2_strXstr) String() string {
+	var sb strings.Builder
+
+	for ele1, proj2 := range r2 {
+		for ele2, ok := range proj2 {
+			if ok || true {
+				sb.WriteString(ele1)
+				sb.WriteString("\t")
+				sb.WriteString(ele2)
+				sb.WriteString("\n")
+			}
+		}
+	}
+	return sb.String()
+}
+
+func (r2 rel2_strXstr) reaches(a, b string) bool {
+
+	visited := make(map[string]bool)
+
+	var walk func(string, string) bool
+
+	walk = func(at string, tgt string) bool  {
+
+		if at == tgt {
+			return true
+		}
+
+		adj := r2[at]
+
+		if visited[at] == false {
+			for to, _ := range adj {
+				if walk(to, tgt) {
+					return true
+				}
+			}
+
+		}
+		visited[at] = true
+		return false
+	}
+
+	return walk(a, b)
+}
+
+func (r2 rel2_strXstr) is_dag() bool {
+
+	arcs := make([]string, 0)
+	for ele1, proj2 := range r2 {
+		for ele2, ok := range proj2 {
+			if ok {
+				arc := fmt.Sprintf("%s\t%s", ele1, ele2)
+				arcs = append(arcs, arc)
+			}
+		}
+	}
+	return tsort(arcs) != nil
 }

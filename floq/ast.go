@@ -75,7 +75,7 @@ func (a *ast) yy_name() string {
 //
 //  Note: rename to ast.dump() and simplyfy String()
 
-func (a *ast) String() string {
+func (a *ast) dump() string {
 
 	var what string
 
@@ -302,7 +302,7 @@ func (a *ast) walk_print(indent int, parent *ast) {
 		}
 	}
 
-	os.Stderr.WriteString(a.String() + "\n")
+	os.Stderr.WriteString(a.dump() + "\n")
 
 	//  print kids
 
@@ -316,6 +316,14 @@ func (a *ast) walk_print(indent int, parent *ast) {
 			as.walk_print(indent, parent)
 		}
 	}
+}
+
+func (a *ast) String() string {
+
+	if a.name == "" {
+		return yy_name(a.yy_tok)
+	}
+	return fmt.Sprintf("%s:%s", yy_name(a.yy_tok), a.name)
 }
 
 //  recursively print arbitrary ast nodes and descendents, starting with
