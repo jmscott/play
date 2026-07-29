@@ -2,20 +2,22 @@
  *  Synopsis:
  *	Build an abstract syntax tree for "floq" language.
  *  Note:
- *	- define one command in terms of another command:
+ *	-  can we relax the requirement that a "run <command>(..." must occur
+ *	   before a projection of "<command>"?  why not just reorder the run
+ *	   call order?
+ *
+ *	-  define one command in terms of another command:
  *
  *		define command2 using command1;
  *		define command2 as SET using command1;
  *
- *	- only constants in <command>[uint64] expressions!  need uint64 express
+ *	-  only constants in <command>[uint64] expressions!  need uint64 express
  *
- *	- Consider defining multiple commands with single define!
+ *	-  consider defining multiple commands with single define!
  *
  *		define commands (name, name2) as {...
  *
- *	- type yy_tok needs String()!  perhaps an ast.my_yy_tok?
- *
- *	- func lookahead() ignores eof.  that is not correct.
+ *	-  func lookahead() ignores eof.  that is not correct.
  */
 
 %{
@@ -80,7 +82,7 @@ func init() {
 %token	CONCAT
 %token	WHEN
 %token  CONDITIONAL
-%token	PROJECT_FLOW_TUPLE_TSV_N
+%token	PROJECT_FLOW_TUPLE_TSV_N  PROJECT_OSX_STDOUT_TSV_N
 %token	MOD
 
 //  project the rusage variables <commamd>$<var>
@@ -111,7 +113,7 @@ func init() {
 %type	<ast>		arg_list
 %type	<ast>		set  element  element_list
 %type	<ast>		array  component_list
-%type	<ast>		constant  expr  qualification
+%type	<ast>		constant  expr
 %type	<ast>		stmt  stmt_list
 %type	<ast>		value
 %type	<command_ref>	COMMAND_REF  FLOW_REF
@@ -215,6 +217,7 @@ expr:
 		$$ = a
 		$$ = nil
 	  }
+	  */
 	|
 	  COMMAND_REF  '['  expr  ']'
 	  {
@@ -226,8 +229,8 @@ expr:
 
 		$$ = lex.ast(PROJECT_OSX_STDOUT_TSV_N, $3)
 		$$.command_ref = $1
+		$$.name = $$.command_ref.name
 	  }
-	  */
 	|
 	  FLOW_REF  '['  expr  ']'
 	  {
@@ -241,6 +244,7 @@ expr:
 			call_order: cmd.ref_count,
 		}
 		a.command_ref = cmd
+		a.name = cmd.name
 		$$ = a
 	  }
 	|
@@ -415,25 +419,6 @@ expr:
 		cond.push_right(if_false)
 		
 		$$ = cond
-	  }
-	;
-
-qualification:
-	  /*  empty  */
-	  {
-	  	$$ = nil
-	  }
-	|
-	  WHEN  expr
-	  {
-	  	lex := yylex.(*yyLexState)
-
-		//  Note:  move to ast.frisk()
-	  	if $2.is_bool() == false {
-			lex.error("when: qualification not boolean")
-			return 0
-		}
-		$$ = lex.ast(WHEN, $2)
 	  }
 	;
 
@@ -656,10 +641,21 @@ stmt:
 		$$ = nil
 	  }
 	|
-	  RUN  COMMAND_REF  '('  arg_list  ')'  qualification  {
+	  //  Note: collapse "run <command>(...)" into single production!
+	  RUN  COMMAND_REF  '('  arg_list  ')'  WHEN  expr  {
 	  	lex := yylex.(*yyLexState)
 
-		run := lex.run($2, $4, $6)
+		run := lex.run($2, $4, $7)
+		if run == nil {
+			return 0
+		}
+		$$ = run
+	  }
+	|
+	  RUN  COMMAND_REF  '('  arg_list  ')'  {
+	  	lex := yylex.(*yyLexState)
+
+		run := lex.run($2, $4, nil)
 		if run == nil {
 			return 0
 		}
@@ -989,7 +985,7 @@ func (lex *yyLexState) scan_raw_string(yylval *yySymType) (eof bool, err error) 
 			yylval.string = s
 			return false, nil
 		}
-		s += string(c)
+		s += string(c)	//  Note: convert to scanner!
 	}
 	if err != nil {
 		return false, err
