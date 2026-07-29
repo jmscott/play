@@ -5,7 +5,10 @@
 //  the graph is a list of arc pairs.  the two nodes in the arc are separated by
 //  a single space character.
 //
-//  Note: upon failure, need to return an example cycle, to aid debuging.
+//  Note:
+//	tsort needs to use the rel2_strXstr data type!
+//
+//	upon failure, need to return an example cycle, to aid debuging.
 
 package main
 
@@ -22,7 +25,7 @@ func tsort(arc []string) (order []string) {
 
 	for _, e := range arc {
 
-		pair := strings.Split(e, " ")
+		pair := strings.Split(e, "\t")
 
 		source := pair[0]
 		target := pair[1]
