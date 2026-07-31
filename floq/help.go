@@ -9,18 +9,19 @@ var help_tuple = `
 
 define tuple <name> as {
 	attributes: {
-		att1: {
-			matches:
-	"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})",
+		interface: {
+			matches: "^[a-z][a-z0-9_]{0,7}$",
 			tab_field: 1
 		},
-		att2: {
-			matches: "[a-z][a-z0-9_]{0,7}~[[:graph:]]{1,128}",
+		byte_count: {
+			#  64bit unsigned
+			matches: "^[1-9][0-9]{19}$",
 			tab_field: 2
 		}
 	}
 };
 `
+
 var help_command = `
 
 define command <name>[.<tuple>] as {
