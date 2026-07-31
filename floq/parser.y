@@ -2,6 +2,13 @@
  *  Synopsis:
  *	Build an abstract syntax tree for "floq" language.
  *  Note:
+ *	-  Consider pattern for common errors, like a missing semicolon after
+ *	   a brace:
+ *
+ *		define command cmd1 ...
+ *		}
+ *		define comand cmd2 ...
+ *
  *	-  can we relax the requirement that a "run <command>(..." must occur
  *	   before a projection of "<command>"?  why not just reorder the run
  *	   call order?
@@ -11,9 +18,7 @@
  *		define command2 using command1;
  *		define command2 as SET using command1;
  *
- *	-  only constants in <command>[uint64] expressions!  need uint64 express
- *
- *	-  consider defining multiple commands with single define!
+ *	   or, overload the command name list
  *
  *		define commands (name, name2) as {...
  *
