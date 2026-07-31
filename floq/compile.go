@@ -306,7 +306,7 @@ func (cmp *compilation) compile(a *ast) {
 		proj := a.proj_ref
 		cmd := proj.command_ref
 		fo := cmd2osxfo[cmd]
-		a2str[a] = flo.osx_proj_tuple_tsv(
+		a2str[a] = flo.osx_proj_tsv(
 				fo[proj.call_order-1],
 				cmd,
 				proj.att_ref,

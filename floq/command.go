@@ -324,7 +324,7 @@ func (cmd *command) String() string {
  *  project a particular attribute of a tab separated, new line terminated
  *  set of tuples as osx tuples
  */
-func (flo *flow) osx_proj_tuple_tsv(
+func (flo *flow) osx_proj_tsv(
 	in osx_chan,
 	cmd *command,
 	att *attribute,
@@ -356,6 +356,8 @@ func (flo *flow) osx_proj_tuple_tsv(
 				_die("more than one newline")
 			}
 
+			//  Note: inconsistent with other tsv operators that
+			//        do not panic and send null instead.
 			fld := strings.Split(str, "\t")
 			if len(fld) != len(att.tuple_ref.atts) {
 				_die("not %d fields", len(att.tuple_ref.atts))

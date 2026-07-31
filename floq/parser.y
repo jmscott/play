@@ -83,6 +83,7 @@ func init() {
 %token	WHEN
 %token  CONDITIONAL
 %token	PROJECT_FLOW_TUPLE_TSV_N  PROJECT_OSX_STDOUT_TSV_N
+%token	PROJECT_FLOW_TUPLE
 %token	MOD
 
 //  project the rusage variables <commamd>$<var>
@@ -203,21 +204,36 @@ expr:
 		}
 		$$ = a
 	  }
-	/*
 	|
 	  COMMAND_REF  '.'  {
 	  	yylex.(*yyLexState).name_is_name = true
 	  }  name {
 	  	lex := yylex.(*yyLexState)
+		cmd := $1
+		name := $4
+		tup := cmd.tuple_ref
 
-		a := lex.project_osx($1, $4)
-		if a == nil {
+		if tup == nil {
+			die("tuple ref is nil in command: %s", cmd)
+		}
+		att := tup.atts[name]
+		if att == nil {
+			lex.error("unknown attribute: %s.%s", cmd, name)
 			return 0
 		}
+
+		cmd.ref_count++
+		a := lex.ast(PROJECT_OSX_TSV)
+		a.proj_ref = &projection{
+			command_ref:	cmd,
+			call_order: cmd.ref_count,
+		}
+		a.command_ref = cmd
+		a.name = cmd.name
 		$$ = a
-		$$ = nil
+
+		$$ = a
 	  }
-	  */
 	|
 	  COMMAND_REF  '['  expr  ']'
 	  {
@@ -248,6 +264,38 @@ expr:
 		$$ = a
 	  }
 	|
+	  FLOW_REF  '.'  {
+	  	yylex.(*yyLexState).name_is_name = true
+	  }  name {
+	  	lex := yylex.(*yyLexState)
+		cmd := $1
+		name := $4
+		tup := cmd.tuple_ref
+
+		if tup == nil {
+			die("tuple ref is nil in command: %s", cmd)
+		}
+		att := tup.atts[name]
+		if att == nil {
+			lex.error("unknown attribute: %s.%s", cmd, name)
+			return 0
+		}
+
+		idx := &ast{
+			yy_tok: UINT64,
+			uint64:	uint64(att.tab_field),
+		}
+		cmd.ref_count++
+		a := lex.ast(PROJECT_FLOW_TSV_N, idx)
+		a.proj_ref = &projection{
+			command_ref:	cmd,
+			call_order: cmd.ref_count,
+		}
+		a.command_ref = cmd
+		a.name = cmd.name
+		$$ = a
+	  }
+	|
 	  FLOW_REF  '$'  {
 	  	yylex.(*yyLexState).name_is_name = true
 	  }  name  {
@@ -257,9 +305,12 @@ expr:
 		att := $4
 
 		if att != "flow_seq" {
-			lex.error("%s$: unknown attribute: %s", cmd , att)
+			lex.error("%s$: unknown sys attribute: %s", cmd , att)
 		}
-		$$ = lex.ast(PROJECT_FLOW_SEQ);
+		a := lex.ast(PROJECT_FLOW_SEQ);
+		a.command_ref = cmd
+
+		$$ = a
 	  }
 	|
 	  expr  yy_AND  expr
@@ -1085,6 +1136,10 @@ func (lex *yyLexState) scan_word(
 	lex.name = w
 	yylval.name = w
 
+	if lex.name_is_name {
+		return NAME, nil
+	}
+
 	//  FLOW_REF
 	if lex.flow_cmd != nil && lex.flow_cmd.name == w {
 		yylval.command_ref = lex.flow_cmd
@@ -1107,6 +1162,7 @@ func (lex *yyLexState) scan_word(
 	}
 
 	//  AST NODE ?
+
 	if lex.name_is_name == false && lex.name2ast[w] != nil {
 		return lex.name2ast[w].yy_tok, nil
 	}
