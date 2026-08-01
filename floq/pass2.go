@@ -217,7 +217,11 @@ func (p2 *pass2) osx_att(a *ast) error {
 		}
 		pn := att.String()
 		if ar.line_no >= a.line_no {
-			return fmt.Errorf("run not after att: %s", pn)
+			return fmt.Errorf(
+				"run not after att: %s, near line %d",
+				pn,
+				a.line_no,
+			)
 		}
 
 		if len(p2.osx_proj[pn]) >= 255 {
