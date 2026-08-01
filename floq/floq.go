@@ -167,12 +167,6 @@ func string_brief(str string, clen int, ellipse bool) string {
 	return str + "..."
 }
 
-//  debug with attitude and no caller function prepended.,
-//  usefull to reduce redundancy when all WTF()s called from single function.
-func WTF2(format string, args ...interface{}) {
-	os.Stderr.WriteString(fmt.Sprintf("WTF: " + format, args...) + "\n")
-}
-
 //  debug with attitude 
 
 func WTF(format string, args ...interface{}) {
