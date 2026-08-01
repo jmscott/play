@@ -89,25 +89,25 @@ func init() {
 %token	CONCAT
 %token	WHEN
 %token  CONDITIONAL
-%token	PROJECT_FLOW_TUPLE_TSV_N  PROJECT_OSX_STDOUT_TSV_N
-%token	PROJECT_FLOW_TUPLE
+%token	PROJ_FLOW_TUPLE_TSV_N  PROJ_OSX_STDOUT_TSV_N
+%token	PROJ_FLOW_TUPLE
 %token	MOD
 
 //  project the rusage variables <commamd>$<var>
 
-%token	PROJECT_OSX_EXIT_CODE
-%token	PROJECT_OSX_PID
-%token	PROJECT_OSX_START_TIME
-%token	PROJECT_OSX_WALL_DURATION
-%token	PROJECT_OSX_USER_SEC
-%token	PROJECT_OSX_USER_USEC
-%token	PROJECT_OSX_SYS_SEC
-%token	PROJECT_OSX_SYS_USEC
-%token	PROJECT_OSX_STDOUT
-%token	PROJECT_OSX_STDERR
-%token	PROJECT_OSX_TSV PROJECT_OSX_TSV_N
-%token	PROJECT_FLOW_TSV_N
-%token	PROJECT_FLOW_SEQ
+%token	PROJ_OSX_EXIT_CODE
+%token	PROJ_OSX_PID
+%token	PROJ_OSX_START_TIME
+%token	PROJ_OSX_WALL_DURATION
+%token	PROJ_OSX_USER_SEC
+%token	PROJ_OSX_USER_USEC
+%token	PROJ_OSX_SYS_SEC
+%token	PROJ_OSX_SYS_USEC
+%token	PROJ_OSX_STDOUT
+%token	PROJ_OSX_STDERR
+%token	PROJ_OSX_TSV PROJ_OSX_TSV_N
+%token	PROJ_FLOW_TSV_N
+%token	PROJ_FLOW_SEQ
 
 %token	CAST_BOOL  CAST_UINT64  CAST_STRING
 %token	yy_IS  yy_NULL  IS_NULL
@@ -230,7 +230,7 @@ expr:
 		}
 
 		cmd.ref_count++
-		a := lex.ast(PROJECT_OSX_TSV)
+		a := lex.ast(PROJ_OSX_TSV)
 		a.proj_ref = &projection{
 			command_ref:	cmd,
 			call_order: cmd.ref_count,
@@ -252,7 +252,7 @@ expr:
 			return 0
 		}
 
-		$$ = lex.ast(PROJECT_OSX_STDOUT_TSV_N, $3)
+		$$ = lex.ast(PROJ_OSX_STDOUT_TSV_N, $3)
 		$$.command_ref = $1
 		$$.name = $$.command_ref.name
 	  }
@@ -263,7 +263,7 @@ expr:
 		cmd := $1
 
 		cmd.ref_count++
-		a := lex.ast(PROJECT_FLOW_TSV_N, $3)
+		a := lex.ast(PROJ_FLOW_TSV_N, $3)
 		a.proj_ref = &projection{
 			command_ref:	cmd,
 			call_order: cmd.ref_count,
@@ -299,7 +299,7 @@ expr:
 			uint64:	uint64(att.tab_field),
 		}
 		cmd.ref_count++
-		a := lex.ast(PROJECT_FLOW_TSV_N, idx)
+		a := lex.ast(PROJ_FLOW_TSV_N, idx)
 		a.proj_ref = &projection{
 			command_ref:	cmd,
 			call_order: cmd.ref_count,
@@ -320,7 +320,7 @@ expr:
 		if att != "flow_seq" {
 			lex.error("%s$: unknown sys attribute: %s", cmd , att)
 		}
-		a := lex.ast(PROJECT_FLOW_SEQ);
+		a := lex.ast(PROJ_FLOW_SEQ);
 		a.command_ref = cmd
 
 		$$ = a
@@ -1559,25 +1559,25 @@ func (lex *yyLexState) project_osx_sys(name string, cmd *command) (*ast) {
 	}
 	switch name {
 	case "Stdout":
-		a.yy_tok = PROJECT_OSX_STDOUT
+		a.yy_tok = PROJ_OSX_STDOUT
 	case "Stderr":
-		a.yy_tok = PROJECT_OSX_STDERR
+		a.yy_tok = PROJ_OSX_STDERR
 	case "exit_code": 
-		a.yy_tok = PROJECT_OSX_EXIT_CODE
+		a.yy_tok = PROJ_OSX_EXIT_CODE
 	case "pid":
-		a.yy_tok = PROJECT_OSX_PID
+		a.yy_tok = PROJ_OSX_PID
 	case "start_time": 
-		a.yy_tok = PROJECT_OSX_START_TIME
+		a.yy_tok = PROJ_OSX_START_TIME
 	case "wall_duration": 
-		a.yy_tok = PROJECT_OSX_WALL_DURATION
+		a.yy_tok = PROJ_OSX_WALL_DURATION
 	case "user_sec":
-		a.yy_tok = PROJECT_OSX_USER_SEC
+		a.yy_tok = PROJ_OSX_USER_SEC
 	case "user_usec":
-		a.yy_tok = PROJECT_OSX_USER_USEC
+		a.yy_tok = PROJ_OSX_USER_USEC
 	case "sys_sec":
-		a.yy_tok = PROJECT_OSX_SYS_SEC
+		a.yy_tok = PROJ_OSX_SYS_SEC
 	case "sys_usec":
-		a.yy_tok = PROJECT_OSX_USER_USEC
+		a.yy_tok = PROJ_OSX_USER_USEC
 	default:
 		lex.error(
 			"project_osx_sys: %s: unknown att: %s",
@@ -1589,34 +1589,6 @@ func (lex *yyLexState) project_osx_sys(name string, cmd *command) (*ast) {
 	cmd.sref_count++
 	a.proj_ref.call_order = cmd.sref_count
 	return a
-}
-
-func (lex *yyLexState) project_osx(name string, cmd *command) (*ast) {
-
-	tup := cmd.tuple_ref
-	if tup == nil {
-		lex.error("no tuple defined for command: %s", cmd.name)
-		return nil
-	}
-	att := tup.atts[name]
-	if att == nil {
-		lex.error("tuple %s: no attribute: %s", tup.name, name)
-		return nil
-	}
-	cmd.ref_count++
-	return &ast{
-		name:	name,
-		yy_tok:	PROJECT_OSX_TSV,
-		line_no:	lex.line_no,
-		command_ref:	cmd,
-		att_ref:	att,
-		tuple_ref:	tup,
-		proj_ref:	&projection{
-					command_ref: cmd,
-					att_ref: att,
-					call_order:	cmd.ref_count,
-				},
-	}
 }
 
 func (lex *yyLexState) parse_set(a *ast) bool {

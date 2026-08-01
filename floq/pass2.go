@@ -155,14 +155,14 @@ func (p2 *pass2) osx_sysatt(a *ast) error {
 
 	//  add projection to list of what references this "run".
 
-	case PROJECT_OSX_EXIT_CODE,
-	     PROJECT_OSX_PID,
-	     PROJECT_OSX_START_TIME,
-	     PROJECT_OSX_WALL_DURATION,
-	     PROJECT_OSX_USER_SEC,  PROJECT_OSX_USER_USEC,
-	     PROJECT_OSX_SYS_SEC,  PROJECT_OSX_SYS_USEC,
-	     PROJECT_OSX_STDOUT,
-	     PROJECT_OSX_STDERR:
+	case PROJ_OSX_EXIT_CODE,
+	     PROJ_OSX_PID,
+	     PROJ_OSX_START_TIME,
+	     PROJ_OSX_WALL_DURATION,
+	     PROJ_OSX_USER_SEC,  PROJ_OSX_USER_USEC,
+	     PROJ_OSX_SYS_SEC,  PROJ_OSX_SYS_USEC,
+	     PROJ_OSX_STDOUT,
+	     PROJ_OSX_STDERR:
 		proj := a.proj_ref
 
 		cmd := proj.sysatt_ref.command_ref
@@ -184,7 +184,7 @@ func (p2 *pass2) osx_sysatt(a *ast) error {
 			return _e("too many sysatt ref: %s", pn)
 		}
 
-		//  append PROJECT_OSX... ast node to array of sysatt
+		//  append PROJ_OSX... ast node to array of sysatt
 		//  references.
 		p2.osx_proj[pn] = append(p2.osx_proj[pn], a)
 	}
@@ -206,7 +206,7 @@ func (p2 *pass2) osx_att(a *ast) error {
 		return err
 	}
 
-	if a.yy_tok == PROJECT_OSX_TSV {
+	if a.yy_tok == PROJ_OSX_TSV {
 
 		att := a.att_ref
 		cmd := a.command_ref
@@ -253,16 +253,16 @@ func (p2 *pass2) osx_run_before(a *ast) error {
 
 	//  project <command>$<sysatt>
 
-	case PROJECT_OSX_EXIT_CODE,
-	     PROJECT_OSX_PID,
-	     PROJECT_OSX_START_TIME,
-	     PROJECT_OSX_WALL_DURATION,
-	     PROJECT_OSX_USER_SEC,
-	     PROJECT_OSX_USER_USEC,
-	     PROJECT_OSX_SYS_SEC,
-	     PROJECT_OSX_SYS_USEC,
-	     PROJECT_OSX_STDOUT,
-	     PROJECT_OSX_STDERR:
+	case PROJ_OSX_EXIT_CODE,
+	     PROJ_OSX_PID,
+	     PROJ_OSX_START_TIME,
+	     PROJ_OSX_WALL_DURATION,
+	     PROJ_OSX_USER_SEC,
+	     PROJ_OSX_USER_USEC,
+	     PROJ_OSX_SYS_SEC,
+	     PROJ_OSX_SYS_USEC,
+	     PROJ_OSX_STDOUT,
+	     PROJ_OSX_STDERR:
 	     	
 		stmt := a.ancestor(FLOW)
 		if stmt == nil {
@@ -590,22 +590,22 @@ func (p2 *pass2) parse_sets(root *ast) error {
 func (p2 *pass2) is_PROJECT(a *ast) bool {
 	switch a.yy_tok {
 	case
-		PROJECT_FLOW_SEQ,
-		PROJECT_FLOW_TSV_N,
-		PROJECT_FLOW_TUPLE_TSV_N,
-		PROJECT_OSX_EXIT_CODE,
-		PROJECT_OSX_PID,
-		PROJECT_OSX_START_TIME,
-		PROJECT_OSX_STDERR,
-		PROJECT_OSX_STDOUT_TSV_N,
-		PROJECT_OSX_STDOUT,
-		PROJECT_OSX_SYS_SEC,
-		PROJECT_OSX_SYS_USEC,
-		PROJECT_OSX_TSV_N,
-		PROJECT_OSX_TSV,
-		PROJECT_OSX_USER_SEC,
-		PROJECT_OSX_USER_USEC,
-		PROJECT_OSX_WALL_DURATION:
+		PROJ_FLOW_SEQ,
+		PROJ_FLOW_TSV_N,
+		PROJ_FLOW_TUPLE_TSV_N,
+		PROJ_OSX_EXIT_CODE,
+		PROJ_OSX_PID,
+		PROJ_OSX_START_TIME,
+		PROJ_OSX_STDERR,
+		PROJ_OSX_STDOUT_TSV_N,
+		PROJ_OSX_STDOUT,
+		PROJ_OSX_SYS_SEC,
+		PROJ_OSX_SYS_USEC,
+		PROJ_OSX_TSV_N,
+		PROJ_OSX_TSV,
+		PROJ_OSX_USER_SEC,
+		PROJ_OSX_USER_USEC,
+		PROJ_OSX_WALL_DURATION:
 		return true
 	}
 	return false

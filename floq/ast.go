@@ -214,24 +214,24 @@ func (a *ast) dump() string {
 		what = "FALSE"
 	case yy_TRUE:
 		what = "TRUE"
-	case PROJECT_OSX_EXIT_CODE,
-	     PROJECT_OSX_PID,
-	     PROJECT_OSX_START_TIME,
-	     PROJECT_OSX_WALL_DURATION,
-	     PROJECT_OSX_USER_SEC,
-	     PROJECT_OSX_USER_USEC,
-	     PROJECT_OSX_SYS_SEC,
-	     PROJECT_OSX_SYS_USEC:
+	case PROJ_OSX_EXIT_CODE,
+	     PROJ_OSX_PID,
+	     PROJ_OSX_START_TIME,
+	     PROJ_OSX_WALL_DURATION,
+	     PROJ_OSX_USER_SEC,
+	     PROJ_OSX_USER_USEC,
+	     PROJ_OSX_SYS_SEC,
+	     PROJ_OSX_SYS_USEC:
 		what = fmt.Sprintf(
 			"%s: %s",
 			a.yy_name(),
 			a.proj_ref,
 		)
-	case PROJECT_OSX_TSV:
-		what = "PROJECT_OSX_TSV: " + a.proj_ref.String()
-	case PROJECT_OSX_TSV_N:
+	case PROJ_OSX_TSV:
+		what = "PROJ_OSX_TSV: " + a.proj_ref.String()
+	case PROJ_OSX_TSV_N:
 		what = fmt.Sprintf(
-				"PROJECT_OSX_TSV_N: %s[%d]",
+				"PROJ_OSX_TSV_N: %s[%d]",
 				a.command_ref,
 				a.proj_ref.field,
 			)

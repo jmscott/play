@@ -290,11 +290,11 @@ func (a *ast) is_string() bool {
 
 	switch a.yy_tok {
 	case STRING, CONCAT, EXPAND_ENV,
-	     PROJECT_OSX_START_TIME,
-	     PROJECT_OSX_STDERR,
-	     PROJECT_OSX_STDOUT,
-	     PROJECT_OSX_TSV,
-	     PROJECT_FLOW_TSV_N:
+	     PROJ_OSX_START_TIME,
+	     PROJ_OSX_STDERR,
+	     PROJ_OSX_STDOUT,
+	     PROJ_OSX_TSV,
+	     PROJ_FLOW_TSV_N:
 		return true
 	case CAST, CAST_UINT64, CAST_BOOL, CAST_STRING:
 		if a.right.yy_tok == yy_STRING {
@@ -391,52 +391,6 @@ func (flo *flow) string_null(in string_chan) {
 			flo = flo.next()
 		}
 	}()
-}
-
-/*
- *  Project a string inside tab separated line of fields.
- *  The field is referenced by field number, offset from 1.
- *  A field out of bounds send a null string.
- *
- *  Note:
- *	Consider an option in tuple to disallow nulls!
- */
-
-func (flo *flow) proj_tsv(in string_chan, field uint8) (out string_chan) {
-	
-	out = make(string_chan)
-
-	go func() {
-		<-compiling
-
-		for {
-			sv := <- in
-
-			var str string
-
-			is_null := sv.is_null
-			if is_null == false {
-				fld := strings.Split(
-						strings.Trim(
-							sv.string,
-							"\n"),
-						"\t",
-					)
-				if int(field) <= len(fld) {
-					str = fld[field-1]
-				} else {
-					is_null = true
-				}
-			}
-			out <- &string_value{
-				string:		str,
-				is_null:	is_null,
-			}
-
-			flo = flo.next()
-		}
-	}()
-	return out
 }
 
 //  op: fanout a single string value to multiple channels

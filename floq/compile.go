@@ -27,7 +27,7 @@ type compilation struct {
 	a2argv		map[*ast]argv_chan
 
 	//  fanout targets for specific osx_chan records, like
-	//  PROJECT_OSX_EXIT_CODE, e.g.)  <command>$exit_code
+	//  PROJ_OSX_EXIT_CODE, e.g.)  <command>$exit_code
 	a2osxfo		map[*ast][]osx_chan		//  fanout osx records
 
 	//  fanout string values from <command>.<att>
@@ -71,7 +71,7 @@ func compile(root *ast) *flow {
 //  or bools, e.g.)
 //
 //	NEQ/\
-//		PROJECT_OSX_TSV: blob_request_record.blob:
+//		PROJ_OSX_TSV: blob_request_record.blob:
 //		STRING ""	
 
 func (cmp *compilation) relop(a *ast) {
@@ -252,57 +252,57 @@ func (cmp *compilation) compile(a *ast) {
 			a2strfo[a] = flo.string_fo(a2str[a], rc)
 			cmd2strfo[cmd] = a2strfo[a]
 		}
-	case PROJECT_OSX_EXIT_CODE:
+	case PROJ_OSX_EXIT_CODE:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2osxfo[cmd]
 		a2ui64[a] = flo.osx_proj_exit_code(fo[proj.call_order-1])
-	case PROJECT_OSX_PID:
+	case PROJ_OSX_PID:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2osxfo[cmd]
 		a2ui64[a] = flo.osx_proj_pid(fo[proj.call_order-1])
-	case PROJECT_OSX_USER_SEC:
+	case PROJ_OSX_USER_SEC:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2osxfo[cmd]
 		a2ui64[a] = flo.osx_proj_user_sec(fo[proj.call_order-1])
-	case PROJECT_OSX_USER_USEC:
+	case PROJ_OSX_USER_USEC:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2osxfo[cmd]
 		a2ui64[a] = flo.osx_proj_user_usec(fo[proj.call_order-1])
-	case PROJECT_OSX_SYS_SEC:
+	case PROJ_OSX_SYS_SEC:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2osxfo[cmd]
 		a2ui64[a] = flo.osx_proj_sys_sec(fo[proj.call_order-1])
-	case PROJECT_OSX_SYS_USEC:
+	case PROJ_OSX_SYS_USEC:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2osxfo[cmd]
 		a2ui64[a] = flo.osx_proj_sys_usec(fo[proj.call_order-1])
-	case PROJECT_OSX_START_TIME:
+	case PROJ_OSX_START_TIME:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2osxfo[cmd]
 		a2str[a] = flo.osx_proj_start_time(fo[proj.call_order-1])
-	case PROJECT_OSX_WALL_DURATION:
+	case PROJ_OSX_WALL_DURATION:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2osxfo[cmd]
 		a2ui64[a] = flo.osx_proj_wall_duration(fo[proj.call_order-1])
-	case PROJECT_OSX_STDOUT:
+	case PROJ_OSX_STDOUT:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2osxfo[cmd]
 		a2str[a] = flo.osx_proj_Stdout(fo[proj.call_order-1])
-	case PROJECT_OSX_STDERR:
+	case PROJ_OSX_STDERR:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2osxfo[cmd]
 		a2str[a] = flo.osx_proj_Stderr(fo[proj.call_order-1])
-	case PROJECT_OSX_TSV:
+	case PROJ_OSX_TSV:
 		proj := a.proj_ref
 		cmd := proj.command_ref
 		fo := cmd2osxfo[cmd]
@@ -346,18 +346,18 @@ func (cmp *compilation) compile(a *ast) {
 		default:
 			_c("type not string/uint64/bool")
 		}
-	case PROJECT_FLOW_TSV_N:
+	case PROJ_FLOW_TSV_N:
 		cmd := a.command_ref
 		proj := a.proj_ref
 		fo := cmd2strfo[cmd]
 
-		a2str[a] = flo.project_flow_tsv_n(
+		a2str[a] = flo.proj_flow_tsv_n(
 				cmd,
 				fo[proj.call_order-1],
 				a2ui64[a.left],
 			)
-	case PROJECT_FLOW_SEQ:
-		a2ui64[a] = flo.project_flow_seq()
+	case PROJ_FLOW_SEQ:
+		a2ui64[a] = flo.proj_flow_seq()
 	case FLOQ, STMT_LIST, DEFINE:
 	default:
 		_c("can not compile ast")

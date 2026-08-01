@@ -213,7 +213,7 @@ func (flo *flow) osx_flow(cmd *command) (out string_chan) {
  *  Note:
  *	why is this specific to a flow() statement?
  */
-func (flo *flow) project_flow_tsv_n(
+func (flo *flow) proj_flow_tsv_n(
 	cmd *command,
 	in_str string_chan,
 	in_idx uint64_chan,
@@ -270,7 +270,7 @@ func (flo *flow) project_flow_tsv_n(
 	return
 }
 
-func (flo *flow) project_flow_seq() (out uint64_chan) {
+func (flo *flow) proj_flow_seq() (out uint64_chan) {
 
 	out = make(uint64_chan)
 
@@ -289,22 +289,4 @@ func (flo *flow) project_flow_seq() (out uint64_chan) {
 
 
 	return out
-}
-
-//  project the flow sequence number
-func (flo *flow) proj_flow_seq() (out uint64_chan) {
-
-	out = make(uint64_chan)
-
-	go func() {
-		<-compiling
-
-		for {
-			out <- &uint64_value{
-				uint64:		flo.seq,
-			}
-			flo = flo.next()
-		}
-	}()
-	return
 }

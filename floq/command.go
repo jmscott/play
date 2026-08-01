@@ -389,61 +389,6 @@ func (flo *flow) osx_proj_tsv(
 	}()
 	return out
 }
-/*
- *  project a particular field of osx_value.Stdout, assuming tab separated
- *  fields.
- *
- *  Note:
- *	func TrimRight() may remove more than one newline!!!
- */
-func (flo *flow) osx_proj_tuple_tsv_n(
-	in osx_chan,
-	field uint8,
-  ) (out string_chan) {
-
-	out = make(string_chan)
-
-	go func() {
-		<-compiling
-
-		for {
-			xv := <- in
-
-			var str string
-			
-			is_null := xv.is_null
-			if xv.is_null == false {
-
-				/*
-				 *  Note:
-				 *	Bug.  TrimRight() more than one newline!
-				 */	
-				fld := strings.Split(
-					strings.TrimRight(
-						xv.Stdout,
-						"\n",
-					),
-					"\t",
-				)
-				if int(field) <= len(fld) {
-					str = fld[field-1]
-					is_null = false
-				} else {
-					is_null = true
-				}
-			}
-
-			out <- &string_value{
-				string:		str,
-				is_null:	is_null,
-			}
-
-			flo = flo.next()
-		}
-	}()
-	return out
-}
-
 //  project the command$exit_code from an osx_record
 
 func (flo *flow) osx_proj_exit_code(in osx_chan) (out uint64_chan) {
