@@ -73,6 +73,7 @@ type argv_chan chan *argv_value
  *	signals not handled correctly!
  */
 func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
+
 	cx := exec.Command(
 			cmd.path,
 	)
@@ -350,26 +351,32 @@ func (flo *flow) osx_proj_tsv(
 			xv := <- in
 
 			var str string
-			
-			str = strings.TrimRight(xv.Stdout, "\n")
-			if strings.Count(str, "\n") > 0 {
-				_die("more than one newline")
-			}
+			if !xv.is_null {
+				str = strings.TrimRight(xv.Stdout, "\n")
+				if str == "" {
+					_die("empty string")
+				}
 
-			//  Note: inconsistent with other tsv operators that
-			//        do not panic and send null instead.
-			fld := strings.Split(str, "\t")
-			if len(fld) != len(att.tuple_ref.atts) {
-				_die("not %d fields", len(att.tuple_ref.atts))
-			}
+				if strings.Count(str, "\n") > 0 {
+					_die("more than one newline")
+				}
 
-			str = fld[tab_field]
-			if att.matches.MatchString(str) == false {
-				_die(
-					"matches fails: %s !~ %s",
-					att.matches.String(),
-					str,
-				)
+				//  Note: is panic write action? mabe send null.
+
+				fld := strings.Split(str, "\t")
+				tupa := att.tuple_ref.atts
+				if len(fld) != len(tupa) {
+					_die("not %d fields", len(tupa))
+				}
+
+				str = fld[tab_field]
+				if att.matches.MatchString(str) == false {
+					_die(
+						"matches fails: %s !~ %s",
+						att.matches.String(),
+						str,
+					)
+				}
 			}
 
 			out <- &string_value{
