@@ -2,6 +2,8 @@
  *  Synopsis:
  *	Build an abstract syntax tree for "floq" language.
  *  Note:
+ *	-  Consider production NAME  '.'  NAME to catch typos in command name.
+ *
  *	-  Consider pattern for common errors, like a missing semicolon after
  *	   a brace:
  *
@@ -223,7 +225,7 @@ expr:
 		}
 		att := tup.atts[name]
 		if att == nil {
-			lex.error("unknown attribute: %s.%s", cmd, name)
+			lex.error("no attribute '%s' of command %s", name, cmd)
 			return 0
 		}
 
@@ -232,8 +234,10 @@ expr:
 		a.proj_ref = &projection{
 			command_ref:	cmd,
 			call_order: cmd.ref_count,
+			att_ref:	att,
 		}
 		a.command_ref = cmd
+		a.att_ref = att
 		a.name = cmd.name
 		$$ = a
 
@@ -282,7 +286,11 @@ expr:
 		}
 		att := tup.atts[name]
 		if att == nil {
-			lex.error("unknown attribute: %s.%s", cmd, name)
+			lex.error(
+				"no attribute '%s' of flow command %s",
+				name,
+				cmd,
+			)
 			return 0
 		}
 
@@ -1581,51 +1589,6 @@ func (lex *yyLexState) project_osx_sys(name string, cmd *command) (*ast) {
 	cmd.sref_count++
 	a.proj_ref.call_order = cmd.sref_count
 	return a
-}
-
-/*
- *  Project the "i'th" tab separated field of <command>$Stdout.
- *
- *	<command>[i]
- */
-
-func (lex *yyLexState) project_osx_Stdout_tsv(
-	cmd *command,
-	name string,
-  ) (a *ast) {
-
-	var yy_tok int
-
-	tup := cmd.tuple_ref
-	if tup == nil {
-		lex.error("no tuple defined for command: %s", cmd)
-		return nil
-	}
-	att := tup.atts[name]
-	if att == nil {
-		lex.error("unknown attribute: %s.%s", cmd, name)
-		return nil
-	}
-
-	//  "run command(...)" must occur before reference of attribute
-	//  value <command>$
-	if lex.cmd2RUN[cmd] == nil {
-		lex.error("no run before command reference: %s", cmd)
-		return nil
-	}
-	a = lex.ast(yy_tok)
-	a.command_ref = cmd
-	a.tuple_ref = tup
-	a.att_ref = att
-	a.name = fmt.Sprintf("%s.%s", cmd.name, name)
-	cmd.ref_count++
-	a.proj_ref = &projection{
-				command_ref: cmd,
-				att_ref: att,
-				call_order:	cmd.ref_count,
-				field:		att.tab_field,
-			}
-	return
 }
 
 func (lex *yyLexState) project_osx(name string, cmd *command) (*ast) {
