@@ -846,6 +846,10 @@ func (lex *yyLexState) run(cmd *command, argv, when *ast) (run *ast) {
 		lex.error("command used in flow statement: %s", cmd)
 		return nil
 	}
+	if when != nil && !when.is_bool() {
+		lex.error("%s: when not boolean: %s", cmd, when)
+		return nil
+	}
 	run = lex.ast(RUN, argv, when) 
 
 	if lex.cmd2RUN == nil {
