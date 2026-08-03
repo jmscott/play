@@ -285,11 +285,7 @@ func (a *ast) walk_print(indent int, parent *ast) {
 		if a.parent == nil {
 			a.corrupt("unexpected nil ast parent")
 		}
-		a.corrupt(
-			"call parent(%s) not ast parent: %s",
-			parent.yy_name(),
-			a.parent.yy_name(),
-		)
+		a.corrupt("parent(%s) not ast parent: %s", parent, a.parent)
 	}
 	if indent == 0 {
 		os.Stderr.WriteString("")
@@ -340,7 +336,7 @@ func (a *ast) print() {
 func (a *ast) corrupt(format string, args...interface{}) {
 
 	msg := fmt.Sprintf(format, args...)
-	die("%s: node \"%s\", near line %d", msg, a.yy_name(), a.line_no)
+	die("%s: node \"%s\", near line %d", msg, a, a.line_no)
 	//  NOTREACHED*/
 }
 
@@ -432,7 +428,7 @@ func (parent *ast) push_lr(lr **ast, kid *ast) {
 
 func (set *ast) string_element(name string) string { 
 	if set.yy_tok != yy_SET {
-		set.corrupt("ast: expected SET, got %s", set.yy_name())
+		set.corrupt("ast: expected SET, got %s", set)
 	}
 
 	for kid := set.left;  kid != nil;  kid = kid.next {
@@ -451,7 +447,7 @@ func (set *ast) string_element(name string) string {
 func (set *ast) array_string_element(name string) []string { 
 
 	if set.yy_tok != yy_SET {
-		set.corrupt("expected SET, got %s", set.yy_name())
+		set.corrupt("expected SET, got %s", set)
 	}
 
 	var kid *ast
