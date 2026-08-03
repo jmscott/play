@@ -289,12 +289,15 @@ func (flo *flow) const_string(s string) (out string_chan) {
 func (a *ast) is_string() bool {
 
 	switch a.yy_tok {
-	case STRING, CONCAT, EXPAND_ENV,
-	     PROJ_OSX_START_TIME,
-	     PROJ_OSX_STDERR,
-	     PROJ_OSX_STDOUT,
-	     PROJ_OSX_TSV,
-	     PROJ_FLOW_TSV_N:
+	case 
+		PROJ_FLOW_TSV_N,
+		PROJ_OSX_START_TIME,
+		PROJ_OSX_STDERR,
+		PROJ_OSX_STDOUT_TSV_N,
+		PROJ_OSX_STDOUT,
+		PROJ_OSX_TSV,
+		STRING, CONCAT,
+		EXPAND_ENV:
 		return true
 	case CAST, CAST_UINT64, CAST_BOOL, CAST_STRING:
 		if a.right.yy_tok == yy_STRING {
@@ -469,4 +472,62 @@ func (flo *flow) cond3_string(
 		}
 	}()
 	return out
+}
+
+/*
+ *  Project the idx'th field of a tab separated string.
+ *
+ *  Note:
+ *	why is this specific to a flow() statement?
+ */
+func (flo *flow) proj_tsv_n(
+	in_str string_chan,
+	in_idx uint64_chan,
+  ) (out string_chan) {
+	out = make(string_chan)
+
+	go func() {
+		<-compiling
+
+		for {
+			var sv *string_value
+			var iv *uint64_value
+
+			//  wait for both the string to project and the field
+			//  index
+
+			for sv == nil || iv == nil {
+				select {
+				case s := <-in_str:
+					if sv != nil {
+						die("input out of sync: string")
+					}
+					sv = s
+				case i := <- in_idx:
+					if iv != nil {
+						die("input out of sync: index")
+					}
+					if i.is_null == false && i.uint64 == 0 {
+						die("tsv field is 0")
+					}
+					iv = i
+				}
+			}
+
+			if sv.is_null == false {
+				idx := int(iv.uint64) - 1
+
+				fld := strings.Split(sv.string, "\t")
+				if idx < len(fld) {
+					sv.string = fld[idx]
+				} else {
+					sv.is_null = true
+				}
+			}
+			out <- sv
+
+			flo = flo.next()
+		}
+	}()
+	return
 }

@@ -247,14 +247,25 @@ expr:
 	  COMMAND_REF  '['  expr  ']'
 	  {
 	  	lex := yylex.(*yyLexState)
-	  	if $3.is_uint64() == false {
-			lex.error("%s[]: index is not uint64", $1)
+
+		cmd := $1
+		idx := $3
+
+		if idx.is_uint64() == false {
+			lex.error("%s[]: index is not uint64", cmd)
 			return 0
 		}
 
-		$$ = lex.ast(PROJ_OSX_STDOUT_TSV_N, $3)
-		$$.command_ref = $1
-		$$.name = $$.command_ref.name
+		a := lex.ast(PROJ_OSX_STDOUT_TSV_N, idx)
+
+		a.command_ref = cmd
+		cmd.ref_count++
+		a.proj_ref = &projection{
+			command_ref:	cmd,
+			call_order: cmd.ref_count,
+		}
+		a.name = cmd.name
+		$$ = a
 	  }
 	|
 	  FLOW_REF  '['  expr  ']'
@@ -1224,7 +1235,7 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 	case NOT:
 		if left.is_bool() == false {
 			lex.line_no = left.line_no
-			lex.error("NOT: can not negate %s", left.yy_name())
+			lex.error("NOT: can not negate %s", left)
 			return nil
 		}
 	case yy_AND, yy_OR:
@@ -1233,7 +1244,7 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 			lex.error(
 				"%s: left expr not bool: got %s",
 				yy_name(tok),
-				left.yy_name(),
+				left,
 			)
 			return nil
 		}
@@ -1242,7 +1253,7 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 			lex.error(
 				"%s: right expr not bool: got %s",
 				yy_name(tok),
-				right.yy_name(),
+				right,
 			)
 			return nil
 		}
@@ -1255,26 +1266,26 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 			lex.error(
 				"%s: can not compare %s and %s",
 				yy_name(tok),
-				left.yy_name(),
-				right.yy_name(),
+				left,
+				right,
 			)
 			return nil
 		}
 	case CONCAT, MATCH, NOMATCH:
 		if left.is_string() == false {
 			lex.line_no = left.line_no
-			lex.error("%s: left is not string", left.yy_name())
+			lex.error("%s: left is not string", left)
 			return nil
 		}
 		if right.is_string() == false {
 			lex.line_no = right.line_no
-			lex.error("%s: right is not string", right.yy_name())
+			lex.error("%s: right is not string", right)
 			return nil
 		}
 	case MOD:
 		if left.is_uint64() == false {
 			lex.line_no = left.line_no
-			lex.error("MOD: %s: left is not uint64", left.yy_name())
+			lex.error("MOD: %s: left is not uint64", left)
 			return nil
 		}
 		if right.is_uint64() == false {
@@ -1282,7 +1293,7 @@ func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
 			lex.error(
 				"%s: %s: right is not uint64",
 				yy_name(tok),
-				right.yy_name(),
+				right,
 			)
 			return nil
 		}

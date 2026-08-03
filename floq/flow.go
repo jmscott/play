@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"strings"
 	"sync"
 	"time"
 )
@@ -207,86 +206,21 @@ func (flo *flow) osx_flow(cmd *command) (out string_chan) {
 	return out
 }
 
-/*
- *  Project the idx'th field of a tab separated record from a flow process.
- *
- *  Note:
- *	why is this specific to a flow() statement?
- */
-func (flo *flow) proj_flow_tsv_n(
-	cmd *command,
-	in_str string_chan,
-	in_idx uint64_chan,
-  ) (out string_chan) {
-	out = make(string_chan)
-
-	go func() {
-		<-compiling
-
-		for {
-			var sv *string_value
-			var iv *uint64_value
-
-			//  wait for both string to project and the field index
-			for sv == nil || iv == nil {
-				select {
-				case s := <-in_str:
-					if sv != nil {
-						die("input out of sync: string")
-					}
-					sv = s
-				case i := <- in_idx:
-					if iv != nil {
-						die("input out of sync: index")
-					}
-					if i.is_null == false && i.uint64 == 0 {
-						die("tsv field is 0")
-					}
-					iv = i
-				}
-			}
-
-
-			//  the projected i'th tsv field
-			fv := &string_value{
-				is_null: sv.is_null || iv.is_null,
-			}
-
-			if fv.is_null == false {
-				idx := int(iv.uint64) - 1
-
-				fld := strings.Split(sv.string, "\t")
-				if idx < len(fld) {
-					fv.string = fld[idx]
-				} else {
-					fv.is_null = true
-				}
-			}
-			out <- fv
-
-			flo = flo.next()
-		}
-	}()
-	return
-}
+//  project the sequence number of current flow
 
 func (flo *flow) proj_flow_seq() (out uint64_chan) {
 
 	out = make(uint64_chan)
 
 	go func() {
-
 		<-compiling
 
 		for {
 			out <- &uint64_value{
-					uint64: flo.seq,
+				uint64:		flo.seq,
 			}
-
 			flo = flo.next()
 		}
 	}()
-
-
-	return out
+	return
 }

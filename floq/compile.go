@@ -104,8 +104,7 @@ func (cmp *compilation) relop(a *ast) {
 				a2bool[a.right],
 		)
 	default:
-		nm := a.yy_name()
-		a.corrupt(" %s: can not compile %s %s %s", nm, l, nm, r)
+		a.corrupt(" %s: can not compile %s %s %s", a, l, a, r)
 	}
 }
 
@@ -346,16 +345,26 @@ func (cmp *compilation) compile(a *ast) {
 		default:
 			_c("type not string/uint64/bool")
 		}
+
 	case PROJ_FLOW_TSV_N:
 		cmd := a.command_ref
 		proj := a.proj_ref
 		fo := cmd2strfo[cmd]
 
-		a2str[a] = flo.proj_flow_tsv_n(
-				cmd,
+		a2str[a] = flo.proj_tsv_n(
 				fo[proj.call_order-1],
 				a2ui64[a.left],
 			)
+	case PROJ_OSX_STDOUT_TSV_N:
+		cmd := a.command_ref
+		proj := a.proj_ref
+		fo := cmd2osxfo[cmd]
+
+		a2str[a] = flo.proj_tsv_n(
+				flo.osx_proj_Stdout(fo[proj.call_order-1]),
+				a2ui64[a.left],
+		)
+		flo.inc()
 	case PROJ_FLOW_SEQ:
 		a2ui64[a] = flo.proj_flow_seq()
 	case FLOQ, STMT_LIST, DEFINE:
