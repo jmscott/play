@@ -207,10 +207,13 @@ func (flo *flow) osx_run_aw(
 
 	out = make(osx_chan)
 
+	//  null_osx sent when command not run
+
 	null_osx := &osx_value{
 			is_null: true,
 			command: cmd,
 		    }
+
 	go func() {
 		<-compiling
 
@@ -220,17 +223,23 @@ func (flo *flow) osx_run_aw(
 
 			//  wait for both "when" clause (bv) and "argv (av)"
 			//  to finish.  also do cheap sanity tests
+
 			for bv == nil || av == nil {
 				select {
-				//  wait for "when" expression
+
+				//  wait for "when" expression resolve
+
 				case b := <-when:
 					//  cheap sanity test
 					if bv != nil {
 						die("bv seen twice")
 					}
 					bv = b
-				//  wait for "argv" expression
+
+				//  wait for "argv" expression resolve
+
 				case a := <-args:
+
 					//  cheap sanity test
 					if av != nil {
 						die("av seen twice")
@@ -241,11 +250,13 @@ func (flo *flow) osx_run_aw(
 
 			//  "when" clause is true, so run command.
 			//  osx_run send value
+
 			if bv.bool == true {
 				flo.osx_run(cmd, av.argv, out)
 			} else {
 				out <- null_osx
 			}
+
 			flo = flo.next()
 		}
 	}()
