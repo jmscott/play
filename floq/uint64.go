@@ -450,6 +450,7 @@ func (a *ast) is_uint64() bool {
 
 	switch a.yy_tok {
 	case UINT64,
+		MOD,
 		PROJ_FLOW_SEQ,
 		PROJ_OSX_EXIT_CODE,
 		PROJ_OSX_PID,
