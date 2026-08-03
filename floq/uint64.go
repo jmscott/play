@@ -382,13 +382,14 @@ func (flo *flow) const_ui64(u64 uint64) (out uint64_chan) {
 func (flo *flow) cast_uint64(in uint64_chan) (out string_chan) {
 
 	out = make(string_chan)
+
 	go func() {
 		<-compiling
 
 		for {
-			var s string
-
 			uiv := <- in
+
+			var s string
 			if uiv.is_null == false { 
 				s = strconv.FormatUint(uiv.uint64, 10)
 			}
