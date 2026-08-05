@@ -1,16 +1,17 @@
 package main
 
-func server(root *ast) error {
+func server(root *ast) {
 
-	flo := compile(root) 
-WTF("flo: %p", flo)
-WTF("op_count: %d", flo.op_count)
+	//  compile pass2 ast.  the first flo created compile().
 
-	// wake up all flow operators wired during compilation
+	compile(root) 
+
+	//  wake up all flow operators pateitnly waiting for compilation
+	//  to complete
+
 	close(compiling)
 
-	//  wait forever
-	<- make(chan interface{})
+	//  wait forever, such is the burden of a server
 
-	return nil		//  not reached
+	<- make(chan interface{})
 }

@@ -52,7 +52,7 @@ var compiling = make(chan(bool))
 //
 //  Note: why return *flow?
 
-func compile(root *ast) *flow {
+func compile(root *ast) {
 
 	cmp := &compilation{
 			root:		root,
@@ -69,7 +69,6 @@ func compile(root *ast) *flow {
 			cmd2strfo:	make(map[*command][]string_chan),
 	}
 	cmp.compile(root)
-	return cmp.flo
 }
 
 //  compile an binary, boolean relational operator over two strings, uint64s

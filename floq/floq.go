@@ -19,7 +19,7 @@ func exit(status int) {
 	os.Exit(status)
 }
 
-//  die() during boot up
+//  die() during boot up, before cli args parsed, etc
 
 func croak(format string, args ...interface{}) {
 
@@ -43,7 +43,6 @@ func rcaller(frame int) string {
 		cn = cn[13:]
 	}
 	return cn
-	
 }
 
 //  write stack trace of all running goroutines into file floq.trace
@@ -136,9 +135,8 @@ func main() {
 		if err := xpass2(root);  err != nil {
 			croak("server/pass2(%s) failed: %s", floq_path, err)
 		}
-		if err := server(root);  err != nil {
-			croak("server(%s) failed: %s", floq_path, err) 
-		}
+		server(root)
+		/* NOTREACHED */
 	default:
 		croak("unknown action: %s", action)
 	}
