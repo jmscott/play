@@ -45,7 +45,12 @@ type compilation struct {
 }
 
 //  block operators from flowing while compiling.
+
 var compiling = make(chan(bool))
+
+//  compile an abstract syntax tree filtered pass2 into flow operations.
+//
+//  Note: why return *flow?
 
 func compile(root *ast) *flow {
 
