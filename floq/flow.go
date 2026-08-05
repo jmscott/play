@@ -11,30 +11,36 @@ import (
 )
 
 type flow struct {
-	//  flow sequence, unique while floq running
+
+	//  flow sequence, driven by "flow <command>()"
+
 	seq		uint64
 
-	//  when particular flow started
 	start_time	time.Time
 
-	//  synchronize all oproutines in this flow
+	//  synchronize all "op" goroutines in this flow
+
 	wg_op		*sync.WaitGroup
 
-	//  number of operators in a single flow
-	//
-	//  Note:  is this not global, like rest of next_* variables?
+	//  total number of go routine "operators" per compiled flow.
+	//  sets the operator WaitGroup().
+	//  no need for atomic, since only synchronous compile() changes.
+
 	op_count	uint8
 
-	next_flow		*flow
+	//  the next flow, fetched by each op goroutine
+
+	next_flow	*flow
 }
 
 //  a river to my people ...
+
 type flow_chan chan *flow
 
 func (flo *flow) new() *flow {
 
 	seq := uint64(1)
-	op_count := uint8(0)		//  compile incremenets firt flow 
+	op_count := uint8(0)		//  compile incremenets first flow 
 
 	if flo != nil {
 		seq = flo.seq + 1
@@ -54,7 +60,7 @@ func (flo *flow) new() *flow {
 	return f
 }
 
-//   increment operator count for a flow by 1
+//   increment operator count for a flow operation by +1
 func (flo *flow) inc() {
 	flo.wg_op.Add(1)
 	flo.op_count++
@@ -87,9 +93,10 @@ type osx_start struct {
 //  Note: why global?
 
 var next_mux sync.Mutex
-var next_flow *flow
 
 func (flo *flow) next() *flow {
+
+	//nm := fmt.Sprintf("%s(%d)", rcaller(2), flo.seq)
 
 	flo.wg_op.Done()
 
@@ -219,6 +226,7 @@ func (flo *flow) proj_flow_seq() (out uint64_chan) {
 			out <- &uint64_value{
 				uint64:		flo.seq,
 			}
+
 			flo = flo.next()
 		}
 	}()

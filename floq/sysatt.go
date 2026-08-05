@@ -12,14 +12,6 @@ type sysatt struct {
 	call_order	uint8
 }
 
-func (sa *sysatt) is_uint64() bool {
-
-	if sa.command_ref != nil {
-		return sa.command_ref.is_sysatt_uint64(sa.name)
-	}
-	return false
-}
-
 func (sa *sysatt) String() string {
 
 	return sa.command_ref.name + "$" + sa.name

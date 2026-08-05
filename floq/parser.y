@@ -331,6 +331,7 @@ expr:
 		if att != "flow_seq" {
 			lex.error("%s$: unknown sys attribute: %s", cmd , att)
 		}
+		cmd.sref_count++
 		a := lex.ast(PROJ_FLOW_SEQ);
 		a.command_ref = cmd
 

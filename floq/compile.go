@@ -154,8 +154,10 @@ func (cmp *compilation) compile(a *ast) {
 		a2bool[a] = flo.const_true()
 	case yy_FALSE:
 		a2bool[a] = flo.const_false()
+	
 	case yy_STRING:
 		//  compensate for default increment at end of switch
+		//  Note: move to test after this switch.
 		flo.decr()
 	case STRING:
 		a2str[a] = flo.const_string(a.string)
@@ -233,23 +235,23 @@ func (cmp *compilation) compile(a *ast) {
 			a2osxfo[a] = flo.osx_fo(a2osx[a], rc)
 			cmd2osxfo[cmd] = a2osxfo[a]
 		}
-		flo.inc()	//  for downstream fanout osx
+		flo.inc()	//  for extra downstream fanout if osx_value
 
-	/*
-	 *  A flow only fans out strings
-	 */
 	case FLOW:
 		cmd := a.command_ref
 		a2str[a] = flo.osx_flow(cmd)
 		rc := cmd.sref_count + cmd.ref_count
+
+		//  Note: rc == 0 is impossible
 		if rc == 0 {
-			flo.string_null(a2str[a])
+			die("FLOW: rc==0: %s", cmd)
 		} else {
 			if cmd2osxfo[cmd] != nil {
 				_c("flow: cmd string fanout exists: %s", cmd)
 			}
 			a2strfo[a] = flo.string_fo(a2str[a], rc)
 			cmd2strfo[cmd] = a2strfo[a]
+			flo.inc()
 		}
 	case PROJ_OSX_EXIT_CODE:
 		proj := a.proj_ref
@@ -373,8 +375,8 @@ func (cmp *compilation) compile(a *ast) {
 	}
 
 	switch a.yy_tok {
-	case FLOQ:
-	case WHEN, STMT_LIST, DEFINE:
+	case FLOQ, FLOW, WHEN, STMT_LIST, DEFINE:
+		//  no goop generated
 	default:
 		flo.inc()
 	}

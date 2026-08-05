@@ -2,7 +2,9 @@ package main
 
 func server(root *ast) error {
 
-	compile(root) 
+	flo := compile(root) 
+WTF("flo: %p", flo)
+WTF("op_count: %d", flo.op_count)
 
 	// wake up all flow operators wired during compilation
 	close(compiling)

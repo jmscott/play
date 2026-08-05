@@ -265,11 +265,9 @@ func (flo *flow) osx_run_aw(
 }
 
 //  Read strings from multiple input channels to assemble an []string
-//  argv to pass to process execnd via ("run <command>(argv)"
-//  null strings are passed as ""
+//  argv to pass to exec via ("run <command>(argv)".
 
 func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
-
 
 	out = make(argv_chan)
 	argc := len(in_args)
@@ -281,13 +279,12 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 		<-compiling
 
 		for {
-			var wg sync.WaitGroup
-
-			wg.Add(int(argc))
-			
 			argv := make([]string, argc)
 
-			//  wait for string arguments.
+			//  wait for string arguments to arrive
+
+			var wg sync.WaitGroup
+			wg.Add(int(argc))
 			for i := 0;  i < argc;  i++ {
 				go func(int) {
 					argv[i] = (<- in_args[i]).string
@@ -295,6 +292,7 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 				}(i)
 			}
 			wg.Wait()
+
 			out <- &argv_value{
 				argv:    argv,
 			}
@@ -318,14 +316,6 @@ func (flo *flow) osx_null(in osx_chan) {
 			flo = flo.next()
 		}
 	}()
-}
-
-func (cmd *command) is_sysatt_uint64(name string) bool {
-	switch name {
-	case "exit_code", "wall_duration":
-		return true
-	}
-	return false
 }
 
 func (cmd *command) String() string {
