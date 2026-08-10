@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
 )
@@ -61,20 +62,9 @@ func (flo *flow) new() *flow {
 }
 
 //   increment operator count for a flow operation by +1
-func (flo *flow) inc() {
+func (flo *flow) incr() {
 	flo.wg_op.Add(1)
 	flo.op_count++
-}
-
-//   decrement operator count for a flow by 1
-func (flo *flow) decr() {
-	
-	//  cheap sanity test
-	if flo.op_count < 1 {
-		die("op_count < 1")
-	}
-	flo.wg_op.Add(-1)
-	flo.op_count--
 }
 
 //  start an os process as part of the "flow <command>" statement
@@ -96,7 +86,13 @@ var next_mux sync.Mutex
 
 func (flo *flow) next() *flow {
 
-	//nm := fmt.Sprintf("%s(%d)", rcaller(2), flo.seq)
+	var nm string
+
+	if floq_trace_next_op {
+		nm = fmt.Sprintf("%s(%d)", rcaller(2), flo.seq)
+
+		trace("%s: hello", nm)
+	}
 
 	flo.wg_op.Done()
 
@@ -188,13 +184,15 @@ func (flo *flow) start(cmd *command) (pro *osx_start) {
 	return pro
 }
 
-//  start the comand in a "flow <command>();" and perptually feed the single
-//  output to a string channel.
+//  start the comand of a "flow <command>();" statement and perptually feed
+//  lines of strings downstream
+
 func (flo *flow) osx_flow(cmd *command) (out string_chan) {
 
 	out = make(string_chan)
 
 	go func() {
+
 		<-compiling
 
 		stdout := flo.start(cmd).stdout
@@ -215,17 +213,54 @@ func (flo *flow) osx_flow(cmd *command) (out string_chan) {
 
 //  project the sequence number of current flow
 
-func (flo *flow) proj_flow_seq() (out uint64_chan) {
+func (flo *flow) proj_flow_seq(in string_chan) (out uint64_chan) {
 
 	out = make(uint64_chan)
 
 	go func() {
+
 		<-compiling
 
 		for {
+			<- in		//  only send if flow record
+
 			out <- &uint64_value{
 				uint64:		flo.seq,
 			}
+
+			flo = flo.next()
+		}
+	}()
+	return
+}
+
+//  project the tab separated field associated with a particular attribute
+
+func (flo *flow) proj_flow_tsv_att(
+	proj *projection,
+	in string_chan,
+  ) (out string_chan) {
+
+	out = make(string_chan)
+
+	go func() {
+
+		<-compiling
+
+		idx := proj.att_ref.tab_field-1
+
+		for {
+			sv := <- in
+
+			if sv.is_null == false {
+				fld := strings.Split(sv.string, "\t")
+				if int(idx) >= len(fld) {
+					die("index >= field count: %s", proj) 
+				}
+
+				sv.string = fld[idx]
+			}
+			out <- sv
 
 			flo = flo.next()
 		}

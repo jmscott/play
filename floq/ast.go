@@ -235,6 +235,9 @@ func (a *ast) dump() string {
 				a.command_ref,
 				a.proj_ref.field,
 			)
+	case PROJ_FLOW_TSV_ATT:
+		//  Note: add the att number
+		what = fmt.Sprintf("PROJ_FLOW_TSV_ATT: %s", a.proj_ref)
 	default:
 		what = fmt.Sprintf("%s%s%s", a.yy_name(), colon, a.name)
 	}

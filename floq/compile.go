@@ -1,44 +1,52 @@
 package main
 
-import "regexp"
+import (
+	"regexp"
+)
 
 type compilation struct {
 
 	root	*ast
 
 	//  the first flow
+
 	flo		*flow
 
 	//  boolean logical comparison, constants and the "when" predicate.
+
 	a2bool		map[*ast]bool_chan
 
 	//  string concatenation, comparison, constants and projections
 	//  of tuples
+
 	a2str		map[*ast]string_chan
 
 	//  unsigned 64bit int comparison, constants and projection 
+
 	a2ui64		map[*ast]uint64_chan
 
 	//  variations of the "run <command(...)", with or without "when"
 	//  predicate, with or without (...) arguments.
+
 	a2osx		map[*ast]osx_chan
 
 	//  argument vector for "run <commmand>" statements  
+
 	a2argv		map[*ast]argv_chan
 
 	//  fanout targets for specific osx_chan records, like
 	//  PROJ_OSX_EXIT_CODE, e.g.)  <command>$exit_code
+
 	a2osxfo		map[*ast][]osx_chan		//  fanout osx records
 
 	//  fanout string values from <command>.<att>
+
 	a2strfo         map[*ast][]string_chan
 
+	flow2strfo		map[*command][]string_chan
 
 	//  fanout targets of run command.
 	cmd2osxfo		map[*command][]osx_chan
-
-	//  string fanout targets of flow command
-	cmd2strfo		map[*command][]string_chan
 
 	//  number of operators running concurently in a single "flow"
 	op_count	uint8
@@ -48,9 +56,7 @@ type compilation struct {
 
 var compiling = make(chan(bool))
 
-//  compile an abstract syntax tree filtered pass2 into flow operations.
-//
-//  Note: why return *flow?
+//  compile an abstract syntax tree into flow#1
 
 func compile(root *ast) {
 
@@ -66,7 +72,7 @@ func compile(root *ast) {
 			a2osxfo:	make(map[*ast][]osx_chan),
 			a2strfo:        make(map[*ast][]string_chan),
 			cmd2osxfo:	make(map[*command][]osx_chan),
-			cmd2strfo:	make(map[*command][]string_chan),
+			flow2strfo:	make(map[*command][]string_chan),
 	}
 	cmp.compile(root)
 }
@@ -140,7 +146,7 @@ func (cmp *compilation) compile(a *ast) {
 	a2osxfo := cmp.a2osxfo
 	a2strfo := cmp.a2strfo
 	cmd2osxfo := cmp.cmd2osxfo
-	cmd2strfo := cmp.cmd2strfo
+	flow2strfo := cmp.flow2strfo
 
 	//  compile from leaves to root
 
@@ -160,9 +166,6 @@ func (cmp *compilation) compile(a *ast) {
 		a2bool[a] = flo.const_false()
 	
 	case yy_STRING:
-		//  compensate for default increment at end of switch
-		//  Note: move to test after this switch.
-		flo.decr()
 	case STRING:
 		a2str[a] = flo.const_string(a.string)
 	case UINT64:
@@ -170,7 +173,7 @@ func (cmp *compilation) compile(a *ast) {
 	case ARGV:
 		in := make([]string_chan, a.count)
 
-		///  pass2 insures argv for command is always strings
+		///  pass2 insures argv[] for command is always strings
 		for n := a.left;  n != nil;  n = n.next {
 			in[n.order-1] = a2str[n]
 		}
@@ -225,6 +228,9 @@ func (cmp *compilation) compile(a *ast) {
 		//  fanout the results of a "run <command>(" statement
 
 		rc := cmd.sref_count + cmd.ref_count
+
+		//  Note: is rc==0 impossible?
+
 		if rc == 0 {
 			flo.osx_null(a2osx[a])
 		} else {
@@ -239,24 +245,21 @@ func (cmp *compilation) compile(a *ast) {
 			a2osxfo[a] = flo.osx_fo(a2osx[a], rc)
 			cmd2osxfo[cmd] = a2osxfo[a]
 		}
-		flo.inc()	//  for extra downstream fanout if osx_value
+		flo.incr()	//  for extra downstream fanout of osx_value
 
 	case FLOW:
-		cmd := a.command_ref
-		a2str[a] = flo.osx_flow(cmd)
-		rc := cmd.sref_count + cmd.ref_count
+		fcmd := a.command_ref
 
-		//  Note: rc == 0 is impossible
+		a2str[a] = flo.osx_flow(fcmd)
+		rc := fcmd.ref_count
+
+		//  Note: already checked in pass1 or 2?
+
 		if rc == 0 {
-			die("FLOW: rc==0: %s", cmd)
-		} else {
-			if cmd2osxfo[cmd] != nil {
-				_c("flow: cmd string fanout exists: %s", cmd)
-			}
-			a2strfo[a] = flo.string_fo(a2str[a], rc)
-			cmd2strfo[cmd] = a2strfo[a]
-			flo.inc()
+			die("FLOW: rc==0: %s", fcmd)
 		}
+		a2strfo[a] = flo.string_fo(a2str[a], rc)
+		flow2strfo[fcmd] = a2strfo[a]
 	case PROJ_OSX_EXIT_CODE:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
@@ -355,7 +358,7 @@ func (cmp *compilation) compile(a *ast) {
 	case PROJ_FLOW_TSV_N:
 		cmd := a.command_ref
 		proj := a.proj_ref
-		fo := cmd2strfo[cmd]
+		fo := flow2strfo[cmd]
 
 		a2str[a] = flo.proj_tsv_n(
 				fo[proj.call_order-1],
@@ -370,20 +373,35 @@ func (cmp *compilation) compile(a *ast) {
 				flo.osx_proj_Stdout(fo[proj.call_order-1]),
 				a2ui64[a.left],
 		)
-		flo.inc()
+		flo.incr()
 	case PROJ_FLOW_SEQ:
-		a2ui64[a] = flo.proj_flow_seq()
+		cmd := a.command_ref
+		proj := a.proj_ref
+		fo := flow2strfo[cmd]
+		a2ui64[a] = flo.proj_flow_seq(fo[proj.call_order-1])
+	case PROJ_FLOW_TSV_ATT:
+		proj := a.proj_ref
+		fo := flow2strfo[proj.command_ref]
+		a2str[a] = flo.proj_flow_tsv_att(proj, fo[proj.call_order-1])
 	case FLOQ, STMT_LIST, DEFINE:
 	default:
 		_c("can not compile ast")
 	}
 
 	switch a.yy_tok {
-	case FLOQ, FLOW, WHEN, STMT_LIST, DEFINE:
+	case FLOQ:
+	case FLOW:
+		if a.command_ref.ref_count > 0 {
+			flo.incr()
+		}
+	case yy_STRING, WHEN, STMT_LIST, DEFINE:
 		//  no goop generated
 	default:
-		flo.inc()
+		flo.incr()
 	}
 
+	if floq_trace_compile {
+		trace("%s: op_count: %d", a, flo.op_count)
+	}
 	cmp.compile(a.next)
 }

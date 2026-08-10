@@ -290,6 +290,7 @@ func (a *ast) is_string() bool {
 
 	switch a.yy_tok {
 	case 
+		PROJ_FLOW_TSV_ATT,
 		PROJ_FLOW_TSV_N,
 		PROJ_OSX_START_TIME,
 		PROJ_OSX_STDERR,
@@ -400,8 +401,8 @@ func (flo *flow) string_null(in string_chan) {
 
 func (flo *flow) string_fo(in string_chan, count uint8) (out []string_chan) {
 
-
 	out = make([]string_chan, count)
+
 	for i := uint8(0); i < count; i++ {
 		out[i] = make(string_chan)
 	}

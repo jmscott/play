@@ -28,19 +28,27 @@ type projection struct {
 	command_ref	*command
 	att_ref		*attribute
 	sysatt_ref	*sysatt
-	field		uint8		//  obsoluted by index channel?
+	field		uint8		//  Note: obsoluted by index channel?
 
 	call_order	uint8
 }
 
 //  build a tuple struct from a "DEFINE TUPLE" abstract syntax tree.
-//  the "set" has already been frisked.
 //
-//  Note: no test for duplicate attributes in the define set!
+//  Note:
+//	--  the tab_order attribute feels clunky.  why not allow the attribute
+//	    "attribute" in the domain as either a set{} - as it is now - OR an
+//	    array[]?  the array[] would have an implied tab_order, hence
+//	    eliminating the "tab_order" attribute altogether.
+//
+//	    why not just make only array[] you ask?  the reason is because,
+//	    strickly typing, order does not matter for attributes of a tuple.
+//
+//	--  no test for duplicate attributes in the define set!
 
-func new_tuple(name string, define *ast) (*tuple, error) {
+func (tup *tuple) new(name string, define *ast) (*tuple, error) {
 
-	tup := &tuple{
+	tup = &tuple{
 		name:	name,
 	}
 
@@ -54,7 +62,8 @@ func new_tuple(name string, define *ast) (*tuple, error) {
 
 	atts := define.left
 
-	//  Note: assume no empty set!
+	//  Note: assume no empty set!  this error is confusing.
+
 	if atts.name != "attributes" {
 		return _e("unknown element: %s", define.left.name)
 	}
@@ -64,7 +73,7 @@ func new_tuple(name string, define *ast) (*tuple, error) {
 
 	prev_fld := uint8(0)	// Note: variable disappears inside for{}!
 
-	//  build attribute set from element "attributes"
+	//  build the tuple set from element "attributes"
 
 	for as := atts.left;  as != nil;  as = as.next {
 

@@ -205,6 +205,7 @@ func (flo *flow) osx_run_aw(
 	when bool_chan,
 ) (out osx_chan) {
 
+
 	out = make(osx_chan)
 
 	//  null_osx sent when command not run
@@ -215,6 +216,7 @@ func (flo *flow) osx_run_aw(
 		    }
 
 	go func() {
+
 		<-compiling
 
 		for {
@@ -352,6 +354,7 @@ func (flo *flow) osx_proj_tsv(
 			xv := <- in
 
 			var str string
+
 			if !xv.is_null {
 				str = strings.TrimRight(xv.Stdout, "\n")
 				if str == "" {
@@ -362,7 +365,8 @@ func (flo *flow) osx_proj_tsv(
 					_die("more than one newline")
 				}
 
-				//  Note: is panic write action? mabe send null.
+				//  Note: is panic correct action?
+				//        maybe send null.
 
 				fld := strings.Split(str, "\t")
 				tupa := att.tuple_ref.atts

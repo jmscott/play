@@ -53,8 +53,6 @@ func init() {
 			die("yy_name != yy_tok: %s@%d", nm, i + 4)
 		}
 	}
-
-	//yyDebug = 4
 }
 %}
 
@@ -89,8 +87,8 @@ func init() {
 %token	CONCAT
 %token	WHEN
 %token  CONDITIONAL
-%token	PROJ_FLOW_TUPLE_TSV_N  PROJ_OSX_STDOUT_TSV_N
-%token	PROJ_FLOW_TUPLE
+%token	PROJ_OSX_STDOUT_TSV_N
+%token	PROJ_FLOW_TSV_ATT
 %token	MOD
 
 //  project the rusage variables <commamd>$<var>
@@ -221,7 +219,8 @@ expr:
 		tup := cmd.tuple_ref
 
 		if tup == nil {
-			die("tuple ref is nil in command: %s", cmd)
+			lex.error("no tuple defined for command: %s", cmd)
+			return 0
 		}
 		att := tup.atts[name]
 		if att == nil {
@@ -305,18 +304,15 @@ expr:
 			return 0
 		}
 
-		idx := &ast{
-			yy_tok: UINT64,
-			uint64:	uint64(att.tab_field),
-		}
 		cmd.ref_count++
-		a := lex.ast(PROJ_FLOW_TSV_N, idx)
+		a := lex.ast(PROJ_FLOW_TSV_ATT)
 		a.proj_ref = &projection{
 			command_ref:	cmd,
+			att_ref:	att,
 			call_order: cmd.ref_count,
 		}
 		a.command_ref = cmd
-		a.name = cmd.name
+		a.name = a.proj_ref.String()
 		$$ = a
 	  }
 	|
@@ -331,9 +327,13 @@ expr:
 		if att != "flow_seq" {
 			lex.error("%s$: unknown sys attribute: %s", cmd , att)
 		}
-		cmd.sref_count++
+		cmd.ref_count++
 		a := lex.ast(PROJ_FLOW_SEQ);
 		a.command_ref = cmd
+		a.proj_ref = &projection{
+				command_ref:	cmd,
+				call_order:	cmd.ref_count,
+		}
 
 		$$ = a
 	  }
@@ -625,7 +625,6 @@ stmt:
 	  	$$ = define
 	  }
 	|
-	  //  Note: consider option to disallow null tuples.
 	  DEFINE  TUPLE  name  AS  set
 	  {
 	  	var err error
@@ -636,7 +635,7 @@ stmt:
 
 		tup := define.left
 		tup.name = $3
-		tup.tuple_ref, err = new_tuple($3, $5)
+		tup.tuple_ref, err = (*tuple)(nil).new($3, $5)
 		if err != nil {
 			lex.error("tuple %s: %s", $3, err)
 			return 0

@@ -25,7 +25,7 @@ state 2
 	RUN  shift 5
 	FLOW  shift 6
 	DEFINE  shift 4
-	.  reduce 1 (src line 138)
+	.  reduce 1 (src line 136)
 
 	stmt  goto 7
 
@@ -78,7 +78,7 @@ state 7
 state 8
 	stmt_list:  stmt ';'.    (64)
 
-	.  reduce 64 (src line 752)
+	.  reduce 64 (src line 751)
 
 
 state 9
@@ -119,7 +119,7 @@ state 11
 state 12
 	stmt:  RUN NAME.    (59)
 
-	.  reduce 59 (src line 701)
+	.  reduce 59 (src line 700)
 
 
 state 13
@@ -133,7 +133,7 @@ state 13
 state 14
 	stmt:  FLOW NAME.    (60)
 
-	.  reduce 60 (src line 710)
+	.  reduce 60 (src line 709)
 
 
 state 15
@@ -146,7 +146,7 @@ state 15
 state 16
 	stmt_list:  stmt_list stmt ';'.    (65)
 
-	.  reduce 65 (src line 757)
+	.  reduce 65 (src line 756)
 
 
 state 17
@@ -211,7 +211,7 @@ state 24
 	yy_FALSE  shift 40
 	NOT  shift 35
 	'('  shift 36
-	.  reduce 66 (src line 764)
+	.  reduce 66 (src line 763)
 
 	string  goto 38
 	arg_list  goto 30
@@ -305,13 +305,13 @@ state 31
 	MOD  shift 64
 	yy_IS  shift 65
 	'?'  shift 66
-	.  reduce 67 (src line 769)
+	.  reduce 67 (src line 768)
 
 
 state 32
 	expr:  constant.    (8)
 
-	.  reduce 8 (src line 187)
+	.  reduce 8 (src line 185)
 
 
 state 33
@@ -375,31 +375,31 @@ state 36
 state 37
 	constant:  UINT64.    (4)
 
-	.  reduce 4 (src line 161)
+	.  reduce 4 (src line 159)
 
 
 state 38
 	constant:  string.    (5)
 
-	.  reduce 5 (src line 167)
+	.  reduce 5 (src line 165)
 
 
 state 39
 	constant:  yy_TRUE.    (6)
 
-	.  reduce 6 (src line 169)
+	.  reduce 6 (src line 167)
 
 
 state 40
 	constant:  yy_FALSE.    (7)
 
-	.  reduce 7 (src line 177)
+	.  reduce 7 (src line 175)
 
 
 state 41
 	string:  STRING.    (2)
 
-	.  reduce 2 (src line 147)
+	.  reduce 2 (src line 145)
 
 
 state 42
@@ -414,7 +414,7 @@ state 42
 state 43
 	stmt:  FLOW COMMAND_REF '(' ')'.    (63)
 
-	.  reduce 63 (src line 740)
+	.  reduce 63 (src line 739)
 
 
 state 44
@@ -440,13 +440,13 @@ state 46
 state 47
 	stmt:  DEFINE COMMAND name AS set.    (56)
 
-	.  reduce 56 (src line 649)
+	.  reduce 56 (src line 648)
 
 
 state 48
 	stmt:  DEFINE COMMAND name '.' name.    (57)
 
-	.  reduce 57 (src line 672)
+	.  reduce 57 (src line 671)
 
 
 state 49
@@ -462,7 +462,7 @@ state 50
 	stmt:  RUN COMMAND_REF '(' arg_list ')'.    (62)
 
 	WHEN  shift 78
-	.  reduce 62 (src line 730)
+	.  reduce 62 (src line 729)
 
 
 state 51
@@ -737,7 +737,7 @@ state 67
 	expr:  COMMAND_REF '$'.$$10 name 
 	$$10: .    (10)
 
-	.  reduce 10 (src line 198)
+	.  reduce 10 (src line 196)
 
 	$$10  goto 96
 
@@ -745,7 +745,7 @@ state 68
 	expr:  COMMAND_REF '.'.$$12 name 
 	$$12: .    (12)
 
-	.  reduce 12 (src line 214)
+	.  reduce 12 (src line 212)
 
 	$$12  goto 97
 
@@ -789,7 +789,7 @@ state 71
 	expr:  FLOW_REF '.'.$$16 name 
 	$$16: .    (16)
 
-	.  reduce 16 (src line 286)
+	.  reduce 16 (src line 285)
 
 	$$16  goto 100
 
@@ -797,7 +797,7 @@ state 72
 	expr:  FLOW_REF '$'.$$18 name 
 	$$18: .    (18)
 
-	.  reduce 18 (src line 322)
+	.  reduce 18 (src line 318)
 
 	$$18  goto 101
 
@@ -866,7 +866,7 @@ state 74
 state 75
 	string:  EXPAND_ENV string.    (3)
 
-	.  reduce 3 (src line 153)
+	.  reduce 3 (src line 151)
 
 
 state 76
@@ -942,13 +942,13 @@ state 79
 	MOD  shift 64
 	yy_IS  shift 65
 	'?'  shift 66
-	.  reduce 68 (src line 774)
+	.  reduce 68 (src line 773)
 
 
 state 80
 	expr:  expr CAST yy_STRING.    (9)
 
-	.  reduce 9 (src line 189)
+	.  reduce 9 (src line 187)
 
 
 state 81
@@ -1477,7 +1477,7 @@ state 105
 state 106
 	stmt:  DEFINE COMMAND name '.' TUPLE_REF AS set.    (58)
 
-	.  reduce 58 (src line 677)
+	.  reduce 58 (src line 676)
 
 
 state 107
@@ -1514,7 +1514,7 @@ state 107
 	MOD  shift 64
 	yy_IS  shift 65
 	'?'  shift 66
-	.  reduce 61 (src line 719)
+	.  reduce 61 (src line 718)
 
 
 state 108
@@ -1544,37 +1544,37 @@ state 109
 state 110
 	expr:  COMMAND_REF '$' $$10 name.    (11)
 
-	.  reduce 11 (src line 205)
+	.  reduce 11 (src line 203)
 
 
 state 111
 	expr:  COMMAND_REF '.' $$12 name.    (13)
 
-	.  reduce 13 (src line 217)
+	.  reduce 13 (src line 215)
 
 
 state 112
 	expr:  COMMAND_REF '[' expr ']'.    (14)
 
-	.  reduce 14 (src line 246)
+	.  reduce 14 (src line 245)
 
 
 state 113
 	expr:  FLOW_REF '[' expr ']'.    (15)
 
-	.  reduce 15 (src line 270)
+	.  reduce 15 (src line 269)
 
 
 state 114
 	expr:  FLOW_REF '.' $$16 name.    (17)
 
-	.  reduce 17 (src line 289)
+	.  reduce 17 (src line 288)
 
 
 state 115
 	expr:  FLOW_REF '$' $$18 name.    (19)
 
-	.  reduce 19 (src line 325)
+	.  reduce 19 (src line 321)
 
 
 state 116
@@ -1735,7 +1735,7 @@ state 131
 	.  reduce 49 (src line 582)
 
 
-85 terminals, 21 nonterminals
+84 terminals, 21 nonterminals
 69 grammar rules, 132/16000 states
 0 shift/reduce, 0 reduce/reduce conflicts reported
 70 working sets used
@@ -1744,6 +1744,6 @@ memory: parser 111/240000
 473 shift entries, 1 exceptions
 58 goto entries
 42 entries saved by goto default
-Optimizer space used: output 292/240000
-292 table entries, 72 zero
-maximum spread: 85, maximum offset: 129
+Optimizer space used: output 288/240000
+288 table entries, 68 zero
+maximum spread: 84, maximum offset: 129

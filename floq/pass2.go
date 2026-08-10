@@ -592,7 +592,7 @@ func (p2 *pass2) is_PROJECT(a *ast) bool {
 	case
 		PROJ_FLOW_SEQ,
 		PROJ_FLOW_TSV_N,
-		PROJ_FLOW_TUPLE_TSV_N,
+		PROJ_FLOW_TSV_ATT,
 		PROJ_OSX_EXIT_CODE,
 		PROJ_OSX_PID,
 		PROJ_OSX_START_TIME,
@@ -654,7 +654,7 @@ func (p2 *pass2) flow_depends(root *ast) error {
 		}
 		if a.yy_tok == RUN && !depends.reaches(a.name, flow_name) {
 			return fmt.Errorf(
-				"command %s can not reach flow %s",
+				"command can not reach flow: %s !-> %s",
 				a.name,
 				flow_name,
 			)
