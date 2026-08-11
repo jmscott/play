@@ -89,7 +89,7 @@ func (flo *flow) next() *flow {
 	var nm string
 
 	if floq_trace_next_op {
-		nm = fmt.Sprintf("%s(%d)", rcaller(2), flo.seq)
+		nm = fmt.Sprintf("%s#%d", rcaller(2), flo.seq)
 
 		trace("%s: hello", nm)
 	}
@@ -109,6 +109,10 @@ func (flo *flow) next() *flow {
 	
 	if flo.next_flow == nil {
 		flo.next_flow = flo.new()
+	}
+
+	if floq_trace_next_op {
+		trace("next flow: %d", flo.next_flow.seq)
 	}
 
 	return flo.next_flow
@@ -255,7 +259,13 @@ func (flo *flow) proj_flow_tsv_att(
 			if sv.is_null == false {
 				fld := strings.Split(sv.string, "\t")
 				if int(idx) >= len(fld) {
-					die("index >= field count: %s", proj) 
+					die(
+						"flow#%d: " +
+						"index >= field count: %s: %s",
+						flo.seq,
+						proj,
+						sv.string) 
+
 				}
 
 				sv.string = fld[idx]
