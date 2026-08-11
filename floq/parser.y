@@ -1592,7 +1592,7 @@ func (lex *yyLexState) project_osx_sys(name string, cmd *command) (*ast) {
 	case "sys_sec":
 		a.yy_tok = PROJ_OSX_SYS_SEC
 	case "sys_usec":
-		a.yy_tok = PROJ_OSX_USER_USEC
+		a.yy_tok = PROJ_OSX_SYS_USEC
 	default:
 		lex.error(
 			"project_osx_sys: %s: unknown att: %s",
