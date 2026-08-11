@@ -254,15 +254,18 @@ func (flo *flow) proj_flow_tsv_att(
 		idx := proj.att_ref.tab_field-1
 
 		for {
-			sv := <- in
+			sv := *<-in
 
 			if sv.is_null == false {
 				fld := strings.Split(sv.string, "\t")
 				if int(idx) >= len(fld) {
 					die(
 						"flow#%d: " +
-						"index >= field count: %s: %s",
+						"index >= field " +
+						"count: %d >= %d: %s: %s",
 						flo.seq,
+						int(idx),
+						len(fld),
 						proj,
 						sv.string) 
 
@@ -270,7 +273,7 @@ func (flo *flow) proj_flow_tsv_att(
 
 				sv.string = fld[idx]
 			}
-			out <- sv
+			out <- &sv
 
 			flo = flo.next()
 		}
