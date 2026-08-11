@@ -253,8 +253,7 @@ func (cmp *compilation) compile(a *ast) {
 		a2str[a] = flo.osx_flow(fcmd)
 		rc := fcmd.ref_count
 
-		//  Note: already checked in pass1 or 2?
-
+		//  Note: no reference to flow.  test needs to be in pass2!
 		if rc == 0 {
 			die("FLOW: rc==0: %s", fcmd)
 		}
