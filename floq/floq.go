@@ -121,8 +121,14 @@ func main() {
 		default:
 			croak("unknown action: %s", action)
 	}
+
+	//  set up tracing environment variables
+
+	floq_trace_compile = env_bool("FLOQ_TRACE_COMPILE")
+	floq_trace_next_op = env_bool("FLOQ_TRACE_NEXT_OP")
+	env_yydebug()
 	
-	//  open floq file
+	//  open and parse the floq file
 
 	floq_path := argv[1]
 	floq, err := os.OpenFile(floq_path, os.O_RDONLY, 0)
@@ -162,10 +168,6 @@ func main() {
 	}()
 
 	//  setup tracing FLOQ_TRACE_*
-
-	floq_trace_compile = env_bool("FLOQ_TRACE_COMPILE")
-	floq_trace_next_op = env_bool("FLOQ_TRACE_NEXT_OP")
-	env_yydebug()
 
 	switch action {
 	case "pass1":
