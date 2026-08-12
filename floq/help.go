@@ -22,28 +22,28 @@ define tuple <name> as {
 };
 `
 
-var help_trace = `
+var help_env = `
 
 export FLOQ_YYDEBUG
 	Synopsis:
-		yacc tracing of parsing states, written to file y.output
-	Example:
+		Debug level of yacc parsing states, written to stdout
+	Usage:
 		export FLOQ_YYDEBUG=4
-		floq server ...
+		floq frisk bug.conf
 
 export FLOQ_TRACE_COMPILE
 	Synopsis:
-		Compilation tracing, written to os.Stdout
-	Example:
+		Compilation tracing, written to stdout
+	Usage:
 		export FLOQ_TRACE_COMPILE=true
-		floq compile ...
+		floq compile bug.floq
 
 export FLOQ_TRACE_NEXT_OP
 	Synopsis:
-		Trace transition from current to next flow operator
-	Example:
+		Trace transition from current to next goop, written to stdout
+	Usage:
 		export FLOQ_TRACE_NEXT_OP=true		
-		floq server ...
+		floq server bug.floq
 `
 
 var help_command = `
@@ -60,13 +60,13 @@ func help(argc int, argv []string) {
 
 	if argc == 0 {
 		os.Stdout.WriteString(usage)
-		os.Stdout.WriteString("help: floq help [tuple|command|trace]\n")
+		os.Stdout.WriteString("help: floq help [tuple|command|env]\n")
 		os.Exit(0)
 	}
 
 	switch argv[0] {
 	case "env":
-		os.Stdout.WriteString(help_trace)
+		os.Stdout.WriteString(help_env)
 	case "tuple":
 		os.Stdout.WriteString(help_tuple)
 	case "command":
