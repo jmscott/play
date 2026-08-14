@@ -44,9 +44,11 @@ const max_name_rune_count = 127
 func init() {
 
 	//  sanity test for mapping yy tokens to name
+
 	if yyToknames[3] != "__MIN_YYTOK" {
 		die("yyToknames[3]!=__MIN_YYTOK: correct yacc command?")
 	}
+
 	//  simple sanity test
 	for i, nm := range yyToknames[4:] {
 		if yy_name(yy_name2tok(nm)) != nm {
@@ -89,14 +91,14 @@ func init() {
 %token  CONDITIONAL
 %token	PROJ_OSX_STDOUT_TSV_N
 %token	PROJ_FLOW_TSV_ATT
-%token	MOD
+%token	MOD  MUL  DIV  ADD  SUB
 
 //  project the rusage variables <commamd>$<var>
 
 %token	PROJ_OSX_EXIT_CODE
 %token	PROJ_OSX_PID
 %token	PROJ_OSX_START_TIME
-%token	PROJ_OSX_WALL_DURATION
+%token	PROJ_OSX_WALL_DURATION  PROJ_OSX_WALL_DURATION_SEC
 %token	PROJ_OSX_USER_SEC
 %token	PROJ_OSX_USER_USEC
 %token	PROJ_OSX_SYS_SEC
@@ -128,7 +130,8 @@ func init() {
 %right			'?'  ':'
 %left			yy_OR  yy_AND
 %left			EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
-%left			CONCAT  MOD
+%left			ADD  SUB  CONCAT
+%left			MOD  MUL  DIV
 %right			yy_IS  NOT  EXPAND_ENV  CAST
 
 %%
@@ -340,7 +343,7 @@ expr:
 	|
 	  expr  yy_AND  expr
 	  {
-		$$ = yylex.(*yyLexState).new_rel_op(yy_AND, $1, $3)
+		$$ = yylex.(*yyLexState).new_bin_op(yy_AND, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -348,7 +351,7 @@ expr:
 	|
 	  expr  yy_OR  expr
 	  {
-		$$ = yylex.(*yyLexState).new_rel_op(yy_OR, $1, $3)
+		$$ = yylex.(*yyLexState).new_bin_op(yy_OR, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -356,7 +359,7 @@ expr:
 	|
 	  expr  LT  expr
 	  {
-		$$ = yylex.(*yyLexState).new_rel_op(LT, $1, $3)
+		$$ = yylex.(*yyLexState).new_bin_op(LT, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -364,7 +367,7 @@ expr:
 	|
 	  expr  LTE  expr
 	  {
-		$$ = yylex.(*yyLexState).new_rel_op(LTE, $1, $3)
+		$$ = yylex.(*yyLexState).new_bin_op(LTE, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -372,7 +375,7 @@ expr:
 	|
 	  expr  EQ  expr
 	  {
-		$$ = yylex.(*yyLexState).new_rel_op(EQ, $1, $3)
+		$$ = yylex.(*yyLexState).new_bin_op(EQ, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -380,7 +383,7 @@ expr:
 	|
 	  expr  NEQ  expr
 	  {
-		$$ = yylex.(*yyLexState).new_rel_op(NEQ, $1, $3)
+		$$ = yylex.(*yyLexState).new_bin_op(NEQ, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -388,7 +391,7 @@ expr:
 	|
 	  expr  GTE  expr
 	  {
-		$$ = yylex.(*yyLexState).new_rel_op(GTE, $1, $3)
+		$$ = yylex.(*yyLexState).new_bin_op(GTE, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -396,7 +399,7 @@ expr:
 	|
 	  expr  GT  expr
 	  {
-		$$ = yylex.(*yyLexState).new_rel_op(GT, $1, $3)
+		$$ = yylex.(*yyLexState).new_bin_op(GT, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -405,7 +408,7 @@ expr:
 	  //  =~ regex operator
 	  expr  MATCH  expr
 	  {
-		$$ = yylex.(*yyLexState).new_rel_op(MATCH, $1, $3)
+		$$ = yylex.(*yyLexState).new_bin_op(MATCH, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -414,7 +417,7 @@ expr:
 	  //  !~ regex operator
 	  expr  NOMATCH  expr
 	  {
-		$$ = yylex.(*yyLexState).new_rel_op(NOMATCH, $1, $3)
+		$$ = yylex.(*yyLexState).new_bin_op(NOMATCH, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -422,7 +425,7 @@ expr:
 	|
 	  expr  CONCAT  expr
 	  {
-		$$ = yylex.(*yyLexState).new_rel_op(CONCAT, $1, $3)
+		$$ = yylex.(*yyLexState).new_bin_op(CONCAT, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -430,7 +433,39 @@ expr:
 	|
 	  expr  MOD  expr
 	  {
-		$$ = yylex.(*yyLexState).new_rel_op(MOD, $1, $3)
+		$$ = yylex.(*yyLexState).new_bin_op(MOD, $1, $3)
+		if $$ == nil {
+			return 0
+		}
+	  }
+	|
+	  expr  MUL  expr
+	  {
+		$$ = yylex.(*yyLexState).new_bin_op(MUL, $1, $3)
+		if $$ == nil {
+			return 0
+		}
+	  }
+	|
+	  expr  DIV  expr
+	  {
+		$$ = yylex.(*yyLexState).new_bin_op(DIV, $1, $3)
+		if $$ == nil {
+			return 0
+		}
+	  }
+	|
+	  expr  SUB  expr
+	  {
+		$$ = yylex.(*yyLexState).new_bin_op(SUB, $1, $3)
+		if $$ == nil {
+			return 0
+		}
+	  }
+	|
+	  expr  ADD  expr
+	  {
+		$$ = yylex.(*yyLexState).new_bin_op(ADD, $1, $3)
 		if $$ == nil {
 			return 0
 		}
@@ -438,7 +473,7 @@ expr:
 	|
 	  NOT  expr  %prec NOT
 	  {
-		$$ = yylex.(*yyLexState).new_rel_op(NOT, $2, nil)
+		$$ = yylex.(*yyLexState).new_bin_op(NOT, $2, nil)
 		if $$ == nil {
 			return 0
 		}
@@ -446,7 +481,7 @@ expr:
 	|
 	  expr  yy_IS  yy_NULL  %prec yy_IS
 	  {
-	  	$$ = yylex.(*yyLexState).new_rel_op(IS_NULL, $1, nil)
+	  	$$ = yylex.(*yyLexState).new_bin_op(IS_NULL, $1, nil)
 		if $$ == nil {
 			return 0
 		}
@@ -454,7 +489,7 @@ expr:
 	|
 	  expr  yy_IS  NOT  yy_NULL  %prec yy_IS
 	  {
-	  	$$ = yylex.(*yyLexState).new_rel_op(IS_NOT_NULL, $1, nil)
+	  	$$ = yylex.(*yyLexState).new_bin_op(IS_NOT_NULL, $1, nil)
 		if $$ == nil {
 			return 0
 		}
@@ -1233,78 +1268,61 @@ func (lex *yyLexState) scan_uint64(yylval *yySymType, c rune) (err error) {
 
 //  Note: move to pass2?
 
-func (lex *yyLexState) new_rel_op(tok int, left, right *ast) (a *ast) {
+func (lex *yyLexState) new_bin_op(tok int, left, right *ast) (a *ast) {
+
+	//  error with left node
+
+	el := func(format string, args...interface{}) *ast {
+		lex.line_no = left.line_no
+		lex.error(yy_name(tok) + ": " + format, args...)
+		return nil
+	}
+
+	//  error with right node
+
+	er := func(format string, args...interface{}) *ast {
+		lex.line_no = right.line_no
+		lex.error(yy_name(tok) + ": " + format, args...)
+		return nil
+	}
 
 	switch tok {
 	case NOT:
 		if left.is_bool() == false {
-			lex.line_no = left.line_no
-			lex.error("NOT: can not negate %s", left)
-			return nil
+			return el("not bool")
 		}
 	case yy_AND, yy_OR:
 		if left.is_bool() == false {
-			lex.line_no = left.line_no
-			lex.error(
-				"%s: left expr not bool: got %s",
-				yy_name(tok),
-				left,
-			)
-			return nil
+			return el("left not bool: %s", left)
 		}
 		if right.is_bool() == false {
-			lex.line_no = right.line_no
-			lex.error(
-				"%s: right expr not bool: got %s",
-				yy_name(tok),
-				right,
-			)
-			return nil
+			return er("right not bool: %s", right)
 		}
 	case EQ, NEQ, LT, LTE, GTE, GT:
 		can_compare := (left.is_string() && right.is_string()) ||
 		               (left.is_uint64() && right.is_uint64()) ||
 		               (left.is_bool() && right.is_bool())
 		if !can_compare {
-			lex.line_no = right.line_no
-			lex.error(
-				"%s: can not compare %s and %s",
-				yy_name(tok),
-				left,
-				right,
-			)
-			return nil
+			return el("can not compare: (%s, %s)", left, right)
 		}
 	case CONCAT, MATCH, NOMATCH:
 		if left.is_string() == false {
-			lex.line_no = left.line_no
-			lex.error("%s: left is not string", left)
-			return nil
+			return el("left not string: %s", left)
 		}
 		if right.is_string() == false {
-			lex.line_no = right.line_no
-			lex.error("%s: right is not string", right)
-			return nil
+			return er("right not string: %s", right)
 		}
-	case MOD:
+	case MOD, MUL, DIV, ADD, SUB:
 		if left.is_uint64() == false {
-			lex.line_no = left.line_no
-			lex.error("MOD: %s: left is not uint64", left)
-			return nil
+			return el("left is not uint64: %s", left)
 		}
 		if right.is_uint64() == false {
-			lex.line_no = right.line_no
-			lex.error(
-				"%s: %s: right is not uint64",
-				yy_name(tok),
-				right,
-			)
-			return nil
+			return er("right is not uint64: %s", right)
 		}
 	case IS_NULL, IS_NOT_NULL:
 		lex.line_no = left.line_no
 	default:
-		die("new_rel_op: yy token: %s", yy_name(tok))
+		die("new_bin_op: yy token: %s", yy_name(tok))
 	}
 
 	a = &ast{
@@ -1413,7 +1431,12 @@ func (lex *yyLexState) Lex(yylval *yySymType) (tok int) {
 		return tok
 	case c == '%':
 		return MOD
-
+	case c == '/':
+		return DIV
+	case c == '+':
+		return ADD
+	case c == '-':
+		return SUB
 	case unicode.IsLetter(c) || c == '_':
 		tok, err = lex.scan_word(yylval, c)
 		if err != nil {

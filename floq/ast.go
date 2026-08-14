@@ -71,9 +71,7 @@ func (a *ast) yy_name() string {
 	return yy_name(a.yy_tok)
 }
 
-//  overly complex String() for an ast node.
-//
-//  Note: rename to ast.dump() and simplyfy String()
+//  dump details of ast node
 
 func (a *ast) dump() string {
 

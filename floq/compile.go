@@ -198,6 +198,14 @@ func (cmp *compilation) compile(a *ast) {
 		a2str[a] = flo.concat(a2str[a.left], a2str[a.right])
 	case MOD:
 		a2ui64[a] = flo.mod_ui64(a2ui64[a.left], a2ui64[a.right])
+	case ADD:
+		a2ui64[a] = flo.add_ui64(a2ui64[a.left], a2ui64[a.right])
+	case SUB:
+		a2ui64[a] = flo.sub_ui64(a2ui64[a.left], a2ui64[a.right])
+	case MUL:
+		a2ui64[a] = flo.mul_ui64(a2ui64[a.left], a2ui64[a.right])
+	case DIV:
+		a2ui64[a] = flo.div_ui64(a2ui64[a.left], a2ui64[a.right])
 	case WHEN:
 		a2bool[a] = a2bool[a.left]
 	case RUN:
