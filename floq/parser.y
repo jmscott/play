@@ -98,14 +98,11 @@ func init() {
 %token	PROJ_OSX_EXIT_CODE
 %token	PROJ_OSX_PID
 %token	PROJ_OSX_START_TIME
-%token	PROJ_OSX_WALL_DURATION  PROJ_OSX_WALL_DURATION_SEC
-%token	PROJ_OSX_USER_SEC
-%token	PROJ_OSX_USER_USEC
-%token	PROJ_OSX_SYS_SEC
-%token	PROJ_OSX_SYS_USEC
-%token	PROJ_OSX_STDOUT
-%token	PROJ_OSX_STDERR
-%token	PROJ_OSX_TSV PROJ_OSX_TSV_N
+%token	PROJ_OSX_WALL_DURATION  PROJ_OSX_WALL_DURATION_SECONDS
+%token	PROJ_OSX_USER_SEC  PROJ_OSX_USER_USEC  PROJ_OSX_USER_SECONDS
+%token	PROJ_OSX_SYS_SEC  PROJ_OSX_SYS_USEC  PROJ_OSX_SYS_SECONDS
+%token	PROJ_OSX_STDOUT  PROJ_OSX_STDERR
+%token	PROJ_OSX_TSV  PROJ_OSX_TSV_N
 %token	PROJ_FLOW_TSV_N
 %token	PROJ_FLOW_SEQ
 
@@ -1608,14 +1605,22 @@ func (lex *yyLexState) project_osx_sys(name string, cmd *command) (*ast) {
 		a.yy_tok = PROJ_OSX_START_TIME
 	case "wall_duration": 
 		a.yy_tok = PROJ_OSX_WALL_DURATION
+	case "wall_duration_seconds": 
+		a.yy_tok = PROJ_OSX_WALL_DURATION_SECONDS
+
 	case "user_sec":
 		a.yy_tok = PROJ_OSX_USER_SEC
 	case "user_usec":
 		a.yy_tok = PROJ_OSX_USER_USEC
+	case "user_seconds":
+		a.yy_tok = PROJ_OSX_USER_SECONDS
+
 	case "sys_sec":
 		a.yy_tok = PROJ_OSX_SYS_SEC
 	case "sys_usec":
 		a.yy_tok = PROJ_OSX_SYS_USEC
+	case "sys_seconds":
+		a.yy_tok = PROJ_OSX_SYS_SECONDS
 	default:
 		lex.error(
 			"project_osx_sys: %s: unknown att: %s",

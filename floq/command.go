@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"strconv"
 	"syscall"
 	"time"
 )
@@ -91,7 +92,7 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 
 	err := cx.Run()
 
-	wall_duration  := time.Since(start_time)
+	wall_duration := time.Since(start_time)
 
 	/*
 	 *  golang exec considers any non-zero exit_code to be the error.
@@ -538,6 +539,38 @@ func (flo *flow) osx_proj_wall_duration(in osx_chan) (out uint64_chan) {
 	return out
 }
 
+//  project osx command$wall_duration_seconds as sec.msec
+
+func (flo *flow) osx_proj_wall_duration_seconds(in osx_chan) (out string_chan) {
+
+	out = make(string_chan)
+
+	go func() {
+		<-compiling
+
+		for {
+			xv := <- in
+
+			//  format as <sec>.<msec>
+
+			wd := strconv.FormatFloat(
+					xv.wall_duration.Seconds(),
+					'f',
+					-1,
+					64,
+			)
+			out <- &string_value{
+				string:		wd,
+				is_null:	xv.is_null,
+			}
+
+			flo = flo.next()
+		}
+	}()
+
+	return out
+}
+
 //  project the command$user_sec from an osx_record
 
 func (flo *flow) osx_proj_user_sec(in osx_chan) (out uint64_chan) {
@@ -586,6 +619,38 @@ func (flo *flow) osx_proj_user_usec(in osx_chan) (out uint64_chan) {
 	return out
 }
 
+//  project the command$user_seconds, derived from an osx_record
+
+func (flo *flow) osx_proj_user_seconds(in osx_chan) (out string_chan) {
+
+	out = make(string_chan)
+
+	go func() {
+		<-compiling
+
+		for {
+			xv := <- in
+
+			sec := strconv.FormatFloat(
+				float64(xv.user_sec) +
+					float64(xv.user_usec)/1000000.0,
+				'f',
+				-1,
+				64,
+			)
+
+			out <- &string_value{
+				string:		sec,
+				is_null:	xv.is_null,
+			}
+
+			flo = flo.next()
+		}
+	}()
+
+	return out
+}
+
 //  project the command$sys_usec from an osx_record
 
 func (flo *flow) osx_proj_sys_usec(in osx_chan) (out uint64_chan) {
@@ -624,6 +689,38 @@ func (flo *flow) osx_proj_sys_sec(in osx_chan) (out uint64_chan) {
 
 			out <- &uint64_value{
 				uint64:		uint64(xv.sys_sec),
+				is_null:	xv.is_null,
+			}
+
+			flo = flo.next()
+		}
+	}()
+
+	return out
+}
+
+//  project the command$sys_seconds, derived from an osx.{sys_sec, sys_usec}
+
+func (flo *flow) osx_proj_sys_seconds(in osx_chan) (out string_chan) {
+
+	out = make(string_chan)
+
+	go func() {
+		<-compiling
+
+		for {
+			xv := <- in
+
+			sec := strconv.FormatFloat(
+				float64(xv.sys_sec) +
+					float64(xv.sys_usec)/1000000.0,
+				'f',
+				-1,
+				64,
+			)
+
+			out <- &string_value{
+				string:		sec,
 				is_null:	xv.is_null,
 			}
 
