@@ -491,7 +491,9 @@ func (flo *flow) osx_proj_pid(in osx_chan) (out uint64_chan) {
 	return out
 }
 
-func (flo *flow) osx_proj_start_time(in osx_chan) (out string_chan) {
+//  project <comand>$start_time_rfc3339 as time formatted as RFC3338 nano
+
+func (flo *flow) osx_proj_start_time_rfc3339(in osx_chan) (out string_chan) {
 
 	out = make(string_chan)
 

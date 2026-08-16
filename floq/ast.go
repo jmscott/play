@@ -214,7 +214,7 @@ func (a *ast) dump() string {
 		what = "TRUE"
 	case PROJ_OSX_EXIT_CODE,
 	     PROJ_OSX_PID,
-	     PROJ_OSX_START_TIME,
+	     PROJ_OSX_START_TIME_RFC3339,
 	     PROJ_OSX_WALL_DURATION,
 	     PROJ_OSX_USER_SEC,
 	     PROJ_OSX_USER_USEC,

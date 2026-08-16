@@ -97,7 +97,7 @@ func init() {
 
 %token	PROJ_OSX_EXIT_CODE
 %token	PROJ_OSX_PID
-%token	PROJ_OSX_START_TIME
+%token	PROJ_OSX_START_TIME_RFC3339
 %token	PROJ_OSX_WALL_DURATION  PROJ_OSX_WALL_DURATION_SECONDS
 %token	PROJ_OSX_USER_SEC  PROJ_OSX_USER_USEC  PROJ_OSX_USER_SECONDS
 %token	PROJ_OSX_SYS_SEC  PROJ_OSX_SYS_USEC  PROJ_OSX_SYS_SECONDS
@@ -1601,8 +1601,8 @@ func (lex *yyLexState) project_osx_sys(name string, cmd *command) (*ast) {
 		a.yy_tok = PROJ_OSX_EXIT_CODE
 	case "pid":
 		a.yy_tok = PROJ_OSX_PID
-	case "start_time": 
-		a.yy_tok = PROJ_OSX_START_TIME
+	case "start_time_rfc3339": 
+		a.yy_tok = PROJ_OSX_START_TIME_RFC3339
 	case "wall_duration": 
 		a.yy_tok = PROJ_OSX_WALL_DURATION
 	case "wall_duration_seconds": 

@@ -297,11 +297,13 @@ func (cmp *compilation) compile(a *ast) {
 		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2osxfo[cmd]
 		a2ui64[a] = flo.osx_proj_sys_usec(fo[proj.call_order-1])
-	case PROJ_OSX_START_TIME:
+	case PROJ_OSX_START_TIME_RFC3339:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
 		fo := cmd2osxfo[cmd]
-		a2str[a] = flo.osx_proj_start_time(fo[proj.call_order-1])
+		a2str[a] = flo.osx_proj_start_time_rfc3339(
+				fo[proj.call_order-1],
+		)
 	case PROJ_OSX_WALL_DURATION:
 		proj := a.proj_ref
 		cmd := proj.sysatt_ref.command_ref
