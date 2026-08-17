@@ -2,6 +2,8 @@
  *  Synopsis:
  *	Build an abstract syntax tree for "floq" language.
  *  Note:
+ *	-  Consider run (cmd1, cmd2, ...) when ...
+ *
  *	-  Consider production NAME  '.'  NAME to catch typos in command name.
  *
  *	-  Consider pattern for common errors, like a missing semicolon after
@@ -733,7 +735,7 @@ stmt:
 	  RUN  NAME
 	  {
 		lex := yylex.(*yyLexState)
-		lex.error("run: unknown command: %s", $2)
+		lex.error("run: unknown command: %s", lex.name)
 		return 0
 
 		$$ = nil
@@ -742,7 +744,7 @@ stmt:
 	  FLOW  NAME
 	  {
 		lex := yylex.(*yyLexState)
-		lex.error("flow: unknown command: %s", $2)
+		lex.error("flow: unknown command: %s", lex.name)
 		return 0
 
 		$$ = nil
