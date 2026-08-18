@@ -21,13 +21,13 @@ type flow struct {
 
 	//  synchronize all "op" goroutines in this flow
 
-	wg_op		*sync.WaitGroup
+	wg_op		sync.WaitGroup
 
 	//  total number of go routine "operators" per compiled flow.
 	//  sets the operator WaitGroup().
 	//  no need for atomic, since only synchronous compile() changes.
 
-	op_count	uint8
+	op_count	uint16
 
 	//  the next flow, fetched by each op goroutine
 
@@ -41,7 +41,7 @@ type flow_chan chan *flow
 func (flo *flow) new() *flow {
 
 	seq := uint64(1)
-	op_count := uint8(0)		//  compile incremenets first flow 
+	op_count := uint16(0)		//  compile incremenets first flow 
 
 	if flo != nil {
 		seq = flo.seq + 1
@@ -56,7 +56,7 @@ func (flo *flow) new() *flow {
 
 	var wg sync.WaitGroup
 	wg.Add(int(op_count))
-	f.wg_op = &wg
+	f.wg_op = wg
 
 	return f
 }
@@ -64,6 +64,8 @@ func (flo *flow) new() *flow {
 //   increment operator count for a flow operation by +1
 func (flo *flow) incr() {
 	flo.wg_op.Add(1)
+
+	//  Note: no test of overflow for uint16!
 	flo.op_count++
 }
 
