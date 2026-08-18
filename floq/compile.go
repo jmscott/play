@@ -49,7 +49,7 @@ type compilation struct {
 	cmd2osxfo		map[*command][]osx_chan
 
 	//  number of operators running concurently in a single "flow"
-	op_count	uint8
+	op_count	uint16
 }
 
 //  block operators from flowing while compiling.
