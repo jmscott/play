@@ -102,9 +102,15 @@ func main() {
 	argv := os.Args[1:]
 	argc := len(argv)
 
-	if argc >= 1 && (argv[0] == "help" || argv[0] == "--help") {
-		argc--
-		help(argc, argv[1:])
+	if argc >= 1 {
+		switch argv[0] {
+		case "help", "--help":
+			argc--
+			help(argc, argv[1:])
+		case "build", "--build":
+			os.Stdout.WriteString(build + "\n")
+			os.Exit(0)
+		}
 	}
 
 	if argc != 2 {

@@ -61,7 +61,7 @@ parser.go: parser.y
 	$(GOYACC) -o parser.go parser.y
 	$(GOEXE) fmt parser.go
 
-floq: $(GOSRCs)
+floq: $(GOSRCs) build
 	#$(GOEXE) build -gcflags -S $(GOSRCs)
 	$(GOEXE) build $(GOSRCs)
 
@@ -122,3 +122,8 @@ distclean:
 	test ! -d $(PLAY_PREFIX)/libexec || (				\
 		cd $(PLAY_PREFIX)/libexec && rm --force --verbose $(LIBEXECs))
 	rm --force --verbose $((PLAY_PREFIX)/src/floq
+build:
+	rm --force build.go
+	echo package main >build.go
+	NOW=`date +'%Y-%m-%d %H:%M:%S %Z'`; 				\
+		echo var build = \"$${NOW} by $$USER\" >>build.go
