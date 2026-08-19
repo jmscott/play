@@ -100,7 +100,12 @@ func (flo *flow) osx_run(cmd *command, argv []string, out osx_chan) {
 	 */
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "exit status ") == false {
-			die("Run(%s) failed: %s", cmd.name, err)
+			se := stderr.String()
+			if se == "" {
+				die("Run(%s) failed: %s", cmd.name, err)
+			} else {
+				die("Run(%s) failed: %s: %s", cmd.name, err, se)
+			}
 		}
 	}
 	if out == nil {		//  caller does not want osx_value
