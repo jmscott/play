@@ -212,6 +212,14 @@ expr:
 		$$ = a
 	  }
 	|
+	  NAME  '.'  {
+		lex := yylex.(*yyLexState)
+		lex.error("projection: unknown command: '%s.'", lex.name)
+		return 0
+
+		$$ = nil
+	  }
+	|
 	  COMMAND_REF  '.'  {
 	  	yylex.(*yyLexState).name_is_name = true
 	  }  name {
