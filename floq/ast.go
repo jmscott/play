@@ -289,17 +289,17 @@ func (a *ast) walk_print(indent int, parent *ast) {
 		a.corrupt("parent(%s) not ast parent: %s", parent, a.parent)
 	}
 	if indent == 0 {
-		os.Stderr.WriteString("")
+		os.Stdout.WriteString("")
 	} else {
 		if a.parent == nil {
 			a.corrupt("indent > 0: ast parent is nil")
 		}
 		for i := 0;  i < indent;  i++ {
-			os.Stderr.WriteString("  ")
+			os.Stdout.WriteString("  ")
 		}
 	}
 
-	os.Stderr.WriteString(a.dump() + "\n")
+	os.Stdout.WriteString(a.dump() + "\n")
 
 	//  print kids
 
