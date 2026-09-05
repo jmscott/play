@@ -107,9 +107,6 @@ func main() {
 		case "help", "--help":
 			argc--
 			help(argc, argv[1:])
-		case "build", "--build":
-			os.Stdout.WriteString(build + "\n")
-			os.Exit(0)
 		}
 	}
 
