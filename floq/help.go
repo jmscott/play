@@ -61,7 +61,6 @@ func help(argc int, argv []string) {
 	if argc == 0 {
 		os.Stdout.WriteString(usage)
 		os.Stdout.WriteString("help: floq help [tuple|command|env]\n")
-		os.Stdout.WriteString("build")
 		os.Exit(0)
 	}
 
@@ -72,8 +71,6 @@ func help(argc int, argv []string) {
 		os.Stdout.WriteString(help_tuple)
 	case "command":
 		os.Stdout.WriteString(help_command)
-	case "build":
-		os.Stdout.WriteString(build+"\n")
 	default:
 		croak("unknown help option: %s", argv[0])
 	}
