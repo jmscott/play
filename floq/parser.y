@@ -188,6 +188,20 @@ constant:
 expr:
 	  constant
 	|
+	  expr  CAST  NAME  %prec CAST
+	  {
+	  	lex := yylex.(*yyLexState)
+
+		//  Note: not clear why $3 not set to parsed name?!
+
+		if lex.name == "text" {
+			lex.error("cast as \"string\", not \"text")
+		} else {
+			lex.error("unknown cast: %s", lex.name)
+		}
+		return 0
+	  }
+	|
 	  expr  CAST  yy_STRING  %prec CAST
 	  {
 	  	lex := yylex.(*yyLexState)
