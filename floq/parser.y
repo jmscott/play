@@ -79,12 +79,12 @@ func init() {
 %token	ARGV
 %token	yy_SET  ARRAY  
 %token	RUN  FLOW
-%token	COMMAND  COMMAND_REF  FLOW_REF
+%token	COMMAND  COMMANDS  COMMAND_LIST  COMMAND_REF  FLOW_REF
 %token	TUPLE  TUPLE_REF
 %token	DEFINE   AS
 %token	EXPAND_ENV
 %token	STMT_LIST
-%token	UINT64  STRING  NAME
+%token	UINT64  STRING  NAME  NAME_LIST
 %token	yy_TRUE  yy_FALSE  yy_AND  yy_OR  NOT  yy_EMPTY
 %token	yy_STRING  CAST
 %token	EQ  NEQ  GT  GTE  LT  LTE  MATCH  NOMATCH
@@ -115,6 +115,7 @@ func init() {
 
 %type	<uint64>	UINT64		
 %type	<string>	STRING  NAME  name
+%type	<ast>		NAME_LIST  name_list
 %type	<ast>		string
 %type	<ast>		flow
 %type	<ast>		arg_list
@@ -657,6 +658,35 @@ set:
 	  }
 	;
 
+name_list:
+	  name
+	  {
+	  	lex := yylex.(*yyLexState)
+
+		nm := lex.ast(NAME)
+		nm.string = $1
+		nm.name = nm.string
+		nml := lex.ast(NAME_LIST)
+		nml.push_left(nm)
+
+		$$ = nml
+	  }
+	|
+	  name_list  ','  name
+	  {
+		lex := yylex.(*yyLexState)
+
+		nm := lex.ast(NAME)
+		nm.string = $3
+		nm.name = nm.string
+
+		nml := $1
+		nml.push_left(nm)
+
+		$$ = nml
+	  }
+	;
+
 stmt:
 	  DEFINE  yy_SET  name  AS set
 	  {
@@ -682,6 +712,8 @@ stmt:
 			lex.error("tuple %s: %s", $3, err)
 			return 0
 		}
+
+		//  Note:  why project $<string>3 instead of tup.name?
 		lex.name2ast[$<string>3] = tup
 		lex.name2tuple[$<string>3] = tup.tuple_ref
 
@@ -691,29 +723,29 @@ stmt:
 	  DEFINE  COMMAND  name  AS  set
 	  {
 	  	lex := yylex.(*yyLexState)
-		name := $3
-		set := $5
 
-	  	define := lex.ast(DEFINE, lex.ast(COMMAND), set)
-
-		cmd := define.left
-		cmd.name = name
-		cmd.command_ref = &command{
-					name: name,
-					path: set.string_element("path"),
-					args: set.array_string_element("args"),
-					env: set.array_string_element("env"),
-				}
-		cf := cmd.command_ref
-		lex.name2cmd[name] = cf
-		lex.name2ast[name] = cmd
-
-		$$ = define
+		cmd := lex.define_command($3, $5)
+		if cmd == nil {
+			return 0
+		}
+		$$ = cmd
 	  }
 	|
 	  DEFINE  COMMAND  name  '.'  name
 	  {
 	  	yylex.(*yyLexState).error("unknown tuple in define: \"%s\"", $5)
+		return 0
+	  }
+	|
+	  DEFINE  COMMANDS  '('  name_list  ')'  AS  set
+	  {
+	  	lex := yylex.(*yyLexState)
+
+		cmds := lex.define_commands($4, $7)
+		if cmds == nil {
+			return 0
+		}
+		$$ = cmds
 	  }
 	|
 	  DEFINE  COMMAND  name  '.'  TUPLE_REF  AS  set
@@ -824,6 +856,7 @@ var keyword = map[string]int{
 	"and":			yy_AND,
 	"as":			AS,
 	"command":		COMMAND,
+	"commands":		COMMANDS,
 	"define":		DEFINE,
 	"ExpandEnv":		EXPAND_ENV,
 	"false":		yy_FALSE,
@@ -935,7 +968,7 @@ func (lex *yyLexState) ast(yy_tok int, args...*ast) *ast {
 		line_no:	lex.line_no,
 	}
 	for i, a := range args {
-		if a == nil {
+		if a == nil {		//  Note: ever nil?
 			continue
 		}
 		if i == 0 {
@@ -1702,4 +1735,67 @@ func (lex *yyLexState) add_name_element(name string, ele *ast) (err error) {
 		lex.error("add_name_element: %s", err)
 	}
 	return err
+}
+
+func (lex *yyLexState) define_command(name string, set *ast) (cmd *ast) {
+
+	if set.string_element("path") == "" {
+		lex.error("set has empty or no \"path\" element")
+		return nil
+	}
+
+	define := lex.ast(DEFINE, lex.ast(COMMAND))
+
+	cmd = define.left
+	cmd.name = name
+	cmd.command_ref = &command{
+				name: name,
+				path: set.string_element("path"),
+				args: set.array_string_element("args"),
+				env: set.array_string_element("env"),
+			}
+	cf := cmd.command_ref
+	lex.name2cmd[name] = cf
+	lex.name2ast[name] = cmd
+
+	cmd.right = set
+
+	return cmd
+}
+
+func (lex *yyLexState) define_commands(name_list, set *ast) *ast {
+
+	//  Note:  move to pass2!
+
+	if set.string_element("path") == "" {
+		lex.error(
+			"define commands: " +
+			"set has empty or no \"path\" element",
+		)
+		return nil
+	}
+
+	define := lex.ast(DEFINE)
+	set.parent = define
+	define.right = set
+
+	name_list.yy_tok = COMMANDS
+	for an := name_list.left;  an != nil;  an = an.next {
+		an = an
+		name := an.name
+		an.yy_tok = COMMAND
+		an.command_ref = &command{
+					name: name,
+					path: set.string_element("path"),
+					args: set.array_string_element("args"),
+					env: set.array_string_element("env"),
+				}
+		cf := an.command_ref
+		lex.name2cmd[name] = cf
+		lex.name2ast[name] = an
+	}
+	name_list.yy_tok = COMMANDS
+	define.left = name_list
+	name_list.parent = define
+	return define
 }
