@@ -126,7 +126,7 @@ func (cmp *compilation) compile(a *ast) {
 		return
 	}
 
-	//  skip "define command/tuple" statements.
+	//  skip "define command[s]/tuple" statements.
 
 	if a.yy_tok == DEFINE {
 		cmp.compile(a.next)
@@ -263,7 +263,7 @@ func (cmp *compilation) compile(a *ast) {
 
 		//  Note: no reference to flow.  test needs to be in pass2!
 		if rc == 0 {
-			die("FLOW: rc==0: %s", fcmd)
+			die("what to do? no reference to flow: %s", fcmd)
 		}
 		a2strfo[a] = flo.string_fo(a2str[a], rc)
 		flow2strfo[fcmd] = a2strfo[a]
