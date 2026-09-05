@@ -724,11 +724,11 @@ stmt:
 	  {
 	  	lex := yylex.(*yyLexState)
 
-		cmd := lex.define_command($3, $5)
-		if cmd == nil {
+		define := lex.define_command($3, $5)
+		if define == nil {
 			return 0
 		}
-		$$ = cmd
+		$$ = define
 	  }
 	|
 	  DEFINE  COMMAND  name  '.'  name
@@ -746,6 +746,12 @@ stmt:
 			return 0
 		}
 		$$ = cmds
+	  }
+	|
+	  DEFINE  COMMAND  '('
+	  {
+	  	yylex.(*yyLexState).error("did you mean \"define commands\"")
+		return 0
 	  }
 	|
 	  DEFINE  COMMAND  name  '.'  TUPLE_REF  AS  set
@@ -1739,12 +1745,13 @@ func (lex *yyLexState) add_name_element(name string, ele *ast) (err error) {
 
 func (lex *yyLexState) define_command(name string, set *ast) (cmd *ast) {
 
+	//  Note: ought to be in pass2
 	if set.string_element("path") == "" {
 		lex.error("set has empty or no \"path\" element")
 		return nil
 	}
 
-	define := lex.ast(DEFINE, lex.ast(COMMAND))
+	define := lex.ast(DEFINE, lex.ast(COMMAND), set)
 
 	cmd = define.left
 	cmd.name = name
@@ -1758,9 +1765,7 @@ func (lex *yyLexState) define_command(name string, set *ast) (cmd *ast) {
 	lex.name2cmd[name] = cf
 	lex.name2ast[name] = cmd
 
-	cmd.right = set
-
-	return cmd
+	return define
 }
 
 func (lex *yyLexState) define_commands(name_list, set *ast) *ast {
@@ -1797,5 +1802,6 @@ func (lex *yyLexState) define_commands(name_list, set *ast) *ast {
 	name_list.yy_tok = COMMANDS
 	define.left = name_list
 	name_list.parent = define
+	set.parent = define
 	return define
 }
