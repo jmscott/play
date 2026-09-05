@@ -72,7 +72,6 @@ GOSRCs="
 	command.go
 	compile.go
 	flow.go
-	build.go
 	help.go
 	parser.go
 	pass2.go
