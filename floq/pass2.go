@@ -50,12 +50,22 @@ func (p2 *pass2) plumb(a *ast) {
 		if kid == nil {
 			return
 		}
-		what = fmt.Sprintf("%s: %s", what, kid)
+		
+		//  simple sanity tests
+
+		if kid.parent == nil {
+			kid.corrupt("parent is nil")
+		}
 		if kid.prev != nil {
 			kid.corrupt("%s: prev %s not nil", what, kid.prev)
 		}
 		if kid.parent != a {
-			kid.corrupt("%s: parent not %s", what, a)
+			kid.corrupt(
+				"%s: parent %s not %s",
+				what,
+				kid.parent,
+				a,
+			)
 		}
 		p2.plumb(kid)
 	}
