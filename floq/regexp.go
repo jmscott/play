@@ -8,7 +8,7 @@ func (flo *flow) match(in string_chan, re *regexp.Regexp) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			// wait for source string from left channel
@@ -39,7 +39,7 @@ func (flo *flow) nomatch(left string_chan, re *regexp.Regexp) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			// wait for left hand string to arrive

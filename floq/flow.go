@@ -32,6 +32,8 @@ type flow struct {
 	//  the next flow, fetched by each op goroutine
 
 	next_flow	*flow
+	next_mux	sync.Mutex
+	compiling	chan(bool)
 }
 
 //  a river to my people ...
@@ -52,6 +54,7 @@ func (flo *flow) new() *flow {
 		seq:		seq,
 		start_time:	time.Now(),
 		op_count:	op_count,
+		compiling:	make(chan(bool)),
 	}
 
 	var wg sync.WaitGroup
@@ -82,10 +85,6 @@ type osx_start struct {
 	process		*os.Process
 }
 
-//  Note: why global?
-
-var next_mux sync.Mutex
-
 func (flo *flow) next() *flow {
 
 	var nm string
@@ -104,9 +103,9 @@ func (flo *flow) next() *flow {
 
 	//  allocate a new flow ... only once.
 
-	next_mux.Lock()
+	flo.next_mux.Lock()
 	defer func() {
-		next_mux.Unlock()
+		flo.next_mux.Unlock()
 	}()
 	
 	if flo.next_flow == nil {
@@ -199,7 +198,7 @@ func (flo *flow) osx_flow(cmd *command) (out string_chan) {
 
 	go func() {
 
-		<-compiling
+		<-flo.compiling
 
 		stdout := flo.start(cmd).stdout
 
@@ -225,7 +224,7 @@ func (flo *flow) proj_flow_seq(in string_chan) (out uint64_chan) {
 
 	go func() {
 
-		<-compiling
+		<-flo.compiling
 
 		for {
 			<- in		//  only send if flow record
@@ -251,7 +250,7 @@ func (flo *flow) proj_flow_tsv_att(
 
 	go func() {
 
-		<-compiling
+		<-flo.compiling
 
 		idx := proj.att_ref.tab_field-1
 

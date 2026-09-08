@@ -50,7 +50,7 @@ func (flo *flow) concat(left, right string_chan) (out string_chan) {
 	out = make(string_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			lv, rv := left.wait2(right)
@@ -81,7 +81,7 @@ func (flo *flow) eq_string(left, right string_chan) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			lv, rv := left.wait2(right)
@@ -114,7 +114,7 @@ func (flo *flow) neq_string(left, right string_chan) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			lv, rv := left.wait2(right)
@@ -146,7 +146,7 @@ func (flo *flow) gt_string(left, right string_chan) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			lv, rv := left.wait2(right)
@@ -177,7 +177,7 @@ func (flo *flow) gte_string(left, right string_chan) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			lv, rv := left.wait2(right)
@@ -208,7 +208,7 @@ func (flo *flow) lt_string(left, right string_chan) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			lv, rv := left.wait2(right)
@@ -239,7 +239,7 @@ func (flo *flow) lte_string(left, right string_chan) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			lv, rv := left.wait2(right)
@@ -270,7 +270,7 @@ func (flo *flow) const_string(s string) (out string_chan) {
 	out = make(string_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			out <- &string_value{
@@ -322,7 +322,7 @@ func (flo *flow) cast_string(in string_chan) (out string_chan) {
 	out = make(string_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			out <-<-in
@@ -338,7 +338,7 @@ func (flo *flow) is_null_string(in string_chan) (out bool_chan) {
 
 	out = make(bool_chan)
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			out <- &bool_value{
@@ -358,7 +358,7 @@ func (flo *flow) is_not_null_string(in string_chan) (out bool_chan) {
 
 	out = make(bool_chan)
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			out <- &bool_value{
@@ -390,7 +390,7 @@ func (sv *string_value) String() string {
 func (flo *flow) string_null(in string_chan) {
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			<- in
@@ -411,7 +411,7 @@ func (flo *flow) string_fo(in string_chan, count uint8) (out []string_chan) {
 	}
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 
@@ -446,7 +446,7 @@ func (flo *flow) cond3_string(
 	out = make(string_chan)
 
 	go func() {
-		<- compiling
+		<- flo.compiling
 
 		for {
 			var bv *bool_value
@@ -491,7 +491,7 @@ func (flo *flow) proj_tsv_n(
 	out = make(string_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			var sv *string_value

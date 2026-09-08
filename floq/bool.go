@@ -270,7 +270,7 @@ func (flo *flow) bool2(
 	out = make(bool_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 
@@ -303,7 +303,7 @@ func (flo *flow) const_true() (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			out <- &bool_value{
@@ -323,7 +323,7 @@ func (flo *flow) const_false() (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			out <- &bool_value{
@@ -343,7 +343,7 @@ func (flo *flow) not(in bool_chan) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			bv := <- in
@@ -399,7 +399,7 @@ func (flo *flow) eq_bool(left, right bool_chan) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			lv, rv := left.wait2(right)
@@ -429,7 +429,7 @@ func (flo *flow) neq_bool(left, right bool_chan) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			lv, rv := left.wait2(right)
@@ -458,7 +458,7 @@ func (flo *flow) cast_bool(in bool_chan) (out string_chan) {
 	out = make(string_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			bv := <-in
@@ -487,7 +487,7 @@ func (flo *flow) is_null_bool(in bool_chan) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			out <- &bool_value{
@@ -507,7 +507,7 @@ func (flo *flow) is_not_null_bool(in bool_chan) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			out <- &bool_value{
@@ -528,7 +528,7 @@ func (flo *flow) cond3_bool(
 	out = make(bool_chan)
 
 	go func() {
-		<- compiling
+		<- flo.compiling
 
 		for {
 			var bv *bool_value

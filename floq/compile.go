@@ -52,13 +52,9 @@ type compilation struct {
 	op_count	uint16
 }
 
-//  block operators from flowing while compiling.
-
-var compiling = make(chan(bool))
-
 //  compile an abstract syntax tree into flow#1
 
-func compile(root *ast) {
+func compile(root *ast) *flow {
 
 	cmp := &compilation{
 			root:		root,
@@ -75,6 +71,7 @@ func compile(root *ast) {
 			flow2strfo:	make(map[*command][]string_chan),
 	}
 	cmp.compile(root)
+	return cmp.flo
 }
 
 //  compile an binary, boolean relational operator over two strings, uint64s

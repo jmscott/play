@@ -144,7 +144,7 @@ func (flo *flow) osx_run_0(cmd *command) (out osx_chan) {
 	out = make(osx_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			flo.osx_run(cmd, nil, out)
@@ -163,7 +163,7 @@ func (flo *flow) osx_run_a(cmd *command, in argv_chan) (out osx_chan) {
 	out = make(osx_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			flo.osx_run(cmd, (<-in).argv, out)
@@ -186,7 +186,7 @@ func (flo *flow) osx_run_w(cmd *command, when bool_chan) (out osx_chan) {
 			command:	cmd,
 	}
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			bv := <- when
@@ -223,7 +223,7 @@ func (flo *flow) osx_run_aw(
 
 	go func() {
 
-		<-compiling
+		<-flo.compiling
 
 		for {
 			var bv *bool_value
@@ -284,7 +284,7 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 	//  before sending assembled argv[]
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			argv := make([]string, argc)
@@ -316,7 +316,7 @@ func (flo *flow) argv(in_args []string_chan) (out argv_chan) {
 func (flo *flow) osx_null(in osx_chan) {
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			<- in
@@ -354,7 +354,7 @@ func (flo *flow) osx_proj_tsv(
 	}
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			xv := <- in
@@ -407,7 +407,7 @@ func (flo *flow) osx_proj_exit_code(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			xv := <- in
@@ -431,7 +431,7 @@ func (flo *flow) osx_proj_Stdout(in osx_chan) (out string_chan) {
 	out = make(string_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			xv := <- in
@@ -455,7 +455,7 @@ func (flo *flow) osx_proj_Stderr(in osx_chan) (out string_chan) {
 	out = make(string_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			xv := <- in
@@ -479,7 +479,7 @@ func (flo *flow) osx_proj_pid(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			xv := <- in
@@ -503,7 +503,7 @@ func (flo *flow) osx_proj_start_time(in osx_chan) (out string_chan) {
 	out = make(string_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			xv := <- in
@@ -529,7 +529,7 @@ func (flo *flow) osx_proj_wall_duration(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			xv := <- in
@@ -553,7 +553,7 @@ func (flo *flow) osx_proj_wall_duration_seconds(in osx_chan) (out string_chan) {
 	out = make(string_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			xv := <- in
@@ -585,7 +585,7 @@ func (flo *flow) osx_proj_user_sec(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			xv := <- in
@@ -609,7 +609,7 @@ func (flo *flow) osx_proj_user_usec(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			xv := <- in
@@ -633,7 +633,7 @@ func (flo *flow) osx_proj_user_seconds(in osx_chan) (out string_chan) {
 	out = make(string_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			xv := <- in
@@ -665,7 +665,7 @@ func (flo *flow) osx_proj_sys_usec(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			xv := <- in
@@ -689,7 +689,7 @@ func (flo *flow) osx_proj_sys_sec(in osx_chan) (out uint64_chan) {
 	out = make(uint64_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			xv := <- in
@@ -713,7 +713,7 @@ func (flo *flow) osx_proj_sys_seconds(in osx_chan) (out string_chan) {
 	out = make(string_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			xv := <- in
@@ -748,7 +748,7 @@ func (flo *flow) osx_fo(in osx_chan, count uint8) (out []osx_chan) {
 	}
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			xv := <-in

@@ -54,7 +54,7 @@ func (flo *flow) mod_ui64(left, right uint64_chan) (out uint64_chan) {
 
 	go func() {
 
-		<-compiling
+		<-flo.compiling
 
 		for {
 			lv, rv := left.wait2(right)
@@ -78,7 +78,7 @@ func (flo *flow) eq_ui64(left, right uint64_chan) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			lv, rv := left.wait2(right)
@@ -108,7 +108,7 @@ func (flo *flow) neq_ui64(left, right uint64_chan) (out bool_chan) {
 	out = make(bool_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			lv, rv := left.wait2(right)
@@ -139,7 +139,7 @@ func (flo *flow) gt_ui64(left, right uint64_chan) (out bool_chan) {
 
 	go func() {
 
-		<-compiling
+		<-flo.compiling
 
 		for {
 			lv, rv := left.wait2(right)
@@ -170,7 +170,7 @@ func (flo *flow) gte_ui64(left, right uint64_chan) (out bool_chan) {
 
 	go func() {
 
-		<-compiling
+		<-flo.compiling
 
 		for {
 			lv, rv := left.wait2(right)
@@ -201,7 +201,7 @@ func (flo *flow) lt_ui64(left, right uint64_chan) (out bool_chan) {
 
 	go func() {
 
-		<-compiling
+		<-flo.compiling
 
 		for {
 			lv, rv := left.wait2(right)
@@ -232,7 +232,7 @@ func (flo *flow) lte_ui64(left, right uint64_chan) (out bool_chan) {
 
 	go func() {
 
-		<-compiling
+		<-flo.compiling
 
 		for {
 			lv, rv := left.wait2(right)
@@ -265,7 +265,7 @@ func (flo *flow) add_ui64(left, right uint64_chan) (out uint64_chan) {
 
 	go func() {
 
-		<-compiling
+		<-flo.compiling
 
 		for {
 			lv, rv := left.wait2(right)
@@ -290,7 +290,7 @@ func (flo *flow) mul_ui64(left, right uint64_chan) (out uint64_chan) {
 
 	go func() {
 
-		<-compiling
+		<-flo.compiling
 
 		for {
 			lv, rv := left.wait2(right)
@@ -315,7 +315,7 @@ func (flo *flow) sub_ui64(left, right uint64_chan) (out uint64_chan) {
 
 	go func() {
 
-		<-compiling
+		<-flo.compiling
 
 		for {
 			lv, rv := left.wait2(right)
@@ -340,7 +340,7 @@ func (flo *flow) div_ui64(left, right uint64_chan) (out uint64_chan) {
 
 	go func() {
 
-		<-compiling
+		<-flo.compiling
 
 		for {
 			lv, rv := left.wait2(right)
@@ -363,7 +363,7 @@ func (flo *flow) const_ui64(u64 uint64) (out uint64_chan) {
 
 	out = make(uint64_chan)
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			out <- &uint64_value{
@@ -385,7 +385,7 @@ func (flo *flow) cast_uint64(in uint64_chan) (out string_chan) {
 	out = make(string_chan)
 
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			uiv := <- in
@@ -412,7 +412,7 @@ func (flo *flow) is_null_uint64(in uint64_chan) (out bool_chan) {
 
 	out = make(bool_chan)
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			out <- &bool_value{
@@ -432,7 +432,7 @@ func (flo *flow) is_not_null_uint64(in uint64_chan) (out bool_chan) {
 
 	out = make(bool_chan)
 	go func() {
-		<-compiling
+		<-flo.compiling
 
 		for {
 			out <- &bool_value{
@@ -491,7 +491,7 @@ func (flo *flow) cond3_uint64(
 	out = make(uint64_chan)
 
 	go func() {
-		<- compiling
+		<- flo.compiling
 
 		for {
 			var bv *bool_value

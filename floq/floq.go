@@ -201,6 +201,8 @@ func main() {
 	exit(0)
 }
 
+//  avoid confusing, multiple die messages
+
 var die_mux sync.Mutex
 
 func die(format string, args ...interface{}) {
