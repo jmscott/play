@@ -4,7 +4,6 @@ import (
 	"os"
 )
 
-
 var help_tuple = `
 
 define tuple <name> as {
@@ -24,21 +23,28 @@ define tuple <name> as {
 
 var help_env = `
 
-export FLOQ_YYDEBUG
+FLOQ_FLOWS
+	Synopsis:
+		Number of simultaneous flows for a server,  Default is 1
+	Usage:
+		export FLOQ_FLOWS=4
+		floq server jmsdesk.floq
+
+FLOQ_YYDEBUG
 	Synopsis:
 		Debug level of yacc parsing states, written to stdout
 	Usage:
 		export FLOQ_YYDEBUG=4
 		floq frisk bug.conf
 
-export FLOQ_TRACE_COMPILE
+FLOQ_TRACE_COMPILE
 	Synopsis:
 		Compilation tracing, written to stdout
 	Usage:
 		export FLOQ_TRACE_COMPILE=true
 		floq compile bug.floq
 
-export FLOQ_TRACE_NEXT_OP
+FLOQ_TRACE_NEXT_OP
 	Synopsis:
 		Trace transition from current to next goop, written to stdout
 	Usage:
