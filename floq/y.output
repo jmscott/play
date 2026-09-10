@@ -25,7 +25,7 @@ state 2
 	RUN  shift 5
 	FLOW  shift 6
 	DEFINE  shift 4
-	.  reduce 1 (src line 121)
+	.  reduce 1 (src line 119)
 
 	stmt  goto 7
 
@@ -81,7 +81,7 @@ state 7
 state 8
 	stmt_list:  stmt ';'.    (74)
 
-	.  reduce 74 (src line 827)
+	.  reduce 74 (src line 825)
 
 
 state 9
@@ -131,7 +131,7 @@ state 12
 state 13
 	stmt:  RUN NAME.    (69)
 
-	.  reduce 69 (src line 776)
+	.  reduce 69 (src line 774)
 
 
 state 14
@@ -145,7 +145,7 @@ state 14
 state 15
 	stmt:  FLOW NAME.    (70)
 
-	.  reduce 70 (src line 785)
+	.  reduce 70 (src line 783)
 
 
 state 16
@@ -158,7 +158,7 @@ state 16
 state 17
 	stmt_list:  stmt_list stmt ';'.    (75)
 
-	.  reduce 75 (src line 832)
+	.  reduce 75 (src line 830)
 
 
 state 18
@@ -171,25 +171,25 @@ state 18
 state 19
 	name:  NAME.    (43)
 
-	.  reduce 43 (src line 540)
+	.  reduce 43 (src line 538)
 
 
 state 20
 	name:  COMMAND_REF.    (44)
 
-	.  reduce 44 (src line 548)
+	.  reduce 44 (src line 546)
 
 
 state 21
 	name:  FLOW_REF.    (45)
 
-	.  reduce 45 (src line 554)
+	.  reduce 45 (src line 552)
 
 
 state 22
 	name:  TUPLE_REF.    (46)
 
-	.  reduce 46 (src line 560)
+	.  reduce 46 (src line 558)
 
 
 state 23
@@ -212,7 +212,7 @@ state 24
 state 25
 	stmt:  DEFINE COMMAND '('.    (67)
 
-	.  reduce 67 (src line 746)
+	.  reduce 67 (src line 744)
 
 
 state 26
@@ -242,7 +242,7 @@ state 27
 	yy_FALSE  shift 46
 	NOT  shift 41
 	'('  shift 42
-	.  reduce 76 (src line 839)
+	.  reduce 76 (src line 837)
 
 	string  goto 44
 	arg_list  goto 35
@@ -304,7 +304,7 @@ state 33
 state 34
 	name_list:  name.    (60)
 
-	.  reduce 60 (src line 657)
+	.  reduce 60 (src line 655)
 
 
 state 35
@@ -360,13 +360,13 @@ state 36
 	SUB  shift 75
 	yy_IS  shift 77
 	'?'  shift 78
-	.  reduce 77 (src line 844)
+	.  reduce 77 (src line 842)
 
 
 state 37
 	expr:  constant.    (8)
 
-	.  reduce 8 (src line 170)
+	.  reduce 8 (src line 168)
 
 
 state 38
@@ -439,31 +439,31 @@ state 42
 state 43
 	constant:  UINT64.    (4)
 
-	.  reduce 4 (src line 144)
+	.  reduce 4 (src line 142)
 
 
 state 44
 	constant:  string.    (5)
 
-	.  reduce 5 (src line 150)
+	.  reduce 5 (src line 148)
 
 
 state 45
 	constant:  yy_TRUE.    (6)
 
-	.  reduce 6 (src line 152)
+	.  reduce 6 (src line 150)
 
 
 state 46
 	constant:  yy_FALSE.    (7)
 
-	.  reduce 7 (src line 160)
+	.  reduce 7 (src line 158)
 
 
 state 47
 	string:  STRING.    (2)
 
-	.  reduce 2 (src line 130)
+	.  reduce 2 (src line 128)
 
 
 state 48
@@ -478,39 +478,39 @@ state 48
 state 49
 	stmt:  FLOW COMMAND_REF '(' ')'.    (73)
 
-	.  reduce 73 (src line 815)
+	.  reduce 73 (src line 813)
 
 
 state 50
 	stmt:  DEFINE yy_SET name AS set.    (62)
 
-	.  reduce 62 (src line 686)
+	.  reduce 62 (src line 684)
 
 
 state 51
 	set:  '{'.$$58 element_list '}' 
 	$$58: .    (58)
 
-	.  reduce 58 (src line 644)
+	.  reduce 58 (src line 642)
 
 	$$58  goto 89
 
 state 52
 	stmt:  DEFINE TUPLE name AS set.    (63)
 
-	.  reduce 63 (src line 695)
+	.  reduce 63 (src line 693)
 
 
 state 53
 	stmt:  DEFINE COMMAND name AS set.    (64)
 
-	.  reduce 64 (src line 718)
+	.  reduce 64 (src line 716)
 
 
 state 54
 	stmt:  DEFINE COMMAND name '.' name.    (65)
 
-	.  reduce 65 (src line 729)
+	.  reduce 65 (src line 727)
 
 
 state 55
@@ -518,7 +518,7 @@ state 55
 	stmt:  DEFINE COMMAND name '.' TUPLE_REF.AS set 
 
 	AS  shift 90
-	.  reduce 46 (src line 560)
+	.  reduce 46 (src line 558)
 
 
 state 56
@@ -544,7 +544,7 @@ state 58
 	stmt:  RUN COMMAND_REF '(' arg_list ')'.    (72)
 
 	WHEN  shift 93
-	.  reduce 72 (src line 805)
+	.  reduce 72 (src line 803)
 
 
 state 59
@@ -911,7 +911,7 @@ state 79
 	expr:  COMMAND_REF '$'.$$11 name 
 	$$11: .    (11)
 
-	.  reduce 11 (src line 195)
+	.  reduce 11 (src line 193)
 
 	$$11  goto 116
 
@@ -919,7 +919,7 @@ state 80
 	expr:  COMMAND_REF '.'.$$14 name 
 	$$14: .    (14)
 
-	.  reduce 14 (src line 219)
+	.  reduce 14 (src line 217)
 
 	$$14  goto 117
 
@@ -945,7 +945,7 @@ state 81
 state 82
 	expr:  NAME '.'.    (13)
 
-	.  reduce 13 (src line 211)
+	.  reduce 13 (src line 209)
 
 
 state 83
@@ -971,7 +971,7 @@ state 84
 	expr:  FLOW_REF '.'.$$18 name 
 	$$18: .    (18)
 
-	.  reduce 18 (src line 292)
+	.  reduce 18 (src line 290)
 
 	$$18  goto 120
 
@@ -979,7 +979,7 @@ state 85
 	expr:  FLOW_REF '$'.$$20 name 
 	$$20: .    (20)
 
-	.  reduce 20 (src line 325)
+	.  reduce 20 (src line 323)
 
 	$$20  goto 121
 
@@ -1009,7 +1009,7 @@ state 86
 
 	CAST  shift 60
 	yy_IS  shift 77
-	.  reduce 38 (src line 477)
+	.  reduce 38 (src line 475)
 
 
 state 87
@@ -1062,7 +1062,7 @@ state 87
 state 88
 	string:  EXPAND_ENV string.    (3)
 
-	.  reduce 3 (src line 136)
+	.  reduce 3 (src line 134)
 
 
 state 89
@@ -1089,7 +1089,7 @@ state 90
 state 91
 	name_list:  name_list ',' name.    (61)
 
-	.  reduce 61 (src line 670)
+	.  reduce 61 (src line 668)
 
 
 state 92
@@ -1162,19 +1162,19 @@ state 94
 	SUB  shift 75
 	yy_IS  shift 77
 	'?'  shift 78
-	.  reduce 78 (src line 849)
+	.  reduce 78 (src line 847)
 
 
 state 95
 	expr:  expr CAST NAME.    (9)
 
-	.  reduce 9 (src line 172)
+	.  reduce 9 (src line 170)
 
 
 state 96
 	expr:  expr CAST yy_STRING.    (10)
 
-	.  reduce 10 (src line 186)
+	.  reduce 10 (src line 184)
 
 
 state 97
@@ -1217,7 +1217,7 @@ state 97
 	ADD  shift 76
 	SUB  shift 75
 	yy_IS  shift 77
-	.  reduce 22 (src line 347)
+	.  reduce 22 (src line 345)
 
 
 state 98
@@ -1260,7 +1260,7 @@ state 98
 	ADD  shift 76
 	SUB  shift 75
 	yy_IS  shift 77
-	.  reduce 23 (src line 355)
+	.  reduce 23 (src line 353)
 
 
 state 99
@@ -1295,7 +1295,7 @@ state 99
 	ADD  shift 76
 	SUB  shift 75
 	yy_IS  shift 77
-	.  reduce 24 (src line 363)
+	.  reduce 24 (src line 361)
 
 
 state 100
@@ -1330,7 +1330,7 @@ state 100
 	ADD  shift 76
 	SUB  shift 75
 	yy_IS  shift 77
-	.  reduce 25 (src line 371)
+	.  reduce 25 (src line 369)
 
 
 state 101
@@ -1365,7 +1365,7 @@ state 101
 	ADD  shift 76
 	SUB  shift 75
 	yy_IS  shift 77
-	.  reduce 26 (src line 379)
+	.  reduce 26 (src line 377)
 
 
 state 102
@@ -1400,7 +1400,7 @@ state 102
 	ADD  shift 76
 	SUB  shift 75
 	yy_IS  shift 77
-	.  reduce 27 (src line 387)
+	.  reduce 27 (src line 385)
 
 
 state 103
@@ -1435,7 +1435,7 @@ state 103
 	ADD  shift 76
 	SUB  shift 75
 	yy_IS  shift 77
-	.  reduce 28 (src line 395)
+	.  reduce 28 (src line 393)
 
 
 state 104
@@ -1470,7 +1470,7 @@ state 104
 	ADD  shift 76
 	SUB  shift 75
 	yy_IS  shift 77
-	.  reduce 29 (src line 403)
+	.  reduce 29 (src line 401)
 
 
 state 105
@@ -1505,7 +1505,7 @@ state 105
 	ADD  shift 76
 	SUB  shift 75
 	yy_IS  shift 77
-	.  reduce 30 (src line 411)
+	.  reduce 30 (src line 409)
 
 
 state 106
@@ -1540,7 +1540,7 @@ state 106
 	ADD  shift 76
 	SUB  shift 75
 	yy_IS  shift 77
-	.  reduce 31 (src line 420)
+	.  reduce 31 (src line 418)
 
 
 state 107
@@ -1572,7 +1572,7 @@ state 107
 	MUL  shift 73
 	DIV  shift 74
 	yy_IS  shift 77
-	.  reduce 32 (src line 429)
+	.  reduce 32 (src line 427)
 
 
 state 108
@@ -1601,7 +1601,7 @@ state 108
 
 	CAST  shift 60
 	yy_IS  shift 77
-	.  reduce 33 (src line 437)
+	.  reduce 33 (src line 435)
 
 
 state 109
@@ -1630,7 +1630,7 @@ state 109
 
 	CAST  shift 60
 	yy_IS  shift 77
-	.  reduce 34 (src line 445)
+	.  reduce 34 (src line 443)
 
 
 state 110
@@ -1659,7 +1659,7 @@ state 110
 
 	CAST  shift 60
 	yy_IS  shift 77
-	.  reduce 35 (src line 453)
+	.  reduce 35 (src line 451)
 
 
 state 111
@@ -1691,7 +1691,7 @@ state 111
 	MUL  shift 73
 	DIV  shift 74
 	yy_IS  shift 77
-	.  reduce 36 (src line 461)
+	.  reduce 36 (src line 459)
 
 
 state 112
@@ -1723,13 +1723,13 @@ state 112
 	MUL  shift 73
 	DIV  shift 74
 	yy_IS  shift 77
-	.  reduce 37 (src line 469)
+	.  reduce 37 (src line 467)
 
 
 state 113
 	expr:  expr yy_IS yy_NULL.    (39)
 
-	.  reduce 39 (src line 485)
+	.  reduce 39 (src line 483)
 
 
 state 114
@@ -1927,7 +1927,7 @@ state 121
 state 122
 	expr:  '(' expr ')'.    (41)
 
-	.  reduce 41 (src line 501)
+	.  reduce 41 (src line 499)
 
 
 state 123
@@ -1942,7 +1942,7 @@ state 123
 state 124
 	element_list:  element.    (51)
 
-	.  reduce 51 (src line 590)
+	.  reduce 51 (src line 588)
 
 
 state 125
@@ -1955,13 +1955,13 @@ state 125
 state 126
 	stmt:  DEFINE COMMAND name '.' TUPLE_REF AS set.    (68)
 
-	.  reduce 68 (src line 752)
+	.  reduce 68 (src line 750)
 
 
 state 127
 	stmt:  DEFINE COMMANDS '(' name_list ')' AS set.    (66)
 
-	.  reduce 66 (src line 735)
+	.  reduce 66 (src line 733)
 
 
 state 128
@@ -2007,13 +2007,13 @@ state 128
 	SUB  shift 75
 	yy_IS  shift 77
 	'?'  shift 78
-	.  reduce 71 (src line 794)
+	.  reduce 71 (src line 792)
 
 
 state 129
 	expr:  expr yy_IS NOT yy_NULL.    (40)
 
-	.  reduce 40 (src line 493)
+	.  reduce 40 (src line 491)
 
 
 state 130
@@ -2038,37 +2038,37 @@ state 130
 state 131
 	expr:  COMMAND_REF '$' $$11 name.    (12)
 
-	.  reduce 12 (src line 202)
+	.  reduce 12 (src line 200)
 
 
 state 132
 	expr:  COMMAND_REF '.' $$14 name.    (15)
 
-	.  reduce 15 (src line 222)
+	.  reduce 15 (src line 220)
 
 
 state 133
 	expr:  COMMAND_REF '[' expr ']'.    (16)
 
-	.  reduce 16 (src line 252)
+	.  reduce 16 (src line 250)
 
 
 state 134
 	expr:  FLOW_REF '[' expr ']'.    (17)
 
-	.  reduce 17 (src line 276)
+	.  reduce 17 (src line 274)
 
 
 state 135
 	expr:  FLOW_REF '.' $$18 name.    (19)
 
-	.  reduce 19 (src line 295)
+	.  reduce 19 (src line 293)
 
 
 state 136
 	expr:  FLOW_REF '$' $$20 name.    (21)
 
-	.  reduce 21 (src line 328)
+	.  reduce 21 (src line 326)
 
 
 state 137
@@ -2086,7 +2086,7 @@ state 137
 state 138
 	set:  '{' $$58 element_list '}'.    (59)
 
-	.  reduce 59 (src line 649)
+	.  reduce 59 (src line 647)
 
 
 state 139
@@ -2150,44 +2150,44 @@ state 140
 	SUB  shift 75
 	yy_IS  shift 77
 	'?'  shift 78
-	.  reduce 42 (src line 506)
+	.  reduce 42 (src line 504)
 
 
 state 141
 	element_list:  element_list ',' element.    (52)
 
-	.  reduce 52 (src line 596)
+	.  reduce 52 (src line 594)
 
 
 state 142
 	element:  name ':' value.    (50)
 
-	.  reduce 50 (src line 576)
+	.  reduce 50 (src line 574)
 
 
 state 143
 	value:  constant.    (47)
 
-	.  reduce 47 (src line 568)
+	.  reduce 47 (src line 566)
 
 
 state 144
 	value:  set.    (48)
 
-	.  reduce 48 (src line 570)
+	.  reduce 48 (src line 568)
 
 
 state 145
 	value:  array.    (49)
 
-	.  reduce 49 (src line 572)
+	.  reduce 49 (src line 570)
 
 
 state 146
 	array:  '['.$$56 component_list ']' 
 	$$56: .    (56)
 
-	.  reduce 56 (src line 634)
+	.  reduce 56 (src line 632)
 
 	$$56  goto 147
 
@@ -2197,7 +2197,7 @@ state 147
 
 	EXPAND_ENV  shift 48
 	STRING  shift 47
-	.  reduce 53 (src line 605)
+	.  reduce 53 (src line 603)
 
 	string  goto 149
 	component_list  goto 148
@@ -2214,7 +2214,7 @@ state 148
 state 149
 	component_list:  string.    (54)
 
-	.  reduce 54 (src line 610)
+	.  reduce 54 (src line 608)
 
 
 state 150
@@ -2229,13 +2229,13 @@ state 150
 state 151
 	array:  '[' $$56 component_list ']'.    (57)
 
-	.  reduce 57 (src line 638)
+	.  reduce 57 (src line 636)
 
 
 state 152
 	component_list:  component_list ',' string.    (55)
 
-	.  reduce 55 (src line 621)
+	.  reduce 55 (src line 619)
 
 
 94 terminals, 22 nonterminals
