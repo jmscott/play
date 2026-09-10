@@ -56,7 +56,7 @@ func (flo *flow) new() *flow {
 
 	if next_flow_seq == nil {
 		next_flow_seq = make(chan(uint64))
-		seq := uint64(0)
+		seq := uint64(1)
 		go func() {
 			for {
 				next_flow_seq <- seq
