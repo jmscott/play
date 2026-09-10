@@ -2,8 +2,6 @@
  *  Synopsis:
  *	Build an abstract syntax tree for "floq" language.
  *  Note:
- *	-  Consider run (cmd1, cmd2, ...) when ...
- *
  *	-  can we relax the requirement that a "run <command>(..." must occur
  *	   before a projection of "<command>"?  why not just reorder the run
  *	   call order?
