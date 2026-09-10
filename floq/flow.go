@@ -40,13 +40,39 @@ type flow struct {
 
 type flow_chan chan *flow
 
+var new_flow_mux	sync.Mutex
+var next_flow_seq	chan(uint64)
+
 func (flo *flow) new() *flow {
 
-	seq := uint64(1)
+	new_flow_mux.Lock()
+
+	//
+	//  make channel for new floq sequences.
+	//
+	//  Note:
+	//	sync.Once() may not open channel before read.
+	//
+
+	if next_flow_seq == nil {
+		next_flow_seq = make(chan(uint64))
+		seq := uint64(0)
+		go func() {
+			for {
+				next_flow_seq <- seq
+				seq++
+			}
+		}()
+	}
+	new_flow_mux.Unlock()
+
+	seq := <- next_flow_seq
+
 	op_count := uint16(0)		//  compile incremenets first flow 
 
+	//  op count is static after compilation
+
 	if flo != nil {
-		seq = flo.seq + 1
 		op_count = flo.op_count
 	}
 
@@ -65,6 +91,7 @@ func (flo *flow) new() *flow {
 }
 
 //   increment operator count for a flow operation by +1
+
 func (flo *flow) incr() {
 	flo.wg_op.Add(1)
 

@@ -14,6 +14,7 @@ import (
 
 var floq_trace_next_op bool
 var floq_trace_compile bool
+var floq_flows = uint8(1)		//  one flow
 
 var usage = "usage: floq [pass1|pass2|compile|frisk|server] path/to/prog.floq\n"
 
@@ -65,15 +66,15 @@ func stacktrace() {
 
 func env_bool(evar string) bool {
 
-env, exists := os.LookupEnv(evar)
-if exists {
-	b, err := strconv.ParseBool(env)
-	if err != nil {
-		croak("can not parse env var: %s", os.Getenv(env))
+	env, exists := os.LookupEnv(evar)
+	if exists {
+		b, err := strconv.ParseBool(env)
+		if err != nil {
+			croak("can not parse env var: %s", os.Getenv(env))
+		}
+		return b 
 	}
-	return b 
-}
-return false
+	return false
 }
 
 //  set yacc yyDebug level for dumping parsing details into y.output
@@ -95,6 +96,21 @@ func env_yydebug() {
 	if yyDebug > 0 {
 		yyErrorVerbose = true
 	}
+}
+
+func env_flows() uint8 {
+	fe, exists := os.LookupEnv("FLOQ_FLOWS")
+	if !exists {
+		return 1
+	}
+	i, err := strconv.ParseUint(fe, 10, 8)
+	if err != nil {
+		croak("can not parse FLOQ_FLOWS: %s", err)
+	}
+	if i == 0 {
+		croak("zero not allowed: FLOQ_FLOWS");
+	}
+	return uint8(i)
 }
 
 func main() {
@@ -129,6 +145,7 @@ func main() {
 
 	floq_trace_compile = env_bool("FLOQ_TRACE_COMPILE")
 	floq_trace_next_op = env_bool("FLOQ_TRACE_NEXT_OP")
+	floq_flows = env_flows()
 	env_yydebug()
 	
 	//  open and parse the floq file

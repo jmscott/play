@@ -2,14 +2,11 @@ package main
 
 func server(root *ast) {
 
-	//  compile pass2 ast.  the first flo created compile().
+	for i := uint8(0);  i < floq_flows;  i++ {
 
-	flo := compile(root) 
-
-	//  wake up all flow operators patiently waiting for compilation
-	//  to complete
-
-	close(flo.compiling)
+		flo := compile(root)
+		close(flo.compiling)
+	}
 
 	//  wait forever, such is the burden of a server
 
